@@ -52,6 +52,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#include "dfxplugin.h"
 	#include "dfxsettings.h"
 	#include "lib/platform/common/fileresourceinputstream.h"
+	#include "lib/platform/platformfactory.h"
 	#include "pluginterfaces/vst2.x/vstfxstore.h"
 #endif
 
@@ -1459,7 +1460,7 @@ void DfxGuiEditor::LoadPresetFile()
 #elif
 	#warning "implementation missing"
 					assert(false);  // TODO: implement
-#endif  // TARGET_API_AUDIOUNIT
+#endif  // TARGET_API_AUDIOUNIT/TARGET_API_VST
 				}
 				catch (std::exception const& e)
 				{
@@ -1985,14 +1986,12 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 	}
 
 	resultMenu.addSeparator();
-#if TARGET_OS_MAC  // hiding these menu items on Windows until implemented
 	DFX_AppendCommandItemToMenu(resultMenu, "Copy settings", std::bind(&DfxGuiEditor::copySettings, this));
 	{
 		bool currentClipboardIsPastable {};
 		pasteSettings(&currentClipboardIsPastable);
 		DFX_AppendCommandItemToMenu(resultMenu, "Paste settings", std::bind(&DfxGuiEditor::pasteSettings, this, nullptr), currentClipboardIsPastable);
 	}
-#endif
 #ifndef TARGET_API_RTAS  // RTAS has no API for preset files, Pro Tools handles them
 	#ifdef TARGET_API_VST
 	std::string const presetFileLabel("program");
@@ -2123,12 +2122,54 @@ long DfxGuiEditor::initClipboard()
 	mClipboardRef.reset(clipboardRef_temp);
 	return status;
 #else
-	#warning "implementation missing"
-	assert(false);  // TODO: implement
+	return dfx::kStatus_NoError;  // nothing to do
 #endif
-
-	return dfx::kStatus_NoError;
 }
+
+#ifdef TARGET_API_VST
+//-----------------------------------------------------------------------------
+class SettingsDataPackage final : public VSTGUI::IDataPackage
+{
+public:
+	SettingsDataPackage(std::byte const* inSettingsData, VstInt32 inSettingsDataSize)
+	:	mData(inSettingsData, std::next(inSettingsData, inSettingsDataSize))
+	{
+	}
+
+	uint32_t getCount() const override
+	{
+		return mData.empty() ? 0 : 1;
+	}
+
+	uint32_t getDataSize(uint32_t inIndex) const override
+	{
+		if (inIndex >= getCount())
+		{
+			return 0;
+		}
+		return mData.size();
+	}
+
+	Type getDataType(uint32_t inIndex) const override
+	{
+		if (inIndex >= getCount())
+		{
+			return kError;
+		}
+		return kBinary;
+	}
+
+	uint32_t getData(uint32_t inIndex, void const*& outBuffer, Type& outType) const override
+	{
+		outBuffer = (inIndex < getCount()) ? mData.data() : nullptr;
+		outType = getDataType(inIndex);
+		return getDataSize(inIndex);
+	}
+
+private:
+	std::vector<std::byte> const mData;
+};
+#endif  // TARGET_API_VST
 
 //-----------------------------------------------------------------------------
 long DfxGuiEditor::copySettings()
@@ -2209,21 +2250,22 @@ long DfxGuiEditor::copySettings()
 	}
 
 	#if TARGET_OS_MAC
-	auto const vstSettingsCFData = dfx::MakeUniqueCFType(CFDataCreate(kCFAllocatorDefault, const_cast<UInt8 const*>(static_cast<UInt8*>(vstSettingsData)), vstSettingsDataSize));
+	auto const vstSettingsCFData = dfx::MakeUniqueCFType(CFDataCreate(kCFAllocatorDefault, static_cast<UInt8*>(vstSettingsData), vstSettingsDataSize));
 	if (!vstSettingsCFData)
 	{
 		return coreFoundationUnknownErr;
 	}
 	status = PasteboardPutItemFlavor(mClipboardRef.get(), pasteboardItemID, kDfxGui_SettingsPasteboardFlavorType, vstSettingsCFData.get(), kPasteboardFlavorNoFlags);
 	#else
-	#warning "implementation missing"
-	assert(false);
+	auto const vstSettingsDataPackage = VSTGUI::makeOwned<SettingsDataPackage>(static_cast<std::byte const*>(vstSettingsData), vstSettingsDataSize);
+	auto const success = VSTGUI::getPlatformFactory().setClipboard(vstSettingsDataPackage);
+	status = success ? dfx::kStatus_NoError : dfx::kStatus_CannotDoInCurrentContext;
 	#endif  // TARGET_OS_MAC
 
 #else
 	#warning "implementation missing"
 	assert(false);
-#endif  // TARGET_API_AUDIOUNIT
+#endif  // TARGET_API_AUDIOUNIT/TARGET_API_VST
 
 	return status;
 }
@@ -2243,7 +2285,7 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 	}
 
 #ifdef TARGET_API_VST
-	void* vstSettingsData {};
+	void const* vstSettingsData {};
 	VstInt32 vstSettingsDataSize {};
 #endif
 
@@ -2328,14 +2370,14 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 					}
 					if (vstSettingsDataCF)
 					{
-						vstSettingsData = const_cast<UInt8*>(CFDataGetBytePtr(vstSettingsDataCF));
+						vstSettingsData = CFDataGetBytePtr(vstSettingsDataCF);
 						vstSettingsDataSize = static_cast<VstInt32>(CFDataGetLength(vstSettingsDataCF));
 						pastableItemFound = (vstSettingsData && (vstSettingsDataSize > 0));
 					}
 	#else
 					#warning "implementation missing"
 					assert(false);
-	#endif	// TARGET_API_AUDIOUNIT
+	#endif	// TARGET_API_AUDIOUNIT/TARGET_API_VST
 				}
 			}
 			if (pastableItemFound)
@@ -2349,8 +2391,16 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 		}
 	}
 #else
-	#warning "implementation missing"
-	assert(false);
+	auto const clipboardData = VSTGUI::getPlatformFactory().getClipboard();
+	if (clipboardData)
+	{
+		constexpr uint32_t dataIndex = 0;  // TODO: should we iterate? can a client add another clipboard atop ours?
+		if (clipboardData->getCount() && clipboardData->getDataSize(dataIndex) && (clipboardData->getDataType(dataIndex) == VSTGUI::IDataPackage::kBinary))
+		{
+			VSTGUI::IDataPackage::Type placeholderType {};
+			vstSettingsDataSize = static_cast<VstInt32>(clipboardData->getData(dataIndex, vstSettingsData, placeholderType));
+		}
+	}
 #endif  // TARGET_OS_MAC
 
 #ifdef TARGET_API_VST
@@ -2360,7 +2410,12 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 	}
 	if (getEffect()->getAeffect()->flags & effFlagsProgramChunks)
 	{
-		auto const chunkSuccess = getEffect()->setChunk(vstSettingsData, vstSettingsDataSize, kDfxGui_CopySettingsIsPreset);
+		if (inQueryPastabilityOnly)
+		{
+			*inQueryPastabilityOnly = dfxgui_GetEffectInstance()->settingsMinimalValidate(vstSettingsData, vstSettingsDataSize);
+			return dfx::kStatus_NoError;
+		}
+		auto const chunkSuccess = getEffect()->setChunk(const_cast<void*>(vstSettingsData), vstSettingsDataSize, kDfxGui_CopySettingsIsPreset);
 		assert(chunkSuccess);
 		if (chunkSuccess == 0)
 		{
@@ -2369,7 +2424,7 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 	}
 	else
 	{
-		auto const parameterValues = static_cast<float*>(vstSettingsData);
+		auto const parameterValues = static_cast<float const*>(vstSettingsData);
 		if ((vstSettingsDataSize % sizeof(*parameterValues)) != 0)
 		{
 			return dfx::kStatus_CannotDoInCurrentContext;
@@ -2378,6 +2433,20 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 		if (numParameters != getEffect()->getAeffect()->numParams)
 		{
 			return dfx::kStatus_CannotDoInCurrentContext;
+		}
+		constexpr auto validateParameterValue = [](float value)
+		{
+			constexpr float margin = 0.1f;  // allow some legal parameter range forgiveness
+			return (value >= (0.f - margin)) && (value <= (1.f + margin));
+		};
+		if (!std::all_of(parameterValues, std::next(parameterValues, numParameters), validateParameterValue))
+		{
+			return dfx::kStatus_CannotDoInCurrentContext;
+		}
+		if (inQueryPastabilityOnly)
+		{
+			*inQueryPastabilityOnly = true;
+			return dfx::kStatus_NoError;
 		}
 		for (VstInt32 parameterID = 0; parameterID < numParameters; parameterID++)
 		{
