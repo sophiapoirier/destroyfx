@@ -70,7 +70,7 @@ enum
 	kDestroyFXLinkX = 351,
 	kDestroyFXLinkY = 339,
 
-	kDisplayX = 318 - 1,
+	kDisplayX = 318 + 1,
 	kDisplayY = 24,
 	kDisplayWidth = 180,
 	kDisplayHeight = 10
