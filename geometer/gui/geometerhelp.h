@@ -130,9 +130,9 @@ the spanning factor.)",
   R"(dy/dx: make point when derivative changes by amount
 Makes a point whenever the slope changes by some 
 threshold.  With the slider > 0.5, this catches sharp rises; 
-at less than 0.5, it makes points on sharp falls.  When the 
-slider is at 0.5, dy/dx makes a point at all peaks and 
-valleys.)", 
+at less than 0.5, it makes points on sharp falls.  When 
+the slider is at 0.5, dy/dx makes a point at all peaks 
+and valleys.)", 
   R"DELIM(level: make point when wave crosses a specific level
 Makes a point when the waveform crosses a specific level 
 (both above and below the origin).  The slider controls the 
@@ -207,11 +207,12 @@ without altering its speed.)",
 Replaces each segment with one period of a sine wave.  
 It's best used with something where landmark generation 
 is related to the sound, like dy/dx (especially on percussive 
-input).  Combine with longpass for a less harsh sound.  The 
-slider makes sing use the sine wave for amplitude 
+input).  Combine with longpass for a less harsh sound.  
+The slider makes sing use the sine wave for amplitude 
 modulation instead, resulting in a totally different sound.)DELIM", 
   R"(shuffle: mix around intervals
-Mixes around the intervals.  Best used with a large window 
-size and long intervals.  When this option is selected, the 
-slider chooses how far the intervals are shuffled.)", 
+Mixes around the intervals.  Best used with a large 
+window size and long intervals.  When this option is 
+selected, the slider chooses how far the intervals are 
+shuffled.)", 
 }};
