@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <array>
 #include <vector>
 
+#include "dfxmath.h"
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
 #include "iirfilter.h"
@@ -117,6 +118,10 @@ private:
   }
 
   std::array<int32_t, dfx::TV::kNumDelays> speedModeStates {};
+
+  // TODO: these are not thread-safe; need to support concurrent execution from main or MIDI threads
+  dfx::math::RandomGenerator<int64_t, dfx::math::RandomSeed::Entropic> paramRandomGenerator_i;
+  dfx::math::RandomGenerator<double, dfx::math::RandomSeed::Entropic> paramRandomGenerator_f;
 };
 
 

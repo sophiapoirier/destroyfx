@@ -30,8 +30,6 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 #include <bitset>
 #include <cassert>
 #include <cmath>
-#include <cstdlib>
-#include <ctime>	// for time(), which is used to feed srand()
 #include <functional>
 #include <mutex>
 #include <thread>
@@ -168,9 +166,6 @@ DfxPlugin::DfxPlugin(
 	mParametersChangedInProcessHavePosted(inNumParameters)
 {
 	updatesamplerate();  // XXX have it set to something here?
-
-	// set a seed value for rand() from the system clock
-	std::srand(static_cast<unsigned int>(std::time(nullptr)));
 
 	mPresets.reserve(inNumPresets);
 	for (long i = 0; i < inNumPresets; i++)

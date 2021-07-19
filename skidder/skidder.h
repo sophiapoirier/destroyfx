@@ -26,6 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <memory>
 #include <vector>
 
+#include "dfxmath.h"
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
 #include "iirfilter.h"
@@ -153,6 +154,8 @@ private:
 	SkidState mState {};  // the state of the process
 	double mRMS = 0.0;
 	long mRMSCount = 0;
+	dfx::math::RandomGenerator<float, dfx::math::RandomSeed::Entropic> mRandomGenerator_f;
+	dfx::math::RandomGenerator<long, dfx::math::RandomSeed::Entropic> mRandomGenerator_i;
 
 	double mCurrentTempoBPS = 1.0;  // tempo in beats per second
 	double mOldTempoBPS = 1.0;  // holds the previous value of currentTempoBPS for comparison (TODO: unused?)

@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <array>
 
+#include "dfxmath.h"
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
 #include "iirfilter.h"
@@ -136,6 +137,7 @@ private:
 	bool mFreeze = false, mSplitChannels = false, mPitchConstraint = false, mTempoSync = false, mUseHostTempo = false;
 	std::array<bool, kNumPitchSteps> mPitchSteps {};
 	dfx::SmoothedValue<float> mInputGain, mOutputGain;
+	dfx::math::RandomGenerator<double, dfx::math::RandomSeed::Entropic> mParamRandomGenerator;
 
 	// generic versions of these parameters for curved randomization
 	double mSeekRateHz_gen = 0.0, mSeekRateRandMinHz_gen = 0.0;
@@ -152,6 +154,9 @@ private:
 	double mMaxAudioBufferSize_f = 0.0;  // for avoiding casting
 
 	std::vector<dfx::IIRFilter> mHighpassFilters;
+
+	dfx::math::RandomGenerator<double, dfx::math::RandomSeed::Entropic> mDSPRandomGenerator_f;
+	dfx::math::RandomGenerator<long, dfx::math::RandomSeed::Entropic> mDSPRandomGenerator_i;
 
 	// tempo sync stuff
 	double mCurrentTempoBPS = 0.0;  // tempo in beats per second

@@ -94,7 +94,7 @@ void Skidder::processPlateau()
 		mRMSCount = 0;  // reset the RMS counter
 		//
 		// set up the random floor values
-		mRandomFloor = static_cast<float>(expandparametervalue(kFloor, dfx::math::InterpolateRandom(mFloorRandMin_gen, mFloor_gen)));
+		mRandomFloor = static_cast<float>(expandparametervalue(kFloor, mRandomGenerator_f.next(std::min(mFloorRandMin_gen, mFloor_gen), mFloor_gen)));
 		mRandomGainRange = 1.0f - mRandomFloor;  // the range of the skidding on/off gain
 		//
 		if (mSlopeDur > 0)
@@ -183,7 +183,7 @@ void Skidder::processValley()
 			// randomize the tempo rate if the random min scalar is lower than the upper bound
 			if (mUseRandomRate)
 			{
-				auto const randomizedTempoRateIndex = static_cast<long>(dfx::math::InterpolateRandom(static_cast<float>(mRateRandMinIndex), static_cast<float>(mRateIndex) + 0.99f));
+				auto const randomizedTempoRateIndex = mRandomGenerator_i.next(mRateRandMinIndex, mRateIndex);
 				cycleRate = mTempoRateTable.getScalar(randomizedTempoRateIndex);
 				// we can't do the bar sync if the skids durations are random
 				mNeedResync = false;
@@ -202,12 +202,12 @@ void Skidder::processValley()
 		}
 		else
 		{
-			cycleRate = mUseRandomRate ? static_cast<float>(expandparametervalue(kRate_Hz, dfx::math::InterpolateRandom(mRateRandMinHz_gen, mRateHz_gen))) : mRate_Hz;
+			cycleRate = mUseRandomRate ? static_cast<float>(expandparametervalue(kRate_Hz, mRandomGenerator_f.next(mRateRandMinHz_gen, mRateHz_gen))) : mRate_Hz;
 		}
 		mNeedResync = false;  // reset this so that we don't have any trouble
 		mCycleSamples = std::lround(getsamplerate_f() / cycleRate);
 		//
-		auto const pulsewidth = mUseRandomPulsewidth ? dfx::math::InterpolateRandom(mPulsewidthRandMin, mPulsewidth) : mPulsewidth;
+		auto const pulsewidth = mUseRandomPulsewidth ? mRandomGenerator_f.next(mPulsewidthRandMin, mPulsewidth) : mPulsewidth;
 		mPulseSamples = std::lround(static_cast<float>(mCycleSamples) * pulsewidth);
 		mValleySamples = mCycleSamples - mPulseSamples;
 		mSlopeSamples = std::lround(getsamplerate() * mSlopeSeconds);
@@ -249,11 +249,10 @@ void Skidder::processValley()
 		}
 		else
 		{
-			// this calculates a random float value from -1.0 to 1.0
-			float const panRander = (dfx::math::Rand<float>() * 2.0f) - 1.0f;
-			// ((panRander * mPanWidth) + 1.0) ranges from 0.0 to 2.0
-			mPanGainL = (panRander * mPanWidth) + 1.0f;
-			mPanGainR = 2.0f - ((panRander * mPanWidth) + 1.0f);
+			// panRander ranges from 0 to 2, scaled from a center of 1
+			float const panRander = mRandomGenerator_f.next(-mPanWidth, mPanWidth) + 1.f;
+			mPanGainL = panRander;
+			mPanGainR = 2.f - panRander;
 		}
 	}  // end of the "valley is over" if-statement
 }
@@ -264,8 +263,8 @@ float Skidder::processOutput(float in1, float in2, float panGain)
 	// output noise
 	if ((mState == SkidState::Valley) && (mNoise.getValue() != 0.0f))
 	{
-		// out gets random noise with samples from -1.0 to 1.0 times the random pan times rupture times the RMS scalar
-		return ((dfx::math::Rand<float>() * 2.0f) - 1.0f) * panGain * mNoise.getValue() * static_cast<float>(mRMS);
+		// output gets random noise with samples from -1.0 to 1.0 times the random pan times rupture times the RMS scalar
+		return mRandomGenerator_f.next(-1.f, 1.f) * panGain * mNoise.getValue() * static_cast<float>(mRMS);
 	}
 	// do regular skidding output
 	else

@@ -248,7 +248,7 @@ void PLUGIN::randomizeparameter(long inParameterIndex)
       return;
   }
 
-  int64_t const newValue = rand() % maxValue;
+  auto const newValue = param_random_generator.next(0, maxValue - 1);
   setparameter_i(inParameterIndex, newValue);
 
   postupdate_parameter(inParameterIndex);	// inform any parameter listeners of the changes
@@ -266,7 +266,7 @@ void PLUGIN::clearwindowcache()
   lastwindowtimestamp.store(0, std::memory_order_relaxed);
 }
 
-void PLUGIN::updatewindowcache(PLUGINCORE const * geometercore)
+void PLUGIN::updatewindowcache(PLUGINCORE * geometercore)
 {
 #if 1
   std::copy_n(geometercore->getinput(), GeometerViewData::samples, windowcache_writer->inputs.data());
@@ -304,10 +304,10 @@ void PLUGINCORE::clearwindowcache()
   }
 }
 
-void PLUGINCORE::updatewindowcache(PLUGINCORE const * geometercore)
+void PLUGINCORE::updatewindowcache()
 {
   if (iswaveformsource()) {
-    geometer->updatewindowcache(geometercore);
+    geometer->updatewindowcache(this);
   }
 }
 
@@ -407,8 +407,8 @@ void PLUGINCORE::processparameters() {
    It's static to enforce thread-safety.
 */
 int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
-                     int * px, float * py, int maxpts,
-                     int * tempx, float * tempy) {
+                         int * px, float * py, int maxpts,
+                         int * tempx, float * tempy) {
   /* pointops. */
 
   switch(pop) {
@@ -601,8 +601,8 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
    3. generate waveform
 */
 int PLUGINCORE::processw(float const * in, float * out, int samples,
-                     int * px, float * py, int maxpts,
-                     int * tempx, float * tempy) const {
+                         int * px, float * py, int maxpts,
+                         int * tempx, float * tempy) {
 
   /* collect points. */
 
@@ -796,7 +796,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
 
     for(;n--;) {
       if (numpts < (maxpts-1)) {
-        px[numpts++] = rand() % samples;
+        px[numpts++] = point_random_generator.next(0, samples - 1);
       } else break;
     }
 
@@ -923,12 +923,9 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
     }
 
     for(int z = 0; z < intervals; z++) {
-      if (dfx::math::Rand<float>() < interparam) {
-        int dest = z + ((interparam * 
-                         interparam * (float)intervals)
-                        * dfx::math::Rand<float>()) - (interparam *
-                                                       interparam *
-                                                       0.5f * (float)intervals);
+      if (interp_random_generator.next() < interparam) {
+        float const range = interparam * interparam * 0.5f * (float)intervals;
+        int dest = z + interp_random_generator.next(-range, range);
         dest = std::clamp(dest, 0, intervals - 1);
 
         std::swap(tempx[z], tempx[dest]);
@@ -1201,7 +1198,7 @@ void PLUGINCORE::process(float const* tin, float* tout, unsigned long samples) {
       processw(in0.data(), out0.data()+outstart+outsize, framesize,
                pointx.data(), pointy.data(), framesize * 2,
                storex.data(), storey.data());
-      updatewindowcache(this);
+      updatewindowcache();
 
 #if TARGET_OS_MAC
       vDSP_vmul(out0.data()+outstart+outsize, 1, windowenvelope.data(), 1, out0.data()+outstart+outsize, 1, static_cast<vDSP_Length>(framesize));

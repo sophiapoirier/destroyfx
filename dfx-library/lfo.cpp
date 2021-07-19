@@ -45,8 +45,8 @@ void dfx::LFO::reset()
 {
 	mPosition = 0.0f;
 	mStepSize = 1.0f;  // just to avoid anything really screwy
-	mPrevRandomNumber = dfx::math::Rand<decltype(mPrevRandomNumber)>();
-	mRandomNumber = dfx::math::Rand<decltype(mRandomNumber)>();
+	mPrevRandomNumber = mRandomGenerator.next();
+	mRandomNumber = mRandomGenerator.next();
 	mSmoothSamples = 0;
 }
 
@@ -143,7 +143,7 @@ void dfx::LFO::updatePosition(long inNumSteps)
 		// wrap around the position tracker if it has made it past the end of the LFO cycle
 		mPosition = std::fmod(mPosition, 1.0f);
 		// get new random LFO values, too
-		mPrevRandomNumber = std::exchange(mRandomNumber, dfx::math::Rand<decltype(mRandomNumber)>());
+		mPrevRandomNumber = std::exchange(mRandomNumber, mRandomGenerator.next());
 		// set up the sample smoothing if a discontiguous waveform's cycle just ended
 		switch (mShape)
 		{

@@ -33,8 +33,6 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 #include <limits>
 #include <unordered_set>
 
-#include "dfxmath.h"
-
 
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -642,14 +640,14 @@ DfxParam::Value DfxParam::randomize()
 	switch (mValueType)
 	{
 		case ValueType::Float:
-			set_gen(dfx::math::Rand<double>());
+			set_gen(mRandomGenerator_f.next());
 			break;
 		case ValueType::Int:
-			mValue.i = (std::rand() % ((mMaxValue.i - mMinValue.i) + 1)) + mMinValue.i;
+			mValue.i = mRandomGenerator_i.next(mMinValue.i, mMaxValue.i);
 			break;
 		case ValueType::Boolean:
 			// but we don't really need to worry about the curve for boolean values
-			mValue.b = (std::rand() % 2) ? true : false;
+			mValue.b = mRandomGenerator_i.next(0, 1) ? true : false;
 			break;
 		default:
 			assert(false);

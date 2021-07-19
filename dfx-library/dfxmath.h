@@ -29,9 +29,10 @@ This is our math and numerics shit.
 
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <cmath>
-#include <cstdlib>  // for RAND_MAX
 #include <limits>
+#include <random>
 #include <type_traits>
 
 
@@ -60,15 +61,6 @@ true;
 //-----------------------------------------------------------------------------
 // functions
 //-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-template <typename T>
-T Rand()
-{
-	static_assert(std::is_floating_point_v<T>);
-	static constexpr T oneDivRandMax = T(1) / T(RAND_MAX);  // reduces wasteful casting and division
-	return static_cast<T>(std::rand()) * oneDivRandMax;
-}
 
 //-----------------------------------------------------------------------------
 template <typename OutputT = size_t, typename InputT>
@@ -236,14 +228,6 @@ constexpr float InterpolateLinear(float inValue1, float inValue2, double inAddre
 }
 
 //-----------------------------------------------------------------------------
-template <typename T>
-T InterpolateRandom(T inMinValue, T inMaxValue)
-{
-	static_assert(std::is_floating_point_v<T>);
-	return ((inMaxValue - inMinValue) * Rand<T>()) + inMinValue;
-}
-
-//-----------------------------------------------------------------------------
 // computes the principle branch of the Lambert W function
 // { LambertW(x) = W(x), where W(x) * exp(W(x)) = x }
 static inline double LambertW(double inValue)
@@ -266,6 +250,97 @@ static inline unsigned long GetFrequencyBasedSmoothingStride(double inSamplerate
 {
 	return std::max(static_cast<unsigned long>(inSamplerate) / 11025ul, 1ul);
 }
+
+
+
+//-----------------------------------------------------------------------------
+// classes
+//-----------------------------------------------------------------------------
+
+enum class RandomSeed
+{
+	Static,
+	Monotonic,
+	Entropic  // unbounded operation (not realtime-safe)
+};
+
+//-----------------------------------------------------------------------------
+// while the seeding mechanism could be a runtime parameter rather than compile-time parameter
+// (the random engine can even be re-seeded at any time), because it has realtime-safety implications,
+// I want to force it to be a very explicit choice regarding how the generator will be used
+template <typename T, RandomSeed Seed>
+class RandomGenerator
+{
+	static_assert(std::is_arithmetic_v<T>);
+
+public:
+	// inclusive range (closed interval)
+	explicit RandomGenerator(T inRangeMinimum = T(0), T inRangeMaximum = getDefaultMaximum())
+	:	mEngine(getSeed()),
+		mDistribution(inRangeMinimum, inRangeMaximum)
+	{
+		assert(inRangeMinimum <= inRangeMaximum);
+	}
+
+	T next()
+	{
+		return mDistribution(mEngine);
+	}
+
+	// allow dynamically using a new distribution range (creation is cheap)
+	T next(T inRangeMinimum, T inRangeMaximum)
+	{
+		assert(inRangeMinimum <= inRangeMaximum);
+		return getDistribution(inRangeMinimum, inRangeMaximum)(mEngine);
+	}
+
+private:
+	using EngineType = std::mt19937_64;
+
+	static EngineType::result_type getSeed()
+	{
+		if constexpr (Seed == RandomSeed::Static)
+		{
+			return 1729;
+		}
+		else if constexpr (Seed == RandomSeed::Monotonic)
+		{
+			return std::chrono::steady_clock::now().time_since_epoch().count();
+		}
+		else if constexpr (Seed == RandomSeed::Entropic)
+		{
+			return std::random_device()();
+		}
+	}
+
+	static constexpr T getDefaultMaximum()
+	{
+		if constexpr (std::is_floating_point_v<T>)
+		{
+			return T(1);
+		}
+		else
+		{
+			return std::numeric_limits<T>::max();
+		}
+	}
+
+	// allows to select between types at compile-time
+	static constexpr auto getDistribution(T inRangeMinimum = T(0), T inRangeMaximum = getDefaultMaximum())
+	{
+		if constexpr (std::is_floating_point_v<T>)
+		{
+			return std::uniform_real_distribution<T>(inRangeMinimum, inRangeMaximum);
+		}
+		else
+		{
+			return std::uniform_int_distribution<T>(inRangeMinimum, inRangeMaximum);
+		}
+	}
+
+	std::mt19937_64 mEngine;
+	decltype(getDistribution()) mDistribution;
+};
 
 
 }  // namespace
