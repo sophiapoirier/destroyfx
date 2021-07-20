@@ -187,6 +187,7 @@ PLUGIN_EDITOR_RES_ID
 // include our crucial shits
 
 #include "dfxdefines.h"
+#include "dfxmath.h"
 #include "dfxparameter.h"
 #include "dfxplugin-base.h"
 #include "dfxpluginproperties.h"
@@ -766,6 +767,17 @@ protected:
 		return mHostCanDoTempo;
 	}
 
+	template <typename T>
+	T generateParameterRandomValue()
+	{
+		return mParameterRandomEngine.next<T>();
+	}
+	template <typename T>
+	T generateParameterRandomValue(T const& inRangeMinimum, T const& inRangeMaximum)
+	{
+		return mParameterRandomEngine.next<T>(inRangeMinimum, inRangeMaximum);
+	}
+
 #if TARGET_PLUGIN_USES_DSPCORE
 	DfxPluginCore* getplugincore(unsigned long inChannel) const;
 #endif
@@ -801,6 +813,8 @@ private:
 	std::vector<DfxParam> mParameters;
 	std::vector<bool> mParametersChangedAsOfPreProcess, mParametersTouchedAsOfPreProcess;
 	std::vector<std::atomic_flag> mParametersChangedInProcessHavePosted;
+	// the effect owns a single random engine shared by all parameters rather than each parameter owning its own for efficiency, because its state data can be quite large
+	dfx::math::RandomEngine mParameterRandomEngine {dfx::math::RandomSeed::Entropic};
 	std::vector<std::pair<std::string, std::set<long>>> mParameterGroups;
 	std::vector<DfxPreset> mPresets;
 	std::atomic_flag mPresetChangedInProcessHasPosted;

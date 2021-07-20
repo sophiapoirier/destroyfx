@@ -264,22 +264,114 @@ enum class RandomSeed
 	Entropic  // unbounded operation (not realtime-safe)
 };
 
-//-----------------------------------------------------------------------------
-// while the seeding mechanism could be a runtime parameter rather than compile-time parameter
-// (the random engine can even be re-seeded at any time), because it has realtime-safety implications,
-// I want to force it to be a very explicit choice regarding how the generator will be used
-template <typename T, RandomSeed Seed>
-class RandomGenerator
+namespace detail
+{
+template <typename T>
+static constexpr void validateRandomValueType()
 {
 	static_assert(std::is_arithmetic_v<T>);
+}
 
+template <typename T>
+static constexpr T getRandomDefaultMaximum()
+{
+	validateRandomValueType<T>();
+	if constexpr (std::is_floating_point_v<T>)
+	{
+		return T(1);
+	}
+	else
+	{
+		return std::numeric_limits<T>::max();
+	}
+}
+
+// allows to select between types at compile-time
+template <typename T>
+static constexpr auto getRandomDistribution(T inRangeMinimum = T(0), T inRangeMaximum = getRandomDefaultMaximum<T>())
+{
+	validateRandomValueType<T>();
+	assert(inRangeMinimum <= inRangeMaximum);
+	if constexpr (std::is_floating_point_v<T>)
+	{
+		return std::uniform_real_distribution<T>(inRangeMinimum, inRangeMaximum);
+	}
+	else
+	{
+		return std::uniform_int_distribution<T>(inRangeMinimum, inRangeMaximum);
+	}
+}
+}
+
+//-----------------------------------------------------------------------------
+class RandomEngine
+{
+public:
+	explicit RandomEngine(RandomSeed inSeedType)
+	:	mEngine(getSeed(inSeedType))
+	{
+	}
+
+	// inclusive range (closed interval)
+	// allow dynamically using a new distribution range (creation is cheap)
+	template <typename T>
+	T next(T const& inRangeMinimum, T const& inRangeMaximum)
+	{
+		detail::validateRandomValueType<T>();
+		return detail::getRandomDistribution<T>(inRangeMinimum, inRangeMaximum)(mEngine);
+	}
+
+	template <typename T>
+	T next()
+	{
+		detail::validateRandomValueType<T>();
+		return detail::getRandomDistribution<T>()(mEngine);
+	}
+
+	// minimum STL-required random engine interface
+	auto operator()()
+	{
+		return mEngine();
+	}
+	static constexpr auto min()
+	{
+		return EngineType::min();
+	}
+	static constexpr auto max()
+	{
+		return EngineType::max();
+	}
+
+private:
+	using EngineType = std::mt19937_64;
+
+	static EngineType::result_type getSeed(RandomSeed inSeedType)
+	{
+		switch (inSeedType)
+		{
+			case RandomSeed::Static:
+				return 1729;
+			case RandomSeed::Monotonic:
+				return std::chrono::steady_clock::now().time_since_epoch().count();
+			case RandomSeed::Entropic:
+				return std::random_device()();
+		}
+	}
+
+	EngineType mEngine;
+};
+
+//-----------------------------------------------------------------------------
+template <typename T>
+class RandomGenerator
+{
 public:
 	// inclusive range (closed interval)
-	explicit RandomGenerator(T inRangeMinimum = T(0), T inRangeMaximum = getDefaultMaximum())
-	:	mEngine(getSeed()),
+	explicit RandomGenerator(RandomSeed inSeedType, T inRangeMinimum = T(0), T inRangeMaximum = detail::getRandomDefaultMaximum<T>())
+	:	mEngine(inSeedType),
 		mDistribution(inRangeMinimum, inRangeMaximum)
 	{
-		assert(inRangeMinimum <= inRangeMaximum);
+		detail::validateRandomValueType<T>();
 	}
 
 	T next()
@@ -287,59 +379,9 @@ public:
 		return mDistribution(mEngine);
 	}
 
-	// allow dynamically using a new distribution range (creation is cheap)
-	T next(T inRangeMinimum, T inRangeMaximum)
-	{
-		assert(inRangeMinimum <= inRangeMaximum);
-		return getDistribution(inRangeMinimum, inRangeMaximum)(mEngine);
-	}
-
 private:
-	using EngineType = std::mt19937_64;
-
-	static EngineType::result_type getSeed()
-	{
-		if constexpr (Seed == RandomSeed::Static)
-		{
-			return 1729;
-		}
-		else if constexpr (Seed == RandomSeed::Monotonic)
-		{
-			return std::chrono::steady_clock::now().time_since_epoch().count();
-		}
-		else if constexpr (Seed == RandomSeed::Entropic)
-		{
-			return std::random_device()();
-		}
-	}
-
-	static constexpr T getDefaultMaximum()
-	{
-		if constexpr (std::is_floating_point_v<T>)
-		{
-			return T(1);
-		}
-		else
-		{
-			return std::numeric_limits<T>::max();
-		}
-	}
-
-	// allows to select between types at compile-time
-	static constexpr auto getDistribution(T inRangeMinimum = T(0), T inRangeMaximum = getDefaultMaximum())
-	{
-		if constexpr (std::is_floating_point_v<T>)
-		{
-			return std::uniform_real_distribution<T>(inRangeMinimum, inRangeMaximum);
-		}
-		else
-		{
-			return std::uniform_int_distribution<T>(inRangeMinimum, inRangeMaximum);
-		}
-	}
-
-	std::mt19937_64 mEngine;
-	decltype(getDistribution()) mDistribution;
+	RandomEngine mEngine;
+	decltype(detail::getRandomDistribution<T>()) mDistribution;
 };
 
 

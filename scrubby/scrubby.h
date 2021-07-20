@@ -137,7 +137,6 @@ private:
 	bool mFreeze = false, mSplitChannels = false, mPitchConstraint = false, mTempoSync = false, mUseHostTempo = false;
 	std::array<bool, kNumPitchSteps> mPitchSteps {};
 	dfx::SmoothedValue<float> mInputGain, mOutputGain;
-	dfx::math::RandomGenerator<double, dfx::math::RandomSeed::Entropic> mParamRandomGenerator;
 
 	// generic versions of these parameters for curved randomization
 	double mSeekRateHz_gen = 0.0, mSeekRateRandMinHz_gen = 0.0;
@@ -155,8 +154,7 @@ private:
 
 	std::vector<dfx::IIRFilter> mHighpassFilters;
 
-	dfx::math::RandomGenerator<double, dfx::math::RandomSeed::Entropic> mDSPRandomGenerator_f;
-	dfx::math::RandomGenerator<long, dfx::math::RandomSeed::Entropic> mDSPRandomGenerator_i;
+	dfx::math::RandomEngine mRandomEngine {dfx::math::RandomSeed::Entropic};
 
 	// tempo sync stuff
 	double mCurrentTempoBPS = 0.0;  // tempo in beats per second

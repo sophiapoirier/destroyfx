@@ -522,7 +522,7 @@ public:
 	}
 
 	// randomize the current value of the parameter
-	Value randomize();
+	Value randomize(dfx::math::RandomEngine& inEngine);
 
 
 private:
@@ -558,8 +558,6 @@ private:
 	std::atomic<bool> mTouched {false};  // indicates if the value has been newly set
 	static_assert(decltype(mTouched)::is_always_lock_free);
 	Attribute mAttributes = 0;  // a bit-mask of various parameter attributes
-	dfx::math::RandomGenerator<double, dfx::math::RandomSeed::Entropic> mRandomGenerator_f;
-	dfx::math::RandomGenerator<int64_t, dfx::math::RandomSeed::Entropic> mRandomGenerator_i;
 
 #ifdef TARGET_API_AUDIOUNIT
 	// CoreFoundation string version of the parameter's name

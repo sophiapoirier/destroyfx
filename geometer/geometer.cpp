@@ -248,7 +248,7 @@ void PLUGIN::randomizeparameter(long inParameterIndex)
       return;
   }
 
-  auto const newValue = param_random_generator.next(0, maxValue - 1);
+  auto const newValue = generateParameterRandomValue<int64_t>(0, maxValue - 1);
   setparameter_i(inParameterIndex, newValue);
 
   postupdate_parameter(inParameterIndex);	// inform any parameter listeners of the changes
@@ -796,7 +796,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
 
     for(;n--;) {
       if (numpts < (maxpts-1)) {
-        px[numpts++] = point_random_generator.next(0, samples - 1);
+        px[numpts++] = randomengine.next<int>(0, samples - 1);
       } else break;
     }
 
@@ -923,9 +923,9 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
     }
 
     for(int z = 0; z < intervals; z++) {
-      if (interp_random_generator.next() < interparam) {
+      if (randomengine.next<float>() < interparam) {
         float const range = interparam * interparam * 0.5f * (float)intervals;
-        int dest = z + interp_random_generator.next(-range, range);
+        int dest = z + randomengine.next(-range, range);
         dest = std::clamp(dest, 0, intervals - 1);
 
         std::swap(tempx[z], tempx[dest]);

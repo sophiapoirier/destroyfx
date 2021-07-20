@@ -154,8 +154,7 @@ private:
 	SkidState mState {};  // the state of the process
 	double mRMS = 0.0;
 	long mRMSCount = 0;
-	dfx::math::RandomGenerator<float, dfx::math::RandomSeed::Entropic> mRandomGenerator_f;
-	dfx::math::RandomGenerator<long, dfx::math::RandomSeed::Entropic> mRandomGenerator_i;
+	dfx::math::RandomEngine mRandomEngine {dfx::math::RandomSeed::Entropic};
 
 	double mCurrentTempoBPS = 1.0;  // tempo in beats per second
 	double mOldTempoBPS = 1.0;  // holds the previous value of currentTempoBPS for comparison (TODO: unused?)

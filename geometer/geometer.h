@@ -79,7 +79,6 @@ private:
   dfx::SpinLock windowcachelock;
   std::atomic<uint64_t> lastwindowtimestamp {0};
   static_assert(decltype(lastwindowtimestamp)::is_always_lock_free);
-  dfx::math::RandomGenerator<int64_t, dfx::math::RandomSeed::Entropic> param_random_generator;
 };
 
 class PLUGINCORE final : public DfxPluginCore {
@@ -162,6 +161,5 @@ private:
 
   std::vector<float> windowenvelope;
 
-  dfx::math::RandomGenerator<int, dfx::math::RandomSeed::Entropic> point_random_generator;
-  dfx::math::RandomGenerator<float, dfx::math::RandomSeed::Entropic> interp_random_generator;
+  dfx::math::RandomEngine randomengine {dfx::math::RandomSeed::Entropic};
 };

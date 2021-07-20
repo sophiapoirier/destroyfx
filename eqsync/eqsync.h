@@ -74,7 +74,7 @@ private:
 	std::vector<float> mPrevOut, prevprevOut;  // these store the previous output samples' values
 	float mPrevA0 = 0.0f, mPrevA1 = 0.0f, mPrevA2 = 0.0f, mPrevB1 = 0.0f, mPrevB2 = 0.0f;  // these store the last random filter parameter values
 	float mCurA0 = 0.0f, mCurA1 = 0.0f, mCurA2 = 0.0f, mCurB1 = 0.0f, mCurB2 = 0.0f;  // these store the current random filter parameter values
-	dfx::math::RandomGenerator<float, dfx::math::RandomSeed::Entropic> mRandomGenerator;
+	dfx::math::RandomGenerator<float> mRandomGenerator {dfx::math::RandomSeed::Entropic};
 
 	double mCurrentTempoBPS = 1.0;  // tempo in beats per second
 	bool mNeedResync = false;  // true when playback has just started up again

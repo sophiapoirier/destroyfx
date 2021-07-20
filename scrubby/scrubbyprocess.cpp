@@ -137,7 +137,7 @@ void Scrubby::generateNewTarget(unsigned long channel)
 		// randomize the tempo rate if the random min scalar is lower than the upper bound
 		if (mUseSeekRateRandMin)
 		{
-			auto const randomizedSeekRateIndex = mDSPRandomGenerator_i.next(mSeekRateRandMinIndex, mSeekRateIndex);
+			auto const randomizedSeekRateIndex = mRandomEngine.next(mSeekRateRandMinIndex, mSeekRateIndex);
 			currentSeekRate = mTempoRateTable.getScalar(randomizedSeekRateIndex);
 			// don't do musical bar sync if we're using randomized tempo rate
 //			std::fill(mNeedResync.begin(), mNeedResync.end(), false);
@@ -156,7 +156,7 @@ void Scrubby::generateNewTarget(unsigned long channel)
 	{
 		if (mUseSeekRateRandMin)
 		{
-			currentSeekRate = expandparametervalue(kSeekRate_Hz, mDSPRandomGenerator_f.next(mSeekRateRandMinHz_gen, mSeekRateHz_gen));
+			currentSeekRate = expandparametervalue(kSeekRate_Hz, mRandomEngine.next(mSeekRateRandMinHz_gen, mSeekRateHz_gen));
 		}
 		else
 		{
@@ -192,7 +192,7 @@ void Scrubby::generateNewTarget(unsigned long channel)
 	mSeekCount[channel] = std::max(mSeekCount[channel], 1L);
 
 // CALCULATE THE MOVEMENT CYCLE LENGTH
-	auto const currentSeekDur = mUseSeekDurRandMin ? mDSPRandomGenerator_f.next(mSeekDurRandMin, mSeekDur) : mSeekDur;
+	auto const currentSeekDur = mUseSeekDurRandMin ? mRandomEngine.next(mSeekDurRandMin, mSeekDur) : mSeekDur;
 	// calculate the length of the seeking movement in samples
 	mMoveCount[channel] = std::max(std::lround(cycleDur * currentSeekDur * getsamplerate()), 1L);
 
@@ -200,7 +200,7 @@ void Scrubby::generateNewTarget(unsigned long channel)
 	// randomly locate a new target position within the buffer seek range
 	long const bufferSize = std::lround(mSeekRangeSeconds * getsamplerate());
 	// search back from the current writer input point
-	long const newTargetPos = mWritePos - mDSPRandomGenerator_i.next(0, bufferSize);
+	long const newTargetPos = mWritePos - mRandomEngine.next<long>(0, bufferSize);
 	//
 	// calculate the distance between
 	auto readPosInt = static_cast<long>(mReadPos[channel]);

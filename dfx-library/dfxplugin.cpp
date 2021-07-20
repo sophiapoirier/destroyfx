@@ -586,7 +586,7 @@ void DfxPlugin::randomizeparameter(long inParameterIndex)
 {
 	if (parameterisvalid(inParameterIndex))
 	{
-		mParameters[inParameterIndex].randomize();
+		mParameters[inParameterIndex].randomize(mParameterRandomEngine);
 		update_parameter(inParameterIndex);  // make the host aware of the parameter change
 		postupdate_parameter(inParameterIndex);  // inform any parameter listeners of the changes
 	}

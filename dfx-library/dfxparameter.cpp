@@ -632,7 +632,7 @@ void DfxParam::SetEnforceValueLimits(bool inMode)
 //-----------------------------------------------------------------------------
 // randomize the current parameter value
 // this takes into account the parameter curve
-DfxParam::Value DfxParam::randomize()
+DfxParam::Value DfxParam::randomize(dfx::math::RandomEngine& inEngine)
 {
 	mChanged = true;  // XXX do this smarter?
 	settouched(true);
@@ -640,14 +640,14 @@ DfxParam::Value DfxParam::randomize()
 	switch (mValueType)
 	{
 		case ValueType::Float:
-			set_gen(mRandomGenerator_f.next());
+			set_gen(inEngine.next<double>());
 			break;
 		case ValueType::Int:
-			mValue.i = mRandomGenerator_i.next(mMinValue.i, mMaxValue.i);
+			mValue.i = inEngine.next(mMinValue.i, mMaxValue.i);
 			break;
 		case ValueType::Boolean:
 			// but we don't really need to worry about the curve for boolean values
-			mValue.b = mRandomGenerator_i.next(0, 1) ? true : false;
+			mValue.b = inEngine.next<bool>();
 			break;
 		default:
 			assert(false);

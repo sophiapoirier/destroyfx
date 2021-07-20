@@ -377,8 +377,8 @@ void Scrubby::randomizeparameters()
 	DfxPlugin::randomizeparameters();
 
 	// randomize the mix parameters
-	auto newDryLevel = expandparametervalue(kDryLevel, mParamRandomGenerator.next());
-	auto newWetLevel = expandparametervalue(kWetLevel, mParamRandomGenerator.next());
+	auto newDryLevel = expandparametervalue(kDryLevel, generateParameterRandomValue<double>());
+	auto newWetLevel = expandparametervalue(kWetLevel, generateParameterRandomValue<double>());
 	// calculate a scalar to make up for total gain changes
 	auto const mixDiffScalar = mixSum / (newDryLevel + newWetLevel);
 
