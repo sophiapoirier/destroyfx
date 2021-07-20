@@ -49,6 +49,7 @@
 		EC8ABF892526BDF500B22CE7 /* gate-mode-button.png in Resources */ = {isa = PBXBuildFile; fileRef = EC8ABF862526BDF500B22CE7 /* gate-mode-button.png */; };
 		EC8ABF8A2526BDF500B22CE7 /* midi-learn-button.png in Resources */ = {isa = PBXBuildFile; fileRef = EC8ABF872526BDF500B22CE7 /* midi-learn-button.png */; };
 		ECC430AC102F46F0000B05A1 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECC430AA102F46F0000B05A1 /* dfx-au-utilities.strings */; };
+		ECD1CD6826A6773D00AFAAE2 /* dfxmutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD1CD6626A6773D00AFAAE2 /* dfxmutex.cpp */; };
 		ECE44FC6156364E700637833 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECE44FC5156364E700637833 /* dfxgui-auviewfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		ECE44FE21563667D00637833 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECE44FE01563667D00637833 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-deprecated-declarations -Wno-four-char-constants"; }; };
 		ECF1D887252555D10094DCDA /* ComponentBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECF1D85B252555D10094DCDA /* ComponentBase.cpp */; };
@@ -144,6 +145,8 @@
 		ECC430AD102F46FD000B05A1 /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECC430AE102F4709000B05A1 /* nl */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECD0B25420CC2FFF006CD7D1 /* de */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = de; path = "../../dfx-library/de.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
+		ECD1CD6626A6773D00AFAAE2 /* dfxmutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmutex.cpp; sourceTree = "<group>"; };
+		ECD1CD6726A6773D00AFAAE2 /* dfxmutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmutex.h; sourceTree = "<group>"; };
 		ECE44FBE1563645500637833 /* dfxplugin-base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "dfxplugin-base.h"; sourceTree = "<group>"; };
 		ECE44FC01563647400637833 /* dfxmisc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmisc.cpp; sourceTree = "<group>"; };
 		ECE44FC11563647400637833 /* dfxmisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmisc.h; sourceTree = "<group>"; };
@@ -300,6 +303,8 @@
 				4932F7990680E859006A9591 /* dfxmidi.cpp */,
 				4918B60C0680FC9C0034CE15 /* dfxsettings.h */,
 				4918B60B0680FC9C0034CE15 /* dfxsettings.cpp */,
+				ECD1CD6726A6773D00AFAAE2 /* dfxmutex.h */,
+				ECD1CD6626A6773D00AFAAE2 /* dfxmutex.cpp */,
 				EC1D5DF4220BDEEC005492F7 /* idfxsmoothedvalue.h */,
 				EC1D5DF1220BDB36005492F7 /* dfxsmoothedvalue.h */,
 				EC1D5DF0220BDB35005492F7 /* dfxsmoothedvalue.hpp */,
@@ -522,6 +527,7 @@
 				4932F4F2068011C9006A9591 /* dfxguitextdisplay.cpp in Sources */,
 				ECF1D891252555D10094DCDA /* AUInputElement.cpp in Sources */,
 				4932F4F4068011C9006A9591 /* dfxguislider.cpp in Sources */,
+				ECD1CD6826A6773D00AFAAE2 /* dfxmutex.cpp in Sources */,
 				EC89B420208D310700E15129 /* dfx-au-utilities-preset-files.m in Sources */,
 				4932F79B0680E859006A9591 /* dfxmidi.cpp in Sources */,
 				4918B60D0680FC9C0034CE15 /* dfxsettings.cpp in Sources */,

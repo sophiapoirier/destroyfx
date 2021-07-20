@@ -632,10 +632,12 @@ void DfxParam::SetEnforceValueLimits(bool inMode)
 //-----------------------------------------------------------------------------
 // randomize the current parameter value
 // this takes into account the parameter curve
-DfxParam::Value DfxParam::randomize(dfx::math::RandomEngine& inEngine)
+DfxParam::Value DfxParam::randomize(dfx::math::RandomEngine& inEngine, dfx::SpinLock& inEngineLock)
 {
 	mChanged = true;  // XXX do this smarter?
 	settouched(true);
+
+	std::lock_guard const guard(inEngineLock);
 
 	switch (mValueType)
 	{

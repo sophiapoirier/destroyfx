@@ -58,6 +58,7 @@
 		ECCEE55325323309007251C9 /* AUBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECCEE53025323309007251C9 /* AUBuffer.cpp */; };
 		ECCEE55425323309007251C9 /* AUMIDIEffectBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECCEE53125323309007251C9 /* AUMIDIEffectBase.cpp */; };
 		ECCEE55525323309007251C9 /* AUInputElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECCEE53625323309007251C9 /* AUInputElement.cpp */; };
+		ECD1DBDB26A675AB00BD8139 /* dfxmutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD1DBD926A675AB00BD8139 /* dfxmutex.cpp */; };
 		ECDB2A7021BA03EE00938F5C /* wide-fader-handle-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47B307E53DEF00861708 /* wide-fader-handle-glowing.png */; };
 		ECDB2A7121BA03F900938F5C /* tall-fader-handle-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47AE07E53DEF00861708 /* tall-fader-handle-glowing.png */; };
 		ECDCF1CF0FB88B87005F739E /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECDCF1CD0FB88B87005F739E /* dfx-au-utilities.strings */; };
@@ -173,6 +174,8 @@
 		ECCEE53425323309007251C9 /* AUScopeElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUScopeElement.h; sourceTree = "<group>"; };
 		ECCEE53525323309007251C9 /* AudioUnitSDK.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AudioUnitSDK.h; sourceTree = "<group>"; };
 		ECCEE53625323309007251C9 /* AUInputElement.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUInputElement.cpp; sourceTree = "<group>"; };
+		ECD1DBD926A675AB00BD8139 /* dfxmutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmutex.cpp; sourceTree = "<group>"; };
+		ECD1DBDA26A675AB00BD8139 /* dfxmutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmutex.h; sourceTree = "<group>"; };
 		ECDCF1CE0FB88B87005F739E /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = "../../dfx-library/en.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECDCF1D00FB88B92005F739E /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECDCF1D10FB88B9C005F739E /* nl */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
@@ -324,6 +327,8 @@
 				EC2F842F24A7C21D00F29321 /* dfxmisc.mm */,
 				4918B60C0680FC9C0034CE15 /* dfxsettings.h */,
 				4918B60B0680FC9C0034CE15 /* dfxsettings.cpp */,
+				ECD1DBDA26A675AB00BD8139 /* dfxmutex.h */,
+				ECD1DBD926A675AB00BD8139 /* dfxmutex.cpp */,
 				EC94769E221B669E00F25BB9 /* idfxsmoothedvalue.h */,
 				ECF7D8D62002AD5400DCE42E /* dfxsmoothedvalue.h */,
 				ECF7D8D52002AD5400DCE42E /* dfxsmoothedvalue.hpp */,
@@ -581,6 +586,7 @@
 				ECF7D8F52002B7F300DCE42E /* vstgui_mac.mm in Sources */,
 				EC4FB173256ADD3000AFC27A /* AUBufferAllocator.cpp in Sources */,
 				49BB478D07E53D2500861708 /* transverbprocess.cpp in Sources */,
+				ECD1DBDB26A675AB00BD8139 /* dfxmutex.cpp in Sources */,
 				49BB479407E53D7300861708 /* firfilter.cpp in Sources */,
 				49BB479607E53D7300861708 /* iirfilter.cpp in Sources */,
 				49BB479E07E53DDC00861708 /* transverbeditor.cpp in Sources */,

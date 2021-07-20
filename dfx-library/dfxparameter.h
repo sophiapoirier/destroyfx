@@ -189,6 +189,7 @@ setusevaluestrings is used to set this property.
 #include "dfxdefines.h"
 #include "dfxmath.h"
 #include "dfxmisc.h"
+#include "dfxmutex.h"
 
 #ifdef TARGET_API_AUDIOUNIT
 	#include <CoreFoundation/CFString.h>
@@ -522,7 +523,8 @@ public:
 	}
 
 	// randomize the current value of the parameter
-	Value randomize(dfx::math::RandomEngine& inEngine);
+	// (it's ugly passing along the lock, but easier than managing locking from the client callsite)
+	Value randomize(dfx::math::RandomEngine& inEngine, dfx::SpinLock& inEngineLock);
 
 
 private:
