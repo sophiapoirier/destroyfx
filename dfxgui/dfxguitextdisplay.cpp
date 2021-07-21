@@ -113,6 +113,10 @@ static DGRect DFXGUI_GetTextDrawRegion(DGFontTweaks inFontTweaks, DGRect const& 
 	}
 	if (inFontTweaks == DGFontTweaks::SNOOTY10PX)
 	{
+          // TODO tom: It looks like we want this offset on windows too,
+          // to match Sophia's screenshots, but doing so clips the top
+          // of the text. Don't know why. Maybe we should just be adjusting
+          // the coordinates in the client GUI code?
 #if TARGET_OS_MAC
 		textArea.offset(0, -2);
 #endif
@@ -368,7 +372,7 @@ VSTGUI::CRect DGTextDisplay::platformGetSize() const
 #if TARGET_OS_MAC
 		rect.top -= 2;
 #else
-		rect.top -= 3;
+		rect.top ++;
 #endif
 	}
 	return rect;
