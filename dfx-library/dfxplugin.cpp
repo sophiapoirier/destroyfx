@@ -582,11 +582,30 @@ void DfxPlugin::setparameterquietly_b(long inParameterIndex, bool inValue)
 }
 
 //-----------------------------------------------------------------------------
+// randomize the current parameter value
+// this takes into account the parameter curve
 void DfxPlugin::randomizeparameter(long inParameterIndex)
 {
 	if (parameterisvalid(inParameterIndex))
 	{
-		mParameters[inParameterIndex].randomize(mParameterRandomEngine, mParameterRandomEngineLock);
+		auto& parameter = mParameters[inParameterIndex];
+		switch (getparametervaluetype(inParameterIndex))
+		{
+			case DfxParam::ValueType::Float:
+				parameter.set_gen(generateParameterRandomValue<double>());
+				break;
+			case DfxParam::ValueType::Int:
+				parameter.set_i(generateParameterRandomValue(parameter.getmin_i(), parameter.getmax_i()));
+				break;
+			case DfxParam::ValueType::Boolean:
+				// we don't need to worry about a curve for boolean values
+				parameter.set_b(generateParameterRandomValue<bool>());
+				break;
+			default:
+				assert(false);
+				break;
+		}
+
 		update_parameter(inParameterIndex);  // make the host aware of the parameter change
 		postupdate_parameter(inParameterIndex);  // inform any parameter listeners of the changes
 	}

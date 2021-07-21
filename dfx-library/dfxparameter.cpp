@@ -630,37 +630,6 @@ void DfxParam::SetEnforceValueLimits(bool inMode)
 }
 
 //-----------------------------------------------------------------------------
-// randomize the current parameter value
-// this takes into account the parameter curve
-DfxParam::Value DfxParam::randomize(dfx::math::RandomEngine& inEngine, dfx::SpinLock& inEngineLock)
-{
-	mChanged = true;  // XXX do this smarter?
-	settouched(true);
-
-	std::lock_guard const guard(inEngineLock);
-
-	switch (mValueType)
-	{
-		case ValueType::Float:
-			set_gen(inEngine.next<double>());
-			break;
-		case ValueType::Int:
-			mValue.i = inEngine.next(mMinValue.i, mMaxValue.i);
-			break;
-		case ValueType::Boolean:
-			// but we don't really need to worry about the curve for boolean values
-			mValue.b = inEngine.next<bool>();
-			break;
-		default:
-			assert(false);
-			break;
-	}
-
-	// just in case this ever expedites things
-	return mValue;
-}
-
-//-----------------------------------------------------------------------------
 // limits the current value to be within the parameter's min/max range
 // returns true if the value was altered, false if not
 bool DfxParam::limit()
