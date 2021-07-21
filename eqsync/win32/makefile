@@ -23,7 +23,7 @@ CXXFLAGS=$(DEFINES) $(INCLUDES) -m64 -Wall -Wno-unknown-pragmas --std=c++17 -O2
 # -static-libgcc and -static-libstdc++ avoid having the output depend on these mingw DLLs.
 LFLAGS=-m64 -shared -mwindows -static-libgcc -static-libstdc++ -s
 
-DFXLIB_OBJECTS=$(DFXLIB)/dfxplugin.o $(DFXLIB)/dfxplugin-vst.o $(DFXLIB)/dfxmisc.o $(DFXLIB)/temporatetable.o $(DFXLIB)/dfxparameter.o
+DFXLIB_OBJECTS=$(DFXLIB)/dfxplugin.o $(DFXLIB)/dfxplugin-vst.o $(DFXLIB)/dfxmisc.o $(DFXLIB)/temporatetable.o $(DFXLIB)/dfxparameter.o $(DFXLIB)/dfxmutex.o
 
 # $(DFXLIB)/dfxsettings.o
 # $(DFXLIB)/dfxmidi.o

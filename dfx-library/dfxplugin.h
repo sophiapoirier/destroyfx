@@ -187,6 +187,8 @@ PLUGIN_EDITOR_RES_ID
 // include our crucial shits
 
 #include "dfxdefines.h"
+#include "dfxmath.h"
+#include "dfxmutex.h"
 #include "dfxparameter.h"
 #include "dfxplugin-base.h"
 #include "dfxpluginproperties.h"
@@ -766,6 +768,11 @@ protected:
 		return mHostCanDoTempo;
 	}
 
+	template <typename T>
+	T generateParameterRandomValue();
+	template <typename T>
+	T generateParameterRandomValue(T const& inRangeMinimum, T const& inRangeMaximum);
+
 #if TARGET_PLUGIN_USES_DSPCORE
 	DfxPluginCore* getplugincore(unsigned long inChannel) const;
 #endif
@@ -801,6 +808,9 @@ private:
 	std::vector<DfxParam> mParameters;
 	std::vector<bool> mParametersChangedAsOfPreProcess, mParametersTouchedAsOfPreProcess;
 	std::vector<std::atomic_flag> mParametersChangedInProcessHavePosted;
+	// the effect owns a single random engine shared by all parameters rather than each parameter owning its own for efficiency, because its state data can be quite large
+	dfx::math::RandomEngine mParameterRandomEngine {dfx::math::RandomSeed::Entropic};
+	dfx::SpinLock mParameterRandomEngineLock;
 	std::vector<std::pair<std::string, std::set<long>>> mParameterGroups;
 	std::vector<DfxPreset> mPresets;
 	std::atomic_flag mPresetChangedInProcessHasPosted;
@@ -1436,6 +1446,24 @@ private:
 
 
 // template implementations follow
+
+// while it is possible for a parameter randomization to be executed from a realtime audio thread, 
+// and therefore locking would be detrimental, the likelihood of contention on this lock is extremely low, 
+// and the critical section extremely brief, and the lock lightweight and out of the scheduler's management, 
+// that this shouldn't actually in practice present any issues
+template <typename T>
+T DfxPlugin::generateParameterRandomValue()
+{
+	std::lock_guard const guard(mParameterRandomEngineLock);
+	return mParameterRandomEngine.next<T>();
+}
+
+template <typename T>
+T DfxPlugin::generateParameterRandomValue(T const& inRangeMinimum, T const& inRangeMaximum)
+{
+	std::lock_guard const guard(mParameterRandomEngineLock);
+	return mParameterRandomEngine.next<T>(inRangeMinimum, inRangeMaximum);
+}
 
 #if TARGET_PLUGIN_USES_DSPCORE
 template <class DSPCoreClass>

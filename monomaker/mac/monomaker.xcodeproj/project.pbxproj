@@ -44,6 +44,7 @@
 		EC89B4BE208D359900E15129 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4B7208D359900E15129 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-deprecated-declarations -Wno-four-char-constants"; }; };
 		EC8AB24424CDF592000504F0 /* dfxgui-fontfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC8AB24124CDF592000504F0 /* dfxgui-fontfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		ECC43141102F5518000B05A1 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECC4313F102F5518000B05A1 /* dfx-au-utilities.strings */; };
+		ECD1CD6526A6771D00AFAAE2 /* dfxmutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD1CD6326A6771D00AFAAE2 /* dfxmutex.cpp */; };
 		ECD59823253DE93500ED0061 /* ComponentBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD597F7253DE93500ED0061 /* ComponentBase.cpp */; };
 		ECD59825253DE93500ED0061 /* AUScopeElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD597F9253DE93500ED0061 /* AUScopeElement.cpp */; };
 		ECD59826253DE93500ED0061 /* AUBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD597FB253DE93500ED0061 /* AUBase.cpp */; };
@@ -132,6 +133,8 @@
 		ECC43142102F551F000B05A1 /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECC43143102F5527000B05A1 /* nl */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECD0B25320CC2FEA006CD7D1 /* de */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = de; path = "../../dfx-library/de.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
+		ECD1CD6326A6771D00AFAAE2 /* dfxmutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmutex.cpp; sourceTree = "<group>"; };
+		ECD1CD6426A6771D00AFAAE2 /* dfxmutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmutex.h; sourceTree = "<group>"; };
 		ECD597F7253DE93500ED0061 /* ComponentBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ComponentBase.cpp; sourceTree = "<group>"; };
 		ECD597F9253DE93500ED0061 /* AUScopeElement.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUScopeElement.cpp; sourceTree = "<group>"; };
 		ECD597FA253DE93500ED0061 /* ComponentBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ComponentBase.h; sourceTree = "<group>"; };
@@ -247,6 +250,8 @@
 				EC89B429208D31E700E15129 /* dfxmisc.h */,
 				EC89B427208D31E600E15129 /* dfxmisc.cpp */,
 				EC2F843724A7C2BB00F29321 /* dfxmisc.mm */,
+				ECD1CD6426A6771D00AFAAE2 /* dfxmutex.h */,
+				ECD1CD6326A6771D00AFAAE2 /* dfxmutex.cpp */,
 				EC7565B7220D1ACF0083D46A /* idfxsmoothedvalue.h */,
 				EC7565B9220D1ACF0083D46A /* dfxsmoothedvalue.h */,
 				EC7565B8220D1ACF0083D46A /* dfxsmoothedvalue.hpp */,
@@ -464,6 +469,7 @@
 				ECD59828253DE93500ED0061 /* AUOutputElement.cpp in Sources */,
 				4932F4D506801180006A9591 /* dfx-au-utilities.c in Sources */,
 				ECD59826253DE93500ED0061 /* AUBase.cpp in Sources */,
+				ECD1CD6526A6771D00AFAAE2 /* dfxmutex.cpp in Sources */,
 				4932F4D906801180006A9591 /* dfxparameter.cpp in Sources */,
 				4932F4DB06801180006A9591 /* dfxplugin-audiounit.cpp in Sources */,
 				ECD5982A253DE93500ED0061 /* AUPlugInDispatch.cpp in Sources */,

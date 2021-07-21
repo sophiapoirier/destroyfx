@@ -33,8 +33,6 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 #include <limits>
 #include <unordered_set>
 
-#include "dfxmath.h"
-
 
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -629,35 +627,6 @@ void DfxParam::SetEnforceValueLimits(bool inMode)
 	{
 		limit();
 	}
-}
-
-//-----------------------------------------------------------------------------
-// randomize the current parameter value
-// this takes into account the parameter curve
-DfxParam::Value DfxParam::randomize()
-{
-	mChanged = true;  // XXX do this smarter?
-	settouched(true);
-
-	switch (mValueType)
-	{
-		case ValueType::Float:
-			set_gen(dfx::math::Rand<double>());
-			break;
-		case ValueType::Int:
-			mValue.i = (std::rand() % ((mMaxValue.i - mMinValue.i) + 1)) + mMinValue.i;
-			break;
-		case ValueType::Boolean:
-			// but we don't really need to worry about the curve for boolean values
-			mValue.b = (std::rand() % 2) ? true : false;
-			break;
-		default:
-			assert(false);
-			break;
-	}
-
-	// just in case this ever expedites things
-	return mValue;
 }
 
 //-----------------------------------------------------------------------------

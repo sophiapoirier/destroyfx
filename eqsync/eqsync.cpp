@@ -180,11 +180,11 @@ void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, u
 			mPrevB2 = mB2;
 
 			// generate "current" filter parameter values
-			mCurA0 = dfx::math::Rand<float>();
-			mCurA1 = dfx::math::Rand<float>();
-			mCurA2 = dfx::math::Rand<float>();
-			mCurB1 = dfx::math::Rand<float>();
-			mCurB2 = dfx::math::Rand<float>();
+			mCurA0 = mRandomGenerator.next();
+			mCurA1 = mRandomGenerator.next();
+			mCurA2 = mRandomGenerator.next();
+			mCurB1 = mRandomGenerator.next();
+			mCurB2 = mRandomGenerator.next();
 
 			eqChanged = true;
 		}

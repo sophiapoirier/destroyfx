@@ -27,6 +27,7 @@ Geometer, starring the Super Destroy FX Windowing System!
 #include <atomic>
 #include <vector>
 
+#include "dfxmath.h"
 #include "dfxmutex.h"
 #include "dfxplugin.h"
 #include "geometer-base.h"
@@ -57,7 +58,7 @@ public:
   void randomizeparameter(long inParameterIndex) override;
 
   void clearwindowcache();
-  void updatewindowcache(class PLUGINCORE const * geometercore);
+  void updatewindowcache(class PLUGINCORE * geometercore);
 
 protected:
   std::optional<dfx::ParameterAssignment> settings_getLearningAssignData(long inParameterIndex) const override;
@@ -90,8 +91,8 @@ public:
 
   /* several of these are needed by geometerview. */
   int processw(float const * in, float * out, int samples,
-	       int * px, float * py, int maxpts,
-	       int * tx, float * ty) const;
+               int * px, float * py, int maxpts,
+               int * tx, float * ty);
 
   int getframesize() const noexcept { return framesize; }
   float const* getinput() const noexcept { return in0.data(); }
@@ -103,7 +104,7 @@ private:
 
   bool iswaveformsource() { return (GetChannelNum() == 0); }
   void clearwindowcache();
-  void updatewindowcache(PLUGINCORE const * geometercore);
+  void updatewindowcache();
 
   PLUGIN* const geometer;
 
@@ -132,8 +133,8 @@ private:
   /* ---------- geometer stuff ----------- */
 
   static int pointops(long pop, int npts, float op_param, int samps,
-		      int * px, float * py, int maxpts,
-		      int * tempx, float * tempy);
+                      int * px, float * py, int maxpts,
+                      int * tempx, float * tempy);
 
   /* shape of envelope */
   long shape {};
@@ -159,4 +160,6 @@ private:
   std::vector<float> storey;
 
   std::vector<float> windowenvelope;
+
+  dfx::math::RandomEngine randomengine {dfx::math::RandomSeed::Entropic};
 };

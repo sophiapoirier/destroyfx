@@ -32,7 +32,6 @@ multiple variable types
 	set/get values by type
 		derive/accept
 	set/get "generically"
-	randomize values
 current, previous, default, min, max
 	init is not necessarily default
 	min and max limits are not necessarily enforced
@@ -69,11 +68,6 @@ a 0.0 to 1.0 range.  Some plugin APIs only support handling parameters in
 this generic 0 to 1 fashion, so the generic set and get routines are 
 available in order to interface with those APIs.  They also provide a 
 convenient way to handle value distribution curves (more on that below).
-
-Additionally, you can easily set a parameter's value randomly using the 
-randomize routine.  This will randomize the current value in a way that 
-makes sense for the parameter's range and native variable type, and 
-which also takes into account the parameter's value distribution curve.
 
 There are certain suffixes that are appended to function names to 
 indicate how they operate.  You will see multiple variations of the 
@@ -519,9 +513,6 @@ public:
 	{
 		return mTouched;
 	}
-
-	// randomize the current value of the parameter
-	Value randomize();
 
 
 private:

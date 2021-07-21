@@ -28,6 +28,8 @@ Welcome to our Low Frequency Oscillator.
 
 #include <string>
 
+#include "dfxmath.h"
+
 
 namespace dfx
 {
@@ -91,6 +93,7 @@ private:
 	float mStepSize = 0.0f;  // size of the steps through the LFO cycle
 	float mRandomNumber = 0.0f;  // random values for the random LFO waveforms
 	float mPrevRandomNumber = 0.0f;  // previous random values for the random interpolating LFO waveform
+	dfx::math::RandomGenerator<decltype(mRandomNumber)> mRandomGenerator {dfx::math::RandomSeed::Entropic};
 	long mSmoothSamples = 0;  // TODO: a counter for the position during a smoothing fade
 
 	float mDepth = 0.0f;

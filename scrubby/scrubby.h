@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <array>
 
+#include "dfxmath.h"
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
 #include "iirfilter.h"
@@ -152,6 +153,8 @@ private:
 	double mMaxAudioBufferSize_f = 0.0;  // for avoiding casting
 
 	std::vector<dfx::IIRFilter> mHighpassFilters;
+
+	dfx::math::RandomEngine mRandomEngine {dfx::math::RandomSeed::Entropic};
 
 	// tempo sync stuff
 	double mCurrentTempoBPS = 0.0;  // tempo in beats per second

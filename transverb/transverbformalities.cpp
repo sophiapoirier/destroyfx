@@ -423,24 +423,26 @@ void Transverb::randomizeparameters()
 		// make slow speeds more probable (for fairer distribution)
 		if ((i == kSpeed1) || (i == kSpeed1))
 		{
-			auto temprand = dfx::math::Rand<double>();
-			if (temprand < 0.5)
+			auto temprand = generateParameterRandomValue<double>(-1., 1.);
+			if (temprand < 0.)
 			{
-				temprand = getparametermin_f(i) * temprand * 2.0;
+				temprand = getparametermin_f(i) * (temprand + 1.);
 			}
 			else
 			{
-				temprand = getparametermax_f(i) * ((temprand - 0.5) * 2.0);
+				temprand = getparametermax_f(i) * temprand;
 			}
 			setparameter_f(i, temprand);
 		}
-		// make smaller buffer sizes more probable (because they sound better)
+		// make smaller buffer sizes more probable (because they sound better), though prevent smallest
 		else if (i == kBsize)
 		{
-			setparameter_gen(kBsize, std::pow((dfx::math::Rand<float>() * 0.93f) + 0.07f, 1.38f));
+			setparameter_gen(kBsize, std::pow(generateParameterRandomValue<double>(0.07, 1.), 1.38));
 		}
 		else
 		{
+			// TODO: this is not thread-safe (wrt randomizer state) given that Transverb can execute this method
+			// from the main thread (GUI) or MIDI thread (though likelihood of concurrency is quite low)
 			randomizeparameter(i);
 		}
 	}
@@ -452,9 +454,9 @@ void Transverb::randomizeparameters()
 	auto const mixSum = getparameter_f(kDrymix) + getparameter_f(kMix1) + getparameter_f(kMix2);
 
 	// randomize the mix parameters
-	auto newDrymix = expandparametervalue(kDrymix, dfx::math::Rand<double>());
-	auto newMix1 = expandparametervalue(kMix1, dfx::math::Rand<double>());
-	auto newMix2 = expandparametervalue(kMix2, dfx::math::Rand<double>());
+	auto newDrymix = expandparametervalue(kDrymix, generateParameterRandomValue<double>());
+	auto newMix1 = expandparametervalue(kMix1, generateParameterRandomValue<double>());
+	auto newMix2 = expandparametervalue(kMix2, generateParameterRandomValue<double>());
 	// calculate a scalar to make up for total gain changes
 	auto const mixDiffScalar = mixSum / (newDrymix + newMix1 + newMix2);
 
@@ -477,9 +479,9 @@ void Transverb::randomizeparameters()
 	// randomize the state parameters
 
 	// make higher qualities more probable (happen 4/5 of the time)
-	setparameter_i(kQuality, ((rand() % 5) + 1) % 3);
+	setparameter_i(kQuality, generateParameterRandomValue<int64_t>(1, (kQualityMode_NumModes * 2) - 1) % kQualityMode_NumModes);
 	// make TOMSOUND less probable (only 1/3 of the time)
-	setparameter_b(kTomsound, static_cast<bool>((rand() % 3) % 2));
+	setparameter_b(kTomsound, static_cast<bool>(generateParameterRandomValue<int64_t>(0, 2) % 2));
 
 
 	for (long i = 0; i < kNumParameters; i++)
