@@ -199,10 +199,9 @@
 		ECC43128102F520F000B05A1 /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECC43129102F5219000B05A1 /* nl */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECD0B25120CC2FB3006CD7D1 /* de */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = de; path = "../../dfx-library/de.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
-		ECF8587E25D2E4C000D92E27 /* dfxsnooty10px.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = dfxsnooty10px.ttf; path = ../../fonts/dfxsnooty10px.ttf; sourceTree = "<group>"; };
 		ECD1CD5D26A676E000AFAAE2 /* dfxmutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmutex.h; sourceTree = "<group>"; };
 		ECD1CD5E26A676E000AFAAE2 /* dfxmutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmutex.cpp; sourceTree = "<group>"; };
-
+		ECF8587E25D2E4C000D92E27 /* dfxsnooty10px.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = dfxsnooty10px.ttf; path = ../../fonts/dfxsnooty10px.ttf; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
