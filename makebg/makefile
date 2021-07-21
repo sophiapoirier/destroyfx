@@ -1,4 +1,4 @@
-default: rezsynth.png skidder.png dither.exe
+default: rezsynth.png skidder.png bogrid.png dither.exe
 
 # for 64 bits on windows
 CXX=x86_64-w64-mingw32-g++
@@ -24,11 +24,17 @@ rezsynth.exe : $(OBJECTS) rezsynth.o
 skidder.exe : $(OBJECTS) skidder.o
 	$(CXX) $(LFLAGS) -o $@ $^
 
+bogrid.exe : $(OBJECTS) bogrid.o
+	$(CXX) $(LFLAGS) -o $@ $^
+
 rezsynth.png : rezsynth.exe
 	./rezsynth.exe
 
 skidder.png : skidder.exe skidder-*.png
 	./skidder.exe
+
+bogrid.png : bogrid.exe
+	./bogrid.exe
 
 dither.exe : $(OBJECTS) dither.o
 	$(CXX) $(LFLAGS) -o $@ $^
