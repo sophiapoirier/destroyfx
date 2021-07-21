@@ -32,9 +32,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-constexpr auto kValueDisplayFont = dfx::kFontName_SnootPixel10;
+constexpr auto kValueDisplayFont = dfx::kFontName_Snooty10px;
 constexpr auto kValueDisplayFontColor = DGColor::kWhite;
-constexpr auto kValueDisplayFontSize = dfx::kFontSize_SnootPixel10;
+constexpr auto kValueDisplayFontSize = dfx::kFontSize_Snooty10px;
 constexpr float kUnusedControlAlpha = 0.33333333f;
 
 //-----------------------------------------------------------------------------
@@ -114,7 +114,7 @@ bool rateGenDisplayProc(float inValue, long inSyncParameterID, char* outText, Df
 			}
 			if (inShowUnits)
 			{
-				dfx::StrlCat(outText, " cycles/beat", DGTextDisplay::kTextMaxLength);
+				dfx::StrlCat(outText, " cyc/beat", DGTextDisplay::kTextMaxLength);
 			}
 			return success;
 		}
@@ -520,8 +520,8 @@ lake when you throw it, bouncing here and there lopsided-style.)DELIM";
 	if (inControl == mMidiLearnButton)
 	{
 		return R"DELIM(MIDI learn:  toggle "MIDI learn" mode for CC control of parameters
-When enabled, you can click on a parameter control and then the next 
-MIDI CC received will be assigned to control that parameter.)DELIM";
+When enabled, you can click on a parameter control and then the 
+next MIDI CC received will be assigned to control that parameter.)DELIM";
 	}
 	if (inControl == mMidiResetButton)
 	{

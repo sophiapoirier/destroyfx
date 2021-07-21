@@ -3,18 +3,18 @@
 Some of our plugins' GUIs use special fonts for text display:
 
 * Buffer Override uses "DFX Pasement 9px"
-* Geometer uses "snoot.org pixel10"
+* Geometer uses "DFX Snooty 10px"
 * Polarizer uses "Boring Boron"
-* Rez Synth uses "snoot.org pixel10"
-* Scrubby uses "snoot.org pixel10"
-* Skidder uses "snoot.org pixel10"
-* Transverb uses "snoot.org pixel10"
+* Rez Synth uses "DFX Snooty 10px"
+* Scrubby uses "DFX Snooty 10px"
+* Skidder uses "DFX Snooty 10px"
+* Transverb uses "DFX Snooty 10px"
 
-`px10.ttf` ("snoot.org pixel10") and `bboron.ttf` ("Boring Boron") are
-included in this directory. The fonts, unlike other things in this
-repository module, are not covered by the GPL. They were made by Tom,
-though. These fonts, along with boatloads of other fonts by Tom, are
-available at [http://fonts.tom7.com/](http://fonts.tom7.com/)
+`bboron.ttf` ("Boring Boron") is included in this directory. The font,
+unlike other things in this repository module, is not covered by the
+GPL. It was made by Tom, though. This font, along with boatloads of
+other fonts by Tom, are available at
+[http://fonts.tom7.com/](http://fonts.tom7.com/)
 
 
 As of 2021, there are also some DFX-specific fonts, which are part of

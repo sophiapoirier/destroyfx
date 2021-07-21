@@ -23,15 +23,14 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <algorithm>
 #include <cassert>
-#include <cstdlib>
 
 #include "dfxmisc.h"
 #include "scrubby.h"
 
 
 //-----------------------------------------------------------------------------
-constexpr auto kValueDisplayFont = dfx::kFontName_SnootPixel10;
-constexpr auto kValueDisplayFontSize = dfx::kFontSize_SnootPixel10;
+constexpr auto kValueDisplayFont = dfx::kFontName_Snooty10px;
+constexpr auto kValueDisplayFontSize = dfx::kFontSize_Snooty10px;
 constexpr DGColor kValueDisplayFontColor(187, 173, 131);
 constexpr float kUnusedControlAlpha = 0.234f;
 constexpr long kRangeSliderOvershoot = 3;
@@ -80,7 +79,8 @@ enum
 	kDisplayWidth = 90,
 	kDisplayWidth_big = 117,  // for seek rate
 	kDisplayHeight = 10,
-	kDisplayInsetX = 2,
+	kDisplayInsetX = 0,
+	kDisplayInsetX_leftAlign = 2,
 	kDisplayInsetY = 0,
 
 	kSpeedModeButtonX = 31,
@@ -340,7 +340,7 @@ long ScrubbyEditor::OpenEditor()
 	//--create the displays---------------------------------------------
 
 	// seek rate random minimum
-	pos.set(kSeekRateSliderX + kDisplayInsetX, kSeekRateSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth_big, kDisplayHeight);
+	pos.set(kSeekRateSliderX + kDisplayInsetX_leftAlign, kSeekRateSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth_big, kDisplayHeight);
 	mSeekRateRandMinDisplay = emplaceControl<DGTextDisplay>(this, seekRateRandMinParamID, pos, seekRateRandMinDisplayProc, this, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// seek rate
@@ -352,7 +352,7 @@ long ScrubbyEditor::OpenEditor()
 	emplaceControl<DGTextDisplay>(this, kSeekRange, pos, seekRangeDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// seek duration random minimum
-	pos.set(kSeekDurSliderX + kDisplayInsetX, kSeekDurSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
+	pos.set(kSeekDurSliderX + kDisplayInsetX_leftAlign, kSeekDurSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
 	emplaceControl<DGTextDisplay>(this, kSeekDurRandMin, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// seek duration
@@ -360,7 +360,7 @@ long ScrubbyEditor::OpenEditor()
 	emplaceControl<DGTextDisplay>(this, kSeekDur, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// octave mininum
-	pos.set(kOctaveMinSliderX + kDisplayInsetX, kOctaveMinSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
+	pos.set(kOctaveMinSliderX + kDisplayInsetX_leftAlign, kOctaveMinSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
 	emplaceControl<DGTextDisplay>(this, kOctaveMin, pos, octaveMinDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// octave maximum
@@ -368,7 +368,7 @@ long ScrubbyEditor::OpenEditor()
 	emplaceControl<DGTextDisplay>(this, kOctaveMax, pos, octaveMaxDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// tempo
-	pos.set(kTempoSliderX + kDisplayInsetX, kTempoSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
+	pos.set(kTempoSliderX + kDisplayInsetX_leftAlign, kTempoSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
 	emplaceControl<DGTextDisplay>(this, kTempo, pos, tempoDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// predelay
@@ -780,7 +780,7 @@ to stick with the current contents of the delay buffer.)DELIM";
 	#define SCRUBBY_ALT_KEY_NAME "alt"
 #endif
 			return "seek rate:  the rate at which Scrubby finds new target destinations\n"
-			"You can define a randomized range with min and max rate limits for each seek.\n"
+			"You can define a randomized range with min & max rate limits for each seek.\n"
 			"(control+click to move both together, " SCRUBBY_ALT_KEY_NAME "+click to move both relative)";
 #undef SCRUBBY_ALT_KEY_NAME
 		case kTempoSync:
@@ -794,8 +794,8 @@ Scrubby finds a new target to move towards at each seek cycle.  You can
 make it reach the target early by lowering this value.  This produces gaps.)DELIM";
 		case kSpeedMode:
 			return R"DELIM(speed mode:  are you a robot or a DJ?
-Robot mode causes Scrubby to jump to the next speed after each target seek.  
-In DJ mode, Scrubby gradually accelerates or decelerates to next speed.)DELIM";
+In Robot mode, Scrubby jumps to the next speed after each target seek.  
+In DJ mode, Scrubby gradually accelerates or decelerates to the next speed.)DELIM";
 		case kSplitChannels:
 			return R"DELIM(channels mode:  toggle between linked or split seeks for each channel
 When linked, all audio channels will seek the same target destinations.  

@@ -73,7 +73,7 @@
 		ECD1CD5F26A676E000AFAAE2 /* dfxmutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD1CD5E26A676E000AFAAE2 /* dfxmutex.cpp */; };
 		ECDB2A6E21BA02AF00938F5C /* slider-handle-learn.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB475F07E53B4B00861708 /* slider-handle-learn.png */; };
 		ECDB2A6F21BA02B200938F5C /* vslider-handle-learn.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB476907E53B4B00861708 /* vslider-handle-learn.png */; };
-		ECF8587F25D2E4C000D92E27 /* px10.ttf in Resources */ = {isa = PBXBuildFile; fileRef = ECF8587E25D2E4C000D92E27 /* px10.ttf */; };
+		ECF8587F25D2E4C000D92E27 /* dfxsnooty10px.ttf in Resources */ = {isa = PBXBuildFile; fileRef = ECF8587E25D2E4C000D92E27 /* dfxsnooty10px.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -199,9 +199,10 @@
 		ECC43128102F520F000B05A1 /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECC43129102F5219000B05A1 /* nl */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECD0B25120CC2FB3006CD7D1 /* de */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = de; path = "../../dfx-library/de.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
+		ECF8587E25D2E4C000D92E27 /* dfxsnooty10px.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = dfxsnooty10px.ttf; path = ../../fonts/dfxsnooty10px.ttf; sourceTree = "<group>"; };
 		ECD1CD5D26A676E000AFAAE2 /* dfxmutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmutex.h; sourceTree = "<group>"; };
 		ECD1CD5E26A676E000AFAAE2 /* dfxmutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmutex.cpp; sourceTree = "<group>"; };
-		ECF8587E25D2E4C000D92E27 /* px10.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = px10.ttf; path = ../../fonts/px10.ttf; sourceTree = "<group>"; };
+
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -257,7 +258,7 @@
 				4905A972067F716E00000F0C /* graphics */,
 				B028C2BB0D0F323700ADA1DA /* destroyfx.icns */,
 				ECC43125102F5208000B05A1 /* dfx-au-utilities.strings */,
-				ECF8587E25D2E4C000D92E27 /* px10.ttf */,
+				ECF8587E25D2E4C000D92E27 /* dfxsnooty10px.ttf */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -521,7 +522,7 @@
 				ECC43127102F5208000B05A1 /* dfx-au-utilities.strings in Resources */,
 				ECC3B61412A6D62B00BA11D5 /* button-reson-algorithm.png in Resources */,
 				ECC3B6E412B0276200BA11D5 /* button-bandwidth-mode.png in Resources */,
-				ECF8587F25D2E4C000D92E27 /* px10.ttf in Resources */,
+				ECF8587F25D2E4C000D92E27 /* dfxsnooty10px.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

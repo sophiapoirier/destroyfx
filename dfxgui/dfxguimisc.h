@@ -220,16 +220,8 @@ public:
 namespace dfx
 {
 
-#if TARGET_OS_WIN32
-// These characters aren't in the "snoot.org px10" font, so they cause
-// font substituion on windows, which makes the text wrong. Use ASCII
-// versions for now.
-static constexpr char const* const kInfinityUTF8 = "oo";
-static constexpr char const* const kPlusMinusUTF8 = "+/-";
-#else
 static inline char const* const kPlusMinusUTF8 = reinterpret_cast<char const*>(u8"\U000000B1");
 static inline auto const kInfinityUTF8 = VSTGUI::kInfiniteSymbol;
-#endif
 
 std::string SanitizeNumericalInput(std::string const& inText);
 

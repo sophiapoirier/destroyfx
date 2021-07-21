@@ -70,16 +70,16 @@ enum
 	kDestroyFXLinkX = 351,
 	kDestroyFXLinkY = 339,
 
-	kDisplayX = 318 - 1,
+	kDisplayX = 318 + 1,
 	kDisplayY = 24,
 	kDisplayWidth = 180,
 	kDisplayHeight = 10
 };
 
 
-constexpr auto kDisplayFont = dfx::kFontName_SnootPixel10;
+constexpr auto kDisplayFont = dfx::kFontName_Snooty10px;
 constexpr DGColor kDisplayTextColor(103, 161, 215);
-constexpr auto kDisplayTextSize = dfx::kFontSize_SnootPixel10;
+constexpr auto kDisplayTextSize = dfx::kFontSize_Snooty10px;
 constexpr float kFineTuneInc = 0.0001f;
 constexpr float kSemitonesPerOctave = 12.0f;
 

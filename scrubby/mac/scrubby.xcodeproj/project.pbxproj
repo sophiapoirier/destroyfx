@@ -11,7 +11,7 @@
 		490E768F07CAE0D200688A1D /* scrubbyprocess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490E768B07CAE0D200688A1D /* scrubbyprocess.cpp */; };
 		490E769607CAE12600688A1D /* scrubbyeditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490E769207CAE12600688A1D /* scrubbyeditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		490E769E07CAE20500688A1D /* temporatetable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490E769C07CAE20500688A1D /* temporatetable.cpp */; };
-		490E76A707CAE29600688A1D /* px10.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 490E76A607CAE29600688A1D /* px10.ttf */; };
+		490E76A707CAE29600688A1D /* dfxsnooty10px.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 490E76A607CAE29600688A1D /* dfxsnooty10px.ttf */; };
 		490E794007CAE4E700688A1D /* all-notes-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 490E791A07CAE4E700688A1D /* all-notes-button.png */; };
 		490E794107CAE4E700688A1D /* destroy-fx-link.png in Resources */ = {isa = PBXBuildFile; fileRef = 490E791B07CAE4E700688A1D /* destroy-fx-link.png */; };
 		490E794207CAE4E700688A1D /* freeze-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 490E791C07CAE4E700688A1D /* freeze-button.png */; };
@@ -100,7 +100,7 @@
 		490E769307CAE12600688A1D /* scrubbyeditor.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = scrubbyeditor.h; path = gui/scrubbyeditor.h; sourceTree = "<group>"; };
 		490E769C07CAE20500688A1D /* temporatetable.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = temporatetable.cpp; sourceTree = "<group>"; };
 		490E769D07CAE20500688A1D /* temporatetable.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = temporatetable.h; sourceTree = "<group>"; };
-		490E76A607CAE29600688A1D /* px10.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = px10.ttf; path = ../../fonts/px10.ttf; sourceTree = "<group>"; };
+		490E76A607CAE29600688A1D /* dfxsnooty10px.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = dfxsnooty10px.ttf; path = ../../fonts/dfxsnooty10px.ttf; sourceTree = "<group>"; };
 		490E791A07CAE4E700688A1D /* all-notes-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "all-notes-button.png"; sourceTree = "<group>"; };
 		490E791B07CAE4E700688A1D /* destroy-fx-link.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "destroy-fx-link.png"; sourceTree = "<group>"; };
 		490E791C07CAE4E700688A1D /* freeze-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "freeze-button.png"; sourceTree = "<group>"; };
@@ -283,7 +283,7 @@
 			isa = PBXGroup;
 			children = (
 				4905A972067F716E00000F0C /* graphics */,
-				490E76A607CAE29600688A1D /* px10.ttf */,
+				490E76A607CAE29600688A1D /* dfxsnooty10px.ttf */,
 				B0AD808C0D0F30D600766C78 /* destroyfx.icns */,
 				EC48270B0F492C2B006126CD /* dfx-au-utilities.strings */,
 			);
@@ -541,7 +541,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				490E76A707CAE29600688A1D /* px10.ttf in Resources */,
+				490E76A707CAE29600688A1D /* dfxsnooty10px.ttf in Resources */,
 				490E794007CAE4E700688A1D /* all-notes-button.png in Resources */,
 				490E794107CAE4E700688A1D /* destroy-fx-link.png in Resources */,
 				490E794207CAE4E700688A1D /* freeze-button.png in Resources */,
