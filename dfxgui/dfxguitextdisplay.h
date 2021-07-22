@@ -31,17 +31,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxguicontrol.h"
 
-namespace internal
-{
-// Some fonts have tweaks that we apply on a platform-by-platform basis
-// to get pixel-perfect alignment.
-enum class DGFontTweaks
-{
-	NONE,
-	SNOOTY10PX,
-	PASEMENT9PX,
-};
-}  // namespace internal
 
 //-----------------------------------------------------------------------------
 class DGTextDisplay : public DGControl<VSTGUI::CTextEdit>
@@ -88,7 +77,6 @@ public:
 protected:
 	void takeFocus() override;
 	void drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion) override;
-	VSTGUI::CRect platformGetSize() const override;
 
 	bool valueToTextProcBridge(float inValue, char outTextUTF8[kTextMaxLength], CParamDisplay* inUserData);
 	bool textToValueProcBridge(VSTGUI::UTF8StringPtr inText, float& outValue, VSTGUI::CTextEdit* textEdit);
@@ -101,7 +89,7 @@ protected:
 private:
 	static bool valueToTextProc_Generic(float inValue, char outTextUTF8[], void* inUserData);
 
-	internal::DGFontTweaks mFontTweaks = internal::DGFontTweaks::NONE;
+	bool const mIsBitmapFont;
 };
 
 
@@ -126,7 +114,7 @@ protected:
 	void drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion) override;
 
 private:
-  	internal::DGFontTweaks mFontTweaks = internal::DGFontTweaks::NONE;
+	bool const mIsBitmapFont;
 };
 
 

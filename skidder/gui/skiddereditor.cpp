@@ -46,7 +46,7 @@ enum
 	kSliderInc = 64,
 
 	kDisplayX = 334,
-	kDisplayY = kSliderY + 11,
+	kDisplayY = kSliderY + 10,
 	kDisplayWidth = 70,
 	kDisplayHeight = 12,
 
@@ -297,7 +297,7 @@ long SkidderEditor::OpenEditor()
 	// help display
 	pos.set(kHelpX, kHelpY, kHelpWidth, kHelpHeight);
 	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind(&SkidderEditor::GetHelpForControl, this, std::placeholders::_1), nullptr, DGColor::kWhite);
-	mHelpBox->setTextMargin({8, 12});
+	mHelpBox->setTextMargin({8, 10});
 	mHelpBox->setLineSpacing(3);
 
 

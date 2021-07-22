@@ -41,7 +41,7 @@ enum
 	kHorizontalSliderHeight = 23,
 
 	kHorizontalDisplayWidth = kHorizontalSliderWidth / 2,
-	kHorizontalDisplayHeight = 10,
+	kHorizontalDisplayHeight = 12,
 	kHorizontalDisplayX = kHorizontalSliderX + kHorizontalSliderWidth - kHorizontalDisplayWidth - 3,
 	kHorizontalDisplayY = kHorizontalSliderY - kHorizontalDisplayHeight,
 
@@ -53,7 +53,7 @@ enum
 	kVerticalSliderNameWidth = 13,
 
 	kVerticalDisplayX = kVerticalSliderX - 21,
-	kVerticalDisplayY = kVerticalSliderY + kVerticalSliderHeight + 11,
+	kVerticalDisplayY = kVerticalSliderY + kVerticalSliderHeight + 9,
 	kVerticalDisplayWidth = 48,
 	kVerticalDisplayHeight = kHorizontalDisplayHeight,
 
@@ -378,7 +378,7 @@ long RezSynthEditor::OpenEditor()
 	// help display
 	pos.set(kHelpX, kHelpY, kHelpWidth, kHelpHeight);
 	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind(&RezSynthEditor::GetHelpForControl, this, std::placeholders::_1), nullptr, DGColor::kWhite);
-	mHelpBox->setTextMargin({11, 8});
+	mHelpBox->setTextMargin({11, 6});
 
 
 

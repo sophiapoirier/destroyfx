@@ -78,7 +78,7 @@ enum
 
 	kDisplayWidth = 90,
 	kDisplayWidth_big = 117,  // for seek rate
-	kDisplayHeight = 10,
+	kDisplayHeight = 12,
 	kDisplayInsetX = 0,
 	kDisplayInsetX_leftAlign = 2,
 	kDisplayInsetY = 0,
@@ -522,7 +522,7 @@ long ScrubbyEditor::OpenEditor()
 	pos.set(kHelpX, kHelpY, helpBackgroundImage->getWidth(), helpBackgroundImage->getHeight());
 	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind(&ScrubbyEditor::GetHelpForControl, this, _1), helpBackgroundImage, DGColor::kWhite);
 	mHelpBox->setHeaderFontColor(DGColor::kBlack);
-	mHelpBox->setTextMargin({12, 4});
+	mHelpBox->setTextMargin({12, 2});
 
 
 
