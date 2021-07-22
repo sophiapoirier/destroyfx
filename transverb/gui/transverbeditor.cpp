@@ -47,6 +47,11 @@ enum
 	kTallFaderY = 265,
 	kTallFaderInc = 28,
 
+	kDisplayX = 318 + 1,
+	kDisplayWidth = 180,
+	kDisplayHeight = 12,
+	kDisplayY = kWideFaderY - kDisplayHeight - 1,
+
 	kQualityButtonX = 425,
 	kTomsoundButtonX = kQualityButtonX,
 	kFreezeButtonX = kWideFaderX,
@@ -68,12 +73,7 @@ enum
 	kDFXLinkX = 107,
 	kDFXLinkY = 281,
 	kDestroyFXLinkX = 351,
-	kDestroyFXLinkY = 339,
-
-	kDisplayX = 318 + 1,
-	kDisplayY = 24,
-	kDisplayWidth = 180,
-	kDisplayHeight = 10
+	kDestroyFXLinkY = 339
 };
 
 

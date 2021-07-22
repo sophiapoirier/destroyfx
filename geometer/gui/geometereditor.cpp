@@ -66,9 +66,9 @@ enum {
   pos_sliderincY = 35,
 
   pos_sliderlabelX = 19,
-  pos_sliderlabelY = pos_sliderY - 1,
+  pos_sliderlabelY = pos_sliderY - 3,
   pos_sliderlabelwidth = 32,
-  pos_sliderlabelheight = 10,
+  pos_sliderlabelheight = 12,
 
   pos_finedownX = 27,
   pos_finedownY = 263,
@@ -77,7 +77,7 @@ enum {
   pos_finebuttonincX = 240,
   pos_finebuttonincY = pos_sliderincY,
 
-  pos_displayheight = 10,
+  pos_displayheight = 12,
   pos_displayX = 180,
   pos_displayY = pos_sliderY - pos_displayheight,
   pos_displaywidth = pos_sliderX + pos_sliderwidth - pos_displayX,
@@ -138,8 +138,8 @@ void GeometerHelpBox::draw(VSTGUI::CDrawContext * inContext) {
     image->draw(inContext, getViewSize());
 
   DGRect textpos(getViewSize());
-  textpos.setSize(textpos.getWidth() - 5, 10);
-  textpos.offset(4, 3);
+  textpos.setSize(textpos.getWidth() - 5, getFont()->getSize() + 2);
+  textpos.offset(4, 1);
 
   auto const helpstrings = [this]() -> char const * {
     switch (helpCategory) {

@@ -29,12 +29,12 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cstdio>
 #include <cstring>
 #include <sstream>
+#include <string_view>
 
 #include "dfxguieditor.h"
 #include "dfxguimisc.h"
 #include "dfxmath.h"
 
-using DGFontTweaks = internal::DGFontTweaks;
 
 //-----------------------------------------------------------------------------
 static constexpr VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inTextAlignment) noexcept
@@ -53,25 +53,30 @@ static constexpr VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAli
 }
 
 //-----------------------------------------------------------------------------
-static constexpr bool DFXGUI_IsBitmapFont(DGFontTweaks inFontTweaks) noexcept
+static bool DFXGUI_IsBitmapFont(char const* inFontName) noexcept
 {
-	switch (inFontTweaks)
+	if (inFontName)
 	{
-		case DGFontTweaks::SNOOTY10PX:
-		case DGFontTweaks::PASEMENT9PX:
+		std::string_view const fontNameView(inFontName);
+		if (fontNameView.compare(dfx::kFontName_Snooty10px) == 0)
+		{
 			return true;
-		default:
-			return false;
+		}
+		if (fontNameView.compare(dfx::kFontName_Pasement9px) == 0)
+		{
+			return true;
+		}
 	}
+	return false;
 }
 
 //-----------------------------------------------------------------------------
-// Constructor-time setup. Returns computed font tweaks enum to be saved for draw-time tweaking.
-[[nodiscard]] static DGFontTweaks DFXGUI_ConfigureTextDisplay(DfxGuiEditor* inOwnerEditor, 
-															  VSTGUI::CTextLabel* inTextDisplay, 
-															  dfx::TextAlignment inTextAlignment, 
-															  float inFontSize, DGColor inFontColor, 
-															  char const* inFontName)
+// common constructor-time setup
+static void DFXGUI_ConfigureTextDisplay(DfxGuiEditor* inOwnerEditor, 
+										VSTGUI::CTextLabel* inTextDisplay, 
+										dfx::TextAlignment inTextAlignment, 
+										float inFontSize, DGColor inFontColor, 
+										char const* inFontName)
 {
 	inTextDisplay->setTransparency(true);
 
@@ -83,44 +88,16 @@ static constexpr bool DFXGUI_IsBitmapFont(DGFontTweaks inFontTweaks) noexcept
 		inTextDisplay->setFont(fontDesc);
 	}
 
-	DGFontTweaks const fontTweaks = [inFontName]
-	{
-		if (inFontName)
-		{
-			if (strcmp(inFontName, dfx::kFontName_Snooty10px) == 0)
-			{
-				return DGFontTweaks::SNOOTY10PX;
-			}
-			if (strcmp(inFontName, dfx::kFontName_Pasement9px) == 0)
-			{
-				return DGFontTweaks::PASEMENT9PX;
-			}
-		}
-		return DGFontTweaks::NONE;
-	}();
-	inTextDisplay->setAntialias(!DFXGUI_IsBitmapFont(fontTweaks));
-
-	return fontTweaks;
+	inTextDisplay->setAntialias(!DFXGUI_IsBitmapFont(inFontName));
 }
 
 //-----------------------------------------------------------------------------
-static DGRect DFXGUI_GetTextDrawRegion(DGFontTweaks inFontTweaks, DGRect const& inRegion)
+static DGRect DFXGUI_GetTextDrawRegion(DGRect const& inRegion, bool inIsBitmapFont)
 {
 	auto textArea = inRegion;
-	if (DFXGUI_IsBitmapFont(inFontTweaks))
+	if (inIsBitmapFont)
 	{
 		textArea.makeIntegral();
-	}
-	if (inFontTweaks == DGFontTweaks::SNOOTY10PX)
-	{
-          // TODO tom: It looks like we want this offset on windows too,
-          // to match Sophia's screenshots, but doing so clips the top
-          // of the text. Don't know why. Maybe we should just be adjusting
-          // the coordinates in the client GUI code?
-#if TARGET_OS_MAC
-		textArea.offset(0, -2);
-#endif
-		textArea.setHeight(textArea.getHeight() + 2);
 	}
 	return textArea;
 }
@@ -144,9 +121,10 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor*							inOwnerEditor,
 							 char const*							inFontName)
 :	DGControl<VSTGUI::CTextEdit>(inRegion, inOwnerEditor, inParamID, nullptr, inBackgroundImage),
 	mValueToTextProc(inTextProc ? inTextProc : valueToTextProc_Generic),
-	mValueToTextUserData(inUserData)
+	mValueToTextUserData(inUserData),
+	mIsBitmapFont(DFXGUI_IsBitmapFont(inFontName))
 {
-	mFontTweaks = DFXGUI_ConfigureTextDisplay(inOwnerEditor, this, inTextAlignment, inFontSize, inFontColor, inFontName);
+	DFXGUI_ConfigureTextDisplay(inOwnerEditor, this, inTextAlignment, inFontSize, inFontColor, inFontName);
 
 	setValueToStringFunction(std::bind(&DGTextDisplay::valueToTextProcBridge, this, 
 									   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
@@ -320,7 +298,7 @@ void DGTextDisplay::takeFocus()
 //-----------------------------------------------------------------------------
 void DGTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion)
 {
-	auto const textArea = DFXGUI_GetTextDrawRegion(mFontTweaks, inRegion);
+	auto const textArea = DFXGUI_GetTextDrawRegion(inRegion, mIsBitmapFont);
 	VSTGUI::CTextEdit::drawPlatformText(inContext, inString, textArea);
 }
 
@@ -360,24 +338,6 @@ bool DGTextDisplay::textToValueProcBridge(VSTGUI::UTF8StringPtr inText, float& o
 	return valueFromText.has_value();
 }
 
-//-----------------------------------------------------------------------------
-// This is called by VSTGUI when the text display transitions to the platform's text
-// editor. We move the text editor up so that it lands where the text label was.
-// (XXX presumably there is a less hacky way to do this??)
-VSTGUI::CRect DGTextDisplay::platformGetSize() const
-{
-	VSTGUI::CRect rect = DGControl<VSTGUI::CTextEdit>::platformGetSize();
-	if (mFontTweaks == DGFontTweaks::SNOOTY10PX)
-	{
-#if TARGET_OS_MAC
-		rect.top -= 2;
-#else
-		rect.top ++;
-#endif
-	}
-	return rect;
-}
-
 
 
 
@@ -388,9 +348,10 @@ VSTGUI::CRect DGTextDisplay::platformGetSize() const
 DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage, 
 										 dfx::TextAlignment inTextAlignment, float inFontSize, 
 										 DGColor inFontColor, char const* inFontName)
-:	DGControl<VSTGUI::CTextLabel>(inRegion, nullptr, inBackgroundImage)
+:	DGControl<VSTGUI::CTextLabel>(inRegion, nullptr, inBackgroundImage),
+	mIsBitmapFont(DFXGUI_IsBitmapFont(inFontName))
 {
-	mFontTweaks = DFXGUI_ConfigureTextDisplay(inOwnerEditor, this, inTextAlignment, inFontSize, inFontColor, inFontName);
+	DFXGUI_ConfigureTextDisplay(inOwnerEditor, this, inTextAlignment, inFontSize, inFontColor, inFontName);
 
 	setMouseEnabled(false);
 }
@@ -416,7 +377,7 @@ void DGStaticTextDisplay::setCFText(CFStringRef inText)
 //-----------------------------------------------------------------------------
 void DGStaticTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion)
 {
-	auto const textArea = DFXGUI_GetTextDrawRegion(mFontTweaks, inRegion);
+	auto const textArea = DFXGUI_GetTextDrawRegion(inRegion, mIsBitmapFont);
 	VSTGUI::CTextLabel::drawPlatformText(inContext, inString, textArea);
 }
 
@@ -522,9 +483,9 @@ void DGHelpBox::draw(VSTGUI::CDrawContext* inContext)
 		image->draw(inContext, getViewSize());
 	}
 
-	constexpr VSTGUI::CCoord textHeight = 10;
+	auto const fontHeight = getFont()->getSize();
 	DGRect textArea(getViewSize());
-	textArea.setSize(textArea.getWidth() - mTextMargin.x, textHeight);
+	textArea.setSize(textArea.getWidth() - mTextMargin.x, fontHeight + 2);
 	textArea.offset(mTextMargin);
 
 	std::istringstream stream(text);
@@ -539,13 +500,13 @@ void DGHelpBox::draw(VSTGUI::CDrawContext* inContext)
 			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textArea);
 			textArea.offset(1, 0);
 			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textArea);
-			textArea.offset(-1, textHeight + mLineSpacing + 2);
+			textArea.offset(-1, fontHeight + mLineSpacing + 2);
 			setFontColor(entryFontColor);
 		}
 		else
 		{
 			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textArea);
-			textArea.offset(0, textHeight + mLineSpacing);
+			textArea.offset(0, fontHeight + mLineSpacing);
 		}
 	}
 
