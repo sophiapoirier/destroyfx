@@ -154,6 +154,7 @@ PLUGIN_EDITOR_RES_ID
 #include <cassert>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <set>
 #include <string>

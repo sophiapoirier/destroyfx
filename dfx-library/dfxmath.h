@@ -349,6 +349,7 @@ private:
 	{
 		switch (inSeedType)
 		{
+			default:
 			case RandomSeed::Static:
 				return 1729;
 			case RandomSeed::Monotonic:
