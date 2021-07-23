@@ -10,13 +10,12 @@ C++ is currently the only appropriate language for creating audio
 plugins, so all of these are written in C++. You will need a C++
 compiler for your platform in order to compile them. You'll also need
 an appropriate version of the VST SDK (for VST) or Audio Unit SDK (for
-Audio Unit). Right now, this means that you'll be able to easily
-compile Xcode for Mac, and that it may be more difficult for any other
-platform. Warning: Our source code repository often drifts out of date
-so that builds do not work; sorry about this. The windows builds are
-especially old. Tom doesn't use Visual Studio anymore and is
-attempting to make this stuff compile with the free mingw toolchain
-(GCC).
+Audio Unit), and the VSTGUI library. Right now, this means that you'll
+be able to easily compile Xcode for Mac, and that it may be more
+difficult for any other platform. Warning: Our source code repository
+often drifts out of date so that builds do not work; sorry about this.
+Tom doesn't use Visual Studio anymore and instead compiles with the
+free mingw toolchain (GCC).
 
 These plugins are Copyright (c) Tom Murphy 7 and Sophia Poirier. You
 can use them in your music however you like, without royalties. You
@@ -203,6 +202,12 @@ the entry point symbol files.  The InfoPlist.strings files are
 localized values for some Info.plist values and are located in 
 <language-code>.lproj subdirectories accordingly.
 
+Some of the external libraries that we use are included in our
+repository as submodules, and you will need to populate these any
+time you clone our repository or fetch/pull and see updates made to
+the submodules. Do so by running the following command:
+`git submodule update --init --recursive`
+
 In order to build Audio Units, you need a Mac with Xcode installed. 
 Xcode is available in the Mac App Store.
 
@@ -236,13 +241,6 @@ new compiler. This is known to work:
 	$ x86_64-w64-mingw32-g++ --version
 	x86_64-w64-mingw32-g++ (GCC) 10.2.0
 
-
-You will also need the VSTGUI library to compile the UIs for these
-plugins. We put this in a directory called "vstgui" next to the
-destroyfx repository (it then contains another directory called
-"vstgui"). VSTGUI is free and open source; you can just check it
-out from GitHub: 
-[https://github.com/steinbergmedia/vstgui](https://github.com/steinbergmedia/vstgui)
 
 ---
 
