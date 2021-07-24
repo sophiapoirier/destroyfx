@@ -305,12 +305,58 @@ static constexpr auto getRandomDistribution(T inRangeMinimum = T(0), T inRangeMa
 		return std::uniform_int_distribution<T>(inRangeMinimum, inRangeMaximum);
 	}
 }
+
+// This is PCG-XSH-RR as a C++11 random number engine with 32 bit output
+// and 64-bit state.
+// https://en.wikipedia.org/wiki/Permuted_congruential_generator
+struct PCGRandomEngine
+{
+	using result_type = uint32_t;
+
+	static constexpr uint32_t min() { return 0U; }
+	static constexpr uint32_t max() { return std::numeric_limits<uint32_t>::max(); }
+	explicit PCGRandomEngine(uint32_t s = 0x333777) : state(s + INCREMENT) {}
+	void seed(uint32_t s) { state = s + INCREMENT; }
+	uint32_t operator() ()
+	{
+		uint64_t x = state;
+		const unsigned count = static_cast<unsigned>(x >> 59);
+		state = x * MULTIPLIER + INCREMENT;
+		x ^= x >> 18;
+		return rotr32(static_cast<uint32_t>(x >> 27), count);
+	}
+	void discard(unsigned long long z)
+	{
+		// Just run operator() z times.
+		while (z--) (void)(*this)();
+	}
+
+private:
+	static constexpr uint32_t rotr32(uint32_t x, unsigned r) {
+		return x >> r | x << (-r & 31);
+	}
+	uint64_t state = 0U;
+	static constexpr uint64_t MULTIPLIER = 6364136223846793005U;
+	static constexpr uint64_t INCREMENT = 1442695040888963407U;
+
+	// TODO: Technically should have overloads << >> == !=, but
+	// are they really useful?
+};
+
 }
 
 //-----------------------------------------------------------------------------
 class RandomEngine
 {
+private:
+	using EngineType = detail::PCGRandomEngine;
+
 public:
+	// XXX since next() is templated, it's a bit suspicious
+	// that this is a specific type. But if any choice makes
+	// sense, it's the underlying type of the engine....
+	using result_type = EngineType::result_type;
+
 	explicit RandomEngine(RandomSeed inSeedType)
 	:	mEngine(getSeed(inSeedType))
 	{
@@ -347,8 +393,6 @@ public:
 	}
 
 private:
-	using EngineType = std::mt19937_64;
-
 	static EngineType::result_type getSeed(RandomSeed inSeedType)
 	{
 		switch (inSeedType)
