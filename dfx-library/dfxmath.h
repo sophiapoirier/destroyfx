@@ -296,6 +296,10 @@ static constexpr auto getRandomDistribution(T inRangeMinimum = T(0), T inRangeMa
 	{
 		return std::uniform_real_distribution<T>(inRangeMinimum, inRangeMaximum);
 	}
+	else if constexpr (std::is_same_v<std::decay_t<T>, bool>)
+	{
+		return std::uniform_int_distribution<uint8_t>(inRangeMinimum ? 1 : 0, inRangeMaximum ? 1 : 0);
+	}
 	else
 	{
 		return std::uniform_int_distribution<T>(inRangeMinimum, inRangeMaximum);
@@ -350,6 +354,7 @@ private:
 		switch (inSeedType)
 		{
 			default:
+				assert(false);
 			case RandomSeed::Static:
 				return 1729;
 			case RandomSeed::Monotonic:

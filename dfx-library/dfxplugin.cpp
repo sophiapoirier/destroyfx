@@ -599,7 +599,7 @@ void DfxPlugin::randomizeparameter(long inParameterIndex)
 				break;
 			case DfxParam::ValueType::Boolean:
 				// we don't need to worry about a curve for boolean values
-				parameter.set_b(0 != generateParameterRandomValue<uint8_t>(0, 1));
+				parameter.set_b(generateParameterRandomValue<bool>());
 				break;
 			default:
 				assert(false);
