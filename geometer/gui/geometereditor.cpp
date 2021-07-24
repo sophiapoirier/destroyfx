@@ -124,6 +124,10 @@ GeometerHelpBox::GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect const & in
 			dfx::kFontSize_Snooty10px, DGColor::kBlack, dfx::kFontName_Snooty10px), 
    helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY)
 {
+  // HACK: duplicated from DGHelpBox (TODO: unify this code with DGHelpBox)
+  auto adjustedRegion = getViewSize();
+  adjustedRegion.offset(-detail::GetTextViewPlatformOffset(getFont()->getName()));
+  setViewSize(adjustedRegion, false);
 }
 
 //--------------------------------------------------------------------------
@@ -140,6 +144,8 @@ void GeometerHelpBox::draw(VSTGUI::CDrawContext * inContext) {
   DGRect textpos(getViewSize());
   textpos.setSize(textpos.getWidth() - 5, getFont()->getSize() + 2);
   textpos.offset(4, 1);
+  // HACK: duplicated from DGHelpBox (TODO: unify this code with DGHelpBox)
+  textpos.offset(detail::GetTextViewPlatformOffset(getFont()->getName()));
 
   auto const helpstrings = [this]() -> char const * {
     switch (helpCategory) {

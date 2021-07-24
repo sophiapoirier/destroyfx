@@ -33,6 +33,13 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
+namespace detail
+{
+VSTGUI::CPoint GetTextViewPlatformOffset(char const* inFontName) noexcept;
+}
+
+
+//-----------------------------------------------------------------------------
 class DGTextDisplay : public DGControl<VSTGUI::CTextEdit>
 {
 public:

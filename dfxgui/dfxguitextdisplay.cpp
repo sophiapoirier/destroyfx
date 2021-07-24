@@ -71,6 +71,19 @@ static bool DFXGUI_IsBitmapFont(char const* inFontName) noexcept
 }
 
 //-----------------------------------------------------------------------------
+VSTGUI::CPoint detail::GetTextViewPlatformOffset(char const* inFontName) noexcept
+{
+#if TARGET_OS_WIN32
+	// HACK: on Windows, render Snooty 1 pixel lower vertically
+	if (inFontName && (std::string(inFontName) == dfx::kFontName_Snooty10px))
+	{
+		return VSTGUI::CPoint(0, 1);
+	}
+#endif
+	return {};
+}
+
+//-----------------------------------------------------------------------------
 // common constructor-time setup
 static void DFXGUI_ConfigureTextDisplay(DfxGuiEditor* inOwnerEditor, 
 										VSTGUI::CTextLabel* inTextDisplay, 
@@ -89,6 +102,10 @@ static void DFXGUI_ConfigureTextDisplay(DfxGuiEditor* inOwnerEditor,
 	}
 
 	inTextDisplay->setAntialias(!DFXGUI_IsBitmapFont(inFontName));
+
+	auto adjustedRegion = inTextDisplay->getViewSize();
+	adjustedRegion.offset(detail::GetTextViewPlatformOffset(inFontName));
+	inTextDisplay->setViewSize(adjustedRegion, false);
 }
 
 //-----------------------------------------------------------------------------
@@ -465,6 +482,12 @@ DGHelpBox::DGHelpBox(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion,
 {
 	assert(inOwnerEditor);
 	assert(inTextForControlProc);
+
+	// HACK part 1: undo "view platform offset", because at the control level, that includes the background,
+	// but what we more narrowly want is to offset the individual regions of each line of text
+	auto adjustedRegion = getViewSize();
+	adjustedRegion.offset(-detail::GetTextViewPlatformOffset(getFont()->getName()));
+	setViewSize(adjustedRegion, false);
 }
 
 //-----------------------------------------------------------------------------
@@ -487,6 +510,8 @@ void DGHelpBox::draw(VSTGUI::CDrawContext* inContext)
 	DGRect textArea(getViewSize());
 	textArea.setSize(textArea.getWidth() - mTextMargin.x, fontHeight + 2);
 	textArea.offset(mTextMargin);
+	// HACK part 2: apply "view platform offset" to the text draw region itself
+	textArea.offset(detail::GetTextViewPlatformOffset(getFont()->getName()));
 
 	std::istringstream stream(text);
 	std::string line;
