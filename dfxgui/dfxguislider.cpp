@@ -546,7 +546,12 @@ void DGXYBox::draw(VSTGUI::CDrawContext* inContext)
 	auto const valueX = mapValueX(mControlX->asCControl()->getValueNormalized());
 	auto const valueY = mapValueY(mControlY->asCControl()->getValueNormalized());
 
-	DGRect rect(valueX * mEffectiveRangeX, valueY * mEffectiveRangeY, mHandleWidth, mHandleHeight);
+	double const posX = valueX * mEffectiveRangeX;
+	double const posY = valueY * mEffectiveRangeY;
+	
+	DGRect rect = DGRect(posX, posY, mHandleWidth, mHandleHeight);
+	if (mIntegralPosition) rect.makeIntegral();
+        
 	VSTGUI::CRect const boundingRect(mMinXPos - getViewSize().left, 
 									 mMinYPos - getViewSize().top, 
 									 mMaxXPos + mHandleWidth - getViewSize().left, 

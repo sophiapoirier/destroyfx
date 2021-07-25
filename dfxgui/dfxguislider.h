@@ -141,6 +141,13 @@ public:
 
 	void setAlternateHandles(VSTGUI::CBitmap* inHandleX, VSTGUI::CBitmap* inHandleY);
 
+	// If true, the handle is only placed at integral positions,
+	// for pixel-perfect rendering.
+	void setIntegralPosition(bool inParam)
+	{
+		mIntegralPosition = inParam;
+	}
+  
 #if TARGET_PLUGIN_USES_MIDI
 	void setMidiLearner(bool inEnable) override;
 #endif
@@ -168,6 +175,7 @@ private:
 
 	float mOldValueX = 0.0f, mOldValueY = 0.0f;
 	VSTGUI::CButtonState mOldButtons;
+	bool mIntegralPosition = false;
 };
 
 
