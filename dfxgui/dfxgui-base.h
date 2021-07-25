@@ -66,9 +66,12 @@ enum class TextAlignment
 
 static constexpr char const* const kFontName_Snooty10px = "DFX Snooty 10px";
 static constexpr char const* const kFontName_Pasement9px = "DFX Pasement 9px";
+static constexpr char const* const kFontName_Wetar16px = "DFX Wetar 16px";
+
 // These are each the one size where the fonts look good (they are bitmap fonts).
 static constexpr float kFontSize_Snooty10px = 10.0f;
 static constexpr float kFontSize_Pasement9px = 9.0f;
+static constexpr float kFontSize_Wetar16px = 16.0f;
 
 static constexpr char const* const kFontName_BoringBoron = "Boring Boron";
 
