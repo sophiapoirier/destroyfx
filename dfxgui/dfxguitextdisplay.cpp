@@ -66,6 +66,10 @@ static bool DFXGUI_IsBitmapFont(char const* inFontName) noexcept
 		{
 			return true;
 		}
+		if (fontNameView.compare(dfx::kFontName_Wetar16px) == 0)
+		{
+			return true;
+		}
 	}
 	return false;
 }
