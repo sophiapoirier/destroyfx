@@ -46,7 +46,7 @@ public:
     1024, 2048, 4096, 8192, 16384, 32768, 
   }};
 
-  PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+  explicit PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
   void dfx_PostConstructor() override;
 
@@ -83,7 +83,7 @@ private:
 
 class PLUGINCORE final : public DfxPluginCore {
 public:
-  PLUGINCORE(DfxPlugin* inDfxPlugin);
+  explicit PLUGINCORE(DfxPlugin* inDfxPlugin);
 
   void reset() override;
   void processparameters() override;

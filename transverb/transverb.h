@@ -87,7 +87,7 @@ private:
 class Transverb final : public DfxPlugin {
 
 public:
-  Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+  explicit Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
   void dfx_PostConstructor() override;
 

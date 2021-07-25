@@ -68,7 +68,7 @@ enum
 class Monomaker final : public DfxPlugin
 {
 public:
-	Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+	explicit Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
 	void createbuffers() override;
 	void releasebuffers() override;

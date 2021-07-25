@@ -52,7 +52,7 @@ enum
 class EQSync final : public DfxPlugin
 {
 public:
-	EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+	explicit EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
 	void reset() override;
 	void processparameters() override;

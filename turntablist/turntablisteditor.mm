@@ -135,7 +135,7 @@ enum
 class TurntablistEditor final : public DfxGuiEditor
 {
 public:
-	TurntablistEditor(DGEditorListenerInstance inInstance);
+	explicit TurntablistEditor(DGEditorListenerInstance inInstance);
 
 	long OpenEditor() override;
 	void PostOpenEditor() override;

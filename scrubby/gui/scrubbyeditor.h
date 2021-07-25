@@ -31,7 +31,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 class ScrubbyEditor final : public DfxGuiEditor
 {
 public:
-	ScrubbyEditor(DGEditorListenerInstance inInstance);
+	explicit ScrubbyEditor(DGEditorListenerInstance inInstance);
 
 	long OpenEditor() override;
 	void CloseEditor() override;

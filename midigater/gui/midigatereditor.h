@@ -27,6 +27,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 class MIDIGaterEditor final : public DfxGuiEditor
 {
 public:
-	MIDIGaterEditor(DGEditorListenerInstance inInstance);
+	explicit MIDIGaterEditor(DGEditorListenerInstance inInstance);
 	long OpenEditor() override;
 };

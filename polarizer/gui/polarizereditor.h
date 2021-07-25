@@ -28,6 +28,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 class PolarizerEditor final : public DfxGuiEditor
 {
 public:
-	PolarizerEditor(DGEditorListenerInstance inInstance);
+	explicit PolarizerEditor(DGEditorListenerInstance inInstance);
 	long OpenEditor() override;
 };

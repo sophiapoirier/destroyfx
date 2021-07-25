@@ -99,7 +99,7 @@ enum
 class Scrubby final : public DfxPlugin
 {
 public:
-	Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+	explicit Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
 	void dfx_PostConstructor() override;
 

@@ -54,7 +54,7 @@ public:
 		kNumGateModes
 	};
 
-	MIDIGater(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+	explicit MIDIGater(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
 	long initialize() override;
 	void cleanup() override;

@@ -28,7 +28,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 class SkidderEditor final : public DfxGuiEditor
 {
 public:
-	SkidderEditor(DGEditorListenerInstance inInstance);
+	explicit SkidderEditor(DGEditorListenerInstance inInstance);
 
 	long OpenEditor() override;
 	void CloseEditor() override;

@@ -29,7 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 class RezSynthEditor final : public DfxGuiEditor
 {
 public:
-	RezSynthEditor(DGEditorListenerInstance inInstance);
+	explicit RezSynthEditor(DGEditorListenerInstance inInstance);
 
 	long OpenEditor() override;
 	void CloseEditor() override;

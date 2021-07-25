@@ -74,7 +74,7 @@ public:
 		kNumMidiModes
 	};
 
-	BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+	explicit BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
 	void reset() override;
 

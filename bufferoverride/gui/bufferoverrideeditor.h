@@ -29,7 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 class BufferOverrideEditor final : public DfxGuiEditor
 {
 public:
-	BufferOverrideEditor(DGEditorListenerInstance inInstance);
+	explicit BufferOverrideEditor(DGEditorListenerInstance inInstance);
 
 	long OpenEditor() override;
 	void CloseEditor() override;

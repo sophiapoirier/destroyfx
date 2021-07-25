@@ -40,7 +40,7 @@ enum
 class PolarizerDSP final : public DfxPluginCore
 {
 public:
-	PolarizerDSP(DfxPlugin* inDfxPlugin);
+	explicit PolarizerDSP(DfxPlugin* inDfxPlugin);
 	void process(float const* inAudio, float* outAudio, unsigned long inNumFrames) override;
 	void reset() override;
 	void processparameters() override;
@@ -54,5 +54,5 @@ private:
 class Polarizer final : public DfxPlugin
 {
 public:
-	Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+	explicit Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 };

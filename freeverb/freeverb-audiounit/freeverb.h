@@ -22,7 +22,7 @@
 class FreeverbAU final : public ausdk::AUEffectBase
 {
 public:
-	FreeverbAU(AudioComponentInstance inComponentInstance);
+	explicit FreeverbAU(AudioComponentInstance inComponentInstance);
 
 	OSStatus Initialize() override;
 	OSStatus Reset(AudioUnitScope inScope, AudioUnitElement inElement) override;

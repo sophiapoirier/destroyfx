@@ -133,7 +133,7 @@ enum : dfx::PropertyID
 class Turntablist final : public DfxPlugin
 {
 public:
-	Turntablist(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+	explicit Turntablist(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
 	void dfx_PostConstructor() override;
 

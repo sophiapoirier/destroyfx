@@ -84,7 +84,7 @@ enum
 class Skidder final : public DfxPlugin
 {
 public:
-	Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+	explicit Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
 	void dfx_PostConstructor() override;
 

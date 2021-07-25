@@ -46,7 +46,7 @@ private:
 //--------------------------------------------------------------------------
 class GeometerEditor final : public DfxGuiEditor {
 public:
-  GeometerEditor(DGEditorListenerInstance inInstance);
+  explicit GeometerEditor(DGEditorListenerInstance inInstance);
 
   long OpenEditor() override;
   void CloseEditor() override;

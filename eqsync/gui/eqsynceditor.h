@@ -28,7 +28,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 class EQSyncEditor final : public DfxGuiEditor
 {
 public:
-	EQSyncEditor(DGEditorListenerInstance inInstance);
+	explicit EQSyncEditor(DGEditorListenerInstance inInstance);
 	long OpenEditor() override;
 	void parameterChanged(long inParameterID) override;
 

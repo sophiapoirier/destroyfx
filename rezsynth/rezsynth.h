@@ -122,7 +122,7 @@ public:
 		kCurveType_NumTypes
 	};
 
-	RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+	explicit RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
 	long initialize() override;
 	void reset() override;

@@ -28,7 +28,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 class MonomakerEditor final : public DfxGuiEditor
 {
 public:
-	MonomakerEditor(DGEditorListenerInstance inInstance);
+	explicit MonomakerEditor(DGEditorListenerInstance inInstance);
 	long OpenEditor() override;
 	void inputChannelsChanged(unsigned long inChannelCount) override;
 };
