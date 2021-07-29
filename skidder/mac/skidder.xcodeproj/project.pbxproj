@@ -620,7 +620,7 @@
 				DFX_PLUGIN_FULL_NAME = Skidder;
 				DFX_PLUGIN_ID = skid;
 				DFX_PLUGIN_SHORT_NAME = skidder;
-				DFX_PLUGIN_VERSION_STRING = 1.5.0;
+				DFX_PLUGIN_VERSION_STRING = 2.0.0;
 			};
 			name = Development;
 		};
@@ -631,7 +631,7 @@
 				DFX_PLUGIN_FULL_NAME = Skidder;
 				DFX_PLUGIN_ID = skid;
 				DFX_PLUGIN_SHORT_NAME = skidder;
-				DFX_PLUGIN_VERSION_STRING = 1.5.0;
+				DFX_PLUGIN_VERSION_STRING = 2.0.0;
 			};
 			name = Deployment;
 		};
