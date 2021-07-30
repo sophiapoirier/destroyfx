@@ -52,8 +52,9 @@ resources.o : resources.rc ../gui/graphics/*
 dfx-bufferoverride-64.dll : $(OBJECTS) $(PTHREAD_OBJECTS) $(VSTGUI_DEP_OBJECTS)
 	$(CXX) $(LFLAGS) -o $@ $^
 
+VSTGUI_FLAGS=-Wno-sign-compare -Wno-multichar -Wno-unused-variable
 $(VSTGUI)/vstgui_win32.o : $(VSTGUI)/*.cpp $(VSTGUI)/lib/*.cpp $(VSTGUI)/lib/controls/*.cpp $(VSTGUI)/lib/animation/*.cpp $(VSTGUI)/lib/platform/common/*.cpp
-	$(CXX) $(CXXFLAGS) $(VSTGUI)/vstgui_win32.cpp -c -o $@
+	$(CXX) $(CXXFLAGS) $(VSTGUI_FLAGS) $(VSTGUI)/vstgui_win32.cpp -c -o $@
 
 # XXX just for Tom's testing
 install : dfx-bufferoverride-64.dll
