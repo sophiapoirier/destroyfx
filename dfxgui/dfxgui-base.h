@@ -38,10 +38,18 @@ To contact the author, use the contact form at http://destroyfx.org/
 #endif
 
 #pragma clang diagnostic push
+#pragma GCC diagnostic push
 	#pragma clang diagnostic ignored "-Wunused-parameter"
 	#pragma clang diagnostic ignored "-Wnon-virtual-dtor"
 	#pragma clang diagnostic ignored "-Wfour-char-constants"
+
+	// (Note that I think this one does not currently work due to
+	// GCC bug #53431. But we should be able to disable non-lexing
+	// warnings here.)
+	#pragma GCC diagnostic ignored "-Wmultichar"
+
 	#include "vstgui.h"
+#pragma GCC diagnostic pop
 #pragma clang diagnostic pop
 
 
