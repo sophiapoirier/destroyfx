@@ -3,17 +3,17 @@ Copyright (C) 2001-2021  Sophia Poirier
 
 This file is part of Rez Synth.
 
-Rez Synth is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Rez Synth is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Rez Synth is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Rez Synth is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Rez Synth.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -30,7 +30,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "iirfilter.h"
 
 
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 // enums
 
 // these are the plugin parameters:
@@ -112,7 +112,7 @@ enum
 };
 
 
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 class RezSynth final : public DfxPlugin
 {
 public:
@@ -153,8 +153,8 @@ private:
 
 	double calculateAmpEvener(int currentNote) const;
 	[[nodiscard]] int calculateCoefficients(int currentNote);
-	void processFilterOuts(float const* const* inAudio, float* const* outAudio, 
-						   unsigned long sampleFrameOffset, unsigned long sampleFrames, 
+	void processFilterOuts(float const* const* inAudio, float* const* outAudio,
+						   unsigned long sampleFrameOffset, unsigned long sampleFrames,
 						   int currentNote, int numBands);
 	void processUnaffected(float const* inAudio, float* outAudio, unsigned long sampleFrames);
 	double getBandwidthForFreq(double inFreq) const;

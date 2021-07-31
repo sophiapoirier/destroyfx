@@ -3,17 +3,17 @@ Copyright (C) 2002-2021  Sophia Poirier
 
 This file is part of Scrubby.
 
-Scrubby is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Scrubby is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Scrubby is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Scrubby is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Scrubby.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -177,7 +177,7 @@ void Scrubby::generateNewTarget(unsigned long channel)
 		{
 			if (mSpeedMode == kSpeedMode_DJ)
 			{
-				// doubling the length of the first seek after syncing to the measure 
+				// doubling the length of the first seek after syncing to the measure
 				// seems to prevent Cubase from freaking out in tempo sync'd DJ mode
 				mSeekCount[channel] = (samplesUntilBar + mSeekCount[channel]) % (mSeekCount[channel] * 2);
 			}
@@ -326,7 +326,7 @@ double Scrubby::processPitchConstraint(double readStep) const
 	bool const backwards = (readStep < 0.0);  // traveling backwards through the buffer?
 	double const direction_f = backwards ? -1.0 : 1.0;  // direction scalar
 
-	// check to see if none of the semitones are enabled, 
+	// check to see if none of the semitones are enabled,
 	// in which case we act like they are all enabled.
 	// no we don't, we become silent, I changed my mind
 	auto const notesActive = std::any_of(mPitchSteps.begin(), mPitchSteps.end(), [](auto const& item){ return item; });
@@ -339,8 +339,8 @@ double Scrubby::processPitchConstraint(double readStep) const
 	// . . . search for a possible active note to constrain to . . .
 	long octave = semitone / 12;  // the octave transposition
 	long remainder = semitone % 12;  // the semitone transposition
-	// remainder will be used as the index to the mPitchSteps array, 
-	// so it must be positive, and we compensate for adding 12 to it 
+	// remainder will be used as the index to the mPitchSteps array,
+	// so it must be positive, and we compensate for adding 12 to it
 	// by subtracting 1 octave, so it all evens out
 	if (remainder < 0)
 	{
@@ -357,7 +357,7 @@ double Scrubby::processPitchConstraint(double readStep) const
 	// if we are choosing from a selection of semitone steps, then do the selection process
 	else
 	{
-		// start searching for an active pitchStep with the current pitchStep (remainder) 
+		// start searching for an active pitchStep with the current pitchStep (remainder)
 		// and then all those below it
 		auto i = remainder;
 		do
@@ -405,8 +405,8 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 	checkTempoSyncStuff();
 
 	auto const notesActive = std::any_of(mPitchSteps.begin(), mPitchSteps.end(), [](auto const& item){ return item; });
-	// if we're using pitch constraint and the previous block had no notes active, 
-	// then check to see if new notes have begun and, if so, begin new seeks 
+	// if we're using pitch constraint and the previous block had no notes active,
+	// then check to see if new notes have begun and, if so, begin new seeks
 	// so that we start producing sound again immediately
 	if ((mPitchConstraint && (mSpeedMode == kSpeedMode_Robot)) && !mNotesWereAlreadyActive && notesActive)
 	{
@@ -546,7 +546,7 @@ void Scrubby::processMidiNotes()
 			case DfxMidi::kStatus_NoteOn:
 				// correct any bogus values that would mess up the system
 				mActiveNotesTable[currentNote] = std::max(mActiveNotesTable[currentNote], 0L);
-				// if there are currently no keys playing this note, 
+				// if there are currently no keys playing this note,
 				// then turn its associated pitch constraint parameter on
 				if (mActiveNotesTable[currentNote] == 0)
 				{
@@ -557,7 +557,7 @@ void Scrubby::processMidiNotes()
 				break;
 
 			case DfxMidi::kStatus_NoteOff:
-				// if this is the last key that was playing this note, 
+				// if this is the last key that was playing this note,
 				// then turn its associated pitch constraint parameter off
 				if (mActiveNotesTable[currentNote] == 1)
 				{
@@ -572,7 +572,7 @@ void Scrubby::processMidiNotes()
 				{
 					for (size_t notecount = 0; notecount < mActiveNotesTable.size(); notecount++)
 					{
-						// if this note is currently active, then turn its 
+						// if this note is currently active, then turn its
 						// associated pitch constraint parameter off
 						// (and reset this note in the table)
 						if (std::exchange(mActiveNotesTable[notecount], 0) > 0)

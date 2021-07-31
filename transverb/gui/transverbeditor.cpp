@@ -3,17 +3,17 @@ Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
-Transverb is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Transverb is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Transverb is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Transverb is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -26,6 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cassert>
 #include <cctype>
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <string_view>
 
@@ -86,7 +87,7 @@ constexpr float kSemitonesPerOctave = 12.0f;
 //-----------------------------------------------------------------------------
 // value text display procedures
 
-bool bsizeDisplayProcedure(float inValue, char* outText, void*)
+static bool bsizeDisplayProcedure(float inValue, char* outText, void*)
 {
 	long const thousands = static_cast<long>(inValue) / 1000;
 	auto const remainder = std::fmod(inValue, 1000.0f);
@@ -105,13 +106,13 @@ bool bsizeDisplayProcedure(float inValue, char* outText, void*)
 	return success;
 }
 
-bool speedDisplayProcedure(float inValue, char* outText, void*)
+static bool speedDisplayProcedure(float inValue, char* outText, void*)
 {
 	std::array<char, 16> semitonesString {};
 	auto speed = inValue;
 	auto const remainder = std::fmod(std::fabs(speed), 1.0f);
 	float semitones = remainder * kSemitonesPerOctave;
-	// make sure that these float crap doesn't result in wacky stuff 
+	// make sure that these float crap doesn't result in wacky stuff
 	// like displays that say "-1 octave & 12.00 semitones"
 	snprintf(semitonesString.data(), semitonesString.size(), "%.3f", semitones);
 	if ((strcmp(semitonesString.data(), "12.000") == 0) || (strcmp(semitonesString.data(), "-12.000") == 0))
@@ -148,7 +149,7 @@ bool speedDisplayProcedure(float inValue, char* outText, void*)
 	}
 }
 
-std::optional<float> speedTextConvertProcedure(std::string const& inText, DGTextDisplay*)
+static std::optional<float> speedTextConvertProcedure(std::string const& inText, DGTextDisplay*)
 {
 	std::string filteredText(inText.size(), '\0');
 	// TODO: does not support locale for number format, and ignores minus and periods that are not part of fractional numbers
@@ -161,7 +162,7 @@ std::optional<float> speedTextConvertProcedure(std::string const& inText, DGText
 	auto const scanCount = sscanf(filteredText.c_str(), "%f%f", &octaves, &semitones);
 	if ((scanCount > 0) && (scanCount != EOF))
 	{
-		// the user only entered one number, which is for octaves, 
+		// the user only entered one number, which is for octaves,
 		// so convert any fractional part of the octaves value into semitones
 		if (scanCount == 1)
 		{
@@ -183,12 +184,12 @@ std::optional<float> speedTextConvertProcedure(std::string const& inText, DGText
 	return {};
 }
 
-bool feedbackDisplayProcedure(float inValue, char* outText, void*)
+static bool feedbackDisplayProcedure(float inValue, char* outText, void*)
 {
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld%%", static_cast<long>(inValue)) > 0;
 }
 
-bool distDisplayProcedure(float inValue, char* outText, void* inEditor)
+static bool distDisplayProcedure(float inValue, char* outText, void* inEditor)
 {
 	float const distance = inValue * static_cast<DfxGuiEditor*>(inEditor)->getparameter_f(kBsize);
 	long const thousands = static_cast<long>(distance) / 1000;
@@ -208,7 +209,7 @@ bool distDisplayProcedure(float inValue, char* outText, void* inEditor)
 	return success;
 }
 
-float distValueFromTextConvertProcedure(float inValue, DGTextDisplay* inTextDisplay)
+static float distValueFromTextConvertProcedure(float inValue, DGTextDisplay* inTextDisplay)
 {
 	auto const bsize = static_cast<float>(inTextDisplay->getOwnerEditor()->getparameter_f(kBsize));
 	return (bsize != 0.0f) ? (inValue / bsize) : inValue;
@@ -218,7 +219,7 @@ float distValueFromTextConvertProcedure(float inValue, DGTextDisplay* inTextDisp
 
 //-----------------------------------------------------------------------------
 
-double nearestIntegerBelow(double number)
+static double nearestIntegerBelow(double number)
 {
 	bool const sign = (number >= 0.0);
 	auto const fraction = std::fmod(std::fabs(number), 1.0);
@@ -238,7 +239,7 @@ double nearestIntegerBelow(double number)
 	}
 }
 
-double nearestIntegerAbove(double number)
+static double nearestIntegerAbove(double number)
 {
 	bool const sign = (number >= 0.0);
 	double const fraction = std::fmod(std::fabs(number), 1.0);
@@ -367,7 +368,7 @@ long TransverbEditor::OpenEditor()
 		}
 		emplaceControl<DGSlider>(this, tag, pos, dfx::kAxis_Horizontal, horizontalSliderHandleImage, horizontalSliderBackgroundImage, sliderRangeMargin)->setAlternateHandle(horizontalSliderHandleImage_glowing);
 
-		auto const textDisplay = emplaceControl<DGTextDisplay>(this, tag, textDisplayPos, displayProc, userData, nullptr, 
+		auto const textDisplay = emplaceControl<DGTextDisplay>(this, tag, textDisplayPos, displayProc, userData, nullptr,
 															   dfx::TextAlignment::Right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
 
 		if (tag == kSpeed1)
@@ -409,7 +410,7 @@ long TransverbEditor::OpenEditor()
 
 	emplaceControl<DGSlider>(this, kBsize, pos, dfx::kAxis_Horizontal, grayHorizontalSliderHandleImage, grayHorizontalSliderBackgroundImage, sliderRangeMargin)->setAlternateHandle(horizontalSliderHandleImage_glowing);
 
-	emplaceControl<DGTextDisplay>(this, kBsize, textDisplayPos, bsizeDisplayProcedure, nullptr, nullptr, 
+	emplaceControl<DGTextDisplay>(this, kBsize, textDisplayPos, bsizeDisplayProcedure, nullptr, nullptr,
 								  dfx::TextAlignment::Right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
 
 	emplaceControl<DGFineTuneButton>(this, kBsize, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
@@ -443,7 +444,7 @@ long TransverbEditor::OpenEditor()
 	// speed mode buttons
 	for (size_t speedModeIndex = 0; speedModeIndex < kNumDelays; speedModeIndex++)
 	{
-		pos.set(kSpeedModeButtonX, kSpeedModeButtonY + (((kWideFaderInc * 2) + kWideFaderMoreInc) * speedModeIndex), 
+		pos.set(kSpeedModeButtonX, kSpeedModeButtonY + (((kWideFaderInc * 2) + kWideFaderMoreInc) * speedModeIndex),
 				speedModeButtonImage->getWidth() / 2, speedModeButtonImage->getHeight() / kSpeedMode_NumModes);
 		mSpeedModeButtons[speedModeIndex] = emplaceControl<DGButton>(this, pos, speedModeButtonImage, kSpeedMode_NumModes, DGButton::Mode::Increment, true);
 		mSpeedModeButtons[speedModeIndex]->setUserProcedure(std::bind(&TransverbEditor::HandleSpeedModeButton, this, speedModeIndex, std::placeholders::_1));
@@ -491,7 +492,7 @@ void TransverbEditor::parameterChanged(long inParameterID)
 	if (inParameterID == kBsize)
 	{
 		// trigger re-conversion of numerical value to text
-		std::for_each(mDistanceTextDisplays.begin(), mDistanceTextDisplays.end(), 
+		std::for_each(mDistanceTextDisplays.begin(), mDistanceTextDisplays.end(),
 					  [](auto& display){ display->refreshText(); });
 	}
 }

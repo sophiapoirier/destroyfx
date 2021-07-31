@@ -3,17 +3,17 @@ Copyright (C) 2001-2021  Sophia Poirier
 
 This file is part of Rez Synth.
 
-Rez Synth is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Rez Synth is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Rez Synth is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Rez Synth is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Rez Synth.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -57,7 +57,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 	// now we're ready to start looking at MIDI messages and processing sound and such
 	do
 	{
-		// check for an upcoming event and decrease this block chunk size accordingly 
+		// check for an upcoming event and decrease this block chunk size accordingly
 		// if there won't be another event, go all the way to the end of the block
 		if ((eventcount + 1) >= getmidistate().getBlockEventCount())
 		{
@@ -69,7 +69,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 			numFramesToProcess = getmidistate().getBlockEvent(eventcount + 1).mOffsetFrames - currentBlockPosition;
 		}
 
-		// this means that two (or more) events occur simultaneously, 
+		// this means that two (or more) events occur simultaneously,
 		// so there's no need to do calculations during this round
 		if (numFramesToProcess == 0)
 		{
@@ -105,9 +105,9 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 					{
 						mAmpEvener[noteIndex].snap();
 						mBaseFreq[noteIndex].snap();
-						std::for_each(mBandCenterFreq[noteIndex].begin(), mBandCenterFreq[noteIndex].end(), 
+						std::for_each(mBandCenterFreq[noteIndex].begin(), mBandCenterFreq[noteIndex].end(),
 									  [](auto& value){ value.snap(); });
-						std::for_each(mBandBandwidth[noteIndex].begin(), mBandBandwidth[noteIndex].end(), 
+						std::for_each(mBandBandwidth[noteIndex].begin(), mBandBandwidth[noteIndex].end(),
 									  [](auto& value){ value.snap(); });
 					}
 
@@ -115,11 +115,11 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 					{
 						auto const valueIsSmoothing = [](auto const& value){ return value.isSmoothing(); };
 						auto const freqIsSmoothing = mBaseFreq[noteIndex].isSmoothing()
-						|| std::any_of(mBandCenterFreq[noteIndex].cbegin(), 
-									   std::next(mBandCenterFreq[noteIndex].cbegin(), activeNumBands), 
+						|| std::any_of(mBandCenterFreq[noteIndex].cbegin(),
+									   std::next(mBandCenterFreq[noteIndex].cbegin(), activeNumBands),
 									   valueIsSmoothing)
-						|| std::any_of(mBandBandwidth[noteIndex].cbegin(), 
-									   std::next(mBandBandwidth[noteIndex].cbegin(), activeNumBands), 
+						|| std::any_of(mBandBandwidth[noteIndex].cbegin(),
+									   std::next(mBandBandwidth[noteIndex].cbegin(), activeNumBands),
 									   valueIsSmoothing);
 						auto const remainingFrames = numFramesToProcess - subSlicePosition;
 						return freqIsSmoothing ? std::min(mFreqSmoothingStride, remainingFrames) : remainingFrames;
@@ -130,14 +130,14 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 					mWetGain = entryWetGain;
 
 					// render the filtered audio output for the note
-					processFilterOuts(inAudio, outAudio, 
-									  currentBlockPosition + subSlicePosition, subSliceFrameCount, 
+					processFilterOuts(inAudio, outAudio,
+									  currentBlockPosition + subSlicePosition, subSliceFrameCount,
 									  noteIndex, activeNumBands);
 
 					mBaseFreq[noteIndex].inc(subSliceFrameCount);
-					std::for_each(mBandCenterFreq[noteIndex].begin(), mBandCenterFreq[noteIndex].end(), 
+					std::for_each(mBandCenterFreq[noteIndex].begin(), mBandCenterFreq[noteIndex].end(),
 								  [subSliceFrameCount](auto& value){ value.inc(subSliceFrameCount); });
-					std::for_each(mBandBandwidth[noteIndex].begin(), mBandBandwidth[noteIndex].end(), 
+					std::for_each(mBandBandwidth[noteIndex].begin(), mBandBandwidth[noteIndex].end(),
 								  [subSliceFrameCount](auto& value){ value.inc(subSliceFrameCount); });
 
 					subSlicePosition += subSliceFrameCount;

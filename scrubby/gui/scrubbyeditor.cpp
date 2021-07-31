@@ -3,17 +3,17 @@ Copyright (C) 2002-2021  Sophia Poirier
 
 This file is part of Scrubby.
 
-Scrubby is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Scrubby is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Scrubby is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Scrubby is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Scrubby.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -150,12 +150,12 @@ enum
 //-----------------------------------------------------------------------------
 // parameter value string display conversion functions
 
-bool seekRangeDisplayProc(float inValue, char* outText, void*)
+static bool seekRangeDisplayProc(float inValue, char* outText, void*)
 {
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f ms", inValue) > 0;
 }
 
-bool seekRateGenDisplayProc(float inValue, long inParameterID, char* outText, DfxGuiEditor* inEditor)
+static bool seekRateGenDisplayProc(float inValue, long inParameterID, char* outText, DfxGuiEditor* inEditor)
 {
 	if (inEditor->getparameter_b(kTempoSync))
 	{
@@ -171,17 +171,17 @@ bool seekRateGenDisplayProc(float inValue, long inParameterID, char* outText, Df
 	return false;
 }
 
-bool seekRateDisplayProc(float inValue, char* outText, void* inEditor)
+static bool seekRateDisplayProc(float inValue, char* outText, void* inEditor)
 {
 	return seekRateGenDisplayProc(inValue, kSeekRate_Sync, outText, static_cast<DfxGuiEditor*>(inEditor));
 }
 
-bool seekRateRandMinDisplayProc(float inValue, char* outText, void* inEditor)
+static bool seekRateRandMinDisplayProc(float inValue, char* outText, void* inEditor)
 {
 	return seekRateGenDisplayProc(inValue, kSeekRateRandMin_Sync, outText, static_cast<DfxGuiEditor*>(inEditor));
 }
 
-bool octaveMinDisplayProc(float inValue, char* outText, void*)
+static bool octaveMinDisplayProc(float inValue, char* outText, void*)
 {
 	auto const octaves = static_cast<long>(inValue);
 	if (octaves <= kOctave_MinValue)
@@ -191,7 +191,7 @@ bool octaveMinDisplayProc(float inValue, char* outText, void*)
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld", octaves) > 0;
 }
 
-bool octaveMaxDisplayProc(float inValue, char* outText, void*)
+static bool octaveMaxDisplayProc(float inValue, char* outText, void*)
 {
 	auto const octaves = static_cast<long>(inValue);
 	if (octaves >= kOctave_MaxValue)
@@ -205,12 +205,12 @@ bool octaveMaxDisplayProc(float inValue, char* outText, void*)
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%+ld", octaves) > 0;
 }
 
-bool tempoDisplayProc(float inValue, char* outText, void*)
+static bool tempoDisplayProc(float inValue, char* outText, void*)
 {
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f bpm", inValue) > 0;
 }
 
-bool predelayDisplayProc(float inValue, char* outText, void*)
+static bool predelayDisplayProc(float inValue, char* outText, void*)
 {
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
 }
@@ -294,8 +294,8 @@ long ScrubbyEditor::OpenEditor()
 
 	// seek rate
 	pos.set(kSeekRateSliderX, kSeekRateSliderY, kSeekRateSliderWidth, kSliderHeight);
-	mSeekRateSlider = emplaceControl<DGRangeSlider>(this, seekRateRandMinParamID, seekRateParamID, pos, 
-													rangeSliderHandleLeftImage, rangeSliderHandleRightImage, nullptr, 
+	mSeekRateSlider = emplaceControl<DGRangeSlider>(this, seekRateRandMinParamID, seekRateParamID, pos,
+													rangeSliderHandleLeftImage, rangeSliderHandleRightImage, nullptr,
 													DGRangeSlider::PushStyle::Upper, kRangeSliderOvershoot);
 	mSeekRateSlider->setAlternateHandles(rangeSliderHandleLeftImage_glowing, rangeSliderHandleRightImage_glowing);
 
@@ -305,10 +305,10 @@ long ScrubbyEditor::OpenEditor()
 
 	// seek duration
 	pos.set(kSeekDurSliderX, kSeekDurSliderY, kSeekDurSliderWidth, kSliderHeight);
-	emplaceControl<DGRangeSlider>(this, kSeekDurRandMin, kSeekDur, pos, 
-								  rangeSliderHandleLeftImage, rangeSliderHandleRightImage, nullptr, 
-								  DGRangeSlider::PushStyle::Upper, 
-								  kRangeSliderOvershoot)->setAlternateHandles(rangeSliderHandleLeftImage_glowing, 
+	emplaceControl<DGRangeSlider>(this, kSeekDurRandMin, kSeekDur, pos,
+								  rangeSliderHandleLeftImage, rangeSliderHandleRightImage, nullptr,
+								  DGRangeSlider::PushStyle::Upper,
+								  kRangeSliderOvershoot)->setAlternateHandles(rangeSliderHandleLeftImage_glowing,
 																			  rangeSliderHandleRightImage_glowing);
 
 	// octave minimum
@@ -526,7 +526,7 @@ long ScrubbyEditor::OpenEditor()
 
 
 
-	// this will initialize the translucency state of dependent controls 
+	// this will initialize the translucency state of dependent controls
 	HandlePitchConstraintChange();
 	HandleTempoSyncChange();
 	HandleTempoAutoChange();
@@ -736,24 +736,24 @@ std::string ScrubbyEditor::GetHelpForControl(IDGControl* inControl) const
 	if (inControl == mTitleArea)
 	{
 		return R"DELIM(Scrubby randomly zips around through an audio delay buffer.
-Scrubby will, at a given seek rate, find random target destinations within a 
+Scrubby will, at a given seek rate, find random target destinations within a
 certain time range and then travel to those destinations.)DELIM";
 	}
 	if (inControl == mMidiLearnButton)
 	{
 		return R"DELIM(MIDI learn:  toggle "MIDI learn" mode for CC control of parameters
-When this is enabled, you can click on a parameter control and then the next 
+When this is enabled, you can click on a parameter control and then the next
 MIDI CC received will be assigned to control that parameter.  (not in all hosts))DELIM";
 	}
 	if (inControl == mMidiResetButton)
 	{
 		return R"DELIM(MIDI reset:  erase CC assignments
-Push this button to erase all of your MIDI CC -> parameter assignments.  
+Push this button to erase all of your MIDI CC -> parameter assignments.
 Then CCs will not affect any parameters and you can start over if you want.)DELIM";
 	}
 
 	constexpr auto notesHelpText = R"DELIM(notes:  - only for robot mode with pitch constraint turned on -
-You can choose which semitone steps within an octave are allowable when 
+You can choose which semitone steps within an octave are allowable when
 pitch constraint mode is on.  There are preset and transposition buttons, too.)DELIM";
 	if (std::find(mNotesButtons.cbegin(), mNotesButtons.cend(), inControl) != mNotesButtons.cend())
 	{
@@ -764,11 +764,11 @@ pitch constraint mode is on.  There are preset and transposition buttons, too.)D
 	{
 		case kSeekRange:
 			return R"DELIM(seek range:  define the time range in which Scrubby can zip around
-This specifies how far back in the delay buffer Scrubby can look for new 
+This specifies how far back in the delay buffer Scrubby can look for new
 random target destinations.  This tends to affect playback speeds.)DELIM";
 		case kFreeze:
 			return R"DELIM(freeze:  freeze the delay buffer
-This causes Scrubby to stop reading from your incoming audio stream and 
+This causes Scrubby to stop reading from your incoming audio stream and
 to stick with the current contents of the delay buffer.)DELIM";
 		case kSeekRate_Hz:
 		case kSeekRate_Sync:
@@ -785,24 +785,24 @@ to stick with the current contents of the delay buffer.)DELIM";
 #undef SCRUBBY_ALT_KEY_NAME
 		case kTempoSync:
 			return R"DELIM(tempo sync:  lock the seek rate to the tempo
-Turning this on will let you define seek rates in terms of your tempo.  
+Turning this on will let you define seek rates in terms of your tempo.
 If your host doesn't send tempo info to plugins, you'll need to define a tempo.)DELIM";
 		case kSeekDur:
 		case kSeekDurRandMin:
 			return R"DELIM(seek duration:  amount of a seek cycle spent moving to the target
-Scrubby finds a new target to move towards at each seek cycle.  You can 
+Scrubby finds a new target to move towards at each seek cycle.  You can
 make it reach the target early by lowering this value.  This produces gaps.)DELIM";
 		case kSpeedMode:
 			return R"DELIM(speed mode:  are you a robot or a DJ?
-In Robot mode, Scrubby jumps to the next speed after each target seek.  
+In Robot mode, Scrubby jumps to the next speed after each target seek.
 In DJ mode, Scrubby gradually accelerates or decelerates to the next speed.)DELIM";
 		case kSplitChannels:
 			return R"DELIM(channels mode:  toggle between linked or split seeks for each channel
-When linked, all audio channels will seek the same target destinations.  
+When linked, all audio channels will seek the same target destinations.
 When split, each audio channel will find different destinations to seek.)DELIM";
 		case kPitchConstraint:
 			return R"DELIM(pitch constraint:  - only for robot mode -
-With this set to "notes," the playback speeds for each seek will always be 
+With this set to "notes," the playback speeds for each seek will always be
 semitone increments from the original pitch.  (see also the keyboard help))DELIM";
 		case kPitchStep0:
 		case kPitchStep1:
@@ -820,19 +820,19 @@ semitone increments from the original pitch.  (see also the keyboard help))DELIM
 		case kOctaveMin:
 		case kOctaveMax:
 			return R"DELIM(octave limits:  limit Scrubby's speeds within a range of octaves
-You can limit how low or how high Scrubby's playback speeds can go in terms 
+You can limit how low or how high Scrubby's playback speeds can go in terms
 of octaves, or move these to their outer points if you want no limits.)DELIM";
 		case kTempo:
 			return R"DELIM(tempo:  sets the tempo that Scrubby uses when tempo sync is on
-If your host app doesn't send tempo info to plugins, you'll need to adjust this 
+If your host app doesn't send tempo info to plugins, you'll need to adjust this
 parameter in order to specify a tempo for Scrubby to use.)DELIM";
 		case kTempoAuto:
 			return R"DELIM(sync to host tempo:  follow the host's current tempo
-If your host app sends tempo info to plugins, you can enable this parameter 
+If your host app sends tempo info to plugins, you can enable this parameter
 to lock the tempo that Scrubby uses to that of the host.)DELIM";
 		case kPredelay:
 			return R"DELIM(predelay:  compensate for Scrubby's (possible) output delay
-Scrubby zips around a delay buffer, which can create some perceived latency.  
+Scrubby zips around a delay buffer, which can create some perceived latency.
 This asks your host to predelay by a % of the seek range.  (not in all hosts))DELIM";
 		case kDryLevel:
 			return R"DELIM(dry level:  the mix level of the unprocessed input audio

@@ -3,17 +3,17 @@ Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
-Geometer is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Geometer is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Geometer is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Geometer is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -31,6 +31,7 @@ Featuring the Super Destroy FX Windowing System!
 #include <cassert>
 #include <chrono>
 #include <cmath>
+#include <cstdint>
 #include <mutex>
 #include <numeric>
 #include <string>
@@ -96,7 +97,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   allop(OP_SLOW, "slow", "slow", 0.25, DfxParam::Unit::Scalar, {});	// "factor"
   allop(OP_FAST, "fast", "fast", 0.5, DfxParam::Unit::Scalar, {});	// "factor"
   allop(OP_NONE, "none", "none", 0.0, DfxParam::Unit::Generic, {});
-  
+
   for(int op = NUM_OPS; op < MAX_OPS; op++) {
     allop(op, "unused", "xxx", 0.5, DfxParam::Unit::Generic, {});
     setparameterattributes(P_OPPAR1S + op, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */
@@ -181,13 +182,13 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 void PLUGIN::dfx_PostConstructor()
 {
-  /* since we don't use notes for any specialized control of Geometer, 
+  /* since we don't use notes for any specialized control of Geometer,
      allow them to be assigned to control parameters via MIDI learn */
   getsettings().setAllowPitchbendEvents(true);
   getsettings().setAllowNoteEvents(true);
 }
 
-long PLUGIN::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+long PLUGIN::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
                                  size_t& outDataSize, dfx::PropertyFlags& outFlags)
 {
   switch (inPropertyID)
@@ -205,7 +206,7 @@ long PLUGIN::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScop
   }
 }
 
-long PLUGIN::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+long PLUGIN::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
                              void* outData)
 {
   switch (inPropertyID)
@@ -278,7 +279,7 @@ void PLUGIN::updatewindowcache(PLUGINCORE * geometercore)
 
   windowcache_writer->apts = std::min(geometercore->getframesize(), GeometerViewData::samples);
 
-  windowcache_writer->numpts = geometercore->processw(windowcache_writer->inputs.data(), windowcache_writer->outputs.data(), 
+  windowcache_writer->numpts = geometercore->processw(windowcache_writer->inputs.data(), windowcache_writer->outputs.data(),
                                                       windowcache_writer->apts,
                                                       windowcache_writer->pointsx.data(), windowcache_writer->pointsy.data(),
                                                       GeometerViewData::samples - 1, tmpx.data(), tmpy.data());
@@ -467,7 +468,7 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
   }
   case OP_LONGPASS: {
     /* longpass. drop any point that's not at least param*samples
-       past the previous. */ 
+       past the previous. */
     /* XXX this can cut out the last point? */
     tempx[0] = px[0];
     tempy[0] = py[0];
@@ -488,7 +489,7 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
       px[c] = tempx[c];
       py[c] = tempy[c];
     }
-    
+
     px[np] = px[npts-1];
     py[np] = py[npts-1];
     np++;
@@ -513,7 +514,7 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
   case OP_SLOW: {
     /* slow points down. stretches the points out so that
        the tail is lost, but preserves their y values. */
-    
+
     float const factor = 1.0f + op_param;
 
     /* We don't need to worry about maxpoints, since
@@ -531,7 +532,7 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
     /* but save last point */
     px[i] = px[npts-1];
     py[i] = py[npts-1];
-    
+
     npts = i + 1;
 
     break;
@@ -555,21 +556,21 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
         if (destx >= samples) goto op_fast_out_of_points;
 
         /* check if we already have one here.
-           if not, add it and advance, otherwise ignore. 
+           if not, add it and advance, otherwise ignore.
            XXX: one possibility would be to mix...
         */
         if (!(outi > 0 && tempx[outi-1] == destx)) {
           tempx[outi] = destx;
           tempy[outi] = py[s];
           outi++;
-        } 
+        }
 
         if (outi > (maxpts - 2)) goto op_fast_out_of_points;
       }
     }
 
   op_fast_out_of_points:
-    
+
     /* always save last sample, as usual */
     tempx[outi] = px[npts - 1];
     tempy[outi] = py[npts - 1];
@@ -613,7 +614,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
   switch(pointstyle) {
 
   case POINT_EXTNCROSS: {
-    /* extremities and crossings 
+    /* extremities and crossings
        XXX: Can this generate points out of order? Don't think so...
     */
 
@@ -643,7 +644,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
           numpts++;
         }
 
-        if (in[i] < 0.0f) { 
+        if (in[i] < 0.0f) {
           state = SB;
         } else {
           state = SA;
@@ -773,7 +774,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
     /* XXX let the user choose hz, do conversion */
     int const nth = (pointparam * pointparam) * samples;
     int ctr = nth;
-  
+
     for(int i = 0; i < samples; i++) {
       ctr--;
       if (ctr <= 0) {
@@ -810,10 +811,10 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
 
     break;
   }
-  
+
   case POINT_SPAN: {
     /* next x determined by sample magnitude
-       
+
     suggested by bram.
     */
 
@@ -830,7 +831,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
 
     break;
   }
-  
+
   case POINT_DYDX: {
     /* dy/dx */
     bool lastsign = false;
@@ -853,7 +854,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
     pp = std::pow(pp, 2.7f);
 
     for (int i = 1; i < samples; i++) {
-      
+
       bool sign {};
       if (above)
         sign = (in[i] - lasts) > pp;
@@ -891,18 +892,18 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
   /* modify the points according to the three slots and
      their parameters */
 
-  numpts = pointops(pointop1, numpts, oppar1, samples, 
+  numpts = pointops(pointop1, numpts, oppar1, samples,
                     px, py, maxpts, tempx, tempy);
-  numpts = pointops(pointop2, numpts, oppar2, samples, 
+  numpts = pointops(pointop2, numpts, oppar2, samples,
                     px, py, maxpts, tempx, tempy);
-  numpts = pointops(pointop3, numpts, oppar3, samples, 
+  numpts = pointops(pointop3, numpts, oppar3, samples,
                     px, py, maxpts, tempx, tempy);
 
   switch(interpstyle) {
 
   case INTERP_SHUFFLE: {
     /* mix around the intervals. The parameter determines
-       how mobile an interval is. 
+       how mobile an interval is.
 
        I build an array of interval indices (integers).
        Then I swap elements with nearby elements (where
@@ -910,7 +911,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
        I reconstruct the wave by reading the intervals
        in their new order.
     */
-    
+
     /* fix last point at last sample -- necessary to
        preserve invariants */
     px[numpts-1] = samples - 1;
@@ -943,9 +944,9 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
   }
 
   case INTERP_FRIENDS: {
-    /* bleed each segment into next segment (its "friend"). 
-       interparam controls the amount of bleeding, between 
-       0 samples and next-segment-size samples. 
+    /* bleed each segment into next segment (its "friend").
+       interparam controls the amount of bleeding, between
+       0 samples and next-segment-size samples.
        suggestion by jcreed (sorta).
     */
 
@@ -966,7 +967,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
       if (tgtlen > 0) {
         /* to avoid using temporary storage, copy from end of target
            towards beginning, overwriting already used source parts on
-           the way. 
+           the way.
 
            j is an offset from p[x-1], ranging from 0 to tgtlen-1.
            Once we reach p[x], we have to start mixing with the
@@ -977,7 +978,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
              j--) {
 
           /* XXX. use interpolated sampling for this */
-          float const wet = in[(int)(px[x-1] + sizeleft * 
+          float const wet = in[(int)(px[x-1] + sizeleft *
                                      (j/(float)tgtlen))];
 
           if ((j + px[x-1]) > px[x]) {
@@ -1001,7 +1002,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
     break;
   }
   case INTERP_POLYGON:
-    /* linear interpolation - "polygon" 
+    /* linear interpolation - "polygon"
        interparam causes dimming effect -- at 1.0 it just does
        straight lines at the median.
     */
@@ -1022,7 +1023,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
 
 
   case INTERP_WRONGYGON:
-    /* linear interpolation, wrong direction - "wrongygon" 
+    /* linear interpolation, wrong direction - "wrongygon"
        same dimming effect from polygon.
     */
 
@@ -1048,9 +1049,9 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
       float const denom = (px[u] - px[u-1]);
       for(int z=px[u-1]; z < px[u]; z++) {
         float const pct = (float)(z-px[u-1]) / denom;
-        
+
         float p = 0.5f * (-std::cos(dfx::math::kPi<float> * pct) + 1.0f);
-        
+
         if (interparam > 0.5f) {
           p = std::pow(p, (interparam - 0.16666667f) * 3.0f);
         } else {
@@ -1085,10 +1086,10 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
   case INTERP_PULSE: {
 
     int const wid = (int)(100.0f * interparam);
-    
+
     for(int i = 0; i < samples; i++) out[i] = 0.0f;
 
-    for(int z = 0; z < numpts; z++) { 
+    for(int z = 0; z < numpts; z++) {
       out[px[z]] = dfx::math::MagnitudeMax(out[px[z]], py[z]);
 
       if (wid > 0) {
@@ -1120,11 +1121,11 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
 
       for(int z=px[u-1]; z < px[u]; z++) {
         float const pct = (float)(z-px[u-1]) * oodenom;
-        
+
         float const wand = sinf(2.0f * dfx::math::kPi<float> * pct);
-        out[z] = wand * 
-          interparam + 
-          ((1.0f-interparam) * 
+        out[z] = wand *
+          interparam +
+          ((1.0f-interparam) *
            in[z] *
            wand);
       }
@@ -1171,7 +1172,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
 
 */
 
-/* to improve: 
+/* to improve:
    - can we use tail of out0 as prevmix, instead of copying?
    - can we use circular buffers instead of memmoving a lot?
      (probably not)
@@ -1190,7 +1191,7 @@ void PLUGINCORE::process(float const* tin, float* tout, unsigned long samples) {
     /* copy sample in */
     in0[insize] = tin[ii];
     insize++;
- 
+
     if (insize == framesize) {
       /* frame is full! */
 
@@ -1215,12 +1216,12 @@ void PLUGINCORE::process(float const* tin, float* tout, unsigned long samples) {
       /* prevmix becomes out1 */
       std::copy_n(std::next(out0.cbegin(), outstart + outsize + third), third, prevmix.begin());
 
-      /* copy 2nd third of input over in0 (need to re-use it for next frame), 
+      /* copy 2nd third of input over in0 (need to re-use it for next frame),
          now insize = third */
       std::copy_n(std::next(in0.cbegin(), third), third, in0.begin());
 
       insize = third;
-      
+
       outsize += third;
     }
 
@@ -1245,7 +1246,7 @@ void PLUGINCORE::updatewindowsize()
   third = framesize / 2;
   bufsize = third * 3;
 
-  /* set up buffers. prevmix and first frame of output are always 
+  /* set up buffers. prevmix and first frame of output are always
      filled with zeros. */
 
   std::fill(prevmix.begin(), prevmix.end(), 0.0f);
@@ -1380,7 +1381,7 @@ void PLUGIN::makepresets() {
   setpresetparameter_i(i, P_INTERPSTYLE, INTERP_POLYGON);
   setpresetparameter_f(i, P_INTERPARAMS + INTERP_POLYGON, 0.0);
   i++;
-  
+
   setpresetname(i, "scrubby chorus");
   setpresetparameter_i(i, P_BUFSIZE, 13);
   setpresetparameter_i(i, P_SHAPE, WINDOW_ARROW);
@@ -1415,9 +1416,9 @@ void PLUGIN::makepresets() {
   setpresetparameter_i(i, P_POINTOP1, OP_QUARTER);
   setpresetparameter_f(i, P_OPPAR1S + OP_QUARTER, 0.0);
   setpresetparameter_i(i, P_POINTOP2, OP_QUARTER);
-  setpresetparameter_f(i, P_OPPAR2S + OP_QUARTER, 0.0);  
+  setpresetparameter_f(i, P_OPPAR2S + OP_QUARTER, 0.0);
   setpresetparameter_i(i, P_POINTOP3, OP_QUARTER);
-  setpresetparameter_f(i, P_OPPAR3S + OP_QUARTER, 0.0);    
+  setpresetparameter_f(i, P_OPPAR3S + OP_QUARTER, 0.0);
   setpresetparameter_i(i, P_INTERPSTYLE, INTERP_FRIENDS);
   setpresetparameter_f(i, P_INTERPARAMS + INTERP_FRIENDS, 0.3876404);
   i++;

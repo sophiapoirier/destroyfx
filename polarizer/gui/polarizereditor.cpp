@@ -3,17 +3,17 @@ Copyright (C) 2001-2021  Sophia Poirier
 
 This file is part of Polarizer.
 
-Polarizer is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Polarizer is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Polarizer is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Polarizer is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Polarizer.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -57,7 +57,7 @@ constexpr float kValueTextSize = 16.8f;
 //-----------------------------------------------------------------------------
 // parameter value string display conversion functions
 
-bool leapDisplayProc(float inValue, char* outText, void*)
+static bool leapDisplayProc(float inValue, char* outText, void*)
 {
 	auto const value_i = static_cast<long>(inValue);
 	bool const success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld sample", value_i) > 0;
@@ -68,12 +68,12 @@ bool leapDisplayProc(float inValue, char* outText, void*)
 	return success;
 }
 
-bool amountDisplayProc(float inValue, char* outText, void*)
+static bool amountDisplayProc(float inValue, char* outText, void*)
 {
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue * 10.0f) > 0;
 }
 
-float amountValueFromTextConvertProc(float inValue, DGTextDisplay*)
+static float amountValueFromTextConvertProc(float inValue, DGTextDisplay*)
 {
 	return inValue / 10.0f;
 }
@@ -83,9 +83,9 @@ float amountValueFromTextConvertProc(float inValue, DGTextDisplay*)
 class PolarizerSlider final : public DGSlider
 {
 public:
-	PolarizerSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
+	PolarizerSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion,
 					DGImage* inHandleImage, DGImage* inBackgroundImage)
-	:	DGSlider(inOwnerEditor, inParamID, inRegion, dfx::kAxis_Vertical, nullptr, inBackgroundImage), 
+	:	DGSlider(inOwnerEditor, inParamID, inRegion, dfx::kAxis_Vertical, nullptr, inBackgroundImage),
 		mHandleImage(inHandleImage)  // store handle image independently so that CSlider does not base control range on it
 	{
 		setOffsetHandle(VSTGUI::CPoint(0, kSliderFrameThickness));
@@ -163,13 +163,13 @@ long PolarizerEditor::OpenEditor()
 
 	// leap size read-out
 	pos.set(kDisplayX, kDisplayY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kSkip, pos, leapDisplayProc, nullptr, nullptr, dfx::TextAlignment::Center, 
+	emplaceControl<DGTextDisplay>(this, kSkip, pos, leapDisplayProc, nullptr, nullptr, dfx::TextAlignment::Center,
 								  kValueTextSize, DGColor::kBlack, kValueTextFont);
 
 	// polarization amount read-out
 	pos.offset(kSliderInc, 0);
-	auto const amountDisplay = emplaceControl<DGTextDisplay>(this, kAmount, pos, amountDisplayProc, nullptr, nullptr, 
-															 dfx::TextAlignment::Center, kValueTextSize, 
+	auto const amountDisplay = emplaceControl<DGTextDisplay>(this, kAmount, pos, amountDisplayProc, nullptr, nullptr,
+															 dfx::TextAlignment::Center, kValueTextSize,
 															 DGColor::kBlack, kValueTextFont);
 	amountDisplay->setValueFromTextConvertProc(amountValueFromTextConvertProc);
 

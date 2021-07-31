@@ -3,17 +3,17 @@ Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
-Transverb is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Transverb is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Transverb is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Transverb is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -83,7 +83,7 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 void Transverb::dfx_PostConstructor() {
 
 #if TARGET_PLUGIN_USES_MIDI
-  // since we don't use notes for any specialized control of Transverb, 
+  // since we don't use notes for any specialized control of Transverb,
   // allow them to be assigned to control parameters via MIDI learn
   getsettings().setAllowPitchbendEvents(true);
   getsettings().setAllowNoteEvents(true);
@@ -148,7 +148,7 @@ void TransverbDSP::processparameters() {
   if (auto const value = getparameterifchanged_f(kDrymix))
   {
     // balance the audio energy when mono input is fanned out to multiple output channels
-    auto const dryGainScalar = std::sqrt(static_cast<double>(getplugin()->getnuminputs()) / 
+    auto const dryGainScalar = std::sqrt(static_cast<double>(getplugin()->getnuminputs()) /
                                          static_cast<double>(getplugin()->getnumoutputs()));
     drymix = *value * dryGainScalar;
   }
@@ -494,7 +494,7 @@ void Transverb::randomizeparameters()
 	}
 }
 
-long Transverb::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+long Transverb::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
                                     size_t& outDataSize, dfx::PropertyFlags& outFlags)
 {
   if (isSpeedModePropertyID(inPropertyID))
@@ -506,7 +506,7 @@ long Transverb::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inS
   return DfxPlugin::dfx_GetPropertyInfo(inPropertyID, inScope, inItemIndex, outDataSize, outFlags);
 }
 
-long Transverb::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+long Transverb::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
                                 void* outData)
 {
   if (isSpeedModePropertyID(inPropertyID))
@@ -517,7 +517,7 @@ long Transverb::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope
   return DfxPlugin::dfx_GetProperty(inPropertyID, inScope, inItemIndex, outData);
 }
 
-long Transverb::dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+long Transverb::dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
                                 void const* inData, size_t inDataSize)
 {
   if (isSpeedModePropertyID(inPropertyID))
@@ -547,7 +547,7 @@ void Transverb::settings_saveExtendedData(void* outData, bool /*isPreset*/)
   memcpy(outData, speedModeStatesSerialization.data(), settings_sizeOfExtendedData());
 }
 
-void Transverb::settings_restoreExtendedData(void const* inData, size_t storedExtendedDataSize, 
+void Transverb::settings_restoreExtendedData(void const* inData, size_t storedExtendedDataSize,
                                              long dataVersion, bool /*isPreset*/)
 {
   if (storedExtendedDataSize >= settings_sizeOfExtendedData())

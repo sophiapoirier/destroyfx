@@ -3,17 +3,17 @@ Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
-Geometer is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Geometer is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Geometer is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Geometer is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -98,7 +98,7 @@ enum {
   pos_helpiconY = 365,
   pos_helpboxX = pos_helpiconX + 99,
   pos_helpboxY = pos_helpiconY + 1,
-        
+
   pos_midilearnbuttonX = 228,
   pos_midilearnbuttonY = 324,
 
@@ -120,8 +120,8 @@ enum {
 
 //--------------------------------------------------------------------------
 GeometerHelpBox::GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect const & inRegion, DGImage * inBackground)
-  : DGStaticTextDisplay(inOwnerEditor, inRegion, inBackground, dfx::TextAlignment::Left, 
-			dfx::kFontSize_Snooty10px, DGColor::kBlack, dfx::kFontName_Snooty10px), 
+  : DGStaticTextDisplay(inOwnerEditor, inRegion, inBackground, dfx::TextAlignment::Left,
+			dfx::kFontSize_Snooty10px, DGColor::kBlack, dfx::kFontName_Snooty10px),
    helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY)
 {
   // HACK: duplicated from DGHelpBox (TODO: unify this code with DGHelpBox)
@@ -261,45 +261,45 @@ long GeometerEditor::OpenEditor() {
 
   // window shape menu
   pos.set(pos_windowshapemenuX, pos_windowshapemenuY, stdsize, stdsize);
-  emplaceControl<DGButton>(this, P_SHAPE, pos, g_windowshapemenu, 
+  emplaceControl<DGButton>(this, P_SHAPE, pos, g_windowshapemenu,
                            DGButton::Mode::Increment, true)->setNumStates(NUM_WINDOWSHAPES);
   pos.set(51, 164, 119, 16);
   genhelpitemcontrols[HELP_WINDOWSHAPE] = emplaceControl<DGNullControl>(this, pos);
 
   // window size menu
   pos.set(pos_windowsizemenuX, pos_windowsizemenuY, stdsize, stdsize);
-  emplaceControl<DGButton>(this, P_BUFSIZE, pos, g_windowsizemenu, 
+  emplaceControl<DGButton>(this, P_BUFSIZE, pos, g_windowsizemenu,
                            DGButton::Mode::Increment, true);
   pos.set(290, 164, 102, 14);
   genhelpitemcontrols[HELP_WINDOWSIZE] = emplaceControl<DGNullControl>(this, pos);
 
   // how to generate landmarks menu
   pos.set(pos_landmarksmenuX, pos_landmarksmenuY,  stdsize, stdsize);
-  emplaceControl<DGButton>(this, P_POINTSTYLE, pos, g_landmarksmenu, 
+  emplaceControl<DGButton>(this, P_POINTSTYLE, pos, g_landmarksmenu,
                            DGButton::Mode::Increment, true)->setNumStates(NUM_POINTSTYLES);
   pos.set(51, 208, 165, 32);
   genhelpitemcontrols[HELP_LANDMARKS] = emplaceControl<DGNullControl>(this, pos);
 
   // how to recreate them menu
   pos.set(pos_recreatemenuX, pos_recreatemenuY, stdsize, stdsize);
-  emplaceControl<DGButton>(this, P_INTERPSTYLE, pos, g_recreatemenu, 
+  emplaceControl<DGButton>(this, P_INTERPSTYLE, pos, g_recreatemenu,
                            DGButton::Mode::Increment, true)->setNumStates(NUM_INTERPSTYLES);
   pos.set(51, 323, 131, 31);
   genhelpitemcontrols[HELP_RECREATE] = emplaceControl<DGNullControl>(this, pos);
 
   // op 1 menu
   pos.set(pos_op1menuX, pos_op1menuY, stdsize, stdsize);
-  emplaceControl<DGButton>(this, P_POINTOP1, pos, g_opsmenu, 
+  emplaceControl<DGButton>(this, P_POINTOP1, pos, g_opsmenu,
                            DGButton::Mode::Increment, true)->setNumStates(NUM_OPS);
 
   // op 2 menu
   pos.offset(pos_opmenuinc, 0);
-  emplaceControl<DGButton>(this, P_POINTOP2, pos, g_opsmenu, 
+  emplaceControl<DGButton>(this, P_POINTOP2, pos, g_opsmenu,
                            DGButton::Mode::Increment, true)->setNumStates(NUM_OPS);
 
   // op 3 menu
   pos.offset(pos_opmenuinc, 0);
-  emplaceControl<DGButton>(this, P_POINTOP3, pos, g_opsmenu, 
+  emplaceControl<DGButton>(this, P_POINTOP3, pos, g_opsmenu,
                            DGButton::Mode::Increment, true)->setNumStates(NUM_OPS);
 
   pos.set(378, 208, 118, 32);
@@ -341,7 +341,7 @@ long GeometerEditor::OpenEditor() {
     auto const param = choose_multiparam(baseparam);
 
     constexpr long sliderRangeMargin = 1;
-    sliders[i] = emplaceControl<DGSlider>(this, param, pos, dfx::kAxis_Horizontal, 
+    sliders[i] = emplaceControl<DGSlider>(this, param, pos, dfx::kAxis_Horizontal,
                                           g_sliderhandle, g_sliderbackground, sliderRangeMargin);
     sliders[i]->setAlternateHandle(g_sliderhandle_glowing);
 
@@ -354,13 +354,13 @@ long GeometerEditor::OpenEditor() {
     auto const geometerDisplayProc = [](float value, char * outText, void *) -> bool {
       return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.7f", value) > 0;
     };
-    displays[i] = emplaceControl<DGTextDisplay>(this, param, dpos, geometerDisplayProc, 
-                                                nullptr, nullptr, dfx::TextAlignment::Right, dfx::kFontSize_Snooty10px, 
+    displays[i] = emplaceControl<DGTextDisplay>(this, param, dpos, geometerDisplayProc,
+                                                nullptr, nullptr, dfx::TextAlignment::Right, dfx::kFontSize_Snooty10px,
                                                 fontcolor_values, dfx::kFontName_Snooty10px);
     // units label
-    auto const label = emplaceControl<DGTextArrayDisplay>(this, baseparam, lpos, labelstrings->size(), 
-                                                          dfx::TextAlignment::Center, nullptr, 
-                                                          dfx::kFontSize_Snooty10px, fontcolor_labels, 
+    auto const label = emplaceControl<DGTextArrayDisplay>(this, baseparam, lpos, labelstrings->size(),
+                                                          dfx::TextAlignment::Center, nullptr,
+                                                          dfx::kFontSize_Snooty10px, fontcolor_labels,
                                                           dfx::kFontName_Snooty10px);
     long j = 0;
     for (auto const& labelstring : *labelstrings) {
@@ -388,7 +388,7 @@ long GeometerEditor::OpenEditor() {
   genhelpitemcontrols[HELP_MIDIRESET] = CreateMidiResetButton(pos_midiresetbuttonX, pos_midiresetbuttonY, g_midiresetbutton);
 
   // Destroy FX web page link
-  pos.set(pos_destroyfxlinkX, pos_destroyfxlinkY, 
+  pos.set(pos_destroyfxlinkX, pos_destroyfxlinkY,
           g_destroyfxlink->getWidth(), g_destroyfxlink->getHeight() / 2);
   emplaceControl<DGWebLink>(this, pos, g_destroyfxlink, DESTROYFX_URL);
 

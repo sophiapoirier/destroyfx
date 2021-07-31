@@ -3,17 +3,17 @@ Copyright (C) 2000-2021  Sophia Poirier
 
 This file is part of Skidder.
 
-Skidder is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Skidder is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Skidder is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Skidder is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Skidder.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -175,7 +175,7 @@ void Skidder::processValley()
 		bool barSync = false;  // true if we need to sync up with the next bar start
 		mRMS = 0.0;  // reset mRMS now because valley is over
 		//
-		// This is where we figure out how many samples long each 
+		// This is where we figure out how many samples long each
 		// envelope section is for the next skid cycle.
 		//
 		if (mTempoSync)  // the user wants to do tempo sync / beat division rate
@@ -335,7 +335,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 		}
 		else if (ch == 0)
 		{
-			// handle the special case of mismatched input/output channel counts that we allow 
+			// handle the special case of mismatched input/output channel counts that we allow
 			// by repeating the mono-input to multiple (faked) input channels
 			// (copying to an intermediate input buffer in case processing in-place)
 			std::copy_n(mEffectualInputAudioBuffers[ch].data(), inNumFrames, mAsymmetricalInputAudioBuffer.data());
@@ -439,7 +439,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 				{
 					for (unsigned long ch = 0; ch < numOutputs; ch++)
 					{
-						sumInPlace(mInputAudio[ch] + mWaitSamples, mOutputAudio[ch] + mWaitSamples, 
+						sumInPlace(mInputAudio[ch] + mWaitSamples, mOutputAudio[ch] + mWaitSamples,
 								   inNumFrames - dfx::math::ToUnsigned(mWaitSamples));
 					}
 					if (mWaitSamples > 0)
@@ -449,7 +449,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 					}
 					else
 					{
-						// that's all we need to do if there are no notes, 
+						// that's all we need to do if there are no notes,
 						// just copy the input to the output
 						return;
 					}
@@ -536,7 +536,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 					processValley();
 					break;
 			}
-	
+
 			mOutputAudio[0][samp] += processOutput(inputValueL, inputValueR, mPanGainL);
 			mOutputAudio[1][samp] += processOutput(inputValueR, inputValueL, mPanGainR);
 
@@ -584,7 +584,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 					processValley();
 					break;
 			}
-	
+
 			for (unsigned long ch = 0; ch < numOutputs; ch++)
 			{
 				mOutputAudio[ch][samp] += processOutput(mInputAudio[ch][samp], mInputAudio[ch][samp], 1.0f);

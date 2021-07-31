@@ -3,17 +3,17 @@ Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
-Transverb is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Transverb is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Transverb is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Transverb is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <vector>
 
 #include "dfxplugin.h"
@@ -94,17 +95,17 @@ public:
   bool loadpreset(long index) override;  // overriden to support the random preset
   void randomizeparameters() override;
 
-  long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+  long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
                            size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
-  long dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+  long dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
                        void* outData) override;
-  long dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+  long dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
                        void const* inData, size_t inDataSize) override;
 
 protected:
   size_t settings_sizeOfExtendedData() const noexcept override;
   void settings_saveExtendedData(void* outData, bool isPreset) override;
-  void settings_restoreExtendedData(void const* inData, size_t storedExtendedDataSize, 
+  void settings_restoreExtendedData(void const* inData, size_t storedExtendedDataSize,
                                     long dataVersion, bool isPreset) override;
   void settings_doChunkRestoreSetParameterStuff(long tag, float value, long dataVersion, long presetNum) override;
 
@@ -120,15 +121,15 @@ private:
 };
 
 
-inline float TransverbDSP::InterpolateHermite(float* data, double address, 
+inline float TransverbDSP::InterpolateHermite(float* data, double address,
                                               int arraysize, int danger) {
   int posMinus1 = 0, posPlus1 = 0, posPlus2 = 0;
 
   auto const pos = (int)address;
   auto const posFract = (float)(address - (double)pos);
 
-  // because the readers and writer are not necessarily aligned, 
-  // upcoming or previous samples could be discontiguous, in which case 
+  // because the readers and writer are not necessarily aligned,
+  // upcoming or previous samples could be discontiguous, in which case
   // just "interpolate" with repeated samples
   switch (danger) {
     case 0:  // the previous sample is bogus
@@ -151,9 +152,9 @@ inline float TransverbDSP::InterpolateHermite(float* data, double address,
       break;
   }
 
-  float const a = ((3.0f * (data[pos] - data[posPlus1])) - 
+  float const a = ((3.0f * (data[pos] - data[posPlus1])) -
                    data[posMinus1] + data[posPlus2]) * 0.5f;
-  float const b = (2.0f * data[posPlus1]) + data[posMinus1] - 
+  float const b = (2.0f * data[posPlus1]) + data[posMinus1] -
                   (2.5f * data[pos]) - (data[posPlus2] * 0.5f);
   float const c = (data[posPlus1] - data[posMinus1]) * 0.5f;
 
@@ -165,9 +166,9 @@ inline float TransverbDSP::InterpolateHermitePostLowpass(float* data, float addr
   auto const pos = (int)address;
   float const posFract = address - (float)pos;
 
-  float const a = ((3.0f * (data[1] - data[2])) - 
+  float const a = ((3.0f * (data[1] - data[2])) -
                    data[0] + data[3]) * 0.5f;
-  float const b = (2.0f * data[2]) + data[0] - 
+  float const b = (2.0f * data[2]) + data[0] -
                   (2.5f * data[1]) - (data[3] * 0.5f);
   float const c = (data[2] - data[0]) * 0.5f;
 
@@ -175,20 +176,20 @@ inline float TransverbDSP::InterpolateHermitePostLowpass(float* data, float addr
 }
 */
 
-inline float TransverbDSP::InterpolateLinear(float* data, double address, 
+inline float TransverbDSP::InterpolateLinear(float* data, double address,
                                              int arraysize, int danger) {
 	int posPlus1 = 0;
 	auto const pos = (int)address;
 	auto const posFract = (float)(address - (double)pos);
 
 	if (danger == 1) {
-		// the upcoming sample is not contiguous because 
+		// the upcoming sample is not contiguous because
 		// the write head is about to write to it
 		posPlus1 = pos;
 	} else {
 		// it's alright
 		posPlus1 = (pos + 1) % arraysize;
 	}
-	return (data[pos] * (1.0f - posFract)) + 
+	return (data[pos] * (1.0f - posFract)) +
 			(data[posPlus1] * posFract);
 }

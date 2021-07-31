@@ -3,17 +3,17 @@ Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
-Transverb is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Transverb is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Transverb is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Transverb is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -81,8 +81,8 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
               // update the coefficients only if necessary
               if (std::exchange(speed1hasChanged, false))
               {
-                dfx::FIRFilter::calculateIdealLowpassCoefficients((samplerate / speed1.getValue()) * dfx::FIRFilter::kShelfStartLowpass, 
-                                                                  samplerate, kNumFIRTaps, firCoefficients1.data(), 
+                dfx::FIRFilter::calculateIdealLowpassCoefficients((samplerate / speed1.getValue()) * dfx::FIRFilter::kShelfStartLowpass,
+                                                                  samplerate, kNumFIRTaps, firCoefficients1.data(),
                                                                   firCoefficientsWindow.data());
                 filter1.reset();
               }
@@ -117,8 +117,8 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
               mug2 = (float) std::pow(speed2.getValue() * 0.2, 0.78);  // compensate for gain lost from filtering
               if (std::exchange(speed2hasChanged, false))
               {
-                dfx::FIRFilter::calculateIdealLowpassCoefficients((samplerate / speed2.getValue()) * dfx::FIRFilter::kShelfStartLowpass, 
-                                                                  samplerate, kNumFIRTaps, firCoefficients2.data(), 
+                dfx::FIRFilter::calculateIdealLowpassCoefficients((samplerate / speed2.getValue()) * dfx::FIRFilter::kShelfStartLowpass,
+                                                                  samplerate, kNumFIRTaps, firCoefficients2.data(),
                                                                   firCoefficientsWindow.data());
                 filter2.reset();
               }
@@ -158,7 +158,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
           r1val = InterpolateHermite(buf1.data(), read1, bsize, writer - read1int);
           r2val = InterpolateHermite(buf2.data(), read2, bsize, writer - read2int);
           break;
-        // spline interpolation plus anti-aliasing lowpass filtering for high speeds 
+        // spline interpolation plus anti-aliasing lowpass filtering for high speeds
         // or sub-bass-removing highpass filtering for low speeds
         case kQualityMode_UltraHiFi:
           switch (filterMode1)
@@ -171,9 +171,9 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
             case FilterMode::LowpassFIR:
             {
               // get 2 consecutive FIR output values for linear interpolation
-              auto const lp1 = dfx::FIRFilter::process(buf1.data(), kNumFIRTaps, firCoefficients1.data(), 
+              auto const lp1 = dfx::FIRFilter::process(buf1.data(), kNumFIRTaps, firCoefficients1.data(),
                                                        (read1int - static_cast<int>(kNumFIRTaps) + bsize) % bsize, bsize);
-              auto const lp2 = dfx::FIRFilter::process(buf1.data(), kNumFIRTaps, firCoefficients1.data(), 
+              auto const lp2 = dfx::FIRFilter::process(buf1.data(), kNumFIRTaps, firCoefficients1.data(),
                                                        (read1int - static_cast<int>(kNumFIRTaps) + 1 + bsize) % bsize, bsize);
               // interpolate output linearly (avoid shit sound) and compensate gain
               r1val = dfx::math::InterpolateLinear(lp1, lp2, read1) * mug1;
@@ -193,9 +193,9 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
             case FilterMode::LowpassFIR:
             {
               // get 2 consecutive FIR output values for linear interpolation
-              auto const lp1 = dfx::FIRFilter::process(buf2.data(), kNumFIRTaps, firCoefficients2.data(), 
+              auto const lp1 = dfx::FIRFilter::process(buf2.data(), kNumFIRTaps, firCoefficients2.data(),
                                                        (read2int - static_cast<int>(kNumFIRTaps) + bsize) % bsize, bsize);
-              auto const lp2 = dfx::FIRFilter::process(buf2.data(), kNumFIRTaps, firCoefficients2.data(), 
+              auto const lp2 = dfx::FIRFilter::process(buf2.data(), kNumFIRTaps, firCoefficients2.data(),
                                                        (read2int - static_cast<int>(kNumFIRTaps) + 1 + bsize) % bsize, bsize);
               // interpolate output linearly (avoid shit sound) and compensate gain
               r2val = dfx::math::InterpolateLinear(lp1, lp2, read2) * mug2;
@@ -208,15 +208,15 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
           break;
       }  // end of quality switch
 
-      // crossfade the last stored smoothing sample with 
+      // crossfade the last stored smoothing sample with
       // the current sample if smoothing is in progress
       if (smoothcount1) {
-        r1val = (r1val * (1.0f - (smoothstep1 * (float)smoothcount1))) 
+        r1val = (r1val * (1.0f - (smoothstep1 * (float)smoothcount1)))
                 + (lastr1val * smoothstep1 * (float)smoothcount1);
         smoothcount1--;
       }
       if (smoothcount2) {
-        r2val = (r2val * (1.0f - (smoothstep2 * (float)smoothcount2))) 
+        r2val = (r2val * (1.0f - (smoothstep2 * (float)smoothcount2)))
                 + (lastr2val * smoothstep2 * (float)smoothcount2);
         smoothcount2--;
       }
@@ -230,7 +230,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       /* make output */
       outAudio[i] = (inAudio[i] * drymix.getValue()) + (r1val * mix1.getValue()) + (r2val * mix2.getValue());
 
-      /* start smoothing stuff if the writer has 
+      /* start smoothing stuff if the writer has
          passed a reader or vice versa, though not
          if reader and writer move at the same speed
            (check the positions before wrapping around the heads)
@@ -240,14 +240,14 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       bool const read1CrossingBehind = (read1int >= writer) && (((int)(read1 + speed1.getValue())) <= (writer + 1));
       bool const speed1IsUnity = speed1.getValue() == 1.0f;
       if ((read1CrossingAhead || read1CrossingBehind) && !speed1IsUnity) {
-      /* check because, at slow speeds, 
+      /* check because, at slow speeds,
       it's possible to go into this twice or more in a row */
         if (smoothcount1 <= 0) {
           // store the most recent output as the channel 1 smoothing sample
           lastr1val = r1val;
           // truncate the smoothing duration if we're using too small of a buffer size
-          smoothdur1 = 
-            (kAudioSmoothingDur_samples > (int)(bsize_float / speed1.getValue())) ? 
+          smoothdur1 =
+            (kAudioSmoothingDur_samples > (int)(bsize_float / speed1.getValue())) ?
             (int)(bsize_float / speed1.getValue()) : kAudioSmoothingDur_samples;
           smoothstep1 = 1.0f / (float)smoothdur1;  // the scalar step value
           smoothcount1 = smoothdur1;  // set the counter to the total duration
@@ -263,8 +263,8 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
           // store the most recent output as the channel 2 smoothing sample
           lastr2val = r2val;
           // truncate the smoothing duration if we're using too small of a buffer size
-          smoothdur2 = 
-            (kAudioSmoothingDur_samples > (int)(bsize_float / speed2.getValue())) ? 
+          smoothdur2 =
+            (kAudioSmoothingDur_samples > (int)(bsize_float / speed2.getValue())) ?
             (int)(bsize_float / speed2.getValue()) : kAudioSmoothingDur_samples;
           smoothstep2 = 1.0f / (float)smoothdur2;  // the scalar step value
           smoothcount2 = smoothdur2;  // set the counter to the total duration
@@ -283,9 +283,9 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       if (read2 >= bsize_float)
         read2 = std::fmod(std::fabs(read2), bsize_float);
 
-      // if we're doing IIR lowpass filtering, 
-      // then we probably need to process a few consecutive samples in order 
-      // to get the continuous impulse (or whatever you call that), 
+      // if we're doing IIR lowpass filtering,
+      // then we probably need to process a few consecutive samples in order
+      // to get the continuous impulse (or whatever you call that),
       // probably whatever the speed multiplier is, that's how many samples
       if (filterMode1 == FilterMode::LowpassIIR)
       {
@@ -325,7 +325,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
           lowpass1pos = (lowpass1pos + 1) % bsize;
         }
       }
-      // it's simpler for highpassing; 
+      // it's simpler for highpassing;
       // we may not even need to process anything for this sample
       else if (filterMode1 == FilterMode::Highpass)
       {
@@ -389,11 +389,11 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
 
   /////////////   T O M S O U N D   //////////////
   else {
-    // the essense of TOMSOUND comes from the error that Tom made 
-    // of putting the channels loop within the samples loop, 
-    // rather than the other way around; the result is that the 
-    // writer and readers get incremented for each channel on each 
-    // sample frame, i.e. doubly incremented, hence the double r/w 
+    // the essense of TOMSOUND comes from the error that Tom made
+    // of putting the channels loop within the samples loop,
+    // rather than the other way around; the result is that the
+    // writer and readers get incremented for each channel on each
+    // sample frame, i.e. doubly incremented, hence the double r/w
     // incrementing in this single-channel emulation of TOMSOUND
     constexpr int tomsoundMultiple = 2;
     constexpr auto tomsoundMultiple_float = (double)tomsoundMultiple;
@@ -430,9 +430,9 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
 
     /* then write into buffer (w/ feedback) */
     if (!freeze) {
-      buf1[writer] = 
-        inAudio[j] + 
-        (feed1.getValue() * r1val) + 
+      buf1[writer] =
+        inAudio[j] +
+        (feed1.getValue() * r1val) +
         (feed2.getValue() * r2val);
     }
 

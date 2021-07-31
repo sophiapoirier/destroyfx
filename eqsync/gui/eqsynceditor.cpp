@@ -3,17 +3,17 @@ Copyright (C) 2001-2021  Sophia Poirier
 
 This file is part of EQ Sync.
 
-EQ Sync is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+EQ Sync is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-EQ Sync is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+EQ Sync is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with EQ Sync.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -50,7 +50,7 @@ enum
 	kHostSyncButtonY = 164,
 	kHostSyncButtonX_Panther = 56,
 	kHostSyncButtonY_Panther = 160,
-	
+
 	kDestroyFXLinkX = 158,
 	kDestroyFXLinkY = 12,
 	kDestroyFXLinkX_Panther = 159,
@@ -85,9 +85,9 @@ static int GetMacOSVersion()
 class EQSyncSlider final : public DGSlider
 {
 public:
-	EQSyncSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
+	EQSyncSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion,
 				 dfx::Axis inOrientation, DGImage* inHandle, DGImage* inHandleClicked, DGImage* inBackground)
-	:	DGSlider(inOwnerEditor, inParamID, inRegion, inOrientation, inHandle, inBackground), 
+	:	DGSlider(inOwnerEditor, inParamID, inRegion, inOrientation, inHandle, inBackground),
 		mRegularHandle(inHandle), mClickedHandle(inHandleClicked)
 	{
 	}

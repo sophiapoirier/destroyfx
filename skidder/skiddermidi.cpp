@@ -3,17 +3,17 @@ Copyright (C) 2000-2021  Sophia Poirier
 
 This file is part of Skidder.
 
-Skidder is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Skidder is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Skidder is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Skidder is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Skidder.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -78,7 +78,7 @@ void Skidder::processMidiNotes()
 		}
 	}
 
-	// check to see whether we are internally in a state of note being on but all, 
+	// check to see whether we are internally in a state of note being on but all,
 	// and do the Skidder notes-off stuff if we have no notes remaining on
 	if (noteWasOn && !isAnyNoteOn())
 	{
@@ -193,11 +193,11 @@ bool Skidder::isAnyNoteOn() const
 }
 
 
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 // this gets called when Skidder automates a parameter from CC messages.
 // this is where we can link parameter automation for rangeslider points.
-void Skidder::settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, long eventChannel, long eventNum, 
-											 unsigned long /*offsetFrames*/, long eventNum2, dfx::MidiEventBehaviorFlags eventBehaviourFlags, 
+void Skidder::settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, long eventChannel, long eventNum,
+											 unsigned long /*offsetFrames*/, long eventNum2, dfx::MidiEventBehaviorFlags eventBehaviourFlags,
 											 long data1, long data2, float fdata1, float fdata2)
 {
 	if (getsettings().getSteal())
@@ -210,28 +210,28 @@ void Skidder::settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventT
 		case kPulsewidth:
 			if (mPulsewidthDoubleAutomate)
 			{
-				getsettings().assignParam(kPulsewidthRandMin, eventType, eventChannel, eventNum, eventNum2, 
+				getsettings().assignParam(kPulsewidthRandMin, eventType, eventChannel, eventNum, eventNum2,
 										  eventBehaviourFlags, data1, data2, fdata1, fdata2);
 			}
 			break;
 		case kPulsewidthRandMin:
 			if (mPulsewidthDoubleAutomate)
 			{
-				getsettings().assignParam(kPulsewidth, eventType, eventChannel, eventNum, eventNum2, 
+				getsettings().assignParam(kPulsewidth, eventType, eventChannel, eventNum, eventNum2,
 										  eventBehaviourFlags, data1, data2, fdata1, fdata2);
 			}
 			break;
 		case kFloor:
 			if (mFloorDoubleAutomate)
 			{
-				getsettings().assignParam(kFloorRandMin, eventType, eventChannel, eventNum, eventNum2, 
+				getsettings().assignParam(kFloorRandMin, eventType, eventChannel, eventNum, eventNum2,
 										  eventBehaviourFlags, data1, data2, fdata1, fdata2);
 			}
 			break;
 		case kFloorRandMin:
 			if (mFloorDoubleAutomate)
 			{
-				getsettings().assignParam(kFloor, eventType, eventChannel, eventNum, eventNum2, 
+				getsettings().assignParam(kFloor, eventType, eventChannel, eventNum, eventNum2,
 										  eventBehaviourFlags, data1, data2, fdata1, fdata2);
 			}
 			break;
@@ -241,7 +241,7 @@ void Skidder::settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventT
 }
 
 /*
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 void Skidder::settings_unassignParam(long tag)
 {
 	VstChunk::unassignParam(tag);

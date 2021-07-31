@@ -3,17 +3,17 @@ Copyright (C) 2001-2021  Sophia Poirier
 
 This file is part of Rez Synth.
 
-Rez Synth is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Rez Synth is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Rez Synth is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Rez Synth is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Rez Synth.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -82,7 +82,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	addparametergroup("mix", {kFilterOutputGain, kBetweenGain, kDryWetMix, kDryWetMixMode});
 
 
-	// this would apply if this was an instrument, but as an effect, the tail is really 
+	// this would apply if this was an instrument, but as an effect, the tail is really
 	// more about the resonance ring-out, however I do not know how to estimate that so...
 	settailsize_seconds(getparametermax_f(kEnvRelease) * 0.001);
 
@@ -258,7 +258,7 @@ void RezSynth::processparameters()
 		clearChannelsOfNotesOfBands(mPrevPrevOutValue);
 	}
 
-	if (getparameterchanged(kEnvAttack) || getparameterchanged(kEnvDecay) 
+	if (getparameterchanged(kEnvAttack) || getparameterchanged(kEnvDecay)
 		|| getparameterchanged(kEnvSustain) || getparameterchanged(kEnvRelease))
 	{
 		getmidistate().setEnvParameters(mAttack_Seconds, mDecay_Seconds, mSustain, mRelease_Seconds);

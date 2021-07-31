@@ -3,17 +3,17 @@ Copyright (C) 2001-2021  Sophia Poirier
 
 This file is part of Rez Synth.
 
-Rez Synth is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Rez Synth is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Rez Synth is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Rez Synth is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Rez Synth.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -22,7 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "rezsynth.h"
 
 #include <cmath>
-
+#include <tuple>
 
 //-----------------------------------------------------------------------------------------
 // this function tries to even out the wildly erratic resonant amplitudes
@@ -94,7 +94,7 @@ int RezSynth::calculateCoefficients(int currentNote)
 		}
 
 		mBandBandwidth[currentNote][bandcount] = getBandwidthForFreq(bandCenterFreq);
-	
+
 // CALCULATE THE COEFFICIENTS FOR THE 2 DELAYED INPUTS IN THE FILTER
 // and CALCULATE THE COEFFICIENT FOR THE CURRENT INPUT SAMPLE IN THE FILTER
 		// kScaleMode_None -> no scaling; input gain = 1
@@ -105,7 +105,7 @@ int RezSynth::calculateCoefficients(int currentNote)
 			// based on the reson opcode in Csound
 			case kResonAlg_2PoleNoZero:
 			default:
-				// this value is usually just approaching 1 from below (i.e. 0.999) but gets smaller 
+				// this value is usually just approaching 1 from below (i.e. 0.999) but gets smaller
 				// and perhaps approaches 0 as bandwidth and/or the center freq distance from base freq grow
 				mPrevPrevOutCoeff[bandcount] = std::exp((bandCenterFreq / baseFreq) * mBandBandwidth[currentNote][bandcount].getValue() * -mTwoPiDivSR);
 				// this value, at 44.1 kHz, moves in a curve from 2 to -2 as the center frequency goes from 0 to ~20 kHz
@@ -125,11 +125,11 @@ int RezSynth::calculateCoefficients(int currentNote)
 				}
 				break;
 
-			// an implementation of the 2-pole, 2-zero resononant filter 
-			// described by Julius O. Smith and James B. Angell in 
-			// "A Constant Gain Digital Resonator Tuned By A Single Coefficient," 
-			// Computer Music Journal, Vol. 6, No. 4, Winter 1982, p.36-39 
-			// (where the zeros are at +/- the square root of r, 
+			// an implementation of the 2-pole, 2-zero resononant filter
+			// described by Julius O. Smith and James B. Angell in
+			// "A Constant Gain Digital Resonator Tuned By A Single Coefficient,"
+			// Computer Music Journal, Vol. 6, No. 4, Winter 1982, p.36-39
+			// (where the zeros are at +/- the square root of r,
 			// where r is the pole radius of the resonant filter)
 			case kResonAlg_2Pole2ZeroR:
 				mPrevOutCoeff[bandcount] = 2.0 * r * std::cos(bandCenterFreq * mTwoPiDivSR);
@@ -169,8 +169,8 @@ int RezSynth::calculateCoefficients(int currentNote)
 
 //-----------------------------------------------------------------------------------------
 // This function writes the filtered audio output.
-void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outAudio, 
-								 unsigned long sampleFrameOffset, unsigned long sampleFrames, 
+void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outAudio,
+								 unsigned long sampleFrameOffset, unsigned long sampleFrames,
 								 int currentNote, int numBands)
 {
 	auto const numChannels = getnumoutputs();
@@ -211,8 +211,8 @@ void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outA
 			for (int bandIndex = 0; bandIndex < numBands; bandIndex++)
 			{
 				// filter using the input, delayed values, and their filter coefficients
-				double const curBandOutValue = (mInputAmp[bandIndex] * (inAudio[ch][sampleIndex] - mPrevPrevInCoeff[bandIndex] * mPrevPrevInValue[ch][currentNote])) 
-											   + (mPrevOutCoeff[bandIndex] * mPrevOutValue[ch][currentNote][bandIndex]) 
+				double const curBandOutValue = (mInputAmp[bandIndex] * (inAudio[ch][sampleIndex] - mPrevPrevInCoeff[bandIndex] * mPrevPrevInValue[ch][currentNote]))
+											   + (mPrevOutCoeff[bandIndex] * mPrevOutValue[ch][currentNote][bandIndex])
 											   - (mPrevPrevOutCoeff[bandIndex] * mPrevPrevOutValue[ch][currentNote][bandIndex]);
 
 				bandOutputSum += curBandOutValue;
@@ -300,14 +300,14 @@ double RezSynth::getBandwidthForFreq(double inFreq) const
 }
 
 //-----------------------------------------------------------------------------------------
-// This function checks if the latest note message is a note-on for a note that's currently off.  
+// This function checks if the latest note message is a note-on for a note that's currently off.
 // If it is, then that note's filter feedback buffers are cleared.
 void RezSynth::checkForNewNote(long currentEvent)
 {
 	// store the current note MIDI number
 	auto const currentNote = getmidistate().getBlockEvent(currentEvent).mByte1;
 
-	// if this latest event is a note-on and this note isn't still active 
+	// if this latest event is a note-on and this note isn't still active
 	// from being previously played, then clear this note's delay buffers
 	if ((getmidistate().getBlockEvent(currentEvent).mStatus == DfxMidi::kStatus_NoteOn)  // it's a note-on
 		&& !getmidistate().isNoteActive(currentNote))  // this note is currently off

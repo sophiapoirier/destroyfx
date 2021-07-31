@@ -3,17 +3,17 @@ Copyright (C) 2000-2021  Sophia Poirier
 
 This file is part of Skidder.
 
-Skidder is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Skidder is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Skidder is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Skidder is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Skidder.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -33,7 +33,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "temporatetable.h"
 
 
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 // these are the plugin parameters:
 enum
 {
@@ -59,7 +59,7 @@ enum
 	kNumParameters
 };
 
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 // these are the MIDI note control modes:
 enum
 {
@@ -69,7 +69,7 @@ enum
 	kNumMidiModes
 };
 
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 enum
 {
 	kCrossoverMode_All,
@@ -80,7 +80,7 @@ enum
 
 
 
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 class Skidder final : public DfxPlugin
 {
 public:
@@ -96,9 +96,9 @@ public:
 	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
 
 	// stuff for extending DfxSettings
-	void settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, long eventChannel, 
-										long eventNum, unsigned long offsetFrames, long eventNum2 = 0, 
-										dfx::MidiEventBehaviorFlags eventBehaviourFlags = dfx::kMidiEventBehaviorFlag_None, 
+	void settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, long eventChannel,
+										long eventNum, unsigned long offsetFrames, long eventNum2 = 0,
+										dfx::MidiEventBehaviorFlags eventBehaviourFlags = dfx::kMidiEventBehaviorFlag_None,
 										long data1 = 0, long data2 = 0, float fdata1 = 0.0f, float fdata2 = 0.0f) override;
 //	void settings_unassignParam(long tag) override;
 

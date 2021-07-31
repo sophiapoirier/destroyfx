@@ -3,17 +3,17 @@ Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
-Geometer is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Geometer is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Geometer is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Geometer is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -41,18 +41,18 @@ class PLUGIN final : public DfxPlugin {
 public:
   static constexpr long BUFFERSIZESSIZE = 14;
 
-  static constexpr std::array<int, BUFFERSIZESSIZE> buffersizes {{ 
-    4, 8, 16, 32, 64, 128, 256, 512, 
-    1024, 2048, 4096, 8192, 16384, 32768, 
+  static constexpr std::array<int, BUFFERSIZESSIZE> buffersizes {{
+    4, 8, 16, 32, 64, 128, 256, 512,
+    1024, 2048, 4096, 8192, 16384, 32768,
   }};
 
   explicit PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
   void dfx_PostConstructor() override;
 
-  long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+  long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
                            size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
-  long dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+  long dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
                        void* outData) override;
 
   void randomizeparameter(long inParameterIndex) override;
@@ -113,7 +113,7 @@ private:
   */
   std::vector<float> in0, out0;
 
-  /* buffersize is 3 * third, framesize is 2 * third 
+  /* buffersize is 3 * third, framesize is 2 * third
      buffersize is used for outbuf.
   */
   int bufsize = 0, framesize = 0, third = 0;

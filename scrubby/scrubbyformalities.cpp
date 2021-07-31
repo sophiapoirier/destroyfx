@@ -3,17 +3,17 @@ Copyright (C) 2002-2021  Sophia Poirier
 
 This file is part of Scrubby.
 
-Scrubby is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Scrubby is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Scrubby is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Scrubby is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Scrubby.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -54,7 +54,7 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_b(kSplitChannels, {"channels split", "Channel", "Chanel", "Chan"}, false, false);
 	initparameter_b(kPitchConstraint, {"pitch constraint", "PtchCon", "PtchCn", "Ptch"}, false, false);
 	// default all notes to off (looks better on the GUI)
-	// no, I changed my mind, at least leave one note on so that the user isn't 
+	// no, I changed my mind, at least leave one note on so that the user isn't
 	// confused the first time turning on pitch constraint and getting silence
 	initparameter_b(kPitchStep0, {"semi0 (unity/octave)"}, true, false);
 	initparameter_b(kPitchStep1, {"semi1 (minor 2nd)"}, false, false);
@@ -130,7 +130,7 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //-------------------------------------------------------------------------
 void Scrubby::dfx_PostConstructor()
 {
-	// since we don't use pitchbend for anything special, 
+	// since we don't use pitchbend for anything special,
 	// allow it be assigned to control parameters
 	getsettings().setAllowPitchbendEvents(true);
 	// can't load old VST-style settings
@@ -168,7 +168,7 @@ mSineCount = 0;
 //-----------------------------------------------------------------------------
 void Scrubby::createbuffers()
 {
-	// the number of samples in the maximum seek range, 
+	// the number of samples in the maximum seek range,
 	// dividing by the minimum seek rate for extra leeway while moving
 	mMaxAudioBufferSize = std::lround(getparametermax_f(kSeekRange) * 0.001 * getsamplerate_f() / getparametermin_f(kSeekRate_Hz));
 	mMaxAudioBufferSize_f = static_cast<double>(mMaxAudioBufferSize);

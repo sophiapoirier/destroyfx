@@ -3,17 +3,17 @@ Copyright (C) 2001-2021  Sophia Poirier
 
 This file is part of Monomaker.
 
-Monomaker is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Monomaker is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Monomaker is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Monomaker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Monomaker.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -60,7 +60,7 @@ Monomaker::Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 /*
 left_output = cos(p) * input
 right_output = sin(p) * input
-where p is 0¡ to 90¡ (or 0 to 1/2 ¹), with 45¡ center
+where p is 0Â° to 90Â° (or 0 to 1/2 Ï€), with 45Â° center
 */
 /*
 Stereo Pan supports three different kinds of pan law:  0 dB, -3 dB, and -6 dB.
@@ -194,7 +194,7 @@ void Monomaker::processparameters()
 //-----------------------------------------------------------------------------------------
 void Monomaker::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
 {
-	// point the input signal pointers to the correct input streams, 
+	// point the input signal pointers to the correct input streams,
 	// according to the input selection (or dual-left if we only have 1 input)
 	float const* inAudioL {}, * inAudioR {};
 	if (getnuminputs() == getnumoutputs())

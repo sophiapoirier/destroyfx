@@ -3,17 +3,17 @@ Copyright (C) 2001-2021  Sophia Poirier
 
 This file is part of Rez Synth.
 
-Rez Synth is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Rez Synth is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Rez Synth is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Rez Synth is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Rez Synth.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -109,7 +109,7 @@ constexpr float kUnusedControlAlpha = 0.39f;
 //-----------------------------------------------------------------------------
 // value text display procedures
 
-bool bandwidthAmountDisplayProc(float inValue, char* outText, void* inEditor)
+static bool bandwidthAmountDisplayProc(float inValue, char* outText, void* inEditor)
 {
 	const auto success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
 	if (static_cast<DfxGuiEditor*>(inEditor)->getparameter_i(kBandwidthMode) == kBandwidthAmount_Hz)
@@ -123,12 +123,12 @@ bool bandwidthAmountDisplayProc(float inValue, char* outText, void* inEditor)
 	return success;
 }
 
-bool numBandsDisplayProc(float inValue, char* outText, void*)
+static bool numBandsDisplayProc(float inValue, char* outText, void*)
 {
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f", inValue) > 0;
 }
 
-bool sepAmountDisplayProc(float inValue, char* outText, void* inEditor)
+static bool sepAmountDisplayProc(float inValue, char* outText, void* inEditor)
 {
 	if (static_cast<DfxGuiEditor*>(inEditor)->getparameter_i(kSepMode) == kSeparationMode_Octaval)
 	{
@@ -140,7 +140,7 @@ bool sepAmountDisplayProc(float inValue, char* outText, void* inEditor)
 	}
 }
 
-bool attackDecayReleaseDisplayProc(float inValue, char* outText, void*)
+static bool attackDecayReleaseDisplayProc(float inValue, char* outText, void*)
 {
 	long const thousands = static_cast<long>(inValue) / 1000;
 	float const remainder = std::fmod(inValue, 1000.0f);
@@ -159,29 +159,29 @@ bool attackDecayReleaseDisplayProc(float inValue, char* outText, void*)
 	return success;
 }
 
-bool percentGenDisplayProc(float inValue, char* outText, int inPrecision)
+static bool percentGenDisplayProc(float inValue, char* outText, int inPrecision)
 {
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.*f%%", inPrecision, inValue) > 0;
 }
 
-bool percentDisplayProc(float inValue, char* outText, void*)
+static bool percentDisplayProc(float inValue, char* outText, void*)
 {
 	return percentGenDisplayProc(inValue, outText, 0);
 }
 
-bool sustainDisplayProc(float inValue, char* outText, void*)
+static bool sustainDisplayProc(float inValue, char* outText, void*)
 {
 	// the parameter is scaled and has a lot more resolution at low values, so add display precision
 	int const precision = (inValue <= 0.9f) ? 1 : 0;
 	return percentGenDisplayProc(inValue, outText, precision);
 }
 
-bool velocityCurveDisplayProc(float inValue, char* outText, void*)
+static bool velocityCurveDisplayProc(float inValue, char* outText, void*)
 {
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
 }
 
-bool pitchBendDisplayProc(float inValue, char* outText, void*)
+static bool pitchBendDisplayProc(float inValue, char* outText, void*)
 {
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s%.2f semitones", dfx::kPlusMinusUTF8, inValue) > 0;
 }
@@ -382,7 +382,7 @@ long RezSynthEditor::OpenEditor()
 
 
 
-	// this will initialize the translucency state of dependent controls 
+	// this will initialize the translucency state of dependent controls
 	HandleLegatoChange();
 
 
@@ -505,19 +505,19 @@ std::string RezSynthEditor::GetHelpForControl(IDGControl* inControl) const
 	if (inControl == mTitleArea)
 	{
 		return R"DELIM(Rez Synth allows you to "play" resonant band-pass filter banks.
-The center frequency of a bank's base filter is controlled by MIDI notes. 
+The center frequency of a bank's base filter is controlled by MIDI notes.
 Additional filters in each bank (if any) have ascending center frequencies.)DELIM";
 	}
 	if (inControl == mMidiLearnButton)
 	{
 		return R"DELIM(MIDI learn:  toggle "MIDI learn" mode for CC control of parameters
-When enabled, you can click on a parameter control and then the next 
+When enabled, you can click on a parameter control and then the next
 MIDI CC received will be assigned to control that parameter.)DELIM";
 	}
 	if (inControl == mMidiResetButton)
 	{
 		return R"DELIM(MIDI reset:  erase CC assignments
-Push this button to erase all of your MIDI CC -> parameter assignments.  
+Push this button to erase all of your MIDI CC -> parameter assignments.
 Then CCs will not affect any parameters and you can start over.)DELIM";
 	}
 

@@ -3,17 +3,17 @@ Copyright (C) 2000-2021  Sophia Poirier
 
 This file is part of Skidder.
 
-Skidder is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Skidder is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Skidder is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Skidder is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Skidder.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -100,7 +100,7 @@ enum
 //-----------------------------------------------------------------------------
 // parameter value string display conversion functions
 
-bool rateGenDisplayProc(float inValue, long inSyncParameterID, char* outText, DfxGuiEditor* inEditor, bool inShowUnits)
+static bool rateGenDisplayProc(float inValue, long inSyncParameterID, char* outText, DfxGuiEditor* inEditor, bool inShowUnits)
 {
 	if (inEditor->getparameter_b(kTempoSync))
 	{
@@ -126,22 +126,22 @@ bool rateGenDisplayProc(float inValue, long inSyncParameterID, char* outText, Df
 	return false;
 }
 
-bool rateDisplayProc(float inValue, char* outText, void* inEditor)
+static bool rateDisplayProc(float inValue, char* outText, void* inEditor)
 {
 	return rateGenDisplayProc(inValue, kRate_Sync, outText, static_cast<DfxGuiEditor*>(inEditor), true);
 }
 
-bool rateRandMinDisplayProc(float inValue, char* outText, void* inEditor)
+static bool rateRandMinDisplayProc(float inValue, char* outText, void* inEditor)
 {
 	return rateGenDisplayProc(inValue, kRateRandMin_Sync, outText, static_cast<DfxGuiEditor*>(inEditor), false);
 }
 
-bool slopeDisplayProc(float inValue, char* outText, void*)
+static bool slopeDisplayProc(float inValue, char* outText, void*)
 {
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f ms", inValue) > 0;
 }
 
-bool crossoverDisplayProc(float inValue, char* outText, void*)
+static bool crossoverDisplayProc(float inValue, char* outText, void*)
 {
 	if (inValue >= 1'000.f)
 	{
@@ -150,7 +150,7 @@ bool crossoverDisplayProc(float inValue, char* outText, void*)
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f Hz", inValue) > 0;
 }
 
-std::optional<float> crossoverTextToValueProc(std::string const& inText, DGTextDisplay* inTextDisplay)
+static std::optional<float> crossoverTextToValueProc(std::string const& inText, DGTextDisplay* inTextDisplay)
 {
 	auto const value = DGTextDisplay::textToValueProc_Generic(inText, inTextDisplay);
 	if (value && (dfx::ToLower(inText).find("khz") != std::string::npos))
@@ -160,7 +160,7 @@ std::optional<float> crossoverTextToValueProc(std::string const& inText, DGTextD
 	return value;
 }
 
-bool gainRandMinDisplayProc(float inValue, char* outText, void* inUserData)
+static bool gainRandMinDisplayProc(float inValue, char* outText, void* inUserData)
 {
 	auto const success = DGTextDisplay::valueToTextProc_LinearToDb(inValue, outText, inUserData);
 	if (success)
@@ -174,7 +174,7 @@ bool gainRandMinDisplayProc(float inValue, char* outText, void* inUserData)
 	return success;
 }
 
-bool tempoDisplayProc(float inValue, char* outText, void*)
+static bool tempoDisplayProc(float inValue, char* outText, void*)
 {
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f bpm", inValue) > 0;
 }
@@ -286,7 +286,7 @@ long SkidderEditor::OpenEditor()
 
 	// clear all MIDI CC assignments
 	mMidiResetButton = CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, midiResetButtonImage);
-	
+
 	// Destroy FX web page link
 	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkImage->getWidth(), destroyFXLinkImage->getHeight() / 2);
 	emplaceControl<DGWebLink>(this, pos, destroyFXLinkImage, DESTROYFX_URL);
@@ -513,20 +513,20 @@ std::string SkidderEditor::GetHelpForControl(IDGControl* inControl) const
 	if (inControl == mTitleArea)
 	{
 		return R"DELIM(Skidder turns the sound on and off.
-It also can randomly pan your choppy chunks of sound all about, 
+It also can randomly pan your choppy chunks of sound all about,
 which is why it's a skidder, like how a rock skids across a frozen
 lake when you throw it, bouncing here and there lopsided-style.)DELIM";
 	}
 	if (inControl == mMidiLearnButton)
 	{
 		return R"DELIM(MIDI learn:  toggle "MIDI learn" mode for CC control of parameters
-When enabled, you can click on a parameter control and then the 
+When enabled, you can click on a parameter control and then the
 next MIDI CC received will be assigned to control that parameter.)DELIM";
 	}
 	if (inControl == mMidiResetButton)
 	{
 		return R"DELIM(MIDI reset:  erase CC assignments
-Push this button to erase all your MIDI CC -> parameter assignments.  
+Push this button to erase all your MIDI CC -> parameter assignments.
 Then CCs will not affect any parameters and you can start over.)DELIM";
 	}
 
@@ -576,7 +576,7 @@ This controls sound level during the "off" period of each cycle.
 )DELIM" + randomRangeText;
 		case kCrossoverFrequency:
 			return R"DELIM(crossover frequency:  selective skids cutoff point
-This adjusts the crossover cutoff frequency used when operating in 
+This adjusts the crossover cutoff frequency used when operating in
 "low" or "high" crossover mode.)DELIM";
 		case kCrossoverMode:
 			return R"DELIM(crossover mode:  which side skids
