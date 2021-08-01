@@ -68,7 +68,7 @@ constexpr float kValueTextSize = 11.0f;
 //-----------------------------------------------------------------------------
 // parameter value display text conversion functions
 
-struct bool envelopeDisplayProc(float inValue, char* outText, void*)
+static bool envelopeDisplayProc(float inValue, char* outText, void*)
 {
 	long const thousands = static_cast<long>(inValue) / 1000;
 	auto const remainder = std::fmod(inValue, 1000.0f);
