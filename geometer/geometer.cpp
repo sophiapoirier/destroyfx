@@ -29,7 +29,6 @@ Featuring the Super Destroy FX Windowing System!
 #endif
 #include <algorithm>
 #include <cassert>
-#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <mutex>
@@ -264,7 +263,7 @@ void PLUGIN::clearwindowcache()
       std::swap(windowcache_reader, windowcache_writer);
     }
   }
-  lastwindowtimestamp.store(0, std::memory_order_relaxed);
+  lastwindowtimestamp.fetch_add(1, std::memory_order_relaxed);
 }
 
 void PLUGIN::updatewindowcache(PLUGINCORE * geometercore)
@@ -294,7 +293,7 @@ void PLUGIN::updatewindowcache(PLUGINCORE * geometercore)
   }
 
   if (updated) {
-    lastwindowtimestamp.store(std::chrono::steady_clock::now().time_since_epoch().count(), std::memory_order_relaxed);
+    lastwindowtimestamp.fetch_add(1, std::memory_order_relaxed);
   }
 }
 
@@ -1177,11 +1176,8 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
    - can we use circular buffers instead of memmoving a lot?
      (probably not)
 XXX Sophia's ideas:
-   - only calculate a given window the first time that it's needed (how often to we change them anyway?)
-   - cache it and use it next time
-   - moreover, we only need one cache for the plugin, although that might be tricky with the whole DSP cores abstraction thing
+   - we only need one cache for the plugin (could be shared across DSP cores)
    - possibly we only need to save half since the second half is always the first half reversed
-   - this can allow for an easy way to vector-optimize the windowing
    - it would also be nice to make this windowing stuff into a reusable class so that we don't find ourselves maintaining the same code accross so many different plugins
 */
 
@@ -1204,6 +1200,7 @@ void PLUGINCORE::process(float const* tin, float* tout, unsigned long samples) {
 #if TARGET_OS_MAC
       vDSP_vmul(out0.data()+outstart+outsize, 1, windowenvelope.data(), 1, out0.data()+outstart+outsize, 1, static_cast<vDSP_Length>(framesize));
 #else
+      // TODO: vector-optimize?
       for (int z=0; z < framesize; z++) {
         out0[z+outstart+outsize] *= windowenvelope[z];
       }
