@@ -48,7 +48,7 @@ public:
   // found before returning?
   static std::unique_ptr<FontFactory> Create();
   virtual ~FontFactory() {}
-  
+
   // Create a VSTGUI font descriptor. If the font name is null, uses
   // the "system font."
   // 

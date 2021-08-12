@@ -581,7 +581,7 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 
 	if (inWriteAutomation)
 	{
-		GenerateParametersAutomationSnapshot();	  
+		GenerateParametersAutomationSnapshot();
 		for (long parameterIndex = 0; parameterIndex < GetNumParameters(); parameterIndex++)
 		{
 			automationgesture_end(parameterIndex);
@@ -875,7 +875,7 @@ double DfxGuiEditor::getparameter_f(long inParameterID)
 	request.inValueType = DfxParam::ValueType::Float;
 
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, 
-										   inParameterID, &request, dataSize); 
+										   inParameterID, &request, dataSize);
 	if (status == noErr)
 	{
 		return request.value.f;
@@ -917,7 +917,7 @@ bool DfxGuiEditor::getparameter_b(long inParameterID)
 	request.inValueType = DfxParam::ValueType::Boolean;
 
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, 
-										   inParameterID, &request, dataSize); 
+										   inParameterID, &request, dataSize);
 	if (status == noErr)
 	{
 		return request.value.b;
@@ -1098,7 +1098,7 @@ std::optional<std::string> DfxGuiEditor::getparametervaluestring(long inParamete
 	size_t dataSize = sizeof(request);
 	request.inStringIndex = stringIndex;
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValueString, dfx::kScope_Global, 
-										   inParameterID, &request, dataSize); 
+										   inParameterID, &request, dataSize);
 	if (status == noErr)
 	{
 		return request.valueString;
@@ -1160,7 +1160,7 @@ float DfxGuiEditor::dfxgui_ExpandParameterValue(long inParameterIndex, float inV
 	request.inValue = inValue;
 	size_t dataSize = sizeof(request);
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValueConversion, dfx::kScope_Global, 
-										   inParameterIndex, &request, dataSize); 
+										   inParameterIndex, &request, dataSize);
 	if (status == noErr)
 	{
 		return request.outValue;
@@ -1184,7 +1184,7 @@ float DfxGuiEditor::dfxgui_ContractParameterValue(long inParameterIndex, float i
 	request.inValue = inValue;
 	size_t dataSize = sizeof(request);
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValueConversion, dfx::kScope_Global, 
-										   inParameterIndex, &request, dataSize); 
+										   inParameterIndex, &request, dataSize);
 	if (status == noErr)
 	{
 		return request.outValue;
@@ -2476,7 +2476,7 @@ void DfxGuiEditor::Require(bool inCondition, char const* inFailureMessage)
 void DfxGuiEditor::InstallAUEventListeners()
 {
 	// TODO: should I use kCFRunLoopCommonModes instead, like AUCarbonViewBase does?
-	AUEventListenerRef auEventListener_temp = nullptr; 
+	AUEventListenerRef auEventListener_temp = nullptr;
 	auto const status = AUEventListenerCreate(AudioUnitEventListenerProc, this, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 
 											  kNotificationInterval, kNotificationInterval, &auEventListener_temp);
 	if ((status != noErr) || !auEventListener_temp)

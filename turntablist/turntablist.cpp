@@ -644,7 +644,7 @@ OSStatus Turntablist::CopyClumpName(AudioUnitScope inScope, UInt32 inClumpID,
 	{
 		return kAudioUnitErr_InvalidScope;
 	}
-	
+
 	auto const pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 	switch (inClumpID)
 	{
@@ -943,7 +943,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 				eventFrame = -1;	// no more events
 			}
 		}
-		
+
 		if (m_bScratching)  // handle scratching
 		{
 			m_nScratchInterval++;
@@ -978,8 +978,8 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 						{
 							m_fPlaySampleRate = m_fDesiredScratchRate2;
 						}
-					}					
-				}				
+					}
+				}
 			}
 		}
 		else // not scratching so just handle power
@@ -1070,7 +1070,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 									{
 										m_fPosition += m_fNumSamples; // - 1;
 										m_bPlayedReverse = true;
-									}									
+									}
 								}
 								else
 									m_fPosition += m_fNumSamples; // - 1;
@@ -1080,7 +1080,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
 					if (!m_bMute)   // if audio on
-					{		
+					{
 #endif
 						if (m_fPlaySampleRate == 0.0)
 						{
@@ -1118,7 +1118,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 								auto const outval = output[static_cast<size_t>(m_fPosition)];
 #endif  // NO_INTERPOLATION
 
-#ifdef LINEAR_INTERPOLATION						
+#ifdef LINEAR_INTERPOLATION
 								float const floating_part = m_fPosition - static_cast<double>(static_cast<long>(m_fPosition));
 								long const big_part1 = static_cast<long>(m_fPosition);
 								long big_part2 = big_part1 + 1;
@@ -1161,7 +1161,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 					}
 #endif
 
-					
+
 					if (m_bPlayForward)	// if play direction = forward
 					{
 						m_bPlayedReverse = false;
@@ -1241,7 +1241,7 @@ void Turntablist::processScratchStop()
 void Turntablist::processScratch(bool inSetParameter)
 {
 	double fIntervalScaler = 0.0;
-	
+
 	if (m_bPitchBendSet)
 	{
 /*
@@ -1284,7 +1284,7 @@ void Turntablist::processScratch(bool inSetParameter)
 		// m_fScratchSpeed_spin is the hand size
 		// set target sample rate
 		m_fDesiredScratchRate = fabs(m_fScratchAmount * m_fScratchSpeed_spin * m_fBasePitch);
-		
+
 		if (m_nScratchMode == kScratchMode_Spin)	// mode 2
 		{
 			m_fPlaySampleRate = m_fDesiredScratchRate;
@@ -1313,7 +1313,7 @@ void Turntablist::processScratch(bool inSetParameter)
 					m_fDesiredPosition = m_fScratchCenter + (contractparametervalue(kParam_ScratchAmount, m_fScratchAmount) * m_fScratchSpeed_scrub * m_fSampleRate);
 
 					double fDesiredDelta {};
-					
+
 					if (m_nScratchInterval == 0)
 					{
 						m_fPosition = m_fDesiredPosition;
@@ -1370,7 +1370,7 @@ void Turntablist::processScratch(bool inSetParameter)
 
 					//new
 					// add fScaler = (m_fScratchSpeed*7.0f)
-					
+
 
 
 					m_fDesiredScratchRate2 = (m_fDesiredScratchRate2 + m_fPlaySampleRate) * 0.5;

@@ -479,7 +479,7 @@ UInt32 DfxPlugin::ProcessAudio(bool inIsGlobalBypassed)
 				}
 				mInputAudioStreams_as[ch] = mZeroAudioBuffer.data();
 			}
-			
+
 			if (inIsGlobalBypassed)
 			{
 				for (long i = 0; i < totalInputSamples; i++)

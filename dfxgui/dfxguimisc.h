@@ -210,7 +210,7 @@ public:
 /*	probably a better interface is:
 	void draw(VSTGUI::CCoord x, VSTGUI::CCoord y);
 	and also something like this for stacked images:
-	void drawex(VSTGUI::CCoord x, VSTGUI::CCoord y, int xIndex, int yIndex); 
+	void drawex(VSTGUI::CCoord x, VSTGUI::CCoord y, int xIndex, int yIndex);
 */
 };
 

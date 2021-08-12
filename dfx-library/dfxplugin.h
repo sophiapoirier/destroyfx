@@ -799,7 +799,7 @@ protected:
 
 
 private:
-	// synchronize the underlying API/preset/etc. parameter value representation to the current value in DfxPlugin 
+	// synchronize the underlying API/preset/etc. parameter value representation to the current value in DfxPlugin
 	void update_parameter(long inParameterIndex);
 
 	std::optional<size_t> getparametergroup(long inParameterIndex) const;
@@ -1360,7 +1360,7 @@ public:
 		CPluginControl_Continuous(id, name, min, max, defaultValue, isAutomatable, begin, end),
 		CPluginControl_Frequency(id, name, min, max, defaultValue, isAutomatable, begin, end),
 		CPluginControl_DfxCurved(id, name, min, max, numSteps, defaultValue, isAutomatable, 
-			inCurve, inCurveSpec, begin, end)
+								 inCurve, inCurveSpec, begin, end)
 	{}
 
 private:

@@ -93,7 +93,7 @@ std::optional<std::string> InstallFontWin32(const char *resource_name) {
   // do this for the memory version, but it is possible with the
   // version that reads from a file. So, write the resource data to
   // a temporary file and load it from there.
-  
+
   char temp_path[MAX_PATH + 1] = {};
   if (!GetTempPathA(MAX_PATH, temp_path)) {
     return {};
@@ -106,7 +106,7 @@ std::optional<std::string> InstallFontWin32(const char *resource_name) {
   if (!GetTempFileNameA(temp_path, "dfx_font_", 0, temp_filename)) {
     return {};
   }
-  
+
   HANDLE temp_fh = CreateFileA((LPTSTR)temp_filename,
                                GENERIC_WRITE,
                                0,
@@ -141,7 +141,7 @@ std::optional<std::string> InstallFontWin32(const char *resource_name) {
     (void)DeleteFileA(temp_filename);
     return {};
   }
-  
+
   return {(std::string)temp_filename};
 }
 #endif  // TARGET_OS_WIN32
@@ -180,7 +180,7 @@ public:
       // Failed, but not much we can do...
     }
   }
-  
+
   const std::string tempfile;
 };
 #else
@@ -192,7 +192,7 @@ public:
   FFImpl() {
     InstallAllFonts();
   }
-  
+
   ~FFImpl() override {
     // (unique pointers in installed vector clean up font resources)
   }
@@ -215,7 +215,7 @@ public:
   }
 
   // Called during constructor.
-  void InstallAllFonts() {    
+  void InstallAllFonts() {
 #if TARGET_OS_MAC
     // Register any fonts located within our plugin bundle resources.
     // The registration occurs locally for the process, and thus need
@@ -280,7 +280,7 @@ public:
       // which would be normal for plugins without embedded fonts.
       return;
     }
-    
+
 #else
 
     #warning "implementation missing"

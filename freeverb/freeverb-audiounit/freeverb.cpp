@@ -187,6 +187,6 @@ OSStatus FreeverbAU::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlag
 	{
 		ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;
 	}
-	
+
 	return noErr;
 }

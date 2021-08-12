@@ -204,7 +204,7 @@ public:
 #pragma mark callbacks
 
 //-----------------------------------------------------------------------------
-void TurntablistAboutButtonProc(long inValue)
+static void TurntablistAboutButtonProc(long inValue)
 {
 	if (inValue > 0)
 	{
@@ -664,7 +664,7 @@ void TurntablistEditor::HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::
 #pragma mark audio file chooser
 
 //-----------------------------------------------------------------------------
-auto DFX_CopyFileNameString(FSRef const& inFileRef)
+static auto DFX_CopyFileNameString(FSRef const& inFileRef)
 {
 	CFStringRef fileName = nullptr;
 	auto const status = LSCopyDisplayNameForRef(&inFileRef, &fileName);
@@ -1457,7 +1457,7 @@ void TurntablistEditor::HandleParameterChange(long inParameterID, float inValue)
 					}
 				}
 			}
-			
+
 			auto const fullDisplayText = CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%@:  %@"), parameterNameString.get(), universalDisplayText.get());
 			if (fullDisplayText)
 			{

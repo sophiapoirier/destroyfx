@@ -45,7 +45,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 // Define to 1 or 0
 #define TARGET_PLUGIN_USES_MIDI	0
 #define TARGET_PLUGIN_IS_INSTRUMENT 0
-#define TARGET_PLUGIN_USES_DSPCORE 0	
+#define TARGET_PLUGIN_USES_DSPCORE 0
 #define TARGET_PLUGIN_HAS_GUI 0
 
 // only necessary for VST
@@ -56,7 +56,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 // optional
 #define PLUGIN_DESCRIPTION_STRING	""
-#define PLUGIN_RES_ID	
+#define PLUGIN_RES_ID
 #if TARGET_PLUGIN_HAS_GUI
 	#define PLUGIN_BACKGROUND_IMAGE_FILENAME	".png"
 	#define PLUGIN_EDITOR_DESCRIPTION_STRING	""

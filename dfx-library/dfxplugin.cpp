@@ -70,7 +70,7 @@ namespace
 static std::atomic<bool> sIdleThreadShouldRun {false};
 __attribute__((no_destroy)) static std::unique_ptr<std::thread> sIdleThread;  // TODO: C++20 use std::jthread, C++23 [[no_destroy]]
 __attribute__((no_destroy)) static std::mutex sIdleThreadLock;
-__attribute__((no_destroy)) static std::unordered_set<DfxPlugin*> sIdleClients; 
+__attribute__((no_destroy)) static std::unordered_set<DfxPlugin*> sIdleClients;
 __attribute__((no_destroy)) static std::mutex sIdleClientsLock;
 
 //-----------------------------------------------------------------------------
@@ -1773,7 +1773,7 @@ else fprintf(stderr, "CallHostTransportState() error %ld\n", status);
 #endif
 #endif
 // TARGET_API_AUDIOUNIT
- 
+
 
 #ifdef TARGET_API_VST
 	VstTimeInfo* vstTimeInfo = getTimeInfo(kVstTempoValid 

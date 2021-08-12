@@ -21,8 +21,8 @@ along with Turntablist.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the developer, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
-		
-	
+
+
 // 1.1 TO DO:
 // 1) fix position based scratching
 // how fix

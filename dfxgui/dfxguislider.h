@@ -143,11 +143,11 @@ public:
 
 	// If true, the handle is only placed at integral positions,
 	// for pixel-perfect rendering.
-	void setIntegralPosition(bool inParam)
+	void setIntegralPosition(bool inParam) noexcept
 	{
 		mIntegralPosition = inParam;
 	}
-  
+
 #if TARGET_PLUGIN_USES_MIDI
 	void setMidiLearner(bool inEnable) override;
 #endif
@@ -185,7 +185,7 @@ private:
 class DGAnimation : public DGControl<VSTGUI::CAnimKnob>
 {
 public:
-	DGAnimation(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion,  
+	DGAnimation(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
 				DGImage* inAnimationImage, long inNumAnimationFrames);
 
 #ifdef TARGET_API_RTAS

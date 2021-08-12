@@ -548,10 +548,13 @@ void DGXYBox::draw(VSTGUI::CDrawContext* inContext)
 
 	double const posX = valueX * mEffectiveRangeX;
 	double const posY = valueY * mEffectiveRangeY;
-	
-	DGRect rect = DGRect(posX, posY, mHandleWidth, mHandleHeight);
-	if (mIntegralPosition) rect.makeIntegral();
-        
+
+	DGRect rect(posX, posY, mHandleWidth, mHandleHeight);
+	if (mIntegralPosition)
+	{
+		rect.makeIntegral();
+	}
+
 	VSTGUI::CRect const boundingRect(mMinXPos - getViewSize().left, 
 									 mMinYPos - getViewSize().top, 
 									 mMaxXPos + mHandleWidth - getViewSize().left, 
@@ -659,7 +662,7 @@ VSTGUI::CMouseEventResult DGXYBox::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::C
 		mOldValueY = mControlY->asCControl()->getValueNormalized();
 	}
 
-	// option/alt locks the X axis, so only adjust the X value if option is not being pressed 
+	// option/alt locks the X axis, so only adjust the X value if option is not being pressed
 	if (!inButtons.isAltSet())
 	{
 		auto const value = [this, inPos, isFineTune]()

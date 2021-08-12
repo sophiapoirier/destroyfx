@@ -1031,8 +1031,8 @@ CFURLRef DfxPlugin::CopyIconLocation()
 //-----------------------------------------------------------------------------
 // get specific information about the properties of a parameter
 OSStatus DfxPlugin::GetParameterInfo(AudioUnitScope inScope, 
-			AudioUnitParameterID inParameterID, 
-			AudioUnitParameterInfo& outParameterInfo)
+									 AudioUnitParameterID inParameterID, 
+									 AudioUnitParameterInfo& outParameterInfo)
 {
 	// we're only handling the global scope
 	if (inScope != kAudioUnitScope_Global)
@@ -1301,8 +1301,8 @@ OSStatus DfxPlugin::CopyClumpName(AudioUnitScope inScope, UInt32 inClumpID,
 
 //-----------------------------------------------------------------------------
 OSStatus DfxPlugin::SetParameter(AudioUnitParameterID inParameterID, 
-			AudioUnitScope inScope, AudioUnitElement inElement, 
-			Float32 inValue, UInt32 /*inBufferOffsetInFrames*/)
+								 AudioUnitScope inScope, AudioUnitElement inElement, 
+								 Float32 inValue, UInt32 /*inBufferOffsetInFrames*/)
 {
 	if (inScope != kAudioUnitScope_Global)
 	{
@@ -1714,7 +1714,7 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags
 // end of if/else TARGET_PLUGIN_USES_DSPCORE
 
 	// TODO: allow effects to communicate their output silence status, or calculate time-out from tail size and latency?
-	bool const effectHasTail = !SupportsTail() || (gettailsize_samples() > 0) || (getlatency_samples() > 0); 
+	bool const effectHasTail = !SupportsTail() || (gettailsize_samples() > 0) || (getlatency_samples() > 0);
 	if (effectHasTail)
 	{
 		ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;
@@ -1738,7 +1738,7 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags
 
 //-----------------------------------------------------------------------------
 OSStatus DfxPlugin::HandleNoteOn(UInt8 inChannel, UInt8 inNoteNumber, 
-						UInt8 inVelocity, UInt32 inStartFrame)
+								 UInt8 inVelocity, UInt32 inStartFrame)
 {
 	handlemidi_noteon(inChannel, inNoteNumber, inVelocity, inStartFrame);
 	return noErr;
@@ -1746,7 +1746,7 @@ OSStatus DfxPlugin::HandleNoteOn(UInt8 inChannel, UInt8 inNoteNumber,
 
 //-----------------------------------------------------------------------------
 OSStatus DfxPlugin::HandleNoteOff(UInt8 inChannel, UInt8 inNoteNumber, 
-						UInt8 inVelocity, UInt32 inStartFrame)
+								  UInt8 inVelocity, UInt32 inStartFrame)
 {
 	handlemidi_noteoff(inChannel, inNoteNumber, inVelocity, inStartFrame);
 	return noErr;
@@ -1761,7 +1761,7 @@ OSStatus DfxPlugin::HandleAllNotesOff(UInt8 inChannel)
 
 //-----------------------------------------------------------------------------
 OSStatus DfxPlugin::HandlePitchWheel(UInt8 inChannel, UInt8 inPitchLSB, UInt8 inPitchMSB, 
-						UInt32 inStartFrame)
+									 UInt32 inStartFrame)
 {
 	handlemidi_pitchbend(inChannel, inPitchLSB, inPitchMSB, inStartFrame);
 	return noErr;
@@ -1776,7 +1776,7 @@ OSStatus DfxPlugin::HandleChannelPressure(UInt8 inChannel, UInt8 inValue, UInt32
 
 //-----------------------------------------------------------------------------
 OSStatus DfxPlugin::HandleControlChange(UInt8 inChannel, UInt8 inController, 
-						UInt8 inValue, UInt32 inStartFrame)
+										UInt8 inValue, UInt32 inStartFrame)
 {
 	handlemidi_cc(inChannel, inController, inValue, inStartFrame);
 	return noErr;

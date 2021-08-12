@@ -367,7 +367,7 @@ protected:
 
 private:
 	// update affected controls of a parameter value change
-	// optional: inSendingControl can specify the originating control to omit it from circular notification 
+	// optional: inSendingControl can specify the originating control to omit it from circular notification
 	void updateParameterControls(long inParameterIndex, float inValue, VSTGUI::CControl* inSendingControl = nullptr);
 
 	[[nodiscard]] bool handleContextualMenuClick(VSTGUI::CControl* inControl, VSTGUI::CButtonState const& inButtons);

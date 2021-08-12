@@ -98,7 +98,7 @@ enum Scope : uint32_t
 
 //-----------------------------------------------------------------------------
 // for kPluginProperty_ParameterValue
-enum class ParameterValueItem : uint32_t 
+enum class ParameterValueItem : uint32_t
 {
 	Current, 
 	Default, 

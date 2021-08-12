@@ -115,7 +115,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 // end of target API check
 
 
-// Now, consistency check defines. 
+// Now, consistency check defines.
 
 // Some preprocessor defines are meant to be used with "ifdef" (TARGET_API_*)
 // and others are meant to be defined to 1/0. Test that these are configured
@@ -157,19 +157,19 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 // Macros that we test with #if, and so should be defined to 1 or 0.
 
-#if defined(TARGET_PLUGIN_USES_MIDI) && (0 - TARGET_PLUGIN_USES_MIDI - 1) == 1 
+#if defined(TARGET_PLUGIN_USES_MIDI) && (0 - TARGET_PLUGIN_USES_MIDI - 1) == 1
 #error TARGET_PLUGIN_USES_MIDI should be defined to 0 or 1
 #endif
 
-#if defined(TARGET_PLUGIN_IS_INSTRUMENT) && (0 - TARGET_PLUGIN_IS_INSTRUMENT - 1) == 1 
+#if defined(TARGET_PLUGIN_IS_INSTRUMENT) && (0 - TARGET_PLUGIN_IS_INSTRUMENT - 1) == 1
 #error TARGET_PLUGIN_IS_INSTRUMENT should be defined to 0 or 1
 #endif
 
-#if defined(TARGET_PLUGIN_USES_DSPCORE) && (0 - TARGET_PLUGIN_USES_DSPCORE - 1) == 1 
+#if defined(TARGET_PLUGIN_USES_DSPCORE) && (0 - TARGET_PLUGIN_USES_DSPCORE - 1) == 1
 #error TARGET_PLUGIN_USES_DSPCORE should be defined to 0 or 1
 #endif
 
-#if defined(TARGET_PLUGIN_HAS_GUI) && (0 - TARGET_PLUGIN_HAS_GUI - 1) == 1 
+#if defined(TARGET_PLUGIN_HAS_GUI) && (0 - TARGET_PLUGIN_HAS_GUI - 1) == 1
 #error TARGET_PLUGIN_HAS_GUI should be defined to 0 or 1
 #endif
 
@@ -177,11 +177,11 @@ To contact the author, use the contact form at http://destroyfx.org/
 #error TARGET_OS_MAC should be defined to 0 or 1
 #endif
 
-#if defined(TARGET_OS_WIN32) && (0 - TARGET_OS_WIN32 - 1) == 1 
+#if defined(TARGET_OS_WIN32) && (0 - TARGET_OS_WIN32 - 1) == 1
 #error TARGET_OS_WIN32 should be defined to 0 or 1
 #endif
 
-#if defined(WINDOWS) && (0 - WINDOWS - 1) == 1 
+#if defined(WINDOWS) && (0 - WINDOWS - 1) == 1
 #error WINDOWS should be defined to 0 or 1
 #endif
 

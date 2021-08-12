@@ -55,7 +55,7 @@ public:
 	// CPluginControl_Continuous overrides
 	long ConvertContinuousToControl(double continuous) const override;
 	double ConvertControlToContinuous(long control) const override;
-	
+
 private:
 	DfxParam::Curve mCurve;
 	double mCurveSpec;
