@@ -185,36 +185,37 @@ VstInt32 DfxPlugin::canDo(char* text)
 		return -1;
 	}
 
-	if (strcmp(text, "plugAsChannelInsert") == 0)
+	std::string const stdText(text);
+	if (stdText == "plugAsChannelInsert")
 	{
 		return 1;
 	}
-	if (strcmp(text, "plugAsSend") == 0)
+	if (stdText == "plugAsSend")
 	{
 		return 1;
 	}
-	if (strcmp(text, "mixDryWet") == 0)
+	if (stdText == "mixDryWet")
 	{
 		return 1;
 	}
-	if (strcmp(text, "fuctsoundz") == 0)
+	if (stdText == "fuctsoundz")
 	{
 		return 1;
 	}
-	if (strcmp(text, "receiveVstTimeInfo") == 0)
+	if (stdText == "receiveVstTimeInfo")
 	{
 		return 1;
 	}
 	// XXX this channels canDo stuff could be improved...
 	if (getnumoutputs() > 1)
 	{
-		if (strcmp(text, "1in2out") == 0)
+		if (stdText == "1in2out")
 		{
 			return 1;
 		}
 		if (getnuminputs() > 1)
 		{
-			if (strcmp(text, "2in2out") == 0)
+			if (stdText == "2in2out")
 			{
 				return 1;
 			}
@@ -222,17 +223,17 @@ VstInt32 DfxPlugin::canDo(char* text)
 	}
 	else
 	{
-		if (strcmp(text, "1in1out") == 0)
+		if (stdText == "1in1out")
 		{
 			return 1;
 		}
 	}
 	#if TARGET_PLUGIN_USES_MIDI
-		if (strcmp(text, "receiveVstEvents") == 0)
+		if (stdText == "receiveVstEvents")
 		{
 			return 1;
 		}
-		if (strcmp(text, "receiveVstMidiEvent") == 0)
+		if (stdText == "receiveVstMidiEvent")
 		{
 			return 1;
 		}

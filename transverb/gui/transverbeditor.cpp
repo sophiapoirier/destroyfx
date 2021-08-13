@@ -115,7 +115,8 @@ static bool speedDisplayProcedure(float inValue, char* outText, void*)
 	// make sure that these float crap doesn't result in wacky stuff
 	// like displays that say "-1 octave & 12.00 semitones"
 	snprintf(semitonesString.data(), semitonesString.size(), "%.3f", semitones);
-	if ((strcmp(semitonesString.data(), "12.000") == 0) || (strcmp(semitonesString.data(), "-12.000") == 0))
+	std::string const semitonesStdString(semitonesString.data());
+	if ((semitonesStdString == "12.000") || (semitonesStdString == "-12.000"))
 	{
 		semitones = 0.0f;
 		if (speed < 0.0f)

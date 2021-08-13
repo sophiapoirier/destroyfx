@@ -25,6 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <cassert>
 #include <cmath>
+#include <cstring>
 #include <optional>
 #include <vector>
 
@@ -585,7 +586,7 @@ VSTGUI::CMessageResult DGTextEntryDialog::notify(VSTGUI::CBaseObject* inSender, 
 	// allow return key in the text edit to additionally trigger the default button
 	if (auto const textEdit = dynamic_cast<VSTGUI::CTextEdit*>(inSender))
 	{
-		if ((strcmp(inMessage, VSTGUI::kMsgLooseFocus) == 0) && textEdit->bWasReturnPressed)
+		if ((std::strcmp(inMessage, VSTGUI::kMsgLooseFocus) == 0) && textEdit->bWasReturnPressed)
 		{
 			if (DFXGUI_PressButton(getButton(kSelection_OK), true))
 			{
