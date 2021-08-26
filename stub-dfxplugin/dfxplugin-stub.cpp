@@ -241,13 +241,13 @@ void DfxStub::createbuffers()
 #if TARGET_PLUGIN_USES_DSPCORE
 void DfxStubDSP::releasebuffers()
 {
-	buffer.clear();
+	buffer = {};
 }
 
 #else
 void DfxStub::releasebuffers()
 {
-	buffers.clear();
+	buffers = {};
 }
 #endif
 

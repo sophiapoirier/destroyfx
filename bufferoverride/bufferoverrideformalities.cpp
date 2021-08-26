@@ -140,8 +140,8 @@ void BufferOverride::createbuffers()
 //-------------------------------------------------------------------------
 void BufferOverride::releasebuffers()
 {
-	mBuffers.clear();
-	mAudioOutputValues.clear();
+	mBuffers = {};
+	mAudioOutputValues = {};
 }
 
 

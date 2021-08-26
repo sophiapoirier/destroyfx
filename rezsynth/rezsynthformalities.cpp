@@ -165,14 +165,14 @@ void RezSynth::createbuffers()
 //-----------------------------------------------------------------------------------------
 void RezSynth::releasebuffers()
 {
-	mPrevOutValue.clear();
-	mPrevPrevOutValue.clear();
-	mPrevInValue.clear();
-	mPrevPrevInValue.clear();
+	mPrevOutValue = {};
+	mPrevPrevOutValue = {};
+	mPrevInValue = {};
+	mPrevPrevInValue = {};
 
 	std::for_each(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), [](auto& channelFilters)
 	{
-		channelFilters.clear();
+		channelFilters = {};
 	});
 }
 

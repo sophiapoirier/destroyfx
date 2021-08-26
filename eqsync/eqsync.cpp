@@ -88,16 +88,16 @@ void EQSync::createbuffers()
 	mPrevIn.assign(numChannels, 0.0f);
 	mPrevPrevIn.assign(numChannels, 0.0f);
 	mPrevOut.assign(numChannels, 0.0f);
-	prevprevOut.assign(numChannels, 0.0f);
+	mPrevPrevOut.assign(numChannels, 0.0f);
 }
 
 //-----------------------------------------------------------------------------
 void EQSync::releasebuffers()
 {
-	mPrevIn.clear();
-	mPrevPrevIn.clear();
-	mPrevOut.clear();
-	prevprevOut.clear();
+	mPrevIn = {};
+	mPrevPrevIn = {};
+	mPrevOut = {};
+	mPrevPrevOut = {};
 }
 
 //-----------------------------------------------------------------------------
@@ -106,7 +106,7 @@ void EQSync::clearbuffers()
 	std::fill(mPrevIn.begin(), mPrevIn.end(), 0.0f);
 	std::fill(mPrevPrevIn.begin(), mPrevPrevIn.end(), 0.0f);
 	std::fill(mPrevOut.begin(), mPrevOut.end(), 0.0f);
-	std::fill(prevprevOut.begin(), prevprevOut.end(), 0.0f);
+	std::fill(mPrevPrevOut.begin(), mPrevPrevOut.end(), 0.0f);
 }
 
 //-----------------------------------------------------------------------------
@@ -212,7 +212,7 @@ void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, u
 		{
 			// audio output section -- outputs the latest sample
 			auto const inputValue = inAudio[ch][sampleCount];  // because Cubase inserts are goofy
-			float outputValue = (inputValue * mA0) + (mPrevIn[ch] * mA1) + (mPrevPrevIn[ch] * mA2) - (mPrevOut[ch] * mB1) - (prevprevOut[ch] * mB2);
+			float outputValue = (inputValue * mA0) + (mPrevIn[ch] * mA1) + (mPrevPrevIn[ch] * mA2) - (mPrevOut[ch] * mB1) - (mPrevPrevOut[ch] * mB2);
 			outputValue = dfx::math::ClampDenormal(outputValue);
 
 			// ...doing the complex filter thing here
@@ -221,7 +221,7 @@ void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, u
 			// update the previous sample holders and increment the i/o streams
 			mPrevPrevIn[ch] = mPrevIn[ch];
 			mPrevIn[ch] = inputValue;
-			prevprevOut[ch] = mPrevOut[ch];
+			mPrevPrevOut[ch] = mPrevOut[ch];
 			mPrevOut[ch] = outputValue;
 		}
 

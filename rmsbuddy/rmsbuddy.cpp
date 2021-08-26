@@ -78,11 +78,11 @@ OSStatus RMSBuddy::Initialize()
 // this is the sort of mini-destructor partner to Initialize, where we clean up DSP resources
 void RMSBuddy::Cleanup()
 {
-	mAverageRMS.clear();
-	mTotalSquaredCollection.clear();
-	mAbsolutePeak.clear();
-	mContinualRMS.clear();
-	mContinualPeak.clear();
+	mAverageRMS = {};
+	mTotalSquaredCollection = {};
+	mAbsolutePeak = {};
+	mContinualRMS = {};
+	mContinualPeak = {};
 }
 
 //-----------------------------------------------------------------------------------------

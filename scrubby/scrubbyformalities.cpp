@@ -197,14 +197,14 @@ void Scrubby::createbuffers()
 //-----------------------------------------------------------------------------
 void Scrubby::releasebuffers()
 {
-	mAudioBuffers.clear();
-	mReadPos.clear();
-	mReadStep.clear();
-	mPortamentoStep.clear();
-	mMoveCount.clear();
-	mSeekCount.clear();
-	mNeedResync.clear();
-	mHighpassFilters.clear();
+	mAudioBuffers = {};
+	mReadPos = {};
+	mReadStep = {};
+	mPortamentoStep = {};
+	mMoveCount = {};
+	mSeekCount = {};
+	mNeedResync = {};
+	mHighpassFilters = {};
 }
 
 //-----------------------------------------------------------------------------

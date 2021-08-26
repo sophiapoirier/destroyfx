@@ -363,13 +363,13 @@ void DfxPlugin::do_cleanup()
 	#ifdef TARGET_API_AUDIOUNIT
 	mAsymmetricalInputBufferList.Deallocate();
 	#else
-	mAsymmetricalInputAudioBuffer.clear();
+	mAsymmetricalInputAudioBuffer = {};
 	#endif
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
-	mInputAudioStreams_au.clear();
-	mOutputAudioStreams_au.clear();
+	mInputAudioStreams_au = {};
+	mOutputAudioStreams_au = {};
 #endif
 
 	cleanup();

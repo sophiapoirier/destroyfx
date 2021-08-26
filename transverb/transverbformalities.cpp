@@ -138,8 +138,8 @@ void TransverbDSP::clearbuffers() {
 void TransverbDSP::releasebuffers() {
 
   MAXBUF = 0;
-  buf1.clear();
-  buf2.clear();
+  buf1 = {};
+  buf2 = {};
 }
 
 

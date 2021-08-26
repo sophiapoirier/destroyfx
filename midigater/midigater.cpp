@@ -76,7 +76,7 @@ void MIDIGater::cleanup()
 {
 	std::for_each(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), [](auto& channelFilters)
 	{
-		channelFilters.clear();
+		channelFilters = {};
 	});
 }
 

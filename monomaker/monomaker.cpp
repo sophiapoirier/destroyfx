@@ -101,7 +101,7 @@ void Monomaker::createbuffers()
 //-----------------------------------------------------------------------------------------
 void Monomaker::releasebuffers()
 {
-	mAsymmetricalInputAudioBuffer.clear();
+	mAsymmetricalInputAudioBuffer = {};
 }
 
 //-----------------------------------------------------------------------------------------

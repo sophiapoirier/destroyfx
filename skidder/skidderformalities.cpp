@@ -115,10 +115,10 @@ void Skidder::createbuffers()
 //-----------------------------------------------------------------------------------------
 void Skidder::releasebuffers()
 {
-	mInputAudio.clear();
-	mOutputAudio.clear();
-	mEffectualInputAudioBuffers.clear();
-	mAsymmetricalInputAudioBuffer.clear();
+	mInputAudio = {};
+	mOutputAudio = {};
+	mEffectualInputAudioBuffers = {};
+	mAsymmetricalInputAudioBuffer = {};
 
 	mCrossover.reset();
 }
