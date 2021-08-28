@@ -27,6 +27,7 @@ Welcome to our Finite Impulse Response filter.
 #pragma once
 
 
+#include <cstddef>
 #include <vector>
 
 
