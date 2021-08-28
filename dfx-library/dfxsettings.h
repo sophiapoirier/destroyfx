@@ -69,11 +69,6 @@ This is our Destroy FX plugin data storage stuff
 // doSetParameterStuff() is called during processParameterEvents() 
 // whenever an incoming MIDI event automates a parameter to which it is 
 // assigned.
-//
-//-------------------------------------------------------------------------
-// NOTE July 3rd:  I've recently mucked with this code a lot and added new 
-// features with notes, pitchbend, stepped control, limited ranges, etc.  
-// I'll document this stuff, later...
 
 #pragma once
 
@@ -124,6 +119,8 @@ public:
 	// for adding to your base plugin class methods
 	std::vector<std::byte> save(bool inIsPreset);
 	bool restore(void const* inData, size_t inBufferSize, bool inIsPreset);
+
+#if TARGET_PLUGIN_USES_MIDI
 #ifdef TARGET_API_AUDIOUNIT
 	bool saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDictionary);
 	bool restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDictionary);
@@ -177,6 +174,7 @@ public:
 	dfx::ParameterAssignment getParameterAssignment(long inParamTag) const;
 	dfx::MidiEventType getParameterAssignmentType(long inParamTag) const;
 	long getParameterAssignmentNum(long inParamTag) const;
+#endif // TARGET_PLUGIN_USES_MIDI
 
 
 	// - - - - - - - - - version compatibility management - - - - - - - - -
@@ -223,6 +221,7 @@ public:
 
 	// - - - - - - - - - optional settings - - - - - - - - -
 
+#if TARGET_PLUGIN_USES_MIDI
 	// true means allowing a given MIDI event to be assigned to only one parameter; 
 	// false means that a single event can be assigned to more than one parameter
 	void setSteal(bool inMode) noexcept;
@@ -278,6 +277,7 @@ public:
 	{
 		return mUseChannel.load();
 	}
+#endif // TARGET_PLUGIN_USES_MIDI
 
 	// this tells DfxSettings what you want it to do if a non-matching 
 	// settings data is received in restore()  (see the enum options above)
@@ -341,7 +341,7 @@ protected:
 	// note:  correctEndian() assumes that the data is all of type 32-bit integer, 
 	// so if you change this structure and add different types, 
 	// then you will want to modify correctEndian() to handle that.
-	// It is also assumed that the first 6 items in this struct 
+	// It is also assumed that the first six items in this struct 
 	// (everything up through mNumStoredPresets) will not change, 
 	// so if you alter this header structure at all, keep the 
 	// first six items in there and add anything else AFTER those.
@@ -401,15 +401,14 @@ protected:
 		return (inParamTag >= 0) && (inParamTag < mNumParameters);
 	}
 
+#if TARGET_PLUGIN_USES_MIDI
 	void handleMidi_assignParam(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, unsigned long inOffsetFrames);
 	void handleMidi_automateParams(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inByte2, unsigned long inOffsetFrames, bool inIsNoteOff = false);
+#endif // TARGET_PLUGIN_USES_MIDI
 
 
 	DfxPlugin* const mPlugin;
 	long const mNumParameters, mNumPresets;
-
-	std::atomic<bool> mMidiLearn {false};  // switch value for MIDI learn mode
-	std::atomic<long> mLearner {kNoLearner};  // the parameter currently selected for MIDI learning
 
 	// size of one preset (preset name + all parameter values)
 	size_t mSizeOfPreset = 0;
@@ -431,6 +430,14 @@ protected:
 	// (this is so that non-parameter-compatible plugin versions can load 
 	// settings and know which stored parameters correspond to theirs)
 	std::vector<int32_t> mParameterIDs;
+
+	// what to do if restore() sends data with a mismatched byte size
+	CrisisBehavior mCrisisBehavior = CrisisBehavior::LoadWhatYouCan;
+
+#if TARGET_PLUGIN_USES_MIDI
+	std::atomic<bool> mMidiLearn {false};  // switch value for MIDI learn mode
+	std::atomic<long> mLearner {kNoLearner};  // the parameter currently selected for MIDI learning
+
 	// the array of which MIDI event, if any, is assigned to each parameter
 	std::vector<dfx::ParameterAssignment> mParameterAssignments;
 
@@ -442,8 +449,6 @@ protected:
 	bool mAllowPitchbendEvents = false;
 	// whether to allow MIDI note events to be assigned to control parameters
 	bool mAllowNoteEvents = false;
-	// what to do if restore() sends data with a mismatched byte size
-	CrisisBehavior mCrisisBehavior = CrisisBehavior::LoadWhatYouCan;
 	// whether to differentiate events and parameter assignments based 
 	// on MIDI channel or whether to ignore channel (omni-style)
 	std::atomic<bool> mUseChannel {false};
@@ -459,64 +464,5 @@ protected:
 	std::atomic<bool> mNoteRangeHalfwayDone {false};
 	// the note that is the first part of the 2-note range being learned
 	std::atomic<long> mHalfwayNoteNum {0};
+#endif // TARGET_PLUGIN_USES_MIDI
 };
-
-
-
-/*
-Here's what you add to a plugin to make it use DfxSettings and MIDI learn.  
-In the header, add these includes:
-
-#include "dfxsettings.h"
-
-
-Add declarations for these 3 virtual functions:
-
-	virtual long getChunk(void** data, bool isPreset);
-	virtual long setChunk(void* data, long byteSize, bool isPreset);
-	virtual long processEvents(VstEvents* events);
-
-
-Add a DfxSettings instance to your plugin class:
-
-	DfxSettings dfxsettings;
-
-
-
-Then in the source, add this to the constructor initializer list:
-
-	dfxsettings(PLUGIN_ID, this)
-
-
-In canDo() add:
-	if (strcmp(text, "receiveVstEvents") == 0)
-	{
-		return 1;
-	}
-	if (strcmp(text, "receiveVstMidiEvent") == 0)
-	{
-		return 1;
-	}
-
-
-Also add these functions somewhere, or if they're already implemented, 
-add the following stuff into them:
-
-long PLUGIN::getChunk(void** data, bool isPreset)
-{	return dfxsettings->save(data, isPreset);	}
-
-long PLUGIN::setChunk(void* data, long byteSize, bool isPreset)
-{	return dfxsettings->restore(data, byteSize, isPreset);	}
-
-long PLUGIN::processEvents(VstEvents* events)
-{
-	dfxsettings->processParameterEvents(events);
-	return 1;
-}
-
-
-To resume(), add:
-
-	wantEvents();
-
-*/
