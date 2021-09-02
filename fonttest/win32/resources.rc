@@ -1,0 +1,29 @@
+
+// Images embedded in the DLL. These are loaded by vstgui's CBitmap,
+// using the name (first column) as the identifier.
+
+dfx-link.png                    PNG  DISCARDABLE     "..\\gui\\graphics\\dfx-link.png"
+fine-down-button.png            PNG  DISCARDABLE     "..\\gui\\graphics\\fine-down-button.png"
+fine-up-button.png              PNG  DISCARDABLE     "..\\gui\\graphics\\fine-up-button.png"
+freeze-button.png               PNG  DISCARDABLE     "..\\gui\\graphics\\freeze-button.png"
+grey-wide-fader-handle.png      PNG  DISCARDABLE     "..\\gui\\graphics\\grey-wide-fader-handle.png"
+grey-wide-fader-slide.png       PNG  DISCARDABLE     "..\\gui\\graphics\\grey-wide-fader-slide.png"
+midi-learn-button.png           PNG  DISCARDABLE     "..\\gui\\graphics\\midi-learn-button.png"
+midi-reset-button.png           PNG  DISCARDABLE     "..\\gui\\graphics\\midi-reset-button.png"
+purple-wide-fader-handle.png    PNG  DISCARDABLE     "..\\gui\\graphics\\purple-wide-fader-handle.png"
+purple-wide-fader-slide.png     PNG  DISCARDABLE     "..\\gui\\graphics\\purple-wide-fader-slide.png"
+quality-button.png              PNG  DISCARDABLE     "..\\gui\\graphics\\quality-button.png"
+randomize-button.png            PNG  DISCARDABLE     "..\\gui\\graphics\\randomize-button.png"
+speed-mode-button.png           PNG  DISCARDABLE     "..\\gui\\graphics\\speed-mode-button.png"
+super-destroy-fx-link.png       PNG  DISCARDABLE     "..\\gui\\graphics\\super-destroy-fx-link.png"
+tall-fader-handle-glowing.png   PNG  DISCARDABLE     "..\\gui\\graphics\\tall-fader-handle-glowing.png"
+tall-fader-handle.png           PNG  DISCARDABLE     "..\\gui\\graphics\\tall-fader-handle.png"
+tall-fader-slide.png            PNG  DISCARDABLE     "..\\gui\\graphics\\tall-fader-slide.png"
+tomsound-button.png             PNG  DISCARDABLE     "..\\gui\\graphics\\tomsound-button.png"
+transverb-background.png        PNG  DISCARDABLE     "..\\gui\\graphics\\transverb-background.png"
+wide-fader-handle-glowing.png   PNG  DISCARDABLE     "..\\gui\\graphics\\wide-fader-handle-glowing.png"
+
+dfxsnooty10px.ttf                        DFX_TTF  DISCARDABLE     "..\\..\\fonts\\dfxsnooty10px.ttf"
+
+#include "../transverbdef.h"
+#include "../../dfx-library/visualstudio/dfxplugin-version.rc"
