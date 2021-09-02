@@ -1,20 +1,20 @@
 /*------------------------------------------------------------------------
 Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
 
-This file is part of Transverb.
+This file is part of FontTest.
 
-Transverb is free software:  you can redistribute it and/or modify
+FontTest is free software:  you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Transverb is distributed in the hope that it will be useful,
+FontTest is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
+along with FontTest.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
@@ -25,15 +25,15 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <array>
 
 #include "dfxgui.h"
-#include "transverb-base.h"
+#include "fonttest-base.h"
 
 
 
 //-----------------------------------------------------------------------------
-class TransverbSpeedTuneButton final : public DGFineTuneButton
+class FontTestSpeedTuneButton final : public DGFineTuneButton
 {
 public:
-	TransverbSpeedTuneButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage,
+	FontTestSpeedTuneButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage,
 							 float inValueChangeAmount)
 	:	DGFineTuneButton(inOwnerEditor, inParamID, inRegion, inImage, inValueChangeAmount)
 	{}
@@ -52,10 +52,10 @@ private:
 
 
 //-----------------------------------------------------------------------------
-class TransverbEditor final : public DfxGuiEditor
+class FontTestEditor final : public DfxGuiEditor
 {
 public:
-	explicit TransverbEditor(DGEditorListenerInstance inInstance);
+	explicit FontTestEditor(DGEditorListenerInstance inInstance);
 
 	long OpenEditor() override;
 	void PostOpenEditor() override;
@@ -68,6 +68,6 @@ private:
 	void HandleSpeedModeChange(size_t inIndex);
 
 	std::array<DGButton*, dfx::TV::kNumDelays> mSpeedModeButtons {};
-	std::array<TransverbSpeedTuneButton*, dfx::TV::kNumDelays> mSpeedDownButtons {}, mSpeedUpButtons {};
+	std::array<FontTestSpeedTuneButton*, dfx::TV::kNumDelays> mSpeedDownButtons {}, mSpeedUpButtons {};
 	std::array<DGTextDisplay*, dfx::TV::kNumDelays> mDistanceTextDisplays {};
 };

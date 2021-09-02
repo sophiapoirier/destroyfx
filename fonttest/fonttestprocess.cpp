@@ -1,25 +1,25 @@
 /*------------------------------------------------------------------------
 Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
 
-This file is part of Transverb.
+This file is part of FontTest.
 
-Transverb is free software:  you can redistribute it and/or modify
+FontTest is free software:  you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Transverb is distributed in the hope that it will be useful,
+FontTest is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
+along with FontTest.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#include "transverb.h"
+#include "fonttest.h"
 
 #include <algorithm>
 #include <cmath>
@@ -32,7 +32,7 @@ using namespace dfx::TV;
 
 
 
-void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long numSampleFrames) {
+void FontTestDSP::process(float const* inAudio, float* outAudio, unsigned long numSampleFrames) {
 
   float r1val {}, r2val {};  // delay buffer output values
   auto const bsize_float = (double)bsize;  // cut down on casting

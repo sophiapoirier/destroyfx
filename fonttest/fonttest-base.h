@@ -1,20 +1,20 @@
 /*------------------------------------------------------------------------
 Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
 
-This file is part of Transverb.
+This file is part of FontTest.
 
-Transverb is free software:  you can redistribute it and/or modify
+FontTest is free software:  you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Transverb is distributed in the hope that it will be useful,
+FontTest is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
+along with FontTest.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
@@ -55,7 +55,7 @@ enum { kQualityMode_DirtFi, kQualityMode_HiFi, kQualityMode_UltraHiFi, kQualityM
 
 // this stuff is for the speed parameter adjustment mode switch on the GUI
 enum { kSpeedMode_Fine, kSpeedMode_Semitone, kSpeedMode_Octave, kSpeedMode_NumModes };
-static constexpr dfx::PropertyID kTransverbProperty_SpeedModeBase = dfx::kPluginProperty_EndOfList;
+static constexpr dfx::PropertyID kFontTestProperty_SpeedModeBase = dfx::kPluginProperty_EndOfList;
 
 
 dfx::PropertyID speedModeIndexToPropertyID(size_t inIndex) noexcept;

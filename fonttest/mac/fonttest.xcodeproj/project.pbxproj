@@ -19,28 +19,12 @@
 		4932F4F2068011C9006A9591 /* dfxguitextdisplay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E6068011C9006A9591 /* dfxguitextdisplay.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		4932F4F4068011C9006A9591 /* dfxguislider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E8068011C9006A9591 /* dfxguislider.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		4932F79B0680E859006A9591 /* dfxmidi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F7990680E859006A9591 /* dfxmidi.cpp */; };
-		49BB478C07E53D2500861708 /* transverbformalities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49BB478807E53D2500861708 /* transverbformalities.cpp */; };
-		49BB478D07E53D2500861708 /* transverbprocess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49BB478907E53D2500861708 /* transverbprocess.cpp */; };
+		49BB478C07E53D2500861708 /* fonttestformalities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49BB478807E53D2500861708 /* fonttestformalities.cpp */; };
+		49BB478D07E53D2500861708 /* fonttestprocess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49BB478907E53D2500861708 /* fonttestprocess.cpp */; };
 		49BB479407E53D7300861708 /* firfilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49BB479007E53D7300861708 /* firfilter.cpp */; };
 		49BB479607E53D7300861708 /* iirfilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49BB479207E53D7300861708 /* iirfilter.cpp */; };
-		49BB479E07E53DDC00861708 /* transverbeditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49BB479C07E53DDC00861708 /* transverbeditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
-		49BB47B407E53DEF00861708 /* dfx-link.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47A007E53DEF00861708 /* dfx-link.png */; };
-		49BB47B507E53DEF00861708 /* fine-down-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47A107E53DEF00861708 /* fine-down-button.png */; };
-		49BB47B607E53DEF00861708 /* fine-up-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47A207E53DEF00861708 /* fine-up-button.png */; };
-		49BB47B707E53DEF00861708 /* grey-wide-fader-handle.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47A307E53DEF00861708 /* grey-wide-fader-handle.png */; };
-		49BB47B807E53DEF00861708 /* grey-wide-fader-slide.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47A407E53DEF00861708 /* grey-wide-fader-slide.png */; };
-		49BB47B907E53DEF00861708 /* midi-learn-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47A507E53DEF00861708 /* midi-learn-button.png */; };
-		49BB47BA07E53DEF00861708 /* midi-reset-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47A607E53DEF00861708 /* midi-reset-button.png */; };
-		49BB47BB07E53DEF00861708 /* purple-wide-fader-handle.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47A707E53DEF00861708 /* purple-wide-fader-handle.png */; };
-		49BB47BC07E53DEF00861708 /* purple-wide-fader-slide.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47A807E53DEF00861708 /* purple-wide-fader-slide.png */; };
-		49BB47BD07E53DEF00861708 /* quality-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47A907E53DEF00861708 /* quality-button.png */; };
-		49BB47BE07E53DEF00861708 /* randomize-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47AA07E53DEF00861708 /* randomize-button.png */; };
-		49BB47C007E53DEF00861708 /* speed-mode-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47AC07E53DEF00861708 /* speed-mode-button.png */; };
-		49BB47C107E53DEF00861708 /* super-destroy-fx-link.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47AD07E53DEF00861708 /* super-destroy-fx-link.png */; };
-		49BB47C307E53DEF00861708 /* tall-fader-handle.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47AF07E53DEF00861708 /* tall-fader-handle.png */; };
-		49BB47C407E53DEF00861708 /* tall-fader-slide.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47B007E53DEF00861708 /* tall-fader-slide.png */; };
-		49BB47C507E53DEF00861708 /* tomsound-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47B107E53DEF00861708 /* tomsound-button.png */; };
-		49BB47C607E53DEF00861708 /* transverb-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47B207E53DEF00861708 /* transverb-background.png */; };
+		49BB479E07E53DDC00861708 /* fonttesteditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49BB479C07E53DDC00861708 /* fonttesteditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		49BB47C607E53DEF00861708 /* fonttest-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47B207E53DEF00861708 /* fonttest-background.png */; };
 		B028C2D20D0F325900ADA1DA /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B028C2D10D0F325900ADA1DA /* destroyfx.icns */; };
 		EC2F843024A7C21D00F29321 /* dfxmisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC2F842F24A7C21D00F29321 /* dfxmisc.mm */; };
 		EC4FB173256ADD3000AFC27A /* AUBufferAllocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC4FB172256ADD3000AFC27A /* AUBufferAllocator.cpp */; };
@@ -59,8 +43,6 @@
 		ECCEE55425323309007251C9 /* AUMIDIEffectBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECCEE53125323309007251C9 /* AUMIDIEffectBase.cpp */; };
 		ECCEE55525323309007251C9 /* AUInputElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECCEE53625323309007251C9 /* AUInputElement.cpp */; };
 		ECD1DBDB26A675AB00BD8139 /* dfxmutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD1DBD926A675AB00BD8139 /* dfxmutex.cpp */; };
-		ECDB2A7021BA03EE00938F5C /* wide-fader-handle-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47B307E53DEF00861708 /* wide-fader-handle-glowing.png */; };
-		ECDB2A7121BA03F900938F5C /* tall-fader-handle-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47AE07E53DEF00861708 /* tall-fader-handle-glowing.png */; };
 		ECDCF1CF0FB88B87005F739E /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECDCF1CD0FB88B87005F739E /* dfx-au-utilities.strings */; };
 		ECE4CBE720D0CB380026E215 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECE4CBE620D0CB380026E215 /* dfxguimisc.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		ECF7D8CE2002AB5800DCE42E /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECF7D8CA2002AB5700DCE42E /* dfxgui-auviewfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
@@ -73,7 +55,6 @@
 		ECF7D9042002D3A000DCE42E /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECF7D9032002D3A000DCE42E /* Cocoa.framework */; };
 		ECF7D9062002D3F600DCE42E /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECF7D9052002D3F600DCE42E /* OpenGL.framework */; };
 		ECF7D90C2002D45F00DCE42E /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECF7D90B2002D45F00DCE42E /* QuartzCore.framework */; };
-		ECF9620B22F740170085D618 /* freeze-button.png in Resources */ = {isa = PBXBuildFile; fileRef = ECF9620A22F740170085D618 /* freeze-button.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -104,37 +85,19 @@
 		4932F4EB068011C9006A9591 /* dfxguimisc.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxguimisc.h; sourceTree = "<group>"; };
 		4932F7990680E859006A9591 /* dfxmidi.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmidi.cpp; sourceTree = "<group>"; };
 		4932F79A0680E859006A9591 /* dfxmidi.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxmidi.h; sourceTree = "<group>"; };
-		49BB478607E53D2500861708 /* transverb.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = transverb.h; sourceTree = "<group>"; usesTabs = 0; };
-		49BB478707E53D2500861708 /* transverbdef.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = transverbdef.h; sourceTree = "<group>"; };
-		49BB478807E53D2500861708 /* transverbformalities.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = transverbformalities.cpp; sourceTree = "<group>"; tabWidth = 4; usesTabs = 0; };
-		49BB478907E53D2500861708 /* transverbprocess.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = transverbprocess.cpp; sourceTree = "<group>"; usesTabs = 0; };
-		49BB478E07E53D3F00861708 /* transverb.exp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.exports; name = transverb.exp; path = mac/transverb.exp; sourceTree = "<group>"; };
+		49BB478607E53D2500861708 /* fonttest.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = fonttest.h; sourceTree = "<group>"; usesTabs = 0; };
+		49BB478707E53D2500861708 /* fonttestdef.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fonttestdef.h; sourceTree = "<group>"; };
+		49BB478807E53D2500861708 /* fonttestformalities.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = fonttestformalities.cpp; sourceTree = "<group>"; tabWidth = 4; usesTabs = 0; };
+		49BB478907E53D2500861708 /* fonttestprocess.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = fonttestprocess.cpp; sourceTree = "<group>"; usesTabs = 0; };
+		49BB478E07E53D3F00861708 /* fonttest.exp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.exports; name = fonttest.exp; path = mac/fonttest.exp; sourceTree = "<group>"; };
 		49BB479007E53D7300861708 /* firfilter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = firfilter.cpp; sourceTree = "<group>"; };
 		49BB479107E53D7300861708 /* firfilter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = firfilter.h; sourceTree = "<group>"; };
 		49BB479207E53D7300861708 /* iirfilter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = iirfilter.cpp; sourceTree = "<group>"; };
 		49BB479307E53D7300861708 /* iirfilter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = iirfilter.h; sourceTree = "<group>"; };
-		49BB479C07E53DDC00861708 /* transverbeditor.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = transverbeditor.cpp; path = gui/transverbeditor.cpp; sourceTree = "<group>"; };
-		49BB479D07E53DDC00861708 /* transverbeditor.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = transverbeditor.h; path = gui/transverbeditor.h; sourceTree = "<group>"; };
-		49BB47A007E53DEF00861708 /* dfx-link.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "dfx-link.png"; sourceTree = "<group>"; };
-		49BB47A107E53DEF00861708 /* fine-down-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "fine-down-button.png"; sourceTree = "<group>"; };
-		49BB47A207E53DEF00861708 /* fine-up-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "fine-up-button.png"; sourceTree = "<group>"; };
-		49BB47A307E53DEF00861708 /* grey-wide-fader-handle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "grey-wide-fader-handle.png"; sourceTree = "<group>"; };
-		49BB47A407E53DEF00861708 /* grey-wide-fader-slide.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "grey-wide-fader-slide.png"; sourceTree = "<group>"; };
-		49BB47A507E53DEF00861708 /* midi-learn-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "midi-learn-button.png"; sourceTree = "<group>"; };
-		49BB47A607E53DEF00861708 /* midi-reset-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "midi-reset-button.png"; sourceTree = "<group>"; };
-		49BB47A707E53DEF00861708 /* purple-wide-fader-handle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "purple-wide-fader-handle.png"; sourceTree = "<group>"; };
-		49BB47A807E53DEF00861708 /* purple-wide-fader-slide.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "purple-wide-fader-slide.png"; sourceTree = "<group>"; };
-		49BB47A907E53DEF00861708 /* quality-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "quality-button.png"; sourceTree = "<group>"; };
-		49BB47AA07E53DEF00861708 /* randomize-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "randomize-button.png"; sourceTree = "<group>"; };
-		49BB47AC07E53DEF00861708 /* speed-mode-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "speed-mode-button.png"; sourceTree = "<group>"; };
-		49BB47AD07E53DEF00861708 /* super-destroy-fx-link.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "super-destroy-fx-link.png"; sourceTree = "<group>"; };
-		49BB47AE07E53DEF00861708 /* tall-fader-handle-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tall-fader-handle-glowing.png"; sourceTree = "<group>"; };
-		49BB47AF07E53DEF00861708 /* tall-fader-handle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tall-fader-handle.png"; sourceTree = "<group>"; };
-		49BB47B007E53DEF00861708 /* tall-fader-slide.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tall-fader-slide.png"; sourceTree = "<group>"; };
-		49BB47B107E53DEF00861708 /* tomsound-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tomsound-button.png"; sourceTree = "<group>"; };
-		49BB47B207E53DEF00861708 /* transverb-background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "transverb-background.png"; sourceTree = "<group>"; };
-		49BB47B307E53DEF00861708 /* wide-fader-handle-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "wide-fader-handle-glowing.png"; sourceTree = "<group>"; };
-		8D01CCD20486CAD60068D4B7 /* dfx Transverb.component */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "dfx Transverb.component"; sourceTree = BUILT_PRODUCTS_DIR; };
+		49BB479C07E53DDC00861708 /* fonttesteditor.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = fonttesteditor.cpp; path = gui/fonttesteditor.cpp; sourceTree = "<group>"; };
+		49BB479D07E53DDC00861708 /* fonttesteditor.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = fonttesteditor.h; path = gui/fonttesteditor.h; sourceTree = "<group>"; };
+		49BB47B207E53DEF00861708 /* fonttest-background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "fonttest-background.png"; sourceTree = "<group>"; };
+		8D01CCD20486CAD60068D4B7 /* dfx Fonttest.component */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "dfx Fonttest.component"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B0204312092D4B1200EDC1C0 /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
 		B028C2D10D0F325900ADA1DA /* destroyfx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = destroyfx.icns; path = "../../dfx-library/destroyfx.icns"; sourceTree = "<group>"; };
 		EC2F842F24A7C21D00F29321 /* dfxmisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxmisc.mm; sourceTree = "<group>"; };
@@ -180,7 +143,7 @@
 		ECDCF1D00FB88B92005F739E /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECDCF1D10FB88B9C005F739E /* nl */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECE4CBE620D0CB380026E215 /* dfxguimisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxguimisc.mm; sourceTree = "<group>"; };
-		ECEF72C52321C12D00130656 /* transverb-base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "transverb-base.h"; sourceTree = "<group>"; };
+		ECEF72C52321C12D00130656 /* fonttest-base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "fonttest-base.h"; sourceTree = "<group>"; };
 		ECF3B50A20CCA88800842E94 /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECF7D8C52002AAD700DCE42E /* dfxgui-base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "dfxgui-base.h"; sourceTree = "<group>"; };
 		ECF7D8C72002AAE000DCE42E /* dfxgui.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxgui.h; sourceTree = "<group>"; };
@@ -203,7 +166,6 @@
 		ECF7D9072002D42D00DCE42E /* dfxmisc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmisc.cpp; sourceTree = "<group>"; };
 		ECF7D9082002D42E00DCE42E /* dfxmisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmisc.h; sourceTree = "<group>"; };
 		ECF7D90B2002D45F00DCE42E /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
-		ECF9620A22F740170085D618 /* freeze-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "freeze-button.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -227,7 +189,7 @@
 		089C166AFE841209C02AAC07 /* turntablist */ = {
 			isa = PBXGroup;
 			children = (
-				08FB77ADFE841716C02AAC07 /* transverb */,
+				08FB77ADFE841716C02AAC07 /* fonttest */,
 				4932F4C6068010F8006A9591 /* DFX Library */,
 				4932F4C906801110006A9591 /* DFX GUI */,
 				ECCEE51425323309007251C9 /* AudioUnitSDK */,
@@ -250,26 +212,26 @@
 			name = Resources;
 			sourceTree = "<group>";
 		};
-		08FB77ADFE841716C02AAC07 /* transverb */ = {
+		08FB77ADFE841716C02AAC07 /* fonttest */ = {
 			isa = PBXGroup;
 			children = (
-				ECEF72C52321C12D00130656 /* transverb-base.h */,
-				49BB478607E53D2500861708 /* transverb.h */,
-				49BB478807E53D2500861708 /* transverbformalities.cpp */,
-				49BB478907E53D2500861708 /* transverbprocess.cpp */,
-				49BB479D07E53DDC00861708 /* transverbeditor.h */,
-				49BB479C07E53DDC00861708 /* transverbeditor.cpp */,
-				49BB478707E53D2500861708 /* transverbdef.h */,
-				49BB478E07E53D3F00861708 /* transverb.exp */,
+				ECEF72C52321C12D00130656 /* fonttest-base.h */,
+				49BB478607E53D2500861708 /* fonttest.h */,
+				49BB478807E53D2500861708 /* fonttestformalities.cpp */,
+				49BB478907E53D2500861708 /* fonttestprocess.cpp */,
+				49BB479D07E53DDC00861708 /* fonttesteditor.h */,
+				49BB479C07E53DDC00861708 /* fonttesteditor.cpp */,
+				49BB478707E53D2500861708 /* fonttestdef.h */,
+				49BB478E07E53D3F00861708 /* fonttest.exp */,
 			);
-			name = transverb;
+			name = fonttest;
 			path = ..;
 			sourceTree = SOURCE_ROOT;
 		};
 		19C28FB4FE9D528D11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8D01CCD20486CAD60068D4B7 /* dfx Transverb.component */,
+				8D01CCD20486CAD60068D4B7 /* dfx FontTest.component */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -277,26 +239,7 @@
 		4905A972067F716E00000F0C /* graphics */ = {
 			isa = PBXGroup;
 			children = (
-				49BB47B207E53DEF00861708 /* transverb-background.png */,
-				49BB47A807E53DEF00861708 /* purple-wide-fader-slide.png */,
-				49BB47A707E53DEF00861708 /* purple-wide-fader-handle.png */,
-				49BB47A407E53DEF00861708 /* grey-wide-fader-slide.png */,
-				49BB47A307E53DEF00861708 /* grey-wide-fader-handle.png */,
-				49BB47B307E53DEF00861708 /* wide-fader-handle-glowing.png */,
-				49BB47B007E53DEF00861708 /* tall-fader-slide.png */,
-				49BB47AF07E53DEF00861708 /* tall-fader-handle.png */,
-				49BB47AE07E53DEF00861708 /* tall-fader-handle-glowing.png */,
-				49BB47A907E53DEF00861708 /* quality-button.png */,
-				49BB47B107E53DEF00861708 /* tomsound-button.png */,
-				ECF9620A22F740170085D618 /* freeze-button.png */,
-				49BB47AA07E53DEF00861708 /* randomize-button.png */,
-				49BB47A107E53DEF00861708 /* fine-down-button.png */,
-				49BB47A207E53DEF00861708 /* fine-up-button.png */,
-				49BB47AC07E53DEF00861708 /* speed-mode-button.png */,
-				49BB47A507E53DEF00861708 /* midi-learn-button.png */,
-				49BB47A607E53DEF00861708 /* midi-reset-button.png */,
-				49BB47A007E53DEF00861708 /* dfx-link.png */,
-				49BB47AD07E53DEF00861708 /* super-destroy-fx-link.png */,
+				49BB47B207E53DEF00861708 /* fonttest-background.png */,
 			);
 			name = graphics;
 			path = ../gui/graphics;
@@ -451,9 +394,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		8D01CCC60486CAD60068D4B7 /* Transverb */ = {
+		8D01CCC60486CAD60068D4B7 /* FontTest */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B03470DD08883BD2000C575D /* Build configuration list for PBXNativeTarget "Transverb" */;
+			buildConfigurationList = B03470DD08883BD2000C575D /* Build configuration list for PBXNativeTarget "FontTest" */;
 			buildPhases = (
 				8D01CCC90486CAD60068D4B7 /* Resources */,
 				8D01CCCB0486CAD60068D4B7 /* Sources */,
@@ -464,10 +407,10 @@
 			);
 			dependencies = (
 			);
-			name = Transverb;
+			name = FontTest;
 			productInstallPath = "$(HOME)/Library/Bundles";
 			productName = turntablist;
-			productReference = 8D01CCD20486CAD60068D4B7 /* dfx Transverb.component */;
+			productReference = 8D01CCD20486CAD60068D4B7 /* dfx FontTest.component */;
 			productType = "com.apple.product-type.bundle";
 		};
 /* End PBXNativeTarget section */
@@ -477,7 +420,7 @@
 			isa = PBXProject;
 			attributes = {
 			};
-			buildConfigurationList = B03470E108883BD2000C575D /* Build configuration list for PBXProject "transverb" */;
+			buildConfigurationList = B03470E108883BD2000C575D /* Build configuration list for PBXProject "fonttest" */;
 			compatibilityVersion = "Xcode 2.4";
 			developmentRegion = en;
 			hasScannedForEncodings = 1;
@@ -493,7 +436,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				8D01CCC60486CAD60068D4B7 /* Transverb */,
+				8D01CCC60486CAD60068D4B7 /* FontTest */,
 			);
 		};
 /* End PBXProject section */
@@ -504,27 +447,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				490E76A707CAE29600688A1D /* dfxsnooty10px.ttf in Resources */,
-				49BB47B407E53DEF00861708 /* dfx-link.png in Resources */,
-				49BB47B507E53DEF00861708 /* fine-down-button.png in Resources */,
-				49BB47B607E53DEF00861708 /* fine-up-button.png in Resources */,
-				49BB47B707E53DEF00861708 /* grey-wide-fader-handle.png in Resources */,
-				49BB47B807E53DEF00861708 /* grey-wide-fader-slide.png in Resources */,
-				49BB47B907E53DEF00861708 /* midi-learn-button.png in Resources */,
-				49BB47BA07E53DEF00861708 /* midi-reset-button.png in Resources */,
-				49BB47BB07E53DEF00861708 /* purple-wide-fader-handle.png in Resources */,
-				49BB47BC07E53DEF00861708 /* purple-wide-fader-slide.png in Resources */,
-				49BB47BD07E53DEF00861708 /* quality-button.png in Resources */,
-				49BB47BE07E53DEF00861708 /* randomize-button.png in Resources */,
-				49BB47C007E53DEF00861708 /* speed-mode-button.png in Resources */,
-				49BB47C107E53DEF00861708 /* super-destroy-fx-link.png in Resources */,
-				49BB47C307E53DEF00861708 /* tall-fader-handle.png in Resources */,
-				ECDB2A7121BA03F900938F5C /* tall-fader-handle-glowing.png in Resources */,
-				49BB47C407E53DEF00861708 /* tall-fader-slide.png in Resources */,
-				49BB47C507E53DEF00861708 /* tomsound-button.png in Resources */,
-				49BB47C607E53DEF00861708 /* transverb-background.png in Resources */,
-				ECDB2A7021BA03EE00938F5C /* wide-fader-handle-glowing.png in Resources */,
+				49BB47C607E53DEF00861708 /* fonttest-background.png in Resources */,
 				B028C2D20D0F325900ADA1DA /* destroyfx.icns in Resources */,
-				ECF9620B22F740170085D618 /* freeze-button.png in Resources */,
 				ECDCF1CF0FB88B87005F739E /* dfx-au-utilities.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -582,14 +506,14 @@
 				EC2F843024A7C21D00F29321 /* dfxmisc.mm in Sources */,
 				ECCEE54E25323309007251C9 /* AUBase.cpp in Sources */,
 				ECF7D8F92002D2F900DCE42E /* dfxenvelope.cpp in Sources */,
-				49BB478C07E53D2500861708 /* transverbformalities.cpp in Sources */,
+				49BB478C07E53D2500861708 /* fonttestformalities.cpp in Sources */,
 				ECF7D8F52002B7F300DCE42E /* vstgui_mac.mm in Sources */,
 				EC4FB173256ADD3000AFC27A /* AUBufferAllocator.cpp in Sources */,
-				49BB478D07E53D2500861708 /* transverbprocess.cpp in Sources */,
+				49BB478D07E53D2500861708 /* fonttestprocess.cpp in Sources */,
 				ECD1DBDB26A675AB00BD8139 /* dfxmutex.cpp in Sources */,
 				49BB479407E53D7300861708 /* firfilter.cpp in Sources */,
 				49BB479607E53D7300861708 /* iirfilter.cpp in Sources */,
-				49BB479E07E53DDC00861708 /* transverbeditor.cpp in Sources */,
+				49BB479E07E53DDC00861708 /* fonttesteditor.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -635,9 +559,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2001-";
-				DFX_PLUGIN_FULL_NAME = Transverb;
+				DFX_PLUGIN_FULL_NAME = FontTest;
 				DFX_PLUGIN_ID = DFtv;
-				DFX_PLUGIN_SHORT_NAME = transverb;
+				DFX_PLUGIN_SHORT_NAME = fonttest;
 				DFX_PLUGIN_VERSION_STRING = 1.5.1;
 			};
 			name = Development;
@@ -646,9 +570,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2001-";
-				DFX_PLUGIN_FULL_NAME = Transverb;
+				DFX_PLUGIN_FULL_NAME = FontTest;
 				DFX_PLUGIN_ID = DFtv;
-				DFX_PLUGIN_SHORT_NAME = transverb;
+				DFX_PLUGIN_SHORT_NAME = fonttest;
 				DFX_PLUGIN_VERSION_STRING = 1.5.1;
 			};
 			name = Deployment;
@@ -656,7 +580,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		B03470DD08883BD2000C575D /* Build configuration list for PBXNativeTarget "Transverb" */ = {
+		B03470DD08883BD2000C575D /* Build configuration list for PBXNativeTarget "FontTest" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B03470DE08883BD2000C575D /* Development */,
@@ -665,7 +589,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;
 		};
-		B03470E108883BD2000C575D /* Build configuration list for PBXProject "transverb" */ = {
+		B03470E108883BD2000C575D /* Build configuration list for PBXProject "fonttest" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B03470E208883BD2000C575D /* Development */,

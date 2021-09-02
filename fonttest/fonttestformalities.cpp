@@ -1,25 +1,25 @@
 /*------------------------------------------------------------------------
 Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
 
-This file is part of Transverb.
+This file is part of FontTest.
 
-Transverb is free software:  you can redistribute it and/or modify
+FontTest is free software:  you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Transverb is distributed in the hope that it will be useful,
+FontTest is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
+along with FontTest.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#include "transverb.h"
+#include "fonttest.h"
 
 #include <algorithm>
 #include <cassert>
@@ -30,14 +30,14 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 // these are macros that do boring entry point stuff for us
-DFX_EFFECT_ENTRY(Transverb)
-DFX_CORE_ENTRY(TransverbDSP)
+DFX_EFFECT_ENTRY(FontTest)
+DFX_CORE_ENTRY(FontTestDSP)
 
 using namespace dfx::TV;
 
 
 
-Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
+FontTest::FontTest(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   : DfxPlugin(inInstance, kNumParameters, kNumPresets) {
 
   initparameter_f(kBsize, {"buffer size", "BufSize", "BufSiz", "BfSz"}, 2700.0, 333.0, 1.0, 3000.0, DfxParam::Unit::MS);
@@ -80,10 +80,10 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   speedModeStates.fill(kSpeedMode_Fine);
 }
 
-void Transverb::dfx_PostConstructor() {
+void FontTest::dfx_PostConstructor() {
 
 #if TARGET_PLUGIN_USES_MIDI
-  // since we don't use notes for any specialized control of Transverb,
+  // since we don't use notes for any specialized control of FontTest,
   // allow them to be assigned to control parameters via MIDI learn
   getsettings().setAllowPitchbendEvents(true);
   getsettings().setAllowNoteEvents(true);
@@ -92,7 +92,7 @@ void Transverb::dfx_PostConstructor() {
 
 
 
-TransverbDSP::TransverbDSP(DfxPlugin* inDfxPlugin)
+FontTestDSP::FontTestDSP(DfxPlugin* inDfxPlugin)
   : DfxPluginCore(inDfxPlugin),
     firCoefficientsWindow(dfx::FIRFilter::generateKaiserWindow(kNumFIRTaps, 60.0f)) {
 
@@ -109,7 +109,7 @@ TransverbDSP::TransverbDSP(DfxPlugin* inDfxPlugin)
 }
 
 
-void TransverbDSP::reset() {
+void FontTestDSP::reset() {
 
   smoothcount1 = smoothcount2 = 0;
   lastr1val = lastr2val = 0.0f;
@@ -121,7 +121,7 @@ void TransverbDSP::reset() {
   filter2.setSampleRate(getsamplerate());
 }
 
-void TransverbDSP::createbuffers() {
+void FontTestDSP::createbuffers() {
 
   MAXBUF = (int) (getparametermax_f(kBsize) * 0.001 * getsamplerate());
 
@@ -129,13 +129,13 @@ void TransverbDSP::createbuffers() {
   buf2.assign(MAXBUF, 0.0f);
 }
 
-void TransverbDSP::clearbuffers() {
+void FontTestDSP::clearbuffers() {
 
   std::fill(buf1.begin(), buf1.end(), 0.0f);
   std::fill(buf2.begin(), buf2.end(), 0.0f);
 }
 
-void TransverbDSP::releasebuffers() {
+void FontTestDSP::releasebuffers() {
 
   MAXBUF = 0;
   buf1 = {};
@@ -143,7 +143,7 @@ void TransverbDSP::releasebuffers() {
 }
 
 
-void TransverbDSP::processparameters() {
+void FontTestDSP::processparameters() {
 
   if (auto const value = getparameterifchanged_f(kDrymix))
   {
@@ -179,7 +179,7 @@ void TransverbDSP::processparameters() {
   {
     auto const entryBsize = std::exchange(bsize, std::clamp((int) (*value * getsamplerate() * 0.001), 1, MAXBUF));
     // the commented-out logic below is the beginning of an attempt to clean up the buffer states
-    // when the buffer resizes, however the tidiness maybe feels counter to the spirit of Transverb?
+    // when the buffer resizes, however the tidiness maybe feels counter to the spirit of FontTest?
     if (bsize > entryBsize)
     {
       //std::fill(std::next(buf1.begin(), entryBsize), std::next(buf1.begin(), bsize), 0.0f);
@@ -220,7 +220,7 @@ void TransverbDSP::processparameters() {
 
 //--------- presets --------
 
-void Transverb::initPresets() {
+void FontTest::initPresets() {
 
 	long i = 1;
 
@@ -391,7 +391,7 @@ void Transverb::initPresets() {
 }
 
 //-----------------------------------------------------------------------------
-bool Transverb::loadpreset(long index)
+bool FontTest::loadpreset(long index)
 {
 	if (!presetisvalid(index))
 		return false;
@@ -409,8 +409,8 @@ bool Transverb::loadpreset(long index)
 
 
 
-/* this randomizes the values of all of Transverb's parameters, sometimes in smart ways */
-void Transverb::randomizeparameters()
+/* this randomizes the values of all of FontTest's parameters, sometimes in smart ways */
+void FontTest::randomizeparameters()
 {
 	// randomize the non-mix-level parameters
 
@@ -441,7 +441,7 @@ void Transverb::randomizeparameters()
 		}
 		else
 		{
-			// TODO: this is not thread-safe (wrt randomizer state) given that Transverb can execute this method
+			// TODO: this is not thread-safe (wrt randomizer state) given that FontTest can execute this method
 			// from the main thread (GUI) or MIDI thread (though likelihood of concurrency is quite low)
 			randomizeparameter(i);
 		}
@@ -494,7 +494,7 @@ void Transverb::randomizeparameters()
 	}
 }
 
-long Transverb::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
+long FontTest::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
                                     size_t& outDataSize, dfx::PropertyFlags& outFlags)
 {
   if (isSpeedModePropertyID(inPropertyID))
@@ -506,7 +506,7 @@ long Transverb::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inS
   return DfxPlugin::dfx_GetPropertyInfo(inPropertyID, inScope, inItemIndex, outDataSize, outFlags);
 }
 
-long Transverb::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
+long FontTest::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
                                 void* outData)
 {
   if (isSpeedModePropertyID(inPropertyID))
@@ -517,7 +517,7 @@ long Transverb::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope
   return DfxPlugin::dfx_GetProperty(inPropertyID, inScope, inItemIndex, outData);
 }
 
-long Transverb::dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
+long FontTest::dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
                                 void const* inData, size_t inDataSize)
 {
   if (isSpeedModePropertyID(inPropertyID))
@@ -532,12 +532,12 @@ long Transverb::dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope
 }
 
 
-size_t Transverb::settings_sizeOfExtendedData() const noexcept
+size_t FontTest::settings_sizeOfExtendedData() const noexcept
 {
 	return speedModeStates.size() * sizeof(speedModeStates.front());
 }
 
-void Transverb::settings_saveExtendedData(void* outData, bool /*isPreset*/)
+void FontTest::settings_saveExtendedData(void* outData, bool /*isPreset*/)
 {
   auto speedModeStatesSerialization = speedModeStates;
   if constexpr (!DfxSettings::serializationIsNativeEndian())
@@ -547,7 +547,7 @@ void Transverb::settings_saveExtendedData(void* outData, bool /*isPreset*/)
   memcpy(outData, speedModeStatesSerialization.data(), settings_sizeOfExtendedData());
 }
 
-void Transverb::settings_restoreExtendedData(void const* inData, size_t storedExtendedDataSize,
+void FontTest::settings_restoreExtendedData(void const* inData, size_t storedExtendedDataSize,
                                              long dataVersion, bool /*isPreset*/)
 {
   if (storedExtendedDataSize >= settings_sizeOfExtendedData())
@@ -560,7 +560,7 @@ void Transverb::settings_restoreExtendedData(void const* inData, size_t storedEx
   }
 }
 
-void Transverb::settings_doChunkRestoreSetParameterStuff(long tag, float value, long dataVersion, long presetNum)
+void FontTest::settings_doChunkRestoreSetParameterStuff(long tag, float value, long dataVersion, long presetNum)
 {
 	// prevent old speed mode 1 settings from applying to freeze
 	if ((dataVersion < 0x00010501) && (tag == kFreeze))
@@ -583,16 +583,16 @@ void Transverb::settings_doChunkRestoreSetParameterStuff(long tag, float value, 
 
 dfx::PropertyID dfx::TV::speedModeIndexToPropertyID(size_t inIndex) noexcept
 {
-  return kTransverbProperty_SpeedModeBase + static_cast<dfx::PropertyID>(inIndex);
+  return kFontTestProperty_SpeedModeBase + static_cast<dfx::PropertyID>(inIndex);
 }
 
 size_t dfx::TV::speedModePropertyIDToIndex(dfx::PropertyID inPropertyID) noexcept
 {
-  assert(inPropertyID >= kTransverbProperty_SpeedModeBase);
-  return inPropertyID - kTransverbProperty_SpeedModeBase;
+  assert(inPropertyID >= kFontTestProperty_SpeedModeBase);
+  return inPropertyID - kFontTestProperty_SpeedModeBase;
 }
 
 bool dfx::TV::isSpeedModePropertyID(dfx::PropertyID inPropertyID) noexcept
 {
-  return (inPropertyID >= kTransverbProperty_SpeedModeBase) && (speedModePropertyIDToIndex(inPropertyID) < kNumDelays);
+  return (inPropertyID >= kFontTestProperty_SpeedModeBase) && (speedModePropertyIDToIndex(inPropertyID) < kNumDelays);
 }

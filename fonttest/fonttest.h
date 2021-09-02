@@ -1,20 +1,20 @@
 /*------------------------------------------------------------------------
 Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
 
-This file is part of Transverb.
+This file is part of FontTest.
 
-Transverb is free software:  you can redistribute it and/or modify
+FontTest is free software:  you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Transverb is distributed in the hope that it will be useful,
+FontTest is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
+along with FontTest.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
@@ -28,13 +28,13 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
 #include "iirfilter.h"
-#include "transverb-base.h"
+#include "fonttest-base.h"
 
 
-class TransverbDSP final : public DfxPluginCore {
+class FontTestDSP final : public DfxPluginCore {
 
 public:
-  explicit TransverbDSP(DfxPlugin* inDfxPlugin);
+  explicit FontTestDSP(DfxPlugin* inDfxPlugin);
 
   void process(float const* inAudio, float* outAudio, unsigned long inNumFrames) override;
   void reset() override;
@@ -85,10 +85,10 @@ private:
 
 
 
-class Transverb final : public DfxPlugin {
+class FontTest final : public DfxPlugin {
 
 public:
-  explicit Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+  explicit FontTest(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
   void dfx_PostConstructor() override;
 
@@ -121,7 +121,7 @@ private:
 };
 
 
-inline float TransverbDSP::InterpolateHermite(float* data, double address,
+inline float FontTestDSP::InterpolateHermite(float* data, double address,
                                               int arraysize, int danger) {
   int posMinus1 = 0, posPlus1 = 0, posPlus2 = 0;
 
@@ -161,23 +161,8 @@ inline float TransverbDSP::InterpolateHermite(float* data, double address,
   return (((a * posFract) + b) * posFract + c) * posFract + data[pos];
 }
 
-/*
-inline float TransverbDSP::InterpolateHermitePostLowpass(float* data, float address) {
-  auto const pos = (int)address;
-  float const posFract = address - (float)pos;
-
-  float const a = ((3.0f * (data[1] - data[2])) -
-                   data[0] + data[3]) * 0.5f;
-  float const b = (2.0f * data[2]) + data[0] -
-                  (2.5f * data[1]) - (data[3] * 0.5f);
-  float const c = (data[2] - data[0]) * 0.5f;
-
-  return (((a * posFract) + b) * posFract + c) * posFract + data[1];
-}
-*/
-
-inline float TransverbDSP::InterpolateLinear(float* data, double address,
-                                             int arraysize, int danger) {
+inline float FontTestDSP::InterpolateLinear(float* data, double address,
+                                            int arraysize, int danger) {
 	int posPlus1 = 0;
 	auto const pos = (int)address;
 	auto const posFract = (float)(address - (double)pos);

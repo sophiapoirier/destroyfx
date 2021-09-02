@@ -1,25 +1,25 @@
 /*------------------------------------------------------------------------
 Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
 
-This file is part of Transverb.
+This file is part of FontTest.
 
-Transverb is free software:  you can redistribute it and/or modify
+FontTest is free software:  you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Transverb is distributed in the hope that it will be useful,
+FontTest is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
+along with FontTest.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#include "transverbeditor.h"
+#include "fonttesteditor.h"
 
 #include <algorithm>
 #include <array>
@@ -261,7 +261,7 @@ static double nearestIntegerAbove(double number)
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult TransverbSpeedTuneButton::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+VSTGUI::CMouseEventResult FontTestSpeedTuneButton::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
 	if ((mTuneMode == kSpeedMode_Fine) || !inButtons.isLeftButton())
 	{
@@ -302,10 +302,10 @@ VSTGUI::CMouseEventResult TransverbSpeedTuneButton::onMouseDown(VSTGUI::CPoint& 
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-DFX_EDITOR_ENTRY(TransverbEditor)
+DFX_EDITOR_ENTRY(FontTestEditor)
 
 //-----------------------------------------------------------------------------
-TransverbEditor::TransverbEditor(DGEditorListenerInstance inInstance)
+FontTestEditor::FontTestEditor(DGEditorListenerInstance inInstance)
 :	DfxGuiEditor(inInstance)
 {
 	for (size_t i = 0; i < kNumDelays; i++)
@@ -315,7 +315,7 @@ TransverbEditor::TransverbEditor(DGEditorListenerInstance inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long TransverbEditor::OpenEditor()
+long FontTestEditor::OpenEditor()
 {
 	// slider handles
 	auto const horizontalSliderHandleImage = LoadImage("purple-wide-fader-handle.png");
@@ -374,14 +374,14 @@ long TransverbEditor::OpenEditor()
 
 		if (tag == kSpeed1)
 		{
-			mSpeedDownButtons[0] = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
-			mSpeedUpButtons[0] = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
+			mSpeedDownButtons[0] = emplaceControl<FontTestSpeedTuneButton>(this, tag, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
+			mSpeedUpButtons[0] = emplaceControl<FontTestSpeedTuneButton>(this, tag, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
 			textDisplay->setTextToValueProc(speedTextConvertProcedure);
 		}
 		else if (tag == kSpeed2)
 		{
-			mSpeedDownButtons[1] = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
-			mSpeedUpButtons[1] = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
+			mSpeedDownButtons[1] = emplaceControl<FontTestSpeedTuneButton>(this, tag, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
+			mSpeedUpButtons[1] = emplaceControl<FontTestSpeedTuneButton>(this, tag, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
 			textDisplay->setTextToValueProc(speedTextConvertProcedure);
 		}
 		else
@@ -440,7 +440,7 @@ long TransverbEditor::OpenEditor()
 	// randomize button
 	pos.set(kRandomButtonX, kButtonY, randomizeButtonImage->getWidth(), randomizeButtonImage->getHeight() / 2);
 	auto const button = emplaceControl<DGButton>(this, pos, randomizeButtonImage, 2, DGButton::Mode::Momentary);
-	button->setUserProcedure(std::bind(&TransverbEditor::randomizeparameters, this, true));
+	button->setUserProcedure(std::bind(&FontTestEditor::randomizeparameters, this, true));
 
 	// speed mode buttons
 	for (size_t speedModeIndex = 0; speedModeIndex < kNumDelays; speedModeIndex++)
@@ -448,7 +448,7 @@ long TransverbEditor::OpenEditor()
 		pos.set(kSpeedModeButtonX, kSpeedModeButtonY + (((kWideFaderInc * 2) + kWideFaderMoreInc) * speedModeIndex),
 				speedModeButtonImage->getWidth() / 2, speedModeButtonImage->getHeight() / kSpeedMode_NumModes);
 		mSpeedModeButtons[speedModeIndex] = emplaceControl<DGButton>(this, pos, speedModeButtonImage, kSpeedMode_NumModes, DGButton::Mode::Increment, true);
-		mSpeedModeButtons[speedModeIndex]->setUserProcedure(std::bind(&TransverbEditor::HandleSpeedModeButton, this, speedModeIndex, std::placeholders::_1));
+		mSpeedModeButtons[speedModeIndex]->setUserProcedure(std::bind(&FontTestEditor::HandleSpeedModeButton, this, speedModeIndex, std::placeholders::_1));
 	}
 
 	// MIDI learn button
@@ -470,7 +470,7 @@ long TransverbEditor::OpenEditor()
 }
 
 //-----------------------------------------------------------------------------
-void TransverbEditor::PostOpenEditor()
+void FontTestEditor::PostOpenEditor()
 {
 	for (size_t i = 0; i < kNumDelays; i++)
 	{
@@ -479,7 +479,7 @@ void TransverbEditor::PostOpenEditor()
 }
 
 //-----------------------------------------------------------------------------
-void TransverbEditor::CloseEditor()
+void FontTestEditor::CloseEditor()
 {
 	mSpeedModeButtons.fill(nullptr);
 	mSpeedDownButtons.fill(nullptr);
@@ -488,7 +488,7 @@ void TransverbEditor::CloseEditor()
 }
 
 //-----------------------------------------------------------------------------
-void TransverbEditor::parameterChanged(long inParameterID)
+void FontTestEditor::parameterChanged(long inParameterID)
 {
 	if (inParameterID == kBsize)
 	{
@@ -499,7 +499,7 @@ void TransverbEditor::parameterChanged(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-void TransverbEditor::HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope /*inScope*/, unsigned long /*inItemIndex*/)
+void FontTestEditor::HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope /*inScope*/, unsigned long /*inItemIndex*/)
 {
 	if (isSpeedModePropertyID(inPropertyID))
 	{
@@ -508,7 +508,7 @@ void TransverbEditor::HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Sc
 }
 
 //-----------------------------------------------------------------------------
-void TransverbEditor::HandleSpeedModeButton(size_t inIndex, long inValue)
+void FontTestEditor::HandleSpeedModeButton(size_t inIndex, long inValue)
 {
 	auto const value_fixedSize = static_cast<uint8_t>(inValue);
 	[[maybe_unused]] bool const ok = dfxgui_SetProperty(speedModeIndexToPropertyID(inIndex), value_fixedSize);
@@ -516,7 +516,7 @@ void TransverbEditor::HandleSpeedModeButton(size_t inIndex, long inValue)
 }
 
 //-----------------------------------------------------------------------------
-void TransverbEditor::HandleSpeedModeChange(size_t inIndex)
+void FontTestEditor::HandleSpeedModeChange(size_t inIndex)
 {
 	auto const tuneMode = dfxgui_GetProperty<uint8_t>(speedModeIndexToPropertyID(inIndex));
 	assert(tuneMode.has_value());
