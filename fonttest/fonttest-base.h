@@ -21,45 +21,16 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #pragma once
 
-#include "dfxpluginproperties.h"
-
-
-namespace dfx::TV
+namespace dfx::FT
 {
 
 //-----------------------------------------------------------------------------
 // these are the plugin parameters:
 enum
 {
-	kBsize,
-	kSpeed1,
-	kFeed1,
-	kDist1,
-	kSpeed2,
-	kFeed2,
-	kDist2,
-	kDrymix,
-	kMix1,
-	kMix2,
-	kQuality,
-	kTomsound,
-	kFreeze,
+	kPlaceholder,
 
 	kNumParameters
 };
-
-
-static constexpr size_t kNumDelays = 2;
-
-enum { kQualityMode_DirtFi, kQualityMode_HiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes };
-
-// this stuff is for the speed parameter adjustment mode switch on the GUI
-enum { kSpeedMode_Fine, kSpeedMode_Semitone, kSpeedMode_Octave, kSpeedMode_NumModes };
-static constexpr dfx::PropertyID kFontTestProperty_SpeedModeBase = dfx::kPluginProperty_EndOfList;
-
-
-dfx::PropertyID speedModeIndexToPropertyID(size_t inIndex) noexcept;
-size_t speedModePropertyIDToIndex(dfx::PropertyID inPropertyID) noexcept;
-bool isSpeedModePropertyID(dfx::PropertyID inPropertyID) noexcept;
 
 }  // namespace

@@ -28,29 +28,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "fonttest-base.h"
 
 
-
-//-----------------------------------------------------------------------------
-class FontTestSpeedTuneButton final : public DGFineTuneButton
-{
-public:
-	FontTestSpeedTuneButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage,
-							 float inValueChangeAmount)
-	:	DGFineTuneButton(inOwnerEditor, inParamID, inRegion, inImage, inValueChangeAmount)
-	{}
-
-	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-
-	void setTuneMode(long inTuneMode) noexcept
-	{
-		mTuneMode = inTuneMode;
-	}
-
-private:
-	long mTuneMode {};
-};
-
-
-
 //-----------------------------------------------------------------------------
 class FontTestEditor final : public DfxGuiEditor
 {
@@ -64,10 +41,4 @@ public:
 	void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) override;
 
 private:
-	void HandleSpeedModeButton(size_t inIndex, long inValue);
-	void HandleSpeedModeChange(size_t inIndex);
-
-	std::array<DGButton*, dfx::TV::kNumDelays> mSpeedModeButtons {};
-	std::array<FontTestSpeedTuneButton*, dfx::TV::kNumDelays> mSpeedDownButtons {}, mSpeedUpButtons {};
-	std::array<DGTextDisplay*, dfx::TV::kNumDelays> mDistanceTextDisplays {};
 };

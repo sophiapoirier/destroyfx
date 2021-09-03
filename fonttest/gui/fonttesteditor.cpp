@@ -32,274 +32,23 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxmisc.h"
 
-using namespace dfx::TV;
+using namespace dfx::FT;
 
 
 //-----------------------------------------------------------------------------
 // positions
 enum
 {
-	kWideFaderX = 20,
-	kWideFaderY = 35,
-	kWideFaderInc = 24,
-	kWideFaderMoreInc = 42,
-	kWideFaderEvenMoreInc = 50,
-	kTallFaderX = kWideFaderX,
-	kTallFaderY = 265,
-	kTallFaderInc = 28,
+  kTextX = 16,
+  kWetarY = 64,
+  kSnootyY = 128,
+  kPasementY = 192,
 
-	kDisplayX = 318 + 1,
-	kDisplayWidth = 180,
-	kDisplayHeight = 12,
-	kDisplayY = kWideFaderY - kDisplayHeight - 1,
-
-	kQualityButtonX = 425,
-	kTomsoundButtonX = kQualityButtonX,
-	kFreezeButtonX = kWideFaderX,
-	kRandomButtonX = 185,
-	kButtonY = 236,
-	kButtonIncY = 18,
-
-	kFineDownButtonX = 503,
-	kFineUpButtonX = 512,
-	kFineButtonY = kWideFaderY,
-	kSpeedModeButtonX = 503,
-	kSpeedModeButtonY = 22,
-
-	kMidiLearnButtonX = 237,
-	kMidiLearnButtonY = kButtonY + kButtonIncY,
-	kMidiResetButtonX = 288,
-	kMidiResetButtonY = kMidiLearnButtonY,
-
-	kDFXLinkX = 107,
-	kDFXLinkY = 281,
-	kDestroyFXLinkX = 351,
-	kDestroyFXLinkY = 339
+  kTextWidth = 128,
 };
 
 
-constexpr auto kDisplayFont = dfx::kFontName_Snooty10px;
-constexpr DGColor kDisplayTextColor(103, 161, 215);
-constexpr auto kDisplayTextSize = dfx::kFontSize_Snooty10px;
-constexpr float kFineTuneInc = 0.0001f;
-constexpr float kSemitonesPerOctave = 12.0f;
-
-//-----------------------------------------------------------------------------
-// value text display procedures
-
-static bool bsizeDisplayProcedure(float inValue, char* outText, void*)
-{
-	long const thousands = static_cast<long>(inValue) / 1000;
-	auto const remainder = std::fmod(inValue, 1000.0f);
-
-	bool success = false;
-	if (thousands > 0)
-	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld,%05.1f", thousands, remainder) > 0;
-	}
-	else
-	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
-	}
-	dfx::StrlCat(outText, " ms", DGTextDisplay::kTextMaxLength);
-
-	return success;
-}
-
-static bool speedDisplayProcedure(float inValue, char* outText, void*)
-{
-	std::array<char, 16> semitonesString {};
-	auto speed = inValue;
-	auto const remainder = std::fmod(std::fabs(speed), 1.0f);
-	float semitones = remainder * kSemitonesPerOctave;
-	// make sure that these float crap doesn't result in wacky stuff
-	// like displays that say "-1 octave & 12.00 semitones"
-	snprintf(semitonesString.data(), semitonesString.size(), "%.3f", semitones);
-	std::string const semitonesStdString(semitonesString.data());
-	if ((semitonesStdString == "12.000") || (semitonesStdString == "-12.000"))
-	{
-		semitones = 0.0f;
-		if (speed < 0.0f)
-		{
-			speed -= 0.003f;
-		}
-		else
-		{
-			speed += 0.003f;
-		}
-	}
-	auto const octaves = static_cast<int>(speed);
-
-	if (speed > 0.0f)
-	{
-		if (octaves == 0)
-		{
-			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s%.2f semitones", (semitones < 0.000003f) ? "" : "+", semitones) > 0;
-		}
-		auto const octavesSuffix = (octaves == 1) ? "" : "s";
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "+%d octave%s & %.2f semitones", octaves, octavesSuffix, semitones) > 0;
-	}
-	else if (octaves == 0)
-	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "-%.2f semitones", semitones) > 0;
-	}
-	else
-	{
-		auto const octavesSuffix = (octaves == -1) ? "" : "s";
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%d octave%s & %.2f semitones", octaves, octavesSuffix, semitones) > 0;
-	}
-}
-
-static std::optional<float> speedTextConvertProcedure(std::string const& inText, DGTextDisplay*)
-{
-	std::string filteredText(inText.size(), '\0');
-	// TODO: does not support locale for number format, and ignores minus and periods that are not part of fractional numbers
-	filteredText.erase(std::remove_copy_if(inText.cbegin(), inText.cend(), filteredText.begin(), [](auto character)
-										   {
-										     return !(std::isdigit(character) || std::isspace(character) || (character == '-') || (character == '.'));
-										   }), filteredText.cend());
-
-	float octaves = 0.0f, semitones = 0.0f;
-	auto const scanCount = sscanf(filteredText.c_str(), "%f%f", &octaves, &semitones);
-	if ((scanCount > 0) && (scanCount != EOF))
-	{
-		// the user only entered one number, which is for octaves,
-		// so convert any fractional part of the octaves value into semitones
-		if (scanCount == 1)
-		{
-			// unless we find the one number labeled as semitones, in which case treat as those
-			std::vector<char> word(inText.size() + 1, '\0');
-			auto const wordScanCount = sscanf(inText.c_str(), "%*f%s", word.data());
-			constexpr std::string_view wordCompare("semi");
-			if ((wordScanCount > 0) && (wordScanCount != EOF) && !strncasecmp(word.data(), wordCompare.data(), wordCompare.size()))
-			{
-				return octaves / kSemitonesPerOctave;
-			}
-			return octaves;
-		}
-
-		// ignore the sign for the semitones unless the octaves value was in the zero range
-		auto const negative = std::signbit(octaves) || ((std::fabs(octaves) < 1.0f) && std::signbit(semitones));
-		return (std::floor(std::fabs(octaves)) + (std::fabs(semitones) / kSemitonesPerOctave)) * (negative ? -1.0f : 1.0f);
-	}
-	return {};
-}
-
-static bool feedbackDisplayProcedure(float inValue, char* outText, void*)
-{
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld%%", static_cast<long>(inValue)) > 0;
-}
-
-static bool distDisplayProcedure(float inValue, char* outText, void* inEditor)
-{
-	float const distance = inValue * static_cast<DfxGuiEditor*>(inEditor)->getparameter_f(kBsize);
-	long const thousands = static_cast<long>(distance) / 1000;
-	auto const remainder = std::fmod(distance, 1000.0f);
-
-	bool success = false;
-	if (thousands > 0)
-	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld,%06.2f", thousands, remainder) > 0;
-	}
-	else
-	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", distance) > 0;
-	}
-	dfx::StrlCat(outText, " ms", DGTextDisplay::kTextMaxLength);
-
-	return success;
-}
-
-static float distValueFromTextConvertProcedure(float inValue, DGTextDisplay* inTextDisplay)
-{
-	auto const bsize = static_cast<float>(inTextDisplay->getOwnerEditor()->getparameter_f(kBsize));
-	return (bsize != 0.0f) ? (inValue / bsize) : inValue;
-}
-
-
-
-//-----------------------------------------------------------------------------
-
-static double nearestIntegerBelow(double number)
-{
-	bool const sign = (number >= 0.0);
-	auto const fraction = std::fmod(std::fabs(number), 1.0);
-
-	if (fraction <= 0.0001)
-	{
-		return number;
-	}
-
-	if (sign)
-	{
-		return static_cast<double>(static_cast<long>(std::fabs(number)));
-	}
-	else
-	{
-		return -static_cast<double>(static_cast<long>(std::fabs(number)) + 1);
-	}
-}
-
-static double nearestIntegerAbove(double number)
-{
-	bool const sign = (number >= 0.0);
-	double const fraction = std::fmod(std::fabs(number), 1.0);
-
-	if (fraction <= 0.0001)
-	{
-		return number;
-	}
-
-	if (sign)
-	{
-		return static_cast<double>(static_cast<long>(std::fabs(number)) + 1);
-	}
-	else
-	{
-		return -static_cast<double>(static_cast<long>(std::fabs(number)));
-	}
-}
-
-//-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult FontTestSpeedTuneButton::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
-{
-	if ((mTuneMode == kSpeedMode_Fine) || !inButtons.isLeftButton())
-	{
-		return DGFineTuneButton::onMouseDown(inPos, inButtons);
-	}
-
-	beginEdit();
-
-	mEntryValue = getValue();
-
-	auto const oldSpeedValue = getOwnerEditor()->getparameter_f(getParameterID());
-	bool const isInc = (mValueChangeAmount >= 0.0f);
-	double const snapAmount = isInc ? 1.001 : -1.001;
-	double const snapScalar = (mTuneMode == kSpeedMode_Semitone) ? 12.0 : 1.0;
-
-	double newSpeedValue = (oldSpeedValue * snapScalar) + snapAmount;
-	newSpeedValue = isInc ? nearestIntegerBelow(newSpeedValue) : nearestIntegerAbove(newSpeedValue);
-	newSpeedValue /= snapScalar;
-	if (isParameterAttached())
-	{
-		newSpeedValue = getOwnerEditor()->dfxgui_ContractParameterValue(getParameterID(), newSpeedValue);
-	}
-	mNewValue = std::clamp(static_cast<float>(newSpeedValue), getMin(), getMax());
-
-	mMouseIsDown = true;
-	if (mNewValue != mEntryValue)
-	{
-		setValue(mNewValue);
-		valueChanged();
-		invalid();
-	}
-
-	return VSTGUI::kMouseEventHandled;
-}
-
-
-
-#pragma mark -
+constexpr DGColor kDisplayTextColor(0, 0, 0);
 
 //-----------------------------------------------------------------------------
 DFX_EDITOR_ENTRY(FontTestEditor)
@@ -308,229 +57,75 @@ DFX_EDITOR_ENTRY(FontTestEditor)
 FontTestEditor::FontTestEditor(DGEditorListenerInstance inInstance)
 :	DfxGuiEditor(inInstance)
 {
-	for (size_t i = 0; i < kNumDelays; i++)
-	{
-		RegisterPropertyChange(speedModeIndexToPropertyID(i));
-	}
+
 }
 
 //-----------------------------------------------------------------------------
 long FontTestEditor::OpenEditor()
 {
-	// slider handles
-	auto const horizontalSliderHandleImage = LoadImage("purple-wide-fader-handle.png");
-	auto const grayHorizontalSliderHandleImage = LoadImage("grey-wide-fader-handle.png");
-	auto const horizontalSliderHandleImage_glowing = LoadImage("wide-fader-handle-glowing.png");
-	auto const verticalSliderHandleImage = LoadImage("tall-fader-handle.png");
-	auto const verticalSliderHandleImage_glowing = LoadImage("tall-fader-handle-glowing.png");
-	// slider backgrounds
-	auto const horizontalSliderBackgroundImage = LoadImage("purple-wide-fader-slide.png");
-	auto const grayHorizontalSliderBackgroundImage = LoadImage("grey-wide-fader-slide.png");
-	auto const verticalSliderBackgroundImage = LoadImage("tall-fader-slide.png");
-	// buttons
-	auto const qualityButtonImage = LoadImage("quality-button.png");
-	auto const tomsoundButtonImage = LoadImage("tomsound-button.png");
-	auto const freezeButtonImage = LoadImage("freeze-button.png");
-	auto const randomizeButtonImage = LoadImage("randomize-button.png");
-	auto const fineDownButtonImage = LoadImage("fine-down-button.png");
-	auto const fineUpButtonImage = LoadImage("fine-up-button.png");
-	auto const speedModeButtonImage = LoadImage("speed-mode-button.png");
-	auto const midiLearnButtonImage = LoadImage("midi-learn-button.png");
-	auto const midiResetButtonImage = LoadImage("midi-reset-button.png");
-	auto const dfxLinkButtonImage = LoadImage("dfx-link.png");
-	auto const destroyFXLinkButtonImage = LoadImage("super-destroy-fx-link.png");
+  std::string text =
+    (std::string)"Wey go 9%~ " +
+    (std::string)dfx::kInfinityUTF8;
 
+  VSTGUI::UTF8String text8(text);
 
+  {
+    DGRect pos;
+    pos.set(kTextX, kWetarY, kTextWidth, 16);
 
-	DGRect pos, textDisplayPos, tuneDownButtonPos, tuneUpButtonPos;
-	constexpr long sliderRangeMargin = 1;
+    emplaceControl<DGStaticTextDisplay>(
+        this, pos, /* background */ nullptr,
+        dfx::TextAlignment::Left,
+        dfx::kFontSize_Wetar16px,
+        kDisplayTextColor,
+        dfx::kFontName_Wetar16px)->setText(text8);
+  }
 
-	// Make horizontal sliders and add them to the pane
-	pos.set(kWideFaderX, kWideFaderY, horizontalSliderBackgroundImage->getWidth(), horizontalSliderBackgroundImage->getHeight());
-	textDisplayPos.set(kDisplayX, kDisplayY, kDisplayWidth, kDisplayHeight);
-	tuneDownButtonPos.set(kFineDownButtonX, kFineButtonY, fineDownButtonImage->getWidth(), fineDownButtonImage->getHeight() / 2);
-	tuneUpButtonPos.set(kFineUpButtonX, kFineButtonY, fineUpButtonImage->getWidth(), fineUpButtonImage->getHeight() / 2);
-	for (long tag = kSpeed1; tag <= kDist2; tag++)
-	{
-		VSTGUI::CParamDisplayValueToStringProc displayProc = nullptr;
-		void* userData = nullptr;
-		if ((tag == kSpeed1) || (tag == kSpeed2))
-		{
-			displayProc = speedDisplayProcedure;
-		}
-		else if ((tag == kFeed1) || (tag == kFeed2))
-		{
-			displayProc = feedbackDisplayProcedure;
-		}
-		else
-		{
-			displayProc = distDisplayProcedure;
-			userData = this;
-		}
-		emplaceControl<DGSlider>(this, tag, pos, dfx::kAxis_Horizontal, horizontalSliderHandleImage, horizontalSliderBackgroundImage, sliderRangeMargin)->setAlternateHandle(horizontalSliderHandleImage_glowing);
+  {
+    DGRect pos;
+    pos.set(kTextX, kSnootyY, kTextWidth, 10);
 
-		auto const textDisplay = emplaceControl<DGTextDisplay>(this, tag, textDisplayPos, displayProc, userData, nullptr,
-															   dfx::TextAlignment::Right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
+    emplaceControl<DGStaticTextDisplay>(
+        this, pos, /* background */ nullptr,
+        dfx::TextAlignment::Left,
+        dfx::kFontSize_Snooty10px,
+        kDisplayTextColor,
+        dfx::kFontName_Snooty10px)->setText(text8);
+  }
 
-		if (tag == kSpeed1)
-		{
-			mSpeedDownButtons[0] = emplaceControl<FontTestSpeedTuneButton>(this, tag, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
-			mSpeedUpButtons[0] = emplaceControl<FontTestSpeedTuneButton>(this, tag, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
-			textDisplay->setTextToValueProc(speedTextConvertProcedure);
-		}
-		else if (tag == kSpeed2)
-		{
-			mSpeedDownButtons[1] = emplaceControl<FontTestSpeedTuneButton>(this, tag, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
-			mSpeedUpButtons[1] = emplaceControl<FontTestSpeedTuneButton>(this, tag, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
-			textDisplay->setTextToValueProc(speedTextConvertProcedure);
-		}
-		else
-		{
-			emplaceControl<DGFineTuneButton>(this, tag, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
-			emplaceControl<DGFineTuneButton>(this, tag, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
-		}
+  {
+    DGRect pos;
+    pos.set(kTextX, kPasementY, kTextWidth, 9);
 
-		long yoff = kWideFaderInc;
-		if (tag == kDist1)
-		{
-			yoff = kWideFaderMoreInc;
-			mDistanceTextDisplays[0] = textDisplay;
-			textDisplay->setValueFromTextConvertProc(distValueFromTextConvertProcedure);
-		}
-		else if (tag == kDist2)
-		{
-			yoff =  kWideFaderEvenMoreInc;
-			mDistanceTextDisplays[1] = textDisplay;
-			textDisplay->setValueFromTextConvertProc(distValueFromTextConvertProcedure);
-		}
-		pos.offset(0, yoff);
-		textDisplayPos.offset(0, yoff);
-		tuneDownButtonPos.offset(0, yoff);
-		tuneUpButtonPos.offset(0, yoff);
-	}
+    emplaceControl<DGStaticTextDisplay>(
+        this, pos, /* background */ nullptr,
+        dfx::TextAlignment::Left,
+        dfx::kFontSize_Pasement9px,
+        kDisplayTextColor,
+        dfx::kFontName_Pasement9px)->setText(text8);
+  }
+  
 
-	emplaceControl<DGSlider>(this, kBsize, pos, dfx::kAxis_Horizontal, grayHorizontalSliderHandleImage, grayHorizontalSliderBackgroundImage, sliderRangeMargin)->setAlternateHandle(horizontalSliderHandleImage_glowing);
-
-	emplaceControl<DGTextDisplay>(this, kBsize, textDisplayPos, bsizeDisplayProcedure, nullptr, nullptr,
-								  dfx::TextAlignment::Right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
-
-	emplaceControl<DGFineTuneButton>(this, kBsize, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
-	emplaceControl<DGFineTuneButton>(this, kBsize, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
-
-
-	// make horizontal sliders and add them to the view
-	pos.set(kTallFaderX, kTallFaderY, verticalSliderBackgroundImage->getWidth(), verticalSliderBackgroundImage->getHeight());
-	for (long tag = kDrymix; tag <= kMix2; tag++)
-	{
-		emplaceControl<DGSlider>(this, tag, pos, dfx::kAxis_Vertical, verticalSliderHandleImage, verticalSliderBackgroundImage, sliderRangeMargin)->setAlternateHandle(verticalSliderHandleImage_glowing);
-		pos.offset(kTallFaderInc, 0);
-	}
-
-
-	// quality mode button
-	pos.set(kQualityButtonX, kButtonY, qualityButtonImage->getWidth() / 2, qualityButtonImage->getHeight() / kQualityMode_NumModes);
-	emplaceControl<DGButton>(this, kQuality, pos, qualityButtonImage, DGButton::Mode::Increment, true);
-
-	// TOMSOUND button
-	emplaceControl<DGToggleImageButton>(this, kTomsound, kTomsoundButtonX, kButtonY + kButtonIncY, tomsoundButtonImage, true);
-
-	// freeze button
-	emplaceControl<DGToggleImageButton>(this, kFreeze, kFreezeButtonX, kButtonY, freezeButtonImage, true);
-
-	// randomize button
-	pos.set(kRandomButtonX, kButtonY, randomizeButtonImage->getWidth(), randomizeButtonImage->getHeight() / 2);
-	auto const button = emplaceControl<DGButton>(this, pos, randomizeButtonImage, 2, DGButton::Mode::Momentary);
-	button->setUserProcedure(std::bind(&FontTestEditor::randomizeparameters, this, true));
-
-	// speed mode buttons
-	for (size_t speedModeIndex = 0; speedModeIndex < kNumDelays; speedModeIndex++)
-	{
-		pos.set(kSpeedModeButtonX, kSpeedModeButtonY + (((kWideFaderInc * 2) + kWideFaderMoreInc) * speedModeIndex),
-				speedModeButtonImage->getWidth() / 2, speedModeButtonImage->getHeight() / kSpeedMode_NumModes);
-		mSpeedModeButtons[speedModeIndex] = emplaceControl<DGButton>(this, pos, speedModeButtonImage, kSpeedMode_NumModes, DGButton::Mode::Increment, true);
-		mSpeedModeButtons[speedModeIndex]->setUserProcedure(std::bind(&FontTestEditor::HandleSpeedModeButton, this, speedModeIndex, std::placeholders::_1));
-	}
-
-	// MIDI learn button
-	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage, true);
-
-	// MIDI reset button
-	CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, midiResetButtonImage);
-
-	// DFX web link
-	pos.set(kDFXLinkX, kDFXLinkY, dfxLinkButtonImage->getWidth(), dfxLinkButtonImage->getHeight() / 2);
-	emplaceControl<DGWebLink>(this, pos, dfxLinkButtonImage, DESTROYFX_URL);
-
-	// Super Destroy FX web link
-	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkButtonImage->getWidth(), destroyFXLinkButtonImage->getHeight() / 2);
-	emplaceControl<DGWebLink>(this, pos, destroyFXLinkButtonImage, DESTROYFX_URL);
-
-
-	return dfx::kStatus_NoError;
+  return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------
 void FontTestEditor::PostOpenEditor()
 {
-	for (size_t i = 0; i < kNumDelays; i++)
-	{
-		HandleSpeedModeChange(i);
-	}
+
 }
 
 //-----------------------------------------------------------------------------
 void FontTestEditor::CloseEditor()
 {
-	mSpeedModeButtons.fill(nullptr);
-	mSpeedDownButtons.fill(nullptr);
-	mSpeedUpButtons.fill(nullptr);
-	mDistanceTextDisplays.fill(nullptr);
 }
 
 //-----------------------------------------------------------------------------
 void FontTestEditor::parameterChanged(long inParameterID)
 {
-	if (inParameterID == kBsize)
-	{
-		// trigger re-conversion of numerical value to text
-		std::for_each(mDistanceTextDisplays.begin(), mDistanceTextDisplays.end(),
-					  [](auto& display){ display->refreshText(); });
-	}
 }
 
 //-----------------------------------------------------------------------------
 void FontTestEditor::HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope /*inScope*/, unsigned long /*inItemIndex*/)
 {
-	if (isSpeedModePropertyID(inPropertyID))
-	{
-		HandleSpeedModeChange(speedModePropertyIDToIndex(inPropertyID));
-	}
-}
-
-//-----------------------------------------------------------------------------
-void FontTestEditor::HandleSpeedModeButton(size_t inIndex, long inValue)
-{
-	auto const value_fixedSize = static_cast<uint8_t>(inValue);
-	[[maybe_unused]] bool const ok = dfxgui_SetProperty(speedModeIndexToPropertyID(inIndex), value_fixedSize);
-	assert(ok);
-}
-
-//-----------------------------------------------------------------------------
-void FontTestEditor::HandleSpeedModeChange(size_t inIndex)
-{
-	auto const tuneMode = dfxgui_GetProperty<uint8_t>(speedModeIndexToPropertyID(inIndex));
-	assert(tuneMode.has_value());
-	if (tuneMode)
-	{
-		auto&& speedModeButton = mSpeedModeButtons.at(inIndex);
-		assert(speedModeButton);
-		speedModeButton->setValue_i(*tuneMode);
-		if (speedModeButton->isDirty())
-		{
-			speedModeButton->invalid();
-		}
-
-		mSpeedDownButtons.at(inIndex)->setTuneMode(*tuneMode);
-		mSpeedUpButtons.at(inIndex)->setTuneMode(*tuneMode);
-	}
 }
