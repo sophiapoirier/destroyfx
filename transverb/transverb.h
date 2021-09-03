@@ -92,7 +92,7 @@ public:
 
   void dfx_PostConstructor() override;
 
-  bool loadpreset(long index) override;  // overriden to support the random preset
+  bool loadpreset(long index) override;  // overridden to support the random preset
   void randomizeparameters() override;
 
   long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
