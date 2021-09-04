@@ -35,7 +35,10 @@ To contact the author, use the contact form at http://destroyfx.org/
 //-----------------------------------------------------------------------------
 namespace detail
 {
-VSTGUI::CPoint GetTextViewPlatformOffset(char const* inFontName) noexcept;
+DGRect AdjustTextViewForPlatform(char const* inFontName,
+								 DGRect const& inRect) noexcept;
+DGRect UnAdjustTextViewForPlatform(char const* inFontName,
+								   DGRect const& inRect) noexcept;
 }
 
 
@@ -100,6 +103,7 @@ protected:
 private:
 	static bool valueToTextProc_Generic(float inValue, char outTextUTF8[], void* inUserData);
 
+	int const mYOffsetTweak = 0;
 	bool const mIsBitmapFont;
 	bool mTextEditEnabled = true;
 };
@@ -126,6 +130,7 @@ protected:
 	void drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion) override;
 
 private:
+	int const mYOffsetTweak = 0;
 	bool const mIsBitmapFont;
 };
 

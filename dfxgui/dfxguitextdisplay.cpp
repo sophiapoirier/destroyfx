@@ -75,16 +75,63 @@ static bool DFXGUI_IsBitmapFont(char const* inFontName) noexcept
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CPoint detail::GetTextViewPlatformOffset(char const* inFontName) noexcept
+// For unknown reasons on windows, text renders at a different
+// vertical position compared to Mac, and some letters can be cut off
+// (e.g. the lowercase 'g' in DFX Wetar). Since the effect is
+// constant, we just work around this with some platform-specific
+// tweaks. We don't fully understand what's going on here, but note
+// that both the "YOffsetTweak" and "ViewAdjustments" are necessary
+// (it would naively seem that they could be combined, but this
+// will result in clipping, or 1 offset pixel yielding two pixel
+// movement in rendering?).
+static int DFXGUI_GetYOffsetTweak(char const* inFontName) noexcept
 {
 #if TARGET_OS_WIN32
-	// HACK: on Windows, render Snooty 1 pixel lower vertically
-	if (inFontName && (std::string(inFontName) == dfx::kFontName_Snooty10px))
-	{
-		return VSTGUI::CPoint(0, 1);
+	if (inFontName != nullptr) {
+		if (0 == std::strcmp(inFontName, dfx::kFontName_Snooty10px))
+			return -2;
 	}
 #endif
-	return {};
+	return 0;
+}
+
+static std::tuple<int, int, int> GetPlatformViewAdjustments(char const* inFontName) noexcept
+{
+#if TARGET_OS_WIN32
+	if (inFontName == nullptr)
+		return std::make_tuple(0, 0, 0);
+
+	std::string const name(inFontName);
+	if (name == dfx::kFontName_Snooty10px)
+		return std::make_tuple(0, 1, 0);
+	else if (name == dfx::kFontName_Pasement9px)
+		return std::make_tuple(0, 0, 0);
+	else if (name == dfx::kFontName_Wetar16px)
+		return std::make_tuple(0, -3, 3);
+#endif
+
+	return std::make_tuple(0, 0, 0);
+}
+
+DGRect detail::AdjustTextViewForPlatform(char const* inFontName,
+										 DGRect const& inRect) noexcept
+{
+	DGRect adjustedRect = inRect;
+	const auto [x, y, h] = GetPlatformViewAdjustments(inFontName);
+	adjustedRect.offset(x, y);
+	adjustedRect.setHeight(adjustedRect.getHeight() + h);
+	return adjustedRect;
+}
+
+// Inverse of the above.
+DGRect detail::UnAdjustTextViewForPlatform(char const* inFontName,
+										   DGRect const& inRect) noexcept
+{
+	DGRect adjustedRect = inRect;
+	const auto [x, y, h] = GetPlatformViewAdjustments(inFontName);
+	adjustedRect.offset(-x, -y);
+	adjustedRect.setHeight(adjustedRect.getHeight() - h);
+	return inRect;
 }
 
 //-----------------------------------------------------------------------------
@@ -107,19 +154,24 @@ static void DFXGUI_ConfigureTextDisplay(DfxGuiEditor* inOwnerEditor,
 
 	inTextDisplay->setAntialias(!DFXGUI_IsBitmapFont(inFontName));
 
-	auto adjustedRegion = inTextDisplay->getViewSize();
-	adjustedRegion.offset(detail::GetTextViewPlatformOffset(inFontName));
+	auto const adjustedRegion =
+	  detail::AdjustTextViewForPlatform(inFontName,
+										inTextDisplay->getViewSize());
 	inTextDisplay->setViewSize(adjustedRegion, false);
 }
 
 //-----------------------------------------------------------------------------
-static DGRect DFXGUI_GetTextDrawRegion(DGRect const& inRegion, bool inIsBitmapFont)
+static DGRect DFXGUI_GetTextDrawRegion(DGRect const& inRegion, int inYOffsetTweak, bool inIsBitmapFont)
 {
 	auto textArea = inRegion;
 	if (inIsBitmapFont)
 	{
 		textArea.makeIntegral();
 	}
+
+	// textArea.offset(0, inYOffsetTweak);
+	textArea.top += inYOffsetTweak;
+
 	return textArea;
 }
 
@@ -143,6 +195,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor*							inOwnerEditor,
 :	DGControl<VSTGUI::CTextEdit>(inRegion, inOwnerEditor, inParamID, nullptr, inBackgroundImage),
 	mValueToTextProc(inTextProc ? inTextProc : valueToTextProc_Generic),
 	mValueToTextUserData(inUserData),
+	mYOffsetTweak(DFXGUI_GetYOffsetTweak(inFontName)),
 	mIsBitmapFont(DFXGUI_IsBitmapFont(inFontName))
 {
 	DFXGUI_ConfigureTextDisplay(inOwnerEditor, this, inTextAlignment, inFontSize, inFontColor, inFontName);
@@ -335,7 +388,7 @@ void DGTextDisplay::takeFocus()
 //-----------------------------------------------------------------------------
 void DGTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion)
 {
-	auto const textArea = DFXGUI_GetTextDrawRegion(inRegion, mIsBitmapFont);
+	auto const textArea = DFXGUI_GetTextDrawRegion(inRegion, mYOffsetTweak, mIsBitmapFont);
 	VSTGUI::CTextEdit::drawPlatformText(inContext, inString, textArea);
 }
 
@@ -390,6 +443,7 @@ DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor* inOwnerEditor, DGRect con
 										 dfx::TextAlignment inTextAlignment, float inFontSize, 
 										 DGColor inFontColor, char const* inFontName)
 :	DGControl<VSTGUI::CTextLabel>(inRegion, nullptr, inBackgroundImage),
+	mYOffsetTweak(DFXGUI_GetYOffsetTweak(inFontName)),
 	mIsBitmapFont(DFXGUI_IsBitmapFont(inFontName))
 {
 	DFXGUI_ConfigureTextDisplay(inOwnerEditor, this, inTextAlignment, inFontSize, inFontColor, inFontName);
@@ -418,7 +472,7 @@ void DGStaticTextDisplay::setCFText(CFStringRef inText)
 //-----------------------------------------------------------------------------
 void DGStaticTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion)
 {
-	auto const textArea = DFXGUI_GetTextDrawRegion(inRegion, mIsBitmapFont);
+	auto const textArea = DFXGUI_GetTextDrawRegion(inRegion, mYOffsetTweak, mIsBitmapFont);
 	VSTGUI::CTextLabel::drawPlatformText(inContext, inString, textArea);
 }
 
@@ -509,8 +563,7 @@ DGHelpBox::DGHelpBox(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion,
 
 	// HACK part 1: undo "view platform offset", because at the control level, that includes the background,
 	// but what we more narrowly want is to offset the individual regions of each line of text
-	auto adjustedRegion = getViewSize();
-	adjustedRegion.offset(-detail::GetTextViewPlatformOffset(getFont()->getName()));
+	auto const adjustedRegion = detail::UnAdjustTextViewForPlatform(getFont()->getName(), getViewSize());
 	setViewSize(adjustedRegion, false);
 }
 
@@ -535,7 +588,7 @@ void DGHelpBox::draw(VSTGUI::CDrawContext* inContext)
 	textArea.setSize(textArea.getWidth() - mTextMargin.x, fontHeight + 2);
 	textArea.offset(mTextMargin);
 	// HACK part 2: apply "view platform offset" to the text draw region itself
-	textArea.offset(detail::GetTextViewPlatformOffset(getFont()->getName()));
+	textArea = detail::AdjustTextViewForPlatform(getFont()->getName(), textArea);
 
 	std::istringstream stream(text);
 	std::string line;
