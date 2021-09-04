@@ -44,9 +44,9 @@ constexpr int kFontContainerHeight_Pasement9px = 10;
 // left pixel of the font is at (x, y). These are optional; you can
 // also just put the font where it looks good. Internal to dfxgui, the
 // position is adjusted to get the same result on each platform.
-constexpr int kFontYOffset_Wetar16px = -2;
-constexpr int kFontYOffset_Snooty10px = -1;
-constexpr int kFontYOffset_Pasement9px = -1;
+constexpr int kFontYOffset_Wetar16px = -4;
+constexpr int kFontYOffset_Snooty10px = -2;
+constexpr int kFontYOffset_Pasement9px = -2;
 
 constexpr auto kDisplayTextColor = DGColor::kBlack;
 
