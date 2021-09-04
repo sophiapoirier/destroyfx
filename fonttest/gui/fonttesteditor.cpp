@@ -34,10 +34,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 // on Mac, which is the reference platform. Windows has additional
 // tweaks off these. (Or perhaps we could just make these constants
 // differ by platform?)
-// constexpr int kFontContainerHeight_Wetar16px = 20;
-// constexpr int kFontContainerHeight_Snooty10px = 12;
-constexpr int kFontContainerHeight_Wetar16px = 18;
-constexpr int kFontContainerHeight_Snooty10px = 11;
+constexpr int kFontContainerHeight_Wetar16px = 20;
+constexpr int kFontContainerHeight_Snooty10px = 12;
 constexpr int kFontContainerHeight_Pasement9px = 10;
 
 // These offsets allow for precise vertical positioning of the font
