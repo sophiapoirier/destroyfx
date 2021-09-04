@@ -45,6 +45,8 @@ using namespace dfx::FT;
 // on Mac, which is the reference platform. Windows has additional
 // tweaks off these. (Or perhaps we could just make these constants
 // differ by platform?)
+// constexpr int kFontContainerHeight_Wetar16px = 20;
+// constexpr int kFontContainerHeight_Snooty10px = 12;
 constexpr int kFontContainerHeight_Wetar16px = 18;
 constexpr int kFontContainerHeight_Snooty10px = 11;
 constexpr int kFontContainerHeight_Pasement9px = 10;
@@ -65,10 +67,15 @@ constexpr DGColor kDisplayTextColor(0, 0, 0);
 // positions
 enum
 {
-  kTextX = 16,
-  kWetarY = 64 + kFontYOffset_Wetar16px,
-  kSnootyY = 128 + kFontYOffset_Snooty10px,
-  kPasementY = 192 + kFontYOffset_Pasement9px,
+  kEvenTextX = 16,
+  kEvenWetarY = 64 + kFontYOffset_Wetar16px,
+  kEvenSnootyY = 128 + kFontYOffset_Snooty10px,
+  kEvenPasementY = 192 + kFontYOffset_Pasement9px,
+
+  kOddTextX = 160,  
+  kOddWetarY = 63 + kFontYOffset_Wetar16px,
+  kOddSnootyY = 127 + kFontYOffset_Snooty10px,
+  kOddPasementY = 191 + kFontYOffset_Pasement9px,
 
   kTextWidth = 128,
 };
@@ -92,9 +99,10 @@ long FontTestEditor::OpenEditor()
 
   VSTGUI::UTF8String text8(text);
 
+  // Even positions
   {
     DGRect pos;
-    pos.set(kTextX, kWetarY, kTextWidth,
+    pos.set(kEvenTextX, kEvenWetarY, kTextWidth,
             kFontContainerHeight_Wetar16px);
 
     emplaceControl<DGStaticTextDisplay>(
@@ -107,7 +115,7 @@ long FontTestEditor::OpenEditor()
 
   {
     DGRect pos;
-    pos.set(kTextX, kSnootyY, kTextWidth,
+    pos.set(kEvenTextX, kEvenSnootyY, kTextWidth,
             kFontContainerHeight_Snooty10px);
 
     emplaceControl<DGStaticTextDisplay>(
@@ -120,7 +128,7 @@ long FontTestEditor::OpenEditor()
 
   {
     DGRect pos;
-    pos.set(kTextX, kPasementY, kTextWidth,
+    pos.set(kEvenTextX, kEvenPasementY, kTextWidth,
             kFontContainerHeight_Pasement9px);
 
     emplaceControl<DGStaticTextDisplay>(
@@ -130,6 +138,47 @@ long FontTestEditor::OpenEditor()
         kDisplayTextColor,
         dfx::kFontName_Pasement9px)->setText(text8);
   }
+
+  // Odd positions
+  {
+    DGRect pos;
+    pos.set(kOddTextX, kOddWetarY, kTextWidth,
+            kFontContainerHeight_Wetar16px);
+
+    emplaceControl<DGStaticTextDisplay>(
+        this, pos, /* background */ nullptr,
+        dfx::TextAlignment::Left,
+        dfx::kFontSize_Wetar16px,
+        kDisplayTextColor,
+        dfx::kFontName_Wetar16px)->setText(text8);
+  }
+
+  {
+    DGRect pos;
+    pos.set(kOddTextX, kOddSnootyY, kTextWidth,
+            kFontContainerHeight_Snooty10px);
+
+    emplaceControl<DGStaticTextDisplay>(
+        this, pos, /* background */ nullptr,
+        dfx::TextAlignment::Left,
+        dfx::kFontSize_Snooty10px,
+        kDisplayTextColor,
+        dfx::kFontName_Snooty10px)->setText(text8);
+  }
+
+  {
+    DGRect pos;
+    pos.set(kOddTextX, kOddPasementY, kTextWidth,
+            kFontContainerHeight_Pasement9px);
+
+    emplaceControl<DGStaticTextDisplay>(
+        this, pos, /* background */ nullptr,
+        dfx::TextAlignment::Left,
+        dfx::kFontSize_Pasement9px,
+        kDisplayTextColor,
+        dfx::kFontName_Pasement9px)->setText(text8);
+  }
+
   
 
   return dfx::kStatus_NoError;
