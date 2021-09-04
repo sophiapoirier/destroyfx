@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2021  Tom Murphy 7 and Sophia Poirier
 
 This file is part of FontTest.
 
@@ -21,18 +21,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "fonttesteditor.h"
 
-#include <algorithm>
-#include <array>
-#include <cassert>
-#include <cctype>
-#include <cmath>
-#include <cstdint>
-#include <cstdio>
-#include <string_view>
-
 #include "dfxmisc.h"
-
-using namespace dfx::FT;
 
 // Even though a font may be actually 16 pixels high, we need some
 // leeway to account for platform-specific rendering differences.
@@ -61,7 +50,7 @@ constexpr int kFontYOffset_Wetar16px = -2;
 constexpr int kFontYOffset_Snooty10px = -1;
 constexpr int kFontYOffset_Pasement9px = -1;
 
-constexpr DGColor kDisplayTextColor(0, 0, 0);
+constexpr auto kDisplayTextColor = DGColor::kBlack;
 
 //-----------------------------------------------------------------------------
 // positions
@@ -101,9 +90,8 @@ long FontTestEditor::OpenEditor()
 
   // Even positions
   {
-    DGRect pos;
-    pos.set(kEvenTextX, kEvenWetarY, kTextWidth,
-            kFontContainerHeight_Wetar16px);
+    constexpr DGRect pos(kEvenTextX, kEvenWetarY, kTextWidth,
+                         kFontContainerHeight_Wetar16px);
 
     emplaceControl<DGStaticTextDisplay>(
         this, pos, /* background */ nullptr,
@@ -114,9 +102,8 @@ long FontTestEditor::OpenEditor()
   }
 
   {
-    DGRect pos;
-    pos.set(kEvenTextX, kEvenSnootyY, kTextWidth,
-            kFontContainerHeight_Snooty10px);
+    constexpr DGRect pos(kEvenTextX, kEvenSnootyY, kTextWidth,
+                         kFontContainerHeight_Snooty10px);
 
     emplaceControl<DGStaticTextDisplay>(
         this, pos, /* background */ nullptr,
@@ -127,9 +114,8 @@ long FontTestEditor::OpenEditor()
   }
 
   {
-    DGRect pos;
-    pos.set(kEvenTextX, kEvenPasementY, kTextWidth,
-            kFontContainerHeight_Pasement9px);
+    constexpr DGRect pos(kEvenTextX, kEvenPasementY, kTextWidth,
+                         kFontContainerHeight_Pasement9px);
 
     emplaceControl<DGStaticTextDisplay>(
         this, pos, /* background */ nullptr,
@@ -141,9 +127,8 @@ long FontTestEditor::OpenEditor()
 
   // Odd positions
   {
-    DGRect pos;
-    pos.set(kOddTextX, kOddWetarY, kTextWidth,
-            kFontContainerHeight_Wetar16px);
+    constexpr DGRect pos(kOddTextX, kOddWetarY, kTextWidth,
+                         kFontContainerHeight_Wetar16px);
 
     emplaceControl<DGStaticTextDisplay>(
         this, pos, /* background */ nullptr,
@@ -154,9 +139,8 @@ long FontTestEditor::OpenEditor()
   }
 
   {
-    DGRect pos;
-    pos.set(kOddTextX, kOddSnootyY, kTextWidth,
-            kFontContainerHeight_Snooty10px);
+    constexpr DGRect pos(kOddTextX, kOddSnootyY, kTextWidth,
+                         kFontContainerHeight_Snooty10px);
 
     emplaceControl<DGStaticTextDisplay>(
         this, pos, /* background */ nullptr,
@@ -167,9 +151,8 @@ long FontTestEditor::OpenEditor()
   }
 
   {
-    DGRect pos;
-    pos.set(kOddTextX, kOddPasementY, kTextWidth,
-            kFontContainerHeight_Pasement9px);
+    constexpr DGRect pos(kOddTextX, kOddPasementY, kTextWidth,
+                         kFontContainerHeight_Pasement9px);
 
     emplaceControl<DGStaticTextDisplay>(
         this, pos, /* background */ nullptr,
@@ -182,25 +165,4 @@ long FontTestEditor::OpenEditor()
   
 
   return dfx::kStatus_NoError;
-}
-
-//-----------------------------------------------------------------------------
-void FontTestEditor::PostOpenEditor()
-{
-
-}
-
-//-----------------------------------------------------------------------------
-void FontTestEditor::CloseEditor()
-{
-}
-
-//-----------------------------------------------------------------------------
-void FontTestEditor::parameterChanged(long inParameterID)
-{
-}
-
-//-----------------------------------------------------------------------------
-void FontTestEditor::HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope /*inScope*/, unsigned long /*inItemIndex*/)
-{
 }

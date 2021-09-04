@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2021  Tom Murphy 7 and Sophia Poirier
 
 This file is part of FontTest.
 
@@ -35,9 +35,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_VERSION_STRING	"1.0.0"
 #define PLUGIN_CLASS_NAME	FontTest
 #define PLUGIN_ENTRY_POINT	"FontTestEntry"
-#define TARGET_PLUGIN_USES_MIDI	1
+#define TARGET_PLUGIN_USES_MIDI	0
 #define TARGET_PLUGIN_IS_INSTRUMENT	0
-#define TARGET_PLUGIN_USES_DSPCORE	1
+#define TARGET_PLUGIN_USES_DSPCORE	0
 #define TARGET_PLUGIN_HAS_GUI	1
 #define PLUGIN_BACKGROUND_IMAGE_FILENAME	"fonttest-background.png"
 
@@ -45,11 +45,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_DESCRIPTION_STRING	"a plugin of silence, yet of great diagnostic value"
 
 
-#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2021"
+#define PLUGIN_COPYRIGHT_YEAR_STRING	"2021"
 
 #define VST_NUM_CHANNELS 2
-
-#define DFX_SUPPORT_OLD_VST_SETTINGS  1
 
 
 #endif

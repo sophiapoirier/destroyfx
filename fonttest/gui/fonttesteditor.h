@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2021  Tom Murphy 7 and Sophia Poirier
 
 This file is part of FontTest.
 
@@ -22,10 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 
-#include <array>
-
 #include "dfxgui.h"
-#include "fonttest-base.h"
 
 
 //-----------------------------------------------------------------------------
@@ -35,10 +32,4 @@ public:
 	explicit FontTestEditor(DGEditorListenerInstance inInstance);
 
 	long OpenEditor() override;
-	void PostOpenEditor() override;
-	void CloseEditor() override;
-	void parameterChanged(long inParameterID) override;
-	void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) override;
-
-private:
 };

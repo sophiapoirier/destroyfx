@@ -181,6 +181,10 @@ Reduces bit depth and sample rate in order to produce artifacting.
 Extreme settings. Also includes a bonus "DESTROY" effect. Geometer
 is much more flexible and beautiful than this oldie.
 
+### fonttest/
+
+non-audio plugin for testing rendering of our custom fonts
+
 ### intercom/
 
 Adds noise to your sound based on its RMS volume; can also swap

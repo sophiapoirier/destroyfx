@@ -23,7 +23,7 @@ CXXFLAGS=$(DEFINES) $(INCLUDES) -m64 -Wall -Wno-unknown-pragmas --std=c++17 -O2
 # -static-libgcc and -static-libstdc++ avoid having the output depend on these mingw DLLs.
 LFLAGS=-m64 -shared -mwindows -static-libgcc -static-libstdc++ -s
 
-DFXLIB_OBJECTS=$(DFXLIB)/dfxmisc.o $(DFXLIB)/dfxmidi.o $(DFXLIB)/firfilter.o $(DFXLIB)/iirfilter.o $(DFXLIB)/dfxenvelope.o $(DFXLIB)/dfxplugin.o $(DFXLIB)/dfxparameter.o $(DFXLIB)/dfxplugin-vst.o $(DFXLIB)/dfxsettings.o $(DFXLIB)/dfxmutex.o
+DFXLIB_OBJECTS=$(DFXLIB)/dfxmisc.o $(DFXLIB)/dfxplugin.o $(DFXLIB)/dfxparameter.o $(DFXLIB)/dfxplugin-vst.o $(DFXLIB)/dfxmutex.o
 
 VSTSDK_OBJECTS=$(VSTSDK)/public.sdk/source/vst2.x/audioeffect.o $(VSTSDK)/public.sdk/source/vst2.x/audioeffectx.o $(VSTSDK)/public.sdk/source/vst2.x/vstplugmain.o
 
@@ -34,7 +34,7 @@ VSTGUI_OBJECTS=$(VSTGUI)/vstgui_win32.o $(VSTGUI)/plugin-bindings/aeffguieditor.
 
 DFXGUI_OBJECTS=$(DFXGUI)/dfxguitextdisplay.o $(DFXGUI)/dfxguieditor.o $(DFXGUI)/dfxgui-fontfactory.o $(DFXGUI)/dfxguibutton.o $(DFXGUI)/dfxguislider.o $(DFXGUI)/dfxguicontrol.o $(DFXGUI)/dfxguidialog.o $(DFXGUI)/dfxguimisc.o
 
-OBJECTS=$(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) $(VSTGUI_OBJECTS) $(DFXGUI_OBJECTS) resources.o ../fonttestprocess.o ../fonttestformalities.o ../gui/fonttesteditor.o
+OBJECTS=$(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) $(VSTGUI_OBJECTS) $(DFXGUI_OBJECTS) resources.o ../fonttest.o ../gui/fonttesteditor.o
 
 MINGWLIB=/usr/x86_64-w64-mingw32/sys-root/mingw/lib
 
