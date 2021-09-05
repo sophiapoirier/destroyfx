@@ -61,8 +61,10 @@ div.infobox > p:last-child {
 div.plugin img.thumb {
   cursor: pointer;
   width: 100px;
-  border: 0;
-  margin-bottom: 4px;
+  border: 2px solid #333;
+  padding: 0;
+  background-color: #333;
+  margin-bottom: 6px;
 }
 
 /* plugin icons as a flex row that wraps to multiple lines. */
