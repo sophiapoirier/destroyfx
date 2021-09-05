@@ -34,7 +34,7 @@ VSTGUI_OBJECTS=$(VSTGUI)/vstgui_win32.o $(VSTGUI)/plugin-bindings/aeffguieditor.
 
 DFXGUI_OBJECTS=$(DFXGUI)/dfxguieditor.o $(DFXGUI)/dfxgui-fontfactory.o $(DFXGUI)/dfxguitextdisplay.o $(DFXGUI)/dfxguibutton.o $(DFXGUI)/dfxguislider.o $(DFXGUI)/dfxguidialog.o $(DFXGUI)/dfxguimisc.o $(DFXGUI)/dfxguicontrol.o  
 
-OBJECTS=$(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) $(VSTGUI_OBJECTS) $(DFXGUI_OBJECTS) resources.o ../bufferoverrideprocess.o ../bufferoverrideformalities.o ../bufferoverridemidi.o ../gui/bufferoverrideeditor.o
+OBJECTS=$(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) $(VSTGUI_OBJECTS) $(DFXGUI_OBJECTS) resources.o ../bufferoverrideprocess.o ../bufferoverrideformalities.o ../bufferoverridemidi.o ../gui/bufferoverrideeditor.o ../gui/bufferoverrideview.o
 
 MINGWLIB=/usr/x86_64-w64-mingw32/sys-root/mingw/lib
 

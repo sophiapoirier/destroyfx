@@ -3,17 +3,17 @@ Copyright (C) 2001-2021  Sophia Poirier
 
 This file is part of Buffer Override.
 
-Buffer Override is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Buffer Override is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Buffer Override is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Buffer Override is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -21,59 +21,22 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #pragma once
 
-
+#include <array>
+#include <atomic>
 #include <vector>
 
+#include "bufferoverride-base.h"
+#include "dfxmutex.h"
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
 #include "lfo.h"
 #include "temporatetable.h"
 
 
-//----------------------------------------------------------------------------- 
-// these are the plugin parameters:
-enum
-{
-	kDivisor,
-	kBufferSize_MS,
-	kBufferSize_Sync,
-	kBufferTempoSync,
-	kBufferInterrupt,
-
-	kDivisorLFORate_Hz,
-	kDivisorLFORate_Sync,
-	kDivisorLFODepth,
-	kDivisorLFOShape,
-	kDivisorLFOTempoSync,
-	kBufferLFORate_Hz,
-	kBufferLFORate_Sync,
-	kBufferLFODepth,
-	kBufferLFOShape,
-	kBufferLFOTempoSync,
-
-	kSmooth,
-	kDryWetMix,
-
-	kPitchBendRange,
-	kMidiMode,
-
-	kTempo,
-	kTempoAuto,
-
-	kNumParameters
-};
-
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 class BufferOverride final : public DfxPlugin
 {
 public:
-	enum
-	{
-		kMidiMode_Nudge,
-		kMidiMode_Trigger,
-		kNumMidiModes
-	};
-
 	explicit BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
 	void reset() override;
@@ -84,6 +47,8 @@ public:
 	void createbuffers() override;
 	void releasebuffers() override;
 
+	long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
+	long dfx_GetProperty(dfx::PropertyID, dfx::Scope inScope, unsigned long inItemIndex, void* outData) override;
 
 private:
 	static constexpr long kNumPresets = 16;
@@ -98,6 +63,9 @@ private:
 	float getDivisorParameterFromPitchbend(int valueLSB, int valueMSB);
 
 	void initPresets();
+
+	void clearViewDataCache();
+	void updateViewDataCache();
 
 	// the parameters
 	float mDivisor = 1.0f, mBufferSizeMS = 0.0f, mBufferSizeSync = 0.0f;
@@ -120,6 +88,11 @@ private:
 	long mPrevMinibufferSize = 0;  // the previous size
 	long mReadPos = 0;  // the current sample position within the minibuffer
 
+	// Like mMinibufferSize, but just the size of the first repetition
+	// with no complexity about the boundary case at the end. Just used for
+	// visualization.
+	long mMinibufferSizeForView = 0;
+  
 	float mOneDivSR = 0.0f;  // the inverse of the sampling rate
 
 	double mCurrentTempoBPS = 0.0;  // tempo in beats per second
@@ -140,4 +113,13 @@ private:
 	dfx::LFO mDivisorLFO, mBufferLFO;
 
 	float mFadeOutGain = 0.0f, mFadeInGain = 0.0f, mRealFadePart = 0.0f, mImaginaryFadePart = 0.0f;  // for trig crossfading
+
+	// Access via reader is protected by a lock.
+	// Access via writer is always on or serialized with the audio render thread.
+	std::array<BufferOverrideViewData, 2> mViewDataCaches;
+	BufferOverrideViewData* mViewDataCache_reader = nullptr;
+	BufferOverrideViewData* mViewDataCache_writer = nullptr;
+	dfx::SpinLock mViewDataCachesLock;
+	std::atomic<uint64_t> mLastViewDataCacheTimestamp {0u};
+	static_assert(decltype(mLastViewDataCacheTimestamp)::is_always_lock_free);
 };

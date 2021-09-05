@@ -3,22 +3,23 @@ Copyright (C) 2001-2021  Sophia Poirier
 
 This file is part of Buffer Override.
 
-Buffer Override is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Buffer Override is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Buffer Override is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Buffer Override is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
+#include "bufferoverride-base.h"
 #include "bufferoverride.h"
 
 #include <algorithm>
@@ -52,7 +53,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 	// update the LFOs' positions to the current position
 	mDivisorLFO.updatePosition(mPrevMinibufferSize);
 	mBufferLFO.updatePosition(mPrevMinibufferSize);
-	// Then get the current output values of the LFOs, which also updates their positions once more.  
+	// Then get the current output values of the LFOs, which also updates their positions once more.
 	// Scale the 0.0 - 1.0 LFO output values to 0.0 - 2.0 (oscillating around 1.0).
 	auto const divisorLFOvalue = mDivisorLFO.processZeroToTwo();
 	float const bufferLFOvalue = 2.0f - mBufferLFO.processZeroToTwo();  // inverting it makes more pitch sense
@@ -114,14 +115,17 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 	if (currentBufferDivisor >= 2.0f)
 	{
 		currentBufferDivisor *= divisorLFOvalue;
-		// now it's possible that the LFO could make the divisor less than 2, 
+		// now it's possible that the LFO could make the divisor less than 2,
 		// which will essentially turn the effect off, so we stop the modulation at 2
 		if (currentBufferDivisor < 2.0f)
 		{
 			currentBufferDivisor = 2.0f;
 		}
 	}
-
+    // Simple version of buffer size for view only.
+    mMinibufferSizeForView =
+		std::max(1L, std::lround(static_cast<float>(mCurrentForcedBufferSize) / currentBufferDivisor));
+    
 	//-----------------------CALCULATE THE MINIBUFFER SIZE-------------------------
 	// this is not a new forced buffer starting up
 	if (mWritePos > 0)
@@ -131,7 +135,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 		{
 			mMinibufferSize = std::lround(static_cast<float>(mCurrentForcedBufferSize) / currentBufferDivisor);
 		}
-		// if it's the last minibuffer, then fill up the forced buffer to the end 
+		// if it's the last minibuffer, then fill up the forced buffer to the end
 		// by extending this last minibuffer to fill up the end of the forced buffer
 		long const remainingForcedBuffer = mCurrentForcedBufferSize - mWritePos;
 		if ((mMinibufferSize * 2) >= remainingForcedBuffer)
@@ -177,7 +181,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 			{
 				// calculate how long this forced buffer needs to be
 				long const countdown = samplesToBar % mCurrentForcedBufferSize;
-				// update the forced buffer size and number of minibuffers so that 
+				// update the forced buffer size and number of minibuffers so that
 				// the forced buffers sync up with the musical measures of the song
 				if (countdown < (mMinibufferSize * 2))  // extend the buffer if it would be too short...
 				{
@@ -203,7 +207,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 	{
 		mSmoothDur = std::lround(mSmoothPortion * static_cast<float>(mMinibufferSize));
 		long maxSmoothDur = 0;
-		// if we're just starting a new forced buffer, 
+		// if we're just starting a new forced buffer,
 		// then the samples beyond the end of the previous one are not valid
 		if (mWritePos <= 0)
 		{
@@ -382,4 +386,6 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 		postupdate_parameter(kDivisor);  // inform listeners of change
 	}
 	mDivisorWasChangedByMIDI = false;
+
+	updateViewDataCache();
 }
