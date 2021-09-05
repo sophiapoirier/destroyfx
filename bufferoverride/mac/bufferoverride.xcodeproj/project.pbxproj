@@ -23,22 +23,15 @@
 		4998C0EA07E5063E008EBD90 /* bufferoverrideprocess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4998C0E507E5063E008EBD90 /* bufferoverrideprocess.cpp */; };
 		4998C0ED07E50665008EBD90 /* bufferoverrideeditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4998C0EB07E50665008EBD90 /* bufferoverrideeditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		4998C0F307E506A8008EBD90 /* lfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4998C0F107E506A8008EBD90 /* lfo.cpp */; };
-		4998C11007E50746008EBD90 /* buffer-interrupt-button-corner.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C0F907E50746008EBD90 /* buffer-interrupt-button-corner.png */; };
 		4998C11107E50746008EBD90 /* buffer-interrupt-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C0FA07E50746008EBD90 /* buffer-interrupt-button.png */; };
-		4998C11207E50746008EBD90 /* buffer-lfo-rate-label.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C0FB07E50746008EBD90 /* buffer-lfo-rate-label.png */; };
-		4998C11307E50746008EBD90 /* buffer-lfo-shape-switch.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C0FC07E50746008EBD90 /* buffer-lfo-shape-switch.png */; };
-		4998C11407E50746008EBD90 /* buffer-lfo-tempo-sync-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C0FD07E50746008EBD90 /* buffer-lfo-tempo-sync-button.png */; };
+		4998C11407E50746008EBD90 /* lfo-tempo-sync-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C0FD07E50746008EBD90 /* lfo-tempo-sync-button.png */; };
 		4998C11507E50746008EBD90 /* buffer-override-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C0FE07E50746008EBD90 /* buffer-override-background.png */; };
 		4998C11607E50746008EBD90 /* buffer-size-label.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C0FF07E50746008EBD90 /* buffer-size-label.png */; };
-		4998C11707E50746008EBD90 /* buffer-tempo-sync-button-corner.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10007E50746008EBD90 /* buffer-tempo-sync-button-corner.png */; };
 		4998C11807E50746008EBD90 /* buffer-tempo-sync-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10107E50746008EBD90 /* buffer-tempo-sync-button.png */; };
-		4998C11907E50746008EBD90 /* divisor-lfo-rate-label.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10207E50746008EBD90 /* divisor-lfo-rate-label.png */; };
-		4998C11A07E50746008EBD90 /* divisor-lfo-shape-switch.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10307E50746008EBD90 /* divisor-lfo-shape-switch.png */; };
-		4998C11B07E50746008EBD90 /* divisor-lfo-tempo-sync-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10407E50746008EBD90 /* divisor-lfo-tempo-sync-button.png */; };
+		4998C11A07E50746008EBD90 /* lfo-shape-switch.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10307E50746008EBD90 /* lfo-shape-switch.png */; };
 		4998C11D07E50746008EBD90 /* midi-learn-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10607E50746008EBD90 /* midi-learn-button.png */; };
 		4998C11E07E50746008EBD90 /* midi-mode-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10707E50746008EBD90 /* midi-mode-button.png */; };
 		4998C11F07E50746008EBD90 /* midi-reset-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10807E50746008EBD90 /* midi-reset-button.png */; };
-		4998C12207E50746008EBD90 /* slider-handle-pitchbend.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10B07E50746008EBD90 /* slider-handle-pitchbend.png */; };
 		4998C12307E50746008EBD90 /* slider-handle.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10C07E50746008EBD90 /* slider-handle.png */; };
 		4998C12607E50746008EBD90 /* xy-box-handle.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10F07E50746008EBD90 /* xy-box-handle.png */; };
 		B0AD80DC0D0F315300766C78 /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B0AD80DB0D0F315300766C78 /* destroyfx.icns */; };
@@ -51,6 +44,7 @@
 		EC2F844024A7C33000F29321 /* dfxmisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC2F843F24A7C33000F29321 /* dfxmisc.mm */; };
 		EC3F0C9A20D2A89F00902FF1 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC3F0C9920D2A89E00902FF1 /* dfxguimisc.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		EC4FB197256AE34C00AFC27A /* AUBufferAllocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC4FB196256AE34C00AFC27A /* AUBufferAllocator.cpp */; };
+		EC5FE74E269271C900EC322F /* bufferoverrideview.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC5FE74D2692717B00EC322F /* bufferoverrideview.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		EC89B33F208D2AFB00E15129 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B338208D2AF800E15129 /* Accelerate.framework */; };
 		EC89B340208D2AFB00E15129 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B339208D2AF800E15129 /* OpenGL.framework */; };
 		EC89B341208D2AFB00E15129 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B33A208D2AF900E15129 /* QuartzCore.framework */; };
@@ -59,6 +53,7 @@
 		EC89B344208D2AFB00E15129 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B33D208D2AFA00E15129 /* AudioToolbox.framework */; };
 		EC89B345208D2AFB00E15129 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B33E208D2AFB00E15129 /* Carbon.framework */; };
 		EC8AB25724CDF6FC000504F0 /* dfxgui-fontfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC8AB25424CDF6FC000504F0 /* dfxgui-fontfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		EC8C77E226ADEBEA00DD857C /* dfxwetar16px.ttf in Resources */ = {isa = PBXBuildFile; fileRef = EC8C77E126ADEBEA00DD857C /* dfxwetar16px.ttf */; };
 		EC8E90DB17E60E7F0022A297 /* dfxenvelope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC8E90D917E60E7F0022A297 /* dfxenvelope.cpp */; };
 		EC9B57101B1406D800C7950A /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC9B570F1B1406D800C7950A /* dfx-au-utilities-preset-files.m */; };
 		EC9D0B7118748EC300750E22 /* dfxguicontrol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC9D0B7018748EC300750E22 /* dfxguicontrol.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
@@ -77,7 +72,7 @@
 		ECDB2A6A21BA002800938F5C /* slider-handle-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10907E50746008EBD90 /* slider-handle-glowing.png */; };
 		ECDB2A6B21BA005900938F5C /* xy-box-handle-buffer-glow.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10D07E50746008EBD90 /* xy-box-handle-buffer-glow.png */; };
 		ECDB2A6C21BA005B00938F5C /* xy-box-handle-divisor-glow.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10E07E50746008EBD90 /* xy-box-handle-divisor-glow.png */; };
-		ECDB2A6D21BA009300938F5C /* slider-handle-pitchbend-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10A07E50746008EBD90 /* slider-handle-pitchbend-glowing.png */; };
+		ECF62EDA26C98A0900B39D9E /* destroy-fx-link.png in Resources */ = {isa = PBXBuildFile; fileRef = ECF62ED926C98A0900B39D9E /* destroy-fx-link.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -118,24 +113,16 @@
 		4998C0EF07E50678008EBD90 /* bufferoverride.exp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.exports; name = bufferoverride.exp; path = mac/bufferoverride.exp; sourceTree = "<group>"; };
 		4998C0F107E506A8008EBD90 /* lfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = lfo.cpp; sourceTree = "<group>"; };
 		4998C0F207E506A8008EBD90 /* lfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = lfo.h; sourceTree = "<group>"; };
-		4998C0F907E50746008EBD90 /* buffer-interrupt-button-corner.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "buffer-interrupt-button-corner.png"; sourceTree = "<group>"; };
 		4998C0FA07E50746008EBD90 /* buffer-interrupt-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "buffer-interrupt-button.png"; sourceTree = "<group>"; };
-		4998C0FB07E50746008EBD90 /* buffer-lfo-rate-label.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "buffer-lfo-rate-label.png"; sourceTree = "<group>"; };
-		4998C0FC07E50746008EBD90 /* buffer-lfo-shape-switch.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "buffer-lfo-shape-switch.png"; sourceTree = "<group>"; };
-		4998C0FD07E50746008EBD90 /* buffer-lfo-tempo-sync-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "buffer-lfo-tempo-sync-button.png"; sourceTree = "<group>"; };
+		4998C0FD07E50746008EBD90 /* lfo-tempo-sync-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "lfo-tempo-sync-button.png"; sourceTree = "<group>"; };
 		4998C0FE07E50746008EBD90 /* buffer-override-background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "buffer-override-background.png"; sourceTree = "<group>"; };
 		4998C0FF07E50746008EBD90 /* buffer-size-label.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "buffer-size-label.png"; sourceTree = "<group>"; };
-		4998C10007E50746008EBD90 /* buffer-tempo-sync-button-corner.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "buffer-tempo-sync-button-corner.png"; sourceTree = "<group>"; };
 		4998C10107E50746008EBD90 /* buffer-tempo-sync-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "buffer-tempo-sync-button.png"; sourceTree = "<group>"; };
-		4998C10207E50746008EBD90 /* divisor-lfo-rate-label.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "divisor-lfo-rate-label.png"; sourceTree = "<group>"; };
-		4998C10307E50746008EBD90 /* divisor-lfo-shape-switch.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "divisor-lfo-shape-switch.png"; sourceTree = "<group>"; };
-		4998C10407E50746008EBD90 /* divisor-lfo-tempo-sync-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "divisor-lfo-tempo-sync-button.png"; sourceTree = "<group>"; };
+		4998C10307E50746008EBD90 /* lfo-shape-switch.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "lfo-shape-switch.png"; sourceTree = "<group>"; };
 		4998C10607E50746008EBD90 /* midi-learn-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "midi-learn-button.png"; sourceTree = "<group>"; };
 		4998C10707E50746008EBD90 /* midi-mode-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "midi-mode-button.png"; sourceTree = "<group>"; };
 		4998C10807E50746008EBD90 /* midi-reset-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "midi-reset-button.png"; sourceTree = "<group>"; };
 		4998C10907E50746008EBD90 /* slider-handle-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle-glowing.png"; sourceTree = "<group>"; };
-		4998C10A07E50746008EBD90 /* slider-handle-pitchbend-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle-pitchbend-glowing.png"; sourceTree = "<group>"; };
-		4998C10B07E50746008EBD90 /* slider-handle-pitchbend.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle-pitchbend.png"; sourceTree = "<group>"; };
 		4998C10C07E50746008EBD90 /* slider-handle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle.png"; sourceTree = "<group>"; };
 		4998C10D07E50746008EBD90 /* xy-box-handle-buffer-glow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "xy-box-handle-buffer-glow.png"; sourceTree = "<group>"; };
 		4998C10E07E50746008EBD90 /* xy-box-handle-divisor-glow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "xy-box-handle-divisor-glow.png"; sourceTree = "<group>"; };
@@ -160,6 +147,9 @@
 		EC50A03A20CA258700718651 /* de */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = de; path = "../../dfx-library/de.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		EC5CC734210EDF41007CCD6B /* idfxguicontrol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxguicontrol.h; sourceTree = "<group>"; };
 		EC5CC735210EDF41007CCD6B /* dfxguicontrol.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxguicontrol.hpp; sourceTree = "<group>"; };
+		EC5FE74B2692717000EC322F /* bufferoverride-base.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "bufferoverride-base.h"; sourceTree = "<group>"; };
+		EC5FE74C2692717B00EC322F /* bufferoverrideview.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = bufferoverrideview.h; path = gui/bufferoverrideview.h; sourceTree = "<group>"; };
+		EC5FE74D2692717B00EC322F /* bufferoverrideview.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = bufferoverrideview.cpp; path = gui/bufferoverrideview.cpp; sourceTree = "<group>"; };
 		EC76E2321DD828D20025CE41 /* dfxsmoothedvalue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxsmoothedvalue.h; sourceTree = "<group>"; };
 		EC89B338208D2AF800E15129 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		EC89B339208D2AF800E15129 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -171,6 +161,7 @@
 		EC8AB25424CDF6FC000504F0 /* dfxgui-fontfactory.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "dfxgui-fontfactory.mm"; sourceTree = "<group>"; };
 		EC8AB25524CDF6FC000504F0 /* dfxgui-fontfactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = "dfxgui-fontfactory.cpp"; sourceTree = "<group>"; usesTabs = 0; };
 		EC8AB25624CDF6FC000504F0 /* dfxgui-fontfactory.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = "dfxgui-fontfactory.h"; sourceTree = "<group>"; usesTabs = 0; };
+		EC8C77E126ADEBEA00DD857C /* dfxwetar16px.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = dfxwetar16px.ttf; path = ../../fonts/dfxwetar16px.ttf; sourceTree = "<group>"; };
 		EC8E90D917E60E7F0022A297 /* dfxenvelope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxenvelope.cpp; sourceTree = "<group>"; };
 		EC8E90DA17E60E7F0022A297 /* dfxenvelope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxenvelope.h; sourceTree = "<group>"; };
 		EC9700941A634EB1007E8186 /* dfxgui-auviewfactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "dfxgui-auviewfactory.h"; sourceTree = "<group>"; };
@@ -211,6 +202,7 @@
 		ECD5977B253DE7A400ED0061 /* AUInputElement.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUInputElement.cpp; sourceTree = "<group>"; };
 		ECEF5898220C0AB90058947D /* idfxsmoothedvalue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxsmoothedvalue.h; sourceTree = "<group>"; };
 		ECF3B50920CC9E9000842E94 /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
+		ECF62ED926C98A0900B39D9E /* destroy-fx-link.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "destroy-fx-link.png"; sourceTree = "<group>"; };
 		ECF8794E1DE01ACF009E4BC8 /* dfxsmoothedvalue.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = dfxsmoothedvalue.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -265,6 +257,7 @@
 			isa = PBXGroup;
 			children = (
 				4905A972067F716E00000F0C /* graphics */,
+				EC8C77E126ADEBEA00DD857C /* dfxwetar16px.ttf */,
 				B0AD80DB0D0F315300766C78 /* destroyfx.icns */,
 				EC1227D00FBC910300F013C8 /* dfx-au-utilities.strings */,
 			);
@@ -274,12 +267,15 @@
 		08FB77ADFE841716C02AAC07 /* Buffer Override */ = {
 			isa = PBXGroup;
 			children = (
+				EC5FE74B2692717000EC322F /* bufferoverride-base.h */,
 				4998C0E107E5063E008EBD90 /* bufferoverride.h */,
 				4998C0E307E5063E008EBD90 /* bufferoverrideformalities.cpp */,
 				4998C0E407E5063E008EBD90 /* bufferoverridemidi.cpp */,
 				4998C0E507E5063E008EBD90 /* bufferoverrideprocess.cpp */,
 				4998C0EC07E50665008EBD90 /* bufferoverrideeditor.h */,
 				4998C0EB07E50665008EBD90 /* bufferoverrideeditor.cpp */,
+				EC5FE74C2692717B00EC322F /* bufferoverrideview.h */,
+				EC5FE74D2692717B00EC322F /* bufferoverrideview.cpp */,
 				4998C0E207E5063E008EBD90 /* bufferoverridedef.h */,
 				4998C0EF07E50678008EBD90 /* bufferoverride.exp */,
 			);
@@ -301,26 +297,19 @@
 				4998C0FE07E50746008EBD90 /* buffer-override-background.png */,
 				4998C10C07E50746008EBD90 /* slider-handle.png */,
 				4998C10907E50746008EBD90 /* slider-handle-glowing.png */,
-				4998C10B07E50746008EBD90 /* slider-handle-pitchbend.png */,
-				4998C10A07E50746008EBD90 /* slider-handle-pitchbend-glowing.png */,
 				4998C10F07E50746008EBD90 /* xy-box-handle.png */,
 				4998C10D07E50746008EBD90 /* xy-box-handle-buffer-glow.png */,
 				4998C10E07E50746008EBD90 /* xy-box-handle-divisor-glow.png */,
 				4998C10107E50746008EBD90 /* buffer-tempo-sync-button.png */,
-				4998C10007E50746008EBD90 /* buffer-tempo-sync-button-corner.png */,
 				4998C0FF07E50746008EBD90 /* buffer-size-label.png */,
 				4998C0FA07E50746008EBD90 /* buffer-interrupt-button.png */,
-				4998C0F907E50746008EBD90 /* buffer-interrupt-button-corner.png */,
 				4998C10707E50746008EBD90 /* midi-mode-button.png */,
-				4998C0FC07E50746008EBD90 /* buffer-lfo-shape-switch.png */,
-				4998C0FD07E50746008EBD90 /* buffer-lfo-tempo-sync-button.png */,
-				4998C0FB07E50746008EBD90 /* buffer-lfo-rate-label.png */,
-				4998C10307E50746008EBD90 /* divisor-lfo-shape-switch.png */,
-				4998C10407E50746008EBD90 /* divisor-lfo-tempo-sync-button.png */,
-				4998C10207E50746008EBD90 /* divisor-lfo-rate-label.png */,
 				EC08C71F1A927F9200326647 /* host-tempo-button.png */,
+				4998C10307E50746008EBD90 /* lfo-shape-switch.png */,
+				4998C0FD07E50746008EBD90 /* lfo-tempo-sync-button.png */,
 				4998C10607E50746008EBD90 /* midi-learn-button.png */,
 				4998C10807E50746008EBD90 /* midi-reset-button.png */,
+				ECF62ED926C98A0900B39D9E /* destroy-fx-link.png */,
 			);
 			name = graphics;
 			path = ../gui/graphics;
@@ -516,31 +505,25 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4998C11007E50746008EBD90 /* buffer-interrupt-button-corner.png in Resources */,
 				4998C11107E50746008EBD90 /* buffer-interrupt-button.png in Resources */,
-				4998C11207E50746008EBD90 /* buffer-lfo-rate-label.png in Resources */,
-				4998C11307E50746008EBD90 /* buffer-lfo-shape-switch.png in Resources */,
-				4998C11407E50746008EBD90 /* buffer-lfo-tempo-sync-button.png in Resources */,
+				4998C11407E50746008EBD90 /* lfo-tempo-sync-button.png in Resources */,
 				4998C11507E50746008EBD90 /* buffer-override-background.png in Resources */,
 				4998C11607E50746008EBD90 /* buffer-size-label.png in Resources */,
-				4998C11707E50746008EBD90 /* buffer-tempo-sync-button-corner.png in Resources */,
 				4998C11807E50746008EBD90 /* buffer-tempo-sync-button.png in Resources */,
-				4998C11907E50746008EBD90 /* divisor-lfo-rate-label.png in Resources */,
-				4998C11A07E50746008EBD90 /* divisor-lfo-shape-switch.png in Resources */,
-				4998C11B07E50746008EBD90 /* divisor-lfo-tempo-sync-button.png in Resources */,
+				EC08C7201A927F9200326647 /* host-tempo-button.png in Resources */,
+				4998C11A07E50746008EBD90 /* lfo-shape-switch.png in Resources */,
 				4998C11D07E50746008EBD90 /* midi-learn-button.png in Resources */,
 				4998C11E07E50746008EBD90 /* midi-mode-button.png in Resources */,
 				4998C11F07E50746008EBD90 /* midi-reset-button.png in Resources */,
 				4998C12307E50746008EBD90 /* slider-handle.png in Resources */,
 				ECDB2A6A21BA002800938F5C /* slider-handle-glowing.png in Resources */,
-				4998C12207E50746008EBD90 /* slider-handle-pitchbend.png in Resources */,
-				ECDB2A6D21BA009300938F5C /* slider-handle-pitchbend-glowing.png in Resources */,
 				4998C12607E50746008EBD90 /* xy-box-handle.png in Resources */,
 				ECDB2A6B21BA005900938F5C /* xy-box-handle-buffer-glow.png in Resources */,
 				ECDB2A6C21BA005B00938F5C /* xy-box-handle-divisor-glow.png in Resources */,
+				ECF62EDA26C98A0900B39D9E /* destroy-fx-link.png in Resources */,
+				EC8C77E226ADEBEA00DD857C /* dfxwetar16px.ttf in Resources */,
 				B0AD80DC0D0F315300766C78 /* destroyfx.icns in Resources */,
 				EC1227D20FBC910300F013C8 /* dfx-au-utilities.strings in Resources */,
-				EC08C7201A927F9200326647 /* host-tempo-button.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -598,6 +581,7 @@
 				EC0EF46F2524FD5300864283 /* iirfilter.cpp in Sources */,
 				4998C0EA07E5063E008EBD90 /* bufferoverrideprocess.cpp in Sources */,
 				4998C0ED07E50665008EBD90 /* bufferoverrideeditor.cpp in Sources */,
+				EC5FE74E269271C900EC322F /* bufferoverrideview.cpp in Sources */,
 				ECD59791253DE7A400ED0061 /* AUScopeElement.cpp in Sources */,
 				4998C0F307E506A8008EBD90 /* lfo.cpp in Sources */,
 				ECD59798253DE7A400ED0061 /* AUMIDIEffectBase.cpp in Sources */,
@@ -658,7 +642,7 @@
 				DFX_PLUGIN_FULL_NAME = "Buffer Override";
 				DFX_PLUGIN_ID = buff;
 				DFX_PLUGIN_SHORT_NAME = bufferoverride;
-				DFX_PLUGIN_VERSION_STRING = 2.1.0;
+				DFX_PLUGIN_VERSION_STRING = 2.7.0;
 			};
 			name = Development;
 		};
@@ -668,7 +652,7 @@
 				DFX_PLUGIN_FULL_NAME = "Buffer Override";
 				DFX_PLUGIN_ID = buff;
 				DFX_PLUGIN_SHORT_NAME = bufferoverride;
-				DFX_PLUGIN_VERSION_STRING = 2.1.0;
+				DFX_PLUGIN_VERSION_STRING = 2.7.0;
 			};
 			name = Deployment;
 		};
