@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2021  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -46,7 +46,7 @@ class BufferOverrideView final : public VSTGUI::CView {
 
  private:
 
-  BufferOverrideViewData data;
+  BufferOverrideViewData_GUI data;
   uint64_t prevtimestamp = 0u;
 
   DfxGuiEditor *editor = nullptr;

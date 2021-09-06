@@ -22,6 +22,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #pragma once
 
+#include <atomic>
+
 #include "dfxmisc.h"
 #include "dfxpluginproperties.h"
 
@@ -73,16 +75,15 @@ enum : dfx::PropertyID
 
 // Current effective buffer/divisor/etc. after LFOs. Used for
 // the visualization.
+template <typename T>
 struct BufferOverrideViewData
 {
-	// (XXX is this what we want to pass?)
-	long forced_buffer_samples = 2;
-	long mini_buffer_samples = 1;
-
-	void clear()
-	{
-		*this = BufferOverrideViewData();
-	}
+	T forced_buffer_sec {};
+	T minibuffer_sec {};
 };
+using BufferOverrideViewData_DSP = BufferOverrideViewData<std::atomic<double>>;
+using BufferOverrideViewData_GUI = BufferOverrideViewData<double>;
 
-static_assert(dfx::IsTriviallySerializable<BufferOverrideViewData>);
+static_assert(dfx::IsTriviallySerializable<BufferOverrideViewData_GUI>);
+static_assert(decltype(BufferOverrideViewData_DSP::forced_buffer_sec)::is_always_lock_free);
+static_assert(decltype(BufferOverrideViewData_DSP::minibuffer_sec)::is_always_lock_free);

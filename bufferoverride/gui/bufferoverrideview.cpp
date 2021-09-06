@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2021  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -21,6 +21,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "bufferoverrideview.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <utility>
@@ -34,6 +35,7 @@ constexpr auto color_red = VSTGUI::MakeCColor(0xde, 0x7c, 0x70);
 
 using VSTGUI::CPoint;
 using VSTGUI::CColor;
+using VSTGUI::CCoord;
 using VSTGUI::UTF8StringPtr;
 
 BufferOverrideView::BufferOverrideView(VSTGUI::CRect const & size)
@@ -66,10 +68,8 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
   const auto height = getHeight();
 
 
-  // TODO: Get this from the plugin
-  const float kSampleRate = 44100.0f;
-  const float buffer_sec = data.forced_buffer_samples / kSampleRate;
-  const float minibuffer_sec = data.mini_buffer_samples / kSampleRate;
+  const auto buffer_sec = data.forced_buffer_sec;
+  const auto minibuffer_sec = data.minibuffer_sec;
 
   offc->beginDraw();
 
@@ -78,16 +78,16 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
   offc->drawRect(VSTGUI::CRect(-1, -1, width, height), VSTGUI::kDrawFilled);
 
 
-  constexpr float MARGIN_HORIZ = 8.0f;
-  constexpr float MARGIN_VERT = 16.0f;
+  constexpr CCoord MARGIN_HORIZ = 8.0;
+  constexpr CCoord MARGIN_VERT = 16.0;
   // We want to fit roughly one second, but:
   //   - Remove margin on left, since we don't draw there
   //   - Remove the same margin on right. We do draw there, but
   //     this lets us see the beginning of the next buffer when
   //     at the extreme buffer size of 1 sec.
-  const float pixels_per_second = width - (MARGIN_HORIZ * 2);
+  const CCoord pixels_per_second = width - (MARGIN_HORIZ * 2);
 
-  auto DrawBox = [&](float x, float y, float w, float h,
+  auto DrawBox = [&](CCoord x, CCoord y, CCoord w, CCoord h,
                      CColor c) {
       offc->setFrameColor(c);
       // top
@@ -102,7 +102,7 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
       offc->drawLine(CPoint(x + w - 1, y), CPoint(x + w - 1, y + h - 1));
     };
 
-  auto DrawFilledBox = [&](float x, float y, float w, float h,
+  auto DrawFilledBox = [&](CCoord x, CCoord y, CCoord w, CCoord h,
                            CColor c) {
       offc->setFillColor(c);
       offc->drawRect(VSTGUI::CRect(x, y, x + w, y + h),
@@ -110,17 +110,17 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
     };
 
   // draw 'major' boxes.
-  const float majorbox_width = pixels_per_second * buffer_sec;
-  const float majorbox_height = height - (MARGIN_VERT * 2);
+  const CCoord majorbox_width = std::max(pixels_per_second * buffer_sec, 4.);
+  const CCoord majorbox_height = height - (MARGIN_VERT * 2);
 
-  const float minorbox_width = pixels_per_second * minibuffer_sec;
-  const float minorbox_height = majorbox_height - 4;
+  const CCoord minorbox_width = std::max(pixels_per_second * minibuffer_sec, 2.);
+  const CCoord minorbox_height = majorbox_height - 4;
   {
     // Place boxes in float space but round to integer coordinates
     // since we leave some thin pixel borders.
-    for (float xpos = MARGIN_HORIZ; xpos < width; xpos += majorbox_width) {
-      const int ixpos = (int)roundf(xpos);
-      const int majw = (int)roundf(xpos + majorbox_width) - xpos;
+    for (CCoord xpos = MARGIN_HORIZ; xpos < width; xpos += majorbox_width) {
+      const int ixpos = (int)std::round(xpos);
+      const int majw = (int)std::round(xpos + majorbox_width) - xpos;
 
       // TODO: When the major buffer size is really small, this draws
       // occasional slivers (looks ok) or nothing (probably could be
@@ -142,9 +142,9 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
           }
         } else {
           bool first = true;
-          for (float nxpos = 2.0f; nxpos < majw - 2; nxpos += minorbox_width) {
-            const int inxpos = (int)roundf(nxpos);
-            const int minw = (int)roundf(nxpos + minorbox_width) - inxpos;
+          for (CCoord nxpos = 2.0; nxpos < majw - 2; nxpos += minorbox_width) {
+            const int inxpos = (int)std::round(nxpos);
+            const int minw = (int)std::round(nxpos + minorbox_width) - inxpos;
 
             // Clip the width of the last minibuffer.
             // We can reuse the right margin by overlapping it with the

@@ -21,12 +21,10 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #pragma once
 
-#include <array>
 #include <atomic>
 #include <vector>
 
 #include "bufferoverride-base.h"
-#include "dfxmutex.h"
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
 #include "lfo.h"
@@ -64,7 +62,6 @@ private:
 
 	void initPresets();
 
-	void clearViewDataCache();
 	void updateViewDataCache();
 
 	// the parameters
@@ -114,12 +111,7 @@ private:
 
 	float mFadeOutGain = 0.0f, mFadeInGain = 0.0f, mRealFadePart = 0.0f, mImaginaryFadePart = 0.0f;  // for trig crossfading
 
-	// Access via reader is protected by a lock.
-	// Access via writer is always on or serialized with the audio render thread.
-	std::array<BufferOverrideViewData, 2> mViewDataCaches;
-	BufferOverrideViewData* mViewDataCache_reader = nullptr;
-	BufferOverrideViewData* mViewDataCache_writer = nullptr;
-	dfx::SpinLock mViewDataCachesLock;
+	BufferOverrideViewData_DSP mViewDataCache;
 	std::atomic<uint64_t> mLastViewDataCacheTimestamp {0u};
 	static_assert(decltype(mLastViewDataCacheTimestamp)::is_always_lock_free);
 };

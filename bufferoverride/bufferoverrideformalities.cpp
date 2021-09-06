@@ -95,9 +95,6 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	registerSmoothedAudioValue(&mInputGain);
 	registerSmoothedAudioValue(&mOutputGain);
-
-	mViewDataCache_reader = &mViewDataCaches.front();
-	mViewDataCache_writer = &mViewDataCaches.back();
 }
 
 //-------------------------------------------------------------------------
@@ -107,7 +104,7 @@ void BufferOverride::reset()
 	mCurrentForcedBufferSize = 1;
 	mWritePos = mReadPos = 1;
 	mMinibufferSize = 1;
-    mMinibufferSizeForView = 1;
+	mMinibufferSizeForView = 1;
 	mPrevMinibufferSize = 0;
 	mSmoothCount = mSmoothDur = 0;
 //	mSqrtFadeIn = mSqrtFadeOut = 1.0f;
@@ -126,8 +123,6 @@ void BufferOverride::reset()
 
 	// this is a handy value to have during LFO calculations and wasteful to recalculate at every sample
 	mOneDivSR = 1.0f / getsamplerate_f();
-
-	clearViewDataCache();
 }
 
 //-------------------------------------------------------------------------
@@ -394,43 +389,12 @@ void BufferOverride::processparameters()
 #pragma mark _________properties_________
 
 //-------------------------------------------------------------------------
-void BufferOverride::clearViewDataCache()
-{
-	mViewDataCache_writer->clear();
-	{
-		std::unique_lock const guard(mViewDataCachesLock, std::try_to_lock);
-		if (guard.owns_lock())
-		{
-			std::swap(mViewDataCache_reader, mViewDataCache_writer);
-		}
-	}
-	mLastViewDataCacheTimestamp.fetch_add(1, std::memory_order_relaxed);
-}
-
-//-------------------------------------------------------------------------
 void BufferOverride::updateViewDataCache()
 {
-	// XXX should be copying something computed from update
-	mViewDataCache_writer->forced_buffer_samples = mCurrentForcedBufferSize;
-	mViewDataCache_writer->mini_buffer_samples = mMinibufferSizeForView;
+	mViewDataCache.forced_buffer_sec = mCurrentForcedBufferSize / getsamplerate();
+	mViewDataCache.minibuffer_sec = mMinibufferSizeForView / getsamplerate();
 
-	bool const updated = [this]()
-	{
-		// willing to drop window cache updates to ensure realtime-safety
-		// by not blocking here
-		std::unique_lock const guard(mViewDataCachesLock, std::try_to_lock);
-		if (guard.owns_lock())
-		{
-			std::swap(mViewDataCache_reader, mViewDataCache_writer);
-			return true;
-		}
-		return false;
-	}();
-
-	if (updated)
-	{
-		mLastViewDataCacheTimestamp.fetch_add(1, std::memory_order_relaxed);
-	}
+	mLastViewDataCacheTimestamp.fetch_add(1, std::memory_order_relaxed);
 }
 
 //-------------------------------------------------------------------------
@@ -444,7 +408,7 @@ long BufferOverride::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scop
 			outFlags = dfx::kPropertyFlag_Readable;
 			return dfx::kStatus_NoError;
 		case kBOProperty_ViewData:
-			outDataSize = sizeof(BufferOverrideViewData);
+			outDataSize = sizeof(BufferOverrideViewData_GUI);
 			outFlags = dfx::kPropertyFlag_Readable;
 			return dfx::kStatus_NoError;
 		default:
@@ -463,8 +427,9 @@ long BufferOverride::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope in
 			return dfx::kStatus_NoError;
 		case kBOProperty_ViewData:
 		{
-			std::lock_guard const guard(mViewDataCachesLock);
-			*static_cast<BufferOverrideViewData*>(outData) = *mViewDataCache_reader;
+			auto const viewData = static_cast<BufferOverrideViewData_GUI*>(outData);
+			viewData->forced_buffer_sec = mViewDataCache.forced_buffer_sec;
+			viewData->minibuffer_sec = mViewDataCache.minibuffer_sec;
 			return dfx::kStatus_NoError;
 		}
 		default:
