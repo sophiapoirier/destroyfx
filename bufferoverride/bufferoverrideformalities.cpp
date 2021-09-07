@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "bufferoverride-base.h"
 #include "bufferoverride.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include "dfxmisc.h"
@@ -95,6 +96,8 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	registerSmoothedAudioValue(&mInputGain);
 	registerSmoothedAudioValue(&mOutputGain);
+
+	updateViewDataCache();
 }
 
 //-------------------------------------------------------------------------
@@ -104,7 +107,6 @@ void BufferOverride::reset()
 	mCurrentForcedBufferSize = 1;
 	mWritePos = mReadPos = 1;
 	mMinibufferSize = 1;
-	mMinibufferSizeForView = 1;
 	mPrevMinibufferSize = 0;
 	mSmoothCount = mSmoothDur = 0;
 //	mSqrtFadeIn = mSqrtFadeOut = 1.0f;
@@ -123,6 +125,10 @@ void BufferOverride::reset()
 
 	// this is a handy value to have during LFO calculations and wasteful to recalculate at every sample
 	mOneDivSR = 1.0f / getsamplerate_f();
+
+	mDivisorLFOValue_viewCache.store(1.f, std::memory_order_relaxed);
+	mBufferLFOValue_viewCache.store(1.f, std::memory_order_relaxed);
+	updateViewDataCache();
 }
 
 //-------------------------------------------------------------------------
@@ -385,16 +391,55 @@ void BufferOverride::processparameters()
 	}
 }
 
+//-------------------------------------------------------------------------
+void BufferOverride::parameterChanged(long inParameterIndex)
+{
+	switch (inParameterIndex)
+	{
+		case kDivisor:
+		case kBufferSize_MS:
+		case kBufferSize_Sync:
+		case kBufferTempoSync:
+		case kTempoAuto:
+		case kTempo:
+			updateViewDataCache();
+			break;
+	}
+}
+
 
 #pragma mark _________properties_________
 
 //-------------------------------------------------------------------------
 void BufferOverride::updateViewDataCache()
 {
-	mViewDataCache.forced_buffer_sec = mCurrentForcedBufferSize / getsamplerate();
-	mViewDataCache.minibuffer_sec = mMinibufferSizeForView / getsamplerate();
+	BufferOverrideViewData viewData;
+	auto const hostTempoBPS = mHostTempoBPS_viewCache.load(std::memory_order_relaxed);
+	auto const tempoBPS = (getparameter_b(kTempoAuto) && (hostTempoBPS > 0.)) ? hostTempoBPS : (getparameter_f(kTempo) / 60.);
 
-	mLastViewDataCacheTimestamp.fetch_add(1, std::memory_order_relaxed);
+	if (getparameter_b(kBufferTempoSync) && (tempoBPS > 0.))
+	{
+		viewData.forced_buffer_sec = 1. / (tempoBPS * mTempoRateTable.getScalar(getparameter_i(kBufferSize_Sync)));
+	}
+	else
+	{
+		viewData.forced_buffer_sec = getparameter_f(kBufferSize_MS) * 0.001;
+	}
+	viewData.forced_buffer_sec *= mBufferLFOValue_viewCache.load(std::memory_order_relaxed);
+
+	// just the size of the first repetition with no complexity about the boundary case at the end
+	if (auto divisor = static_cast<float>(getparameter_f(kDivisor)); divisor >= 2.f)
+	{
+		divisor = std::max(divisor * mDivisorLFOValue_viewCache.load(std::memory_order_relaxed), 2.f);
+		viewData.minibuffer_sec = viewData.forced_buffer_sec / divisor;
+	}
+	else
+	{
+		viewData.minibuffer_sec = viewData.forced_buffer_sec;
+	}
+
+	mViewDataCache.store(viewData, std::memory_order_relaxed);
+	mViewDataCacheTimestamp.fetch_add(1, std::memory_order_relaxed);
 }
 
 //-------------------------------------------------------------------------
@@ -408,7 +453,7 @@ long BufferOverride::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scop
 			outFlags = dfx::kPropertyFlag_Readable;
 			return dfx::kStatus_NoError;
 		case kBOProperty_ViewData:
-			outDataSize = sizeof(BufferOverrideViewData_GUI);
+			outDataSize = sizeof(BufferOverrideViewData);
 			outFlags = dfx::kPropertyFlag_Readable;
 			return dfx::kStatus_NoError;
 		default:
@@ -423,15 +468,11 @@ long BufferOverride::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope in
 	switch (inPropertyID)
 	{
 		case kBOProperty_LastViewDataTimestamp:
-			*static_cast<uint64_t*>(outData) = mLastViewDataCacheTimestamp.load(std::memory_order_relaxed);
+			*static_cast<uint64_t*>(outData) = mViewDataCacheTimestamp.load(std::memory_order_relaxed);
 			return dfx::kStatus_NoError;
 		case kBOProperty_ViewData:
-		{
-			auto const viewData = static_cast<BufferOverrideViewData_GUI*>(outData);
-			viewData->forced_buffer_sec = mViewDataCache.forced_buffer_sec;
-			viewData->minibuffer_sec = mViewDataCache.minibuffer_sec;
+			*static_cast<BufferOverrideViewData*>(outData) = mViewDataCache.load(std::memory_order_relaxed);
 			return dfx::kStatus_NoError;
-		}
 		default:
 			return DfxPlugin::dfx_GetProperty(inPropertyID, inScope, inItemIndex, outData);
 	}

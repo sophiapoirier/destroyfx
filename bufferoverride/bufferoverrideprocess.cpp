@@ -55,8 +55,10 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 	mBufferLFO.updatePosition(mPrevMinibufferSize);
 	// Then get the current output values of the LFOs, which also updates their positions once more.
 	// Scale the 0.0 - 1.0 LFO output values to 0.0 - 2.0 (oscillating around 1.0).
-	auto const divisorLFOvalue = mDivisorLFO.processZeroToTwo();
-	float const bufferLFOvalue = 2.0f - mBufferLFO.processZeroToTwo();  // inverting it makes more pitch sense
+	auto const divisorLFOValue = mDivisorLFO.processZeroToTwo();
+	float const bufferLFOValue = 2.0f - mBufferLFO.processZeroToTwo();  // inverting it makes more pitch sense
+	mDivisorLFOValue_viewCache.store(divisorLFOValue, std::memory_order_relaxed);
+	mBufferLFOValue_viewCache.store(bufferLFOValue, std::memory_order_relaxed);
 	// and then update the step size for each LFO, in case the LFO parameters have changed
 	if (mDivisorLFOTempoSync)
 	{
@@ -100,7 +102,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 			mCurrentForcedBufferSize = bufferSize_ms2samples(mBufferSizeMS, getsamplerate());
 		}
 		// apply the buffer LFO to the forced buffer size
-		mCurrentForcedBufferSize = std::lround(static_cast<float>(mCurrentForcedBufferSize) * bufferLFOvalue);
+		mCurrentForcedBufferSize = std::lround(static_cast<float>(mCurrentForcedBufferSize) * bufferLFOValue);
 		// really low tempos and tempo rate values can cause huge forced buffer sizes,
 		// so prevent going outside of the allocated buffer space
 		mCurrentForcedBufferSize = std::clamp(mCurrentForcedBufferSize, 2L, static_cast<long>(mBuffers.front().size()));
@@ -114,7 +116,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 	// apply the divisor LFO to the divisor value if there's an "active" divisor (i.e. 2 or greater)
 	if (currentBufferDivisor >= 2.0f)
 	{
-		currentBufferDivisor *= divisorLFOvalue;
+		currentBufferDivisor *= divisorLFOValue;
 		// now it's possible that the LFO could make the divisor less than 2,
 		// which will essentially turn the effect off, so we stop the modulation at 2
 		if (currentBufferDivisor < 2.0f)
@@ -122,10 +124,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 			currentBufferDivisor = 2.0f;
 		}
 	}
-    // Simple version of buffer size for view only.
-    mMinibufferSizeForView =
-		std::max(1L, std::lround(static_cast<float>(mCurrentForcedBufferSize) / currentBufferDivisor));
-    
+
 	//-----------------------CALCULATE THE MINIBUFFER SIZE-------------------------
 	// this is not a new forced buffer starting up
 	if (mWritePos > 0)
@@ -256,6 +255,7 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 		if (mUseHostTempo && hostCanDoTempo() && gettimeinfo().mTempoIsValid)  // get the tempo from the host
 		{
 			mCurrentTempoBPS = gettimeinfo().mTempo_BPS;
+			mHostTempoBPS_viewCache.store(mCurrentTempoBPS, std::memory_order_relaxed);
 			// check if audio playback has just restarted and reset buffer stuff if it has (for measure sync)
 			if (gettimeinfo().mPlaybackChanged)
 			{

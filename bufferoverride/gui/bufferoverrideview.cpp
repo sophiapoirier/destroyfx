@@ -68,8 +68,8 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
   const auto height = getHeight();
 
 
-  const auto buffer_sec = data.forced_buffer_sec;
-  const auto minibuffer_sec = data.minibuffer_sec;
+  const CCoord buffer_sec = data.forced_buffer_sec;
+  const CCoord minibuffer_sec = data.minibuffer_sec;
 
   offc->beginDraw();
 
@@ -119,8 +119,8 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
     // Place boxes in float space but round to integer coordinates
     // since we leave some thin pixel borders.
     for (CCoord xpos = MARGIN_HORIZ; xpos < width; xpos += majorbox_width) {
-      const int ixpos = (int)std::round(xpos);
-      const int majw = (int)std::round(xpos + majorbox_width) - xpos;
+      const int ixpos = std::lround(xpos);
+      const int majw = std::lround(xpos + majorbox_width) - xpos;
 
       // TODO: When the major buffer size is really small, this draws
       // occasional slivers (looks ok) or nothing (probably could be
@@ -143,8 +143,8 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
         } else {
           bool first = true;
           for (CCoord nxpos = 2.0; nxpos < majw - 2; nxpos += minorbox_width) {
-            const int inxpos = (int)std::round(nxpos);
-            const int minw = (int)std::round(nxpos + minorbox_width) - inxpos;
+            const int inxpos = std::lround(nxpos);
+            const int minw = std::lround(nxpos + minorbox_width) - inxpos;
 
             // Clip the width of the last minibuffer.
             // We can reuse the right margin by overlapping it with the
@@ -198,6 +198,6 @@ void BufferOverrideView::reflect() {
   assert(status == dfx::kStatus_NoError);
   assert(data_size == sizeof (data));
 
-  // Only if changed?
+  // TODO: Only if changed?
   invalid();
 }

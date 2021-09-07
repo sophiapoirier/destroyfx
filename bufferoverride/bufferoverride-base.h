@@ -22,8 +22,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #pragma once
 
-#include <atomic>
-
 #include "dfxmisc.h"
 #include "dfxpluginproperties.h"
 
@@ -75,15 +73,11 @@ enum : dfx::PropertyID
 
 // Current effective buffer/divisor/etc. after LFOs. Used for
 // the visualization.
-template <typename T>
+// NOTE: Clang can but GCC cannot lockfree-atomic two doubles, so using floats
 struct BufferOverrideViewData
 {
-	T forced_buffer_sec {};
-	T minibuffer_sec {};
+	float forced_buffer_sec {};
+	float minibuffer_sec {};
 };
-using BufferOverrideViewData_DSP = BufferOverrideViewData<std::atomic<double>>;
-using BufferOverrideViewData_GUI = BufferOverrideViewData<double>;
 
-static_assert(dfx::IsTriviallySerializable<BufferOverrideViewData_GUI>);
-static_assert(decltype(BufferOverrideViewData_DSP::forced_buffer_sec)::is_always_lock_free);
-static_assert(decltype(BufferOverrideViewData_DSP::minibuffer_sec)::is_always_lock_free);
+static_assert(dfx::IsTriviallySerializable<BufferOverrideViewData>);

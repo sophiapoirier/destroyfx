@@ -649,6 +649,8 @@ void DfxPlugin::update_parameter(long inParameterIndex)
 #ifdef TARGET_API_RTAS
 	SetControlValue(dfx::ParameterID_ToRTAS(inParameterIndex), ConvertToDigiValue(getparameter_gen(inParameterIndex)));  // XXX yeah do this?
 #endif
+
+	parameterChanged(inParameterIndex);
 }
 
 //-----------------------------------------------------------------------------

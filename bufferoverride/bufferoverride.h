@@ -41,6 +41,7 @@ public:
 
 	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
 	void processparameters() override;
+	void parameterChanged(long inParameterIndex) override;
 
 	void createbuffers() override;
 	void releasebuffers() override;
@@ -85,11 +86,6 @@ private:
 	long mPrevMinibufferSize = 0;  // the previous size
 	long mReadPos = 0;  // the current sample position within the minibuffer
 
-	// Like mMinibufferSize, but just the size of the first repetition
-	// with no complexity about the boundary case at the end. Just used for
-	// visualization.
-	long mMinibufferSizeForView = 0;
-  
 	float mOneDivSR = 0.0f;  // the inverse of the sampling rate
 
 	double mCurrentTempoBPS = 0.0;  // tempo in beats per second
@@ -111,7 +107,13 @@ private:
 
 	float mFadeOutGain = 0.0f, mFadeInGain = 0.0f, mRealFadePart = 0.0f, mImaginaryFadePart = 0.0f;  // for trig crossfading
 
-	BufferOverrideViewData_DSP mViewDataCache;
-	std::atomic<uint64_t> mLastViewDataCacheTimestamp {0u};
-	static_assert(decltype(mLastViewDataCacheTimestamp)::is_always_lock_free);
+	std::atomic<BufferOverrideViewData> mViewDataCache;
+	static_assert(decltype(mViewDataCache)::is_always_lock_free);
+	std::atomic<uint64_t> mViewDataCacheTimestamp {0u};
+	static_assert(decltype(mViewDataCacheTimestamp)::is_always_lock_free);
+	std::atomic<double> mHostTempoBPS_viewCache {0.};
+	static_assert(decltype(mHostTempoBPS_viewCache)::is_always_lock_free);
+	std::atomic<float> mDivisorLFOValue_viewCache {1.f}, mBufferLFOValue_viewCache {1.f};
+	static_assert(decltype(mDivisorLFOValue_viewCache)::is_always_lock_free);
+	static_assert(decltype(mBufferLFOValue_viewCache)::is_always_lock_free);
 };

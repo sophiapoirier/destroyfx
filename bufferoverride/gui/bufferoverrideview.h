@@ -46,7 +46,7 @@ class BufferOverrideView final : public VSTGUI::CView {
 
  private:
 
-  BufferOverrideViewData_GUI data;
+  BufferOverrideViewData data;
   uint64_t prevtimestamp = 0u;
 
   DfxGuiEditor *editor = nullptr;
