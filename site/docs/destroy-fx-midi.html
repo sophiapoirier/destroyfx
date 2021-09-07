@@ -14,33 +14,37 @@
 
 
 <p class="intro">
-Most of our Destroy FX plugins can be controlled, at least to some degree, with MIDI.  There are 3 types of control:  parameter automation with CCs, program changes, and note/pitchbend control.
+Most of our Destroy FX plugins can be controlled, at least to some degree, with MIDI.  There are a few types of control:  parameter automation with CCs, channel aftertouch, program changes, and note/pitchbend control.
 </p>
 
 <p class="intro">
-All DFX MIDI is handled omni-style.  Being able to use MIDI with effect plugins depends on whether your host software supports that (see the notes about compatibility below).
+All DFX MIDI is handled omni-style (receiving from any MIDI channel).  Being able to use MIDI with effect plugins depends on whether your host software supports that (see the notes about compatibility below).
 </p>
 
 <br />
 
 
-<p class="label">control with notes &amp; pitchbend:</p>
+<p class="label">control with notes + pitchbend:</p>
 
 <p class="desc">
-Some of our plugins can be controlled with MIDI notes and pitchbend.  Rez Synth and Stuck Synth need notes, otherwise they can't do much of anything.  They both like pitchbend, too.  Some of our other plugins are enhanced with MIDI note control but don't require it.  Buffer Override is a lot more fun with notes and pitchbend.  They control the buffer divisor parameter.  Skidder can be triggered with notes.  Scrubby uses notes for turning transposition steps on or off in pitch constraint mode.
+Some of our plugins can be controlled with MIDI notes and pitchbend.  Rez Synth needs notes, otherwise it can't do much of anything.  It likes pitchbend, too.  Some of our other plugins are enhanced with MIDI note control but don't require it.  Buffer Override is a lot more fun with notes and pitchbend.  They control the buffer divisor parameter.  Skidder can be triggered with notes.  Scrubby uses notes for turning transposition steps on or off in pitch constraint mode.
 </p>
 
 <br />
 
 
-<p class="label">automate parameters with CC messsages:</p>
+<p class="label">automate parameters with control messsages:</p>
 
 <p class="desc">
-You can automate any parameter on Destroy FX plugins with MIDI CCs (continuous controller messages).  Assigning CCs to parameters is done with a "MIDI learn" function.  What you do is press the MIDI learn button on the plugin, then click on some parameter, and it will become the "learner" (some controls will light up when you do this to make it obvious).  As soon as you produce some MIDI CC message (with a MIDI device or from your sequencer), that incoming CC assigns itself to the learner parameter.  From that point on, the parameter can be automated with messages from that CC.  If another CC was already assigned to that parameter, then the old CC gets un-assigned.  Each parameter can only have one CC assigned to it, but you can assign the same CC to more than one parameter (see the <a href="#advanced">advanced stuff</a> section below if you don't like that).  When you're done assigning CCs to parameters, you can click on the MIDI learn button again to exit MIDI learn mode.
+You can automate any parameter on Destroy FX plugins with MIDI CCs (continuous controller messages).  Assigning CCs to parameters is done with a "MIDI learn" function.  What you do is press the MIDI learn button on the plugin, then click on some parameter, and it will become the "learner" (some controls will light up when you do this to make it obvious).  As soon as you produce some MIDI CC message (with a MIDI device or from your sequencer), that incoming CC assigns itself to the learner parameter.  From that point on, the parameter can be automated with messages from that CC.  If another CC was already assigned to that parameter, then the old CC gets un-assigned.  Each parameter can only have one CC assigned to it, but you can assign the same CC to more than one parameter (see the <a href="#advanced">advanced stuff</a> section below if you don't like that).  After you learn a MIDI control to a parameter, MIDI learn mode automatically exits.  You can also exit MIDI learn mode manually by clicking on the MIDI learn button to toggle it off.
 </p>
 
 <p class="desc">
-If you want to erase all of the CC assignments that you've made, press the MIDI reset button.  If you want to erase the assignment for only one parameter, you can turn on MIDI learn mode, click on the parameter, and then click on the MIDI reset button.  That parameter will lose its assignment but the rest of the parameters will keep theirs.
+Channel aftertouch (aka channel pressure) can be assigned to control any parameter in the same manor as CC messages.
+</p>
+
+<p class="desc">
+If you want to erase all of the control assignments that you've made, press the MIDI reset button.  If you want to erase the assignment for only one parameter, you can turn on MIDI learn mode, click on the parameter, and then click on the MIDI reset button.  That parameter will lose its assignment but the rest of the parameters will keep theirs.
 </p>
 
 <p class="desc">
@@ -48,15 +52,15 @@ By default, Destroy FX plugins don't care on which MIDI channels the events are 
 </p>
 
 <p class="desc">
-CC assignments are saved in host song files and also in exported preset files (in VST, though, only with "bank" files, not "program" files), so you don't need to reconfigure them each time you open your song or load a preset settings file.  Also, the CC assignments that you configure stay the same when you switch between presets in a plugin.
+MIDI control assignments are saved in host song files and also in exported preset files (in VST, though, only with "bank" files, not "program" files), so you don't need to reconfigure them each time you open your song or load a preset settings file.  Also, the control assignments that you configure stay the same when you switch between presets in a plugin.
 </p>
 
 <p class="desc">
-Along with CCs, some of our plugins also allow you to assign the pitchbend wheel and even notes to control parameters (see the <a href="#advanced">advanced stuff</a> section below).
+Some of our plugins also allow you to assign the pitchbend wheel and even notes to control parameters (see the <a href="#advanced">advanced stuff</a> section below).
 </p>
 
 <p class="desc">
-You can assign almost any CC to a parameter (all except 123), but you should realize that some CCs are special and might be handled in funny ways by the particular sequencer/multi-tracker that you use.  Some CCs are technically supposed to be "on/off" values and not utilize the full 0 to 127 value range.  Your sequencer might force these ones to output as only 2 values, so keep that in mind if you find them not working properly.  There are also a few other CCs are "single value" and are only supposed to use 0.  Also, some CCs are supposed to handle special major functions, like turning all sound off or all notes off.  Your sequencer might produce these on its own for the purposes of general MIDI communication.  Here's a list of the "special" CCs:
+You can assign almost any CC to a parameter (all except 123), but you should realize that some CCs are special and might be handled in specialized ways by the particular sequencer/DAW that you use.  Some CCs are technically supposed to be "on/off" values and not utilize the full 0 to 127 value range.  Your sequencer might force these ones to output as only 2 values, so keep that in mind if you find them not working properly.  There are also a few other CCs are "single value" and are only supposed to use 0.  Also, some CCs are supposed to handle special major functions, like turning all sound off or all notes off.  Your sequencer might produce these on its own for the purposes of general MIDI communication.  Here's a list of the "special" CCs:
 </p>
 
 <p class="desc">
@@ -72,7 +76,7 @@ In particular 123 (7B) is special.  It is the "all notes off" command, and we do
 </p>
 
 <p class="desc">
-I don't know about all of the sequencers out there, but Logic resets CC 1 (mod wheel), CC 64 (sustain pedal), and CC 123 (all notes off) to 0 when stopping and starting the sequencer, so be careful with those.  Also, Logic uses CC 7 for volume and CC 10 for pan.  It intercepts CC 7 and 10 messages and does not pass them along to plugins.
+We don't know about all of the sequencers out there, but Logic resets CC 1 (mod wheel), CC 64 (sustain pedal), and CC 123 (all notes off) to 0 when stopping and starting the sequencer, so be careful with those.  Also, Logic uses CC 7 for volume and CC 10 for pan.  It intercepts CC 7 and 10 messages and does not pass them along to plugins.
 </p>
 
 <p class="desc">
@@ -80,7 +84,7 @@ If you want to play it safe, CCs 12-63 and 70-119 are probably good ranges to wo
 </p>
 
 <p class="desc">
-Some host apps (like Live and AudioMulch, for example) can manage CC control of plugin parameters on their own.  So if you use software like that, then you can just decide whether you want to use our plugin's built-in CC control system or use your host's system.
+Some host apps (like Ableton Live and AudioMulch, for example) can manage CC control of plugin parameters on their own.  So if you use software like that, then you can just decide whether you want to use our plugins' built-in CC control system or use your host's system.
 </p>
 
 <p class="desc" id="advanced">
@@ -90,19 +94,19 @@ Some host apps (like Live and AudioMulch, for example) can manage CC control of 
 <p class="desc">
 assigning pitchbend and notes to parameters via MIDI learn:
 <br />
-If the plugin is already using either of those things for special purposes (see the section above), then you can't assign them to parameters with MIDI learn (that's means no note assignments in Rez Synth, Buffer Override, Skidder, or Scrubby and no pitchbend assignments in Rez Synth or Buffer Override).  Assigning pitchbend to a parameter is just like assigning a CC.  Assigning notes is more complicated.  If the parameter is a switch or button sort of thing, then you can assign a single note to that parameter and then, each time you play that note, you will toggle the parameter to its next setting.  For other parameters, you need to assign 2 notes to define a range over which you can play notes and the notes will be mapped to values for that parameter.  To do this, turn MIDI learn on, click on a parameter, play a MIDI note, and then play another MIDI note.
-</p>
-
-<p class="desc">
-enabling or disabling parameter assignment stealing:
-<br />
-When assigning MIDI stuff to control parameters, the default behaviour in Destroy FX plugins is that you can assign the same MIDI events to more than one parameter.  If you dislike that, you can turn on "stealing" mode.  In stealing mode, if you try to assign an already assigned MIDI event to a parameter, the new parameter gets the assignment and the old parameter loses it.  To do this, you need to set an environment variable <code>DFX_PARAM_STEALMIDI</code> to <code>TRUE</code>.  In Mac OS X, you can set environment variables in the file ~/.MacOSX/environment.plist.
+If the plugin is already using either of those things for dedicated purposes (see the section above), then you can't assign them to parameters with MIDI learn (that's means no note assignments in Buffer Override, MIDI Gater, Rez Synth, Scrubby, or Skidder and no pitchbend assignments in Buffer Override or Rez Synth).  Assigning pitchbend to a parameter is just like assigning a CC.  Assigning notes is more complicated.  If the parameter is a switch or button sort of thing, then you can assign a single note to that parameter and then, each time you play that note, you will toggle the parameter to its next setting.  For other parameters, you need to assign 2 notes to define a range over which you can play notes and the notes will be mapped to values for that parameter.  To do this, turn MIDI learn on, click on a parameter, play a MIDI note, and then play another MIDI note.
 </p>
 
 <p class="desc">
 enabling or disabling omni operation:
 <br />
-The default behaviour in Destroy FX plugins is to ignore the MIDI channel on which events are received.  If instead you want our plugins to pay attention to MIDI channel when distinguishing between events, set the environment variable <code>DFX_PARAM_USECHANNEL</code> to <code>TRUE</code> (see the above section for more info about setting environment variables).
+The default behaviour in Destroy FX plugins is to ignore the MIDI channel on which events are received.  If instead you want our plugins to pay attention to MIDI channel when distinguishing between events, you can change the behavior by enabling the contextual menu option "MIDI assignments use channel".
+</p>
+
+<p class="desc">
+enabling or disabling parameter assignment stealing:
+<br />
+When assigning MIDI stuff to control parameters, the default behaviour in Destroy FX plugins is that you can assign the same MIDI events to more than one parameter.  If you dislike that, you can turn on "stealing" mode.  In stealing mode, if you try to assign an already assigned MIDI event to a parameter, the new parameter gets the assignment and the old parameter loses it.  You can toggle this behavior via the contextual menu option "Steal MIDI assignments".
 </p>
 
 <br />
@@ -125,63 +129,58 @@ Transverb has a special preset:  15.  Sending that program change message will t
 
 <p class="desc">
 Right now 
-<a href="http://www.apple.com/logic/">Logic</a> (5.0 or higher), 
+<a href="http://www.apple.com/logic-pro/">Logic</a> (5.0 or higher), 
 <a href="http://www.ableton.com/">Ableton Live</a> (4.0 or higher), 
-<a href="http://www.cycling74.com/">Max/MSP</a>, 
-<a href="http://www.tcworks.de/">Spark</a> (2.0 or higher), 
-<a href="http://plogue.com/">Plogue Bidule</a>,
+<a href="http://www.cycling74.com/">Max</a>, 
+<a href="http://plogue.com/">Plogue Bidule</a>, 
 <a href="https://www.bandlab.com/products/cakewalk">Cakewalk</a>,
 <a href="http://www.steinberg.de/">Cubase</a>, 
 <a href="http://www.steinberg.de/">Nuendo</a>, 
+<a href="http://reaper.fm/">REAPER</a>, 
 <a href="http://www.five12.com/">Numerology</a>, 
-<a href="http://www.sagantech.biz/">Metro</a>, 
-<a href="http://plasq.com/rax/">Rax</a>, 
 <a href="http://www.audiomulch.com/">AudioMulch</a>, 
-<a href="http://www.synthedit.com/">SynthEdit</a>, 
-<a href="http://www.fruityloops.com/">Fruity Loops</a>, 
-<a href="http://synapse-audio.com/">Orion</a> (2.7 or higher), and 
-<a href="http://buzzmachines.com/">Buzz</a> 
+<a href="http://www.image-line.com/">FL Studio</a> 
 are, to the best of my knowledge, are the only hosts that support sending MIDI notes to non-instrument audio-processor plugins.
 </p>
 
 <p class="desc">
-In <a href="http://www.apple.com/logic/">Logic</a>, the way to make a Destroy FX plug work with MIDI is to first insert it as an audio instrument (starting in Logic 8, effect plugins like these show up in a separate sub-menu there called &quot;AU MIDI-controlled Effects&quot;).  Then use the sidechain menu in the plugin window to choose an audio track to route into the plugin.  The MIDI will come from the sequences on the audio instrument track (or live MIDI input if that track is selected in the Arrange window) and the audio to be processed will come from the sidechain track.  I've also made workaround that lets you use Rez Synth, Buffer Override, and Skidder in Logic 4 with MIDI notes, but it's not multi-CPU compatible and now Logic 5 is available, so I've decided to stop distributing those versions.  They are still available at our <a href="http://destroyfx.org/museum.html">museum</a>, though.  Apple have published <a href="http://docs.info.apple.com/article.html?artnum=300097">their own article about this</a>, too.
+In <a href="http://www.apple.com/logic-pro/">Logic</a>, the way to make a Destroy FX plug work with MIDI is to first insert it as an audio instrument (starting in Logic 8, effect plugins like these show up in a separate sub-menu there called &quot;AU MIDI-controlled Effects&quot;).  Then use the sidechain menu in the plugin window to choose an audio track to route into the plugin.  The MIDI will come from the sequences on the audio instrument track (or live MIDI input if that track is selected in the Arrange window) and the audio to be processed will come from the sidechain track.
 </p>
 
 <p class="desc">
-  In <a href="https://www.bandlab.com/products/cakewalk">Cakewalk</a>, <a href="http://www.steinberg.de/">Cubase</a>, <a href="http://www.steinberg.de/">Nuendo</a>, and <a href="http://www.sagantech.biz/">Metro</a>, the way to make a Destroy FX plugin work with MIDI is to first insert it as an effect.  In Cubase and Nuendo, you must also &quot;activate&quot; it before doing anything else.  Now it will be included as a MIDI device/destination in the app's MIDI output devices list.  In the output device menu for the MIDI tracks, you will now see the plugin's name listed as an available option.  Select the plugin as the output device for one of your MIDI tracks and now that MIDI track's output will be fed into the plugin and allow you to send MIDI to the effect.  You can either do that with a prearranged MIDI track or live with a keyboard when that particular MIDI track is selected.
+  In <a href="https://www.bandlab.com/products/cakewalk">Cakewalk</a>, <a href="http://www.steinberg.de/">Cubase</a>, and <a href="http://www.steinberg.de/">Nuendo</a>, the way to make a Destroy FX plugin work with MIDI is to first insert it as an effect.  In Cubase and Nuendo, you must also &quot;activate&quot; it before doing anything else.  Now it will be included as a MIDI device/destination in the app's MIDI output devices list.  In the output device menu for the MIDI tracks, you will now see the plugin's name listed as an available option.  Select the plugin as the output device for one of your MIDI tracks and now that MIDI track's output will be fed into the plugin and allow you to send MIDI to the effect.  You can either do that with a prearranged MIDI track or live with a MIDI device when that particular MIDI track is selected.
 </p>
 
 <p class="desc" style="margin-top:2em">
   Using <b>Cakewalk</b> as an example, here we have the <b>affected audio track</b> (1) and the <b>midi control track</b> (2). Add a plugin like Rez Synth to the audio track, like you'd add a normal audio effect:</p>
-<img class="center" src="cakewalk1.png">
+<img class="center" src="http://destroyfx.org/docs/cakewalk1.png">
 
 
 <p class="desc" style="margin-top:2em">In this host, the setting to enable the plugin for MIDI input is hidden in the "VST2" menu:</p>
-<img class="center" src="cakewalk2.png">
+<img class="center" src="http://destroyfx.org/docs/cakewalk2.png">
 
 <p class="desc" style="margin-top:2em">
 Now the plugin instance (here, "Rez Synth 1") is available as an output for all MIDI tracks. Set this as the MIDI output for track 2, the <b>midi control track</b>:</p>
-<img class="center" src="cakewalk3.png">
+<img class="center" src="http://destroyfx.org/docs/cakewalk3.png">
 
 <p class="desc">The sound output will be from the plugin instance on track 1, the audio track. Track 2 will not output sound directly.</p>
 
 <br/>
 
 <p class="desc">
-In <a href="http://www.ableton.com/">Ableton Live</a>, insert the plugin as an effect.  Then choose or create a MIDI track, and then open the &quot;MIDI To&quot; menu on the MIDI track and select the track where the effect was inserted.  Then, if there is more than one MIDI-enabled effect inserted on that first track, you can choose which specific effect you want the MIDI to go to from another pop-up menu below &quot;MIDI To&quot; selection, but otherwise that menu selection will be disabled.
+In <a href="http://www.ableton.com/">Ableton Live</a>, insert the plugin as an effect.  Then choose or create a MIDI track, and then open the &quot;Output&quot; menu on the MIDI track and select the audio track where the effect was inserted.  Then, if there is more than one MIDI-enabled effect inserted on that first track, you can choose to which specific effect you want the MIDI to go from another pop-up menu below the &quot;Output&quot; selection, but otherwise that menu will be disabled.
 </p>
 
 <p class="desc">
-In <a href="http://www.cycling74.com/">Max/MSP</a>, all you have to do is send the the vst~ object midievent messages in the left inlet just like you would for an instrument plugin.  But unlike instruments, be sure to feed audio into the inlets as well.  Also be sure to activate your dac~ before sending any midievent messages, otherwise the messages will be ignored (this is the case with all MIDI-enabled VST plugins in Max/MSP).
+In <a href="http://www.cycling74.com/">Max</a>, all you have to do is send the the audiounit~ or vst~ object midievent messages in the left inlet just like you would for an instrument plugin.  But unlike instruments, be sure to feed audio into the inlets as well.  Also be sure to activate your dac~ before sending any midievent messages, otherwise the messages will be ignored (this is the case with all MIDI-enabled VST plugins in Max).
 </p>
 
 <p class="desc">
-In <a href="http://www.tcworks.de/">Spark</a>, just open the preferences, go to the MIDI panel, and select the port that your MIDI instrument is plugged into as the &quot;MIDI Input&quot;.  Spark LE, however, only uses MIDI that is generated by other plugins.
+In <a href="http://reaper.fm/">REAPER</a>, create two tracks: one for audio and one for MIDI.  On the audio track, insert the plugin as an effect.  Then press the &quot;Route&quot; button on the audio track to open its &quot;Routing&quot; settings window (if you do not see the &quot;Route&quot; button, enable &quot;Routing Matrix&quot; from the application View menu).  In the &quot;Receives&quot; section of the new window, open the &quot;Add new receive...&quot; pop-up menu and select the MIDI track.  In the new &quot;Receive&quot; section added, set &quot;Audio:&quot; to &quot;None&quot; &quot;MIDI:&quot; to &quot;All&quot; or whichever specific MIDI channel you wish to route to the effect plugin.  Now MIDI from the MIDI track will be routed to the effect plugin on the audio track.
 </p>
 
 <p class="desc">
-In <a href="http://plogue.com/">Plogue Bidule</a> or <a href="http://www.synthedit.com/">SynthEdit</a>, just patch MIDI into the effect.  Bidule and SynthEdit make no distinctions between instruments and effects.
+In <a href="http://plogue.com/">Plogue Bidule</a>, just patch MIDI into the effect.  Bidule makes no distinction between instruments and effects.
 </p>
 
 <p class="desc">
@@ -189,11 +188,7 @@ In <a href="http://www.five12.com/">Numerology</a>, make sure that you have some
 </p>
 
 <p class="desc">
-In <a href="http://plasq.com/rax/">Rax</a>, the rack slots for MIDI-enabled effects include a &quot;MIDI source&quot; pop-up menu and MIDI &quot;channel&quot; pop-up menu.  You configure the effect to receive MIDI by setting those options.  Just be aware to choose something different from what you have configured at the top of Rax's main window for the instrument's MIDI input (unless you do want the same MIDI data to be going to both the effect and the instrument).
-</p>
-
-<p class="desc">
-I am told that <a href="http://www.audiomulch.com/">AudioMulch</a>, <a href="http://www.fruityloops.com/">Fruity Loops</a>, <a href="http://buzzmachines.com/">Buzz</a>, and <a href="http://synapse-audio.com/">Orion</a> know how to send MIDI to plugins as well, but I've never tried those out and therefore can't tell you how to set up our plugins in those applications.
+We are told that <a href="http://www.audiomulch.com/">AudioMulch</a> and <a href="http://www.image-line.com/">FL Studio</a> know how to send MIDI to plugins as well, but we have never tried them and therefore can't tell you how to set up our plugins in those applications.
 </p>
 
 <br />
@@ -201,9 +196,13 @@ I am told that <a href="http://www.audiomulch.com/">AudioMulch</a>, <a href="htt
 
 <br />
 <p class="footer">
-Sophia Poirier and Tom Murphy 7
+Copyright &copy; 2009-2021  Sophia Poirier and Tom Murphy 7
 <br />
-<a href="http://destroyfx.org/">http://destroyfx.org/</a>
+<a href="http://destroyfx.org">http://destroyfx.org</a>
+</p>
+
+<p class="footer_fineprint">
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.3 or any later version published by the Free Software Foundation; with no Invariant Sections, no Front-Cover Texts and no Back-Cover Texts.  A copy of the license is included in the file <a href="fdl.html">fdl.html</a>.
 </p>
 
 

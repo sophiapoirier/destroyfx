@@ -1,16 +1,12 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE html 
-	PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<!doctype html>
 
 <head>
-<title>Destroy FX: Rez Synth</title>
-<link rel="Stylesheet" type="text/css" href="dfx-docs.css" />
+	<title>Destroy FX: Rez Synth</title>
+	<link rel="Stylesheet" type="text/css" href="dfx-docs.css" />
+	<meta name="AppleTitle" content="Rez Synth Help" />
 </head>
 
-<body style="background-color: #29603F">
+<body style="background-color: #00877E">
 
 <table class="mainbox">
 <tr><td>
@@ -20,7 +16,7 @@
 
 
 <p class="intro">
-Rez Synth allows you to "play" bandpass resonant filter banks that are applied to the audio input signal.  The the center frequency of the base filter in any bank is controlled by MIDI notes.  The rest of the filters in each bank (if any) have center frequencies that ascend from the base frequency according to linear or octaval increments.  You can have up to 3,000,000 filter banks active.
+Rez Synth allows you to "play" band-pass resonant filter banks that are applied to the input audio.  The center frequency of the base filter in any bank is controlled by MIDI notes.  The rest of the filters in each bank (if any) have center frequencies that ascend from the base frequency according to linear or octaval increments.
 </p>
 
 <br />
@@ -29,7 +25,25 @@ Rez Synth allows you to "play" bandpass resonant filter banks that are applied t
 <p class="label">bandwidth:</p>
 
 <p class="desc">
-The bandwidth parameter controls the bandwidth of each resonant filter, in Hz.
+The bandwidth parameter controls the bandwidth of each resonant filter, in Hertz or Q (depending on the "bandwidth mode").
+</p>
+
+<br />
+
+
+<p class="label">bandwidth mode:</p>
+
+<p class="desc">
+The bandwidth mode defines how the "bandwidth" parameter operates.  The options are "Hz" or "Q".  Hz (Hertz) defines absolute bandwidth and therefore perceptually the filters sound wider at lower frequencies and narrow at higher frequencies.  Q defines relative bandwidth and therefore perceptually the filters sound the same width across all frequencies.
+</p>
+
+<br />
+
+
+<p class="label">resonance algorithm:</p>
+
+<p class="desc">
+You can choose between a few different algorithms for the resonant filters:  second-order (with no zeroes), second-order with zeroes at &plusmn; the square root of the pole radius, and second-order with zeroes at &plusmn;1.  Those are the mathematical descriptions, which are of limited usefulness.  They each sound slightly different and some might sound better on certain audio material than other, and it's probably worth trying each.
 </p>
 
 <br />
@@ -47,11 +61,7 @@ This is how many bands there will be in each filter bank.  Each MIDI note that y
 <p class="label">band separation:</p>
 
 <p class="desc">
-This controls the separation width between each band in a filter bank.  The way that it operates depends one which band separation mode you are working in.  If you are working in "octaval" separation mode, then band separation controls the separation width in semitones.  If you are in "linear" mode, then it controls the separation as a multiplier of the base frequency.
-</p>
-
-<p class="desc">
-In addition to using the slider to adjust this parameter, you can also click on this parameter's value display and type a value in manually in case you need a precise value.
+This controls the separation width between each band in a filter bank.  The way that it operates depends in which band separation mode you are working.  If you are working in "octaval" separation mode, then band separation controls the separation width in semitones.  If you are in "linear" mode, then it controls the separation as a multiplier of the base frequency.
 </p>
 
 <br />
@@ -60,25 +70,43 @@ In addition to using the slider to adjust this parameter, you can also click on 
 <p class="label">separation mode:</p>
 
 <p class="desc">
-The band separation mode defines how the band sep. parameter operates.  Separation mode can be set to "linear" or "octaval" (logarithmic separation).  You can sort of think of it like this:  "linear" makes the other bands spread like harmonics (or inharmonics for fractional values) and "octaval" makes the other bands spread like notes in a chord.
+The band separation mode defines how the "band separation" parameter operates.  Separation mode can be set to "linear" (multiple) or "octaval" (logarithmic) spacing.  You can sort of think of it like this:  "linear" makes the other bands spread like harmonics (or inharmonics, in the case of fractional values) and "octaval" makes the other bands spread like notes in a chord.
 </p>
 
 <br />
 
 
-<p class="label">attack &amp; release:</p>
+<p class="label">mistakes:</p>
 
 <p class="desc">
-These adjust the attack and release durations for each note, in milliseconds.
+Because you are playing banks of resonant filters that ascend in center frequencies, it is possible to get filters in your bank that have center frequencies above what your digital audio sampling resolution can represent.  When this happens, frequencies "fold over" the maximum possible frequency and your filters start sounding rather odd.  I personally like that, so I have left the option up to the user whether or not to "allow" or "resist" these impossible bands.
 </p>
 
 <br />
 
 
-<p class="label">pitchbend range:</p>
+<p class="label">attack, decay, sustain, release:</p>
 
 <p class="desc">
-This lets you adjust your MIDI pitchbend wheel's range in semitones.
+These adjust the values for each note's ADSR-style amplitude envelopes.  Attack sets the duration for the initial volume fade-in period.  Decay sets the duration of the partial fade-down period that immediately follows the attack.  Sustain sets the portion of full note volume that is used for the note after the decay period.  Therefore a sustain value of 100% effectively means no decay, and a sustain value of 0% effectively stops a note after the decay, regardless of how long you hold the note.  Release sets the duration of the final fade-out period (beginning after the note play is released).
+</p>
+
+<br />
+
+
+<p class="label">envelope fades:</p>
+
+<p class="desc">
+This selects whether the attack, decay, and release segments of note envelopes are linear fades, exponential curves, or are achieved through a low-pass filter.  Exponential usually sounds smoother than linear, and low-pass can be the most natural sounding.  Exponential curves use a little more processing power than linear, and the low-pass filter uses even more.
+</p>
+
+<br />
+
+
+<p class="label">pitch bend range:</p>
+
+<p class="desc">
+This lets you adjust your MIDI pitch bend control's range in semitones.
 </p>
 
 <br />
@@ -96,81 +124,16 @@ This lets you adjust the key velocity response curve of your MIDI keyboard.
 <p class="label">velocity influence:</p>
 
 <p class="desc">
-This controls how much of an influence key velocity will have on the volume of each note.  A value of 0 means that key velocity is completely ignored and a value 1 means that key velocity is fully effective.
+This controls how much of an influence key velocity will have on the volume of each note.  A value of 0% means that key velocity is completely ignored and a value 100% means that key velocity tracks the full volume range.
 </p>
 
 <br />
 
 
-<p class="label">input gain scaling:</p>
+<p class="label">filter response scaling mode:</p>
 
 <p class="desc">
-This parameter allows you to scale the gain of the input signal in the resonant filter operations.  It can be scaled according to the RMS of the resonant feedback or the peak of the resonant feedback, or you can disable scaling.
-</p>
-
-<br />
-
-
-<p class="label">filtered output gain:</p>
-
-<p class="desc">
-This allows you to control the level of the output signal after all other processing has taken place.
-</p>
-
-<br />
-
-
-<p class="label">between gain:</p>
-
-<p class="desc">
-This control the volume of the unprocessed audio input when no notes are sounding.
-</p>
-
-<br />
-
-
-<p class="label">dry/wet mix:</p>
-
-<p class="desc">
-This lets you adjust the balance of the input audio (unprocessed) and the output audio (processed).  100% is all processed.
-</p>
-
-<br />
-
-
-<p class="label">dry/wet mix mode:</p>
-
-<p class="desc">
-This allows you to adjust the way that the dry/wet mix combines the dry and wet signals.  You can choose linear mixing or equal power mixing.
-</p>
-
-<br />
-
-
-<p class="label">legato:</p>
-
-<p class="desc">
-Turning this on puts Rez Synth into legato mode (i.e. no polyphony, no space between notes, and no note envelopes).
-<br />
-Note that, while attack and release settings are ineffectual in legato mode, the fade mode is still relevant.  There are very short fades during each note transition in legato mode.  They are too short for the fade mode to make any audible difference, so you are best off setting the fade mode to the mode that is most efficient with your particular CPU.
-</p>
-
-<br />
-
-
-<p class="label">fades:</p>
-
-<p class="desc">
-Calculating the fades for attack and release takes a little extra processing power.  With this parameter, you can choose between "nicer" and "cheap" fades.  On my G3, the difference between cheap fades and nicer fades is approximately 1% extra CPU vs. 2%, but for some reason on my Pentium II, cheap fades use about 2% extra CPU during attacks and releases and nicer fades use about 25% extra.  The nicer fades, of course, sound smoother, but if you have a PC and are only using really short attack and release times or you need to conserve processing power, you probably ought to use cheap fades.
-</p>
-
-<br />
-
-
-<p class="label">mistakes:</p>
-
-<p class="desc">
-Because you are playing banks of resonant filters that ascend in center frequencies, it is possible to get filters in your bank that have center frequencies above what your digital sampling resolution can handle.  When this happens, frequencies "foldover" the maximum possible frequency and your filters start sounding rather odd.  I personally like that, so I have left the option up to the user whether or not to "allow" or "resist" these impossible bands.
+This parameter allows you to scale the response factor of the resonant filters.  It can be scaled to bring the RMS of the resonant filter response to unity volume level, or to bring the peak of the resonant filter response to unity, or you can disable scaling.
 </p>
 
 <br />
@@ -179,7 +142,52 @@ Because you are playing banks of resonant filters that ascend in center frequenc
 <p class="label">careful:</p>
 
 <p class="desc">
-The volume of the output of these resonant bandpass filters is totally erratic.  With careful mode enabled, Rez Synth tries to keep a handle on this and keep your output within a narrow range.  Whether you use this mode or not, I still recommend following Rez Synth with a limiter, and perhaps a compressor before that, too.
+The volume of the output of these resonant band-pass filters is pretty erratic (sometimes even with scaling).  With careful mode enabled, Rez Synth tries to keep a handle on this and keep your output within a narrow range.  Whether you use this mode or not, you may still want to follow Rez Synth with a dynamic limiter, and perhaps also a compressor before that.
+</p>
+
+<br />
+
+
+<p class="label">filtered output gain:</p>
+
+<p class="desc">
+This allows you to control the level of the filtered output audio after all of its processing has taken place.
+</p>
+
+<br />
+
+
+<p class="label">between gain:</p>
+
+<p class="desc">
+This controls the volume of the unprocessed input audio when no notes are sounding.
+</p>
+
+<br />
+
+
+<p class="label">dry/wet mix:</p>
+
+<p class="desc">
+This lets you adjust the balance of the (unprocessed) input audio and the (processed) output audio.  100% is all processed.
+</p>
+
+<br />
+
+
+<p class="label">dry/wet mix mode:</p>
+
+<p class="desc">
+This allows you to adjust the way that the dry/wet mix combines the dry and wet audio.  You can choose linear mixing or equal power mixing.
+</p>
+
+<br />
+
+
+<p class="label">legato:</p>
+
+<p class="desc">
+Turning this on puts Rez Synth into legato mode (i.e. no polyphony and no gap between notes).  The first note played after enabling legato mode will remain in the sustain phase of the note's envelope, even if you release the note, and subsequent notes will alter the pitch but still only sound in the sustain phase.  The note envelope's release finally occurs upon exiting legato mode.
 </p>
 
 <br />
@@ -187,7 +195,7 @@ The volume of the output of these resonant bandpass filters is totally erratic. 
 
 <br />
 <p class="desc">
-<i>parameter adjustment tricks:</i> &nbsp; You can make fine adjustments by holding the shift key while adjusting a parameter with your mouse.  You can also reset a parameter to its default value by holding the command key when clicking on it.
+<i>parameter adjustment tricks:</i> &nbsp; You can make fine adjustments by holding the shift key while adjusting a parameter with your mouse.  You can also reset a parameter to its default value by holding the command&nbsp;&#8984; key (control on Windows) when clicking on it.
 </p>
 <br />
 
@@ -197,17 +205,23 @@ The volume of the output of these resonant bandpass filters is totally erratic. 
 by Sophia Poirier
 <br />
 January - February 2001
+<br />
+graphics by Tom Murphy 7
 <br /><br />
 Destroy FX #8
 <br />
-<a href="http://destroyfx.org/">http://destroyfx.org/</a>
+<a href="http://destroyfx.org">http://destroyfx.org</a>
 <br /><br />
-Rez Synth is Copyright &copy; 2001-2007 Sophia Poirier
+Rez Synth is Copyright &copy; 2001-2021 Sophia Poirier and Tom Murphy 7
 <br />
 <br />
 This software comes with absolutely no warranty, express or implied.  
 <br />
-Use at your own risk.  See the file <a href="COPYING.txt">COPYING</a> for full license terms.
+Use at your own risk.  See the file <a href="COPYING.html">COPYING</a> for full license terms.
+</p>
+
+<p class="footer_fineprint">
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.3 or any later version published by the Free Software Foundation; with no Invariant Sections, no Front-Cover Texts and no Back-Cover Texts.  A copy of the license is included in the file <a href="fdl.html">fdl.html</a>.
 </p>
 
 
