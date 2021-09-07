@@ -1,13 +1,9 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE html 
-	PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<!doctype html>
 
 <head>
-<title>Destroy FX: Scrubby</title>
-<link rel="Stylesheet" type="text/css" href="dfx-docs.css" />
+	<title>Destroy FX: Scrubby</title>
+	<link rel="Stylesheet" type="text/css" href="dfx-docs.css" />
+	<meta name="AppleTitle" content="Scrubby Help" />
 </head>
 
 <body style="background-color: #7B682C">
@@ -20,11 +16,19 @@
 
 
 <p class="intro">
-Scrubby remembers the last few seconds of your audio signal and plays it back by zipping around to random points within it.  That memory of sound is called a delay buffer.  You define a range that Scrubby can look back through and a rate at which Scrubby will seek new target destinations and then, at the beginning of each seeking cycle, a new target is chosen somewhere within the seek range of the delay buffer.  Then Scrubby travels over to that target position, speeding up or slowing down playback as necessary, moving backwards or forwards.
+Scrubby remembers the last few seconds of your audio signal and plays it back by zipping around to random points within it.  That memory of sound is called a delay buffer.  You define a range of time through which Scrubby can look back and a rate at which Scrubby will seek new target destinations.  Then, at the beginning of each seeking cycle, a new target is chosen somewhere within the seek range of the delay buffer.  Then Scrubby travels to that target position, speeding up or slowing down playback as necessary, moving backwards or forwards.
 </p>
 
 <p class="intro">
-The crux of Scrubby's behaviour lies in answering 3 questions:  how often should Scrubby look for new targets, within what range of time can Scrubby look for the new targets, and how quickly should it reach those targets.  You answer those questions by adjusting the seek rate, seek range, and seek duration parameters...
+The crux of Scrubby's behaviour lies in answering three questions:  
+<br />
+&bull; How often should Scrubby look for new targets?
+<br />
+&bull; Within what range of time can Scrubby look for the new targets?
+<br />
+&bull; How quickly should it reach those targets?
+<br />
+You answer these questions by adjusting the seek rate, seek range, and seek duration parameters...
 </p>
 
 <br />
@@ -33,25 +37,15 @@ The crux of Scrubby's behaviour lies in answering 3 questions:  how often should
 <p class="label">seek rate:</p>
 
 <p class="desc">
-The seek rate controls how often Scrubby looks for a new target to reach in its delay buffer.  This can be controlled in terms of Hz (cycles per second) or you can turn <b>tempo sync</b> on and then control the rate in terms of how many times per beat you want a new seek to occur (the tempo sync button is at the middle top of the window and, for your convenience, also located immediately to the right of the seek rate slider).  Higher seek rates generally mean that Scrubby's playback speeds will be faster because there will be less time to reach the target (since the next seek is coming up soon), so Scrubby needs to hurry up if the target is not nearby.
+The seek rate controls how often Scrubby heads towards a new target in its delay buffer.  This can be controlled in terms of Hz (cycles per second) or you can turn on <b>tempo sync</b> and then control the rate in terms of how many times per beat you want a new seek to occur (the tempo sync button is at the middle top of the window and, for your convenience, also located immediately to the right of the seek rate slider).  Higher seek rates generally mean that Scrubby's playback speeds will be faster because there will be less time to reach the target (since the next seek is coming up soon), so Scrubby needs to hurry up if the target is not nearby.
 </p>
 
 <p class="desc">
-If your host software supports sending tempo information to effect plugins, then you can move the <b>tempo</b> parameter all the way to the left and it will say "auto," meaning that you are using the host's tempo.  Otherwise, adjust the tempo to be whatever you want it to be (if you want to tempo sync the seek rate).  You can also click on the numerical value display and type in the exact tempo that you desire.
+If your host software supports sending tempo information to effect plugins, then you can enable <b>sync to host tempo</b> to follow the host's tempo and beat position.  Otherwise, the <b>tempo</b> parameter dictates the tempo to be used.
 </p>
 
-<br />
-
-
-<p class="label">seek duration:</p>
-
 <p class="desc">
-The seek duration is a portion of the seek cycle length.  If seek duration is 100%, then the target destinations are reached at the end of each cycle.  If it's less than 100%, then the targets are reached early and the rest of remaining portion of each cycle is silent.  This means that you will hear gaps in the sound.
-</p>
-
-<br />
-<p class="desc">
-Both seek rate and seek duration are range parameters.  This means that you can define a range of values between which a value will be randomly chosen.  New random values are calculated at each seek cycle.  If there is no range defined (i.e. the upper and lower handles of the slider are touching), then you get exactly that value, with no randomization.  See the <i>parameter adjustment tricks</i> section below for some handy range slider tips.
+Both seek rate and seek duration are range parameters.  This means that you can define a range of values between which an effective value will be randomly chosen.  New random values are calculated at each seek cycle.  If there is no range defined (i.e. the upper and lower handles of the slider are touching), then exactly that value is used, with no randomization.  See the <i>parameter adjustment tricks</i> section below for some handy range slider tips.
 </p>
 
 <br />
@@ -64,7 +58,20 @@ The seek range is a period of time from now into the recent past.  This is the r
 </p>
 
 <p class="desc">
-Greater seek ranges also typically mean that you will have a longer period of silence when you first start up Scrubby.  This is because it will take a little while before the delay buffer starts filling up and Scrubby finally reaches some part of the buffer that contains sound.  Also, Scrubby will usually kind of trail behind the current point in time in the original sound signal, moreso when the seek range is larger.  You can compensate for this delay by adjusting the <b>predelay</b> parameter.  The actual "delay" that Scrubby produces is not constant or predictable, so that's why delay compensation is can't be done very scientifically.  The delay will always be <i>at most</i> equal to the seek range, so the predelay parameter is interpretted as a portion of the seek range.  A predelay of 100% equals the seek range, and anything less than that will be a shorter predelay.  Not all host software supports predelaying audio signals for effect plugins.  Also, you might have to stop and restart audio playback, or with some software bypass the effect and then turn it back on, in order for the predelay setting to be acknowledged.
+Greater seek ranges also typically mean that you will have a longer period of silence when you first start up Scrubby.  This is because it will take a little while before the delay buffer starts filling up with audio and Scrubby finally travels into some portion of the buffer that contains sound.  Also, Scrubby will tend to trail behind the current point in time in the audio input, moreso when the seek range is larger.  You can compensate for this delay by adjusting the <b>predelay</b> parameter.  The actual "delay" that Scrubby produces is not constant or predictable, so that's why delay compensation cannot be achieved very scientifically.  The delay will always be <i>at most</i> equal to the seek range, so the predelay parameter is interpretted as a portion of the seek range.  A predelay of 100% equals the seek range, and anything less than that will be a shorter predelay.  Predelay is essentially a request made by the plugin of the host, but not all host software can provide this time compensation of audio for effect plugins.  Also, you might have to stop and restart audio playback, or with some software bypass the effect and then turn it back on, in order for the predelay setting to go into effect.
+</p>
+
+<br />
+
+
+<p class="label">seek duration:</p>
+
+<p class="desc">
+The seek duration is a portion of the seek cycle length.  If seek duration is 100%, then the target destination is reached at the end of each cycle.  If it is less than 100%, then the target is reached early and the remaining portion of each cycle is silent.  This means that you will hear gaps in the sound.
+</p>
+
+<p class="desc">
+Seek duration, like seek rate, is a range parameter, which is described more above in the seek rate section.
 </p>
 
 <br />
@@ -77,7 +84,7 @@ While zipping around from one target destination to the next, Scrubby needs to s
 </p>
 
 <p class="desc">
-First, however, you need to understand that Scrubby has 2 <b>speed modes</b>:  robot mode and DJ mode.  In robot mode, the playback speed for each target seek remains constant during that seek, so speed changes are abrupt and happen immediately each time a new target is chosen.  In DJ mode, the playback speed slows down or speeds up gradually in order to reach each target within in the seek time period.  This gives you smooth acceleration and deceleration instead of sudden speed changes.
+First, however, you need to understand that Scrubby has two <b>speed modes</b>:  robot mode and DJ mode.  In robot mode, the playback speed for each target seek remains constant during that seek cycle, so each speed change is abrupt and occurs immediately each time a new target is chosen.  In DJ mode, the playback speed gradually slows down or speeds up in order to reach each target within in the seek time period.  This gives you smooth acceleration and deceleration rather than sudden speed changes.
 </p>
 
 <p class="desc">
@@ -85,11 +92,11 @@ Since DJ mode is kind of like constant portamento (the playback transposition is
 </p>
 
 <p class="desc">
-The first thing to do if you want to impose pitch constraint is push the pitch constraint button in the upper right corner so that it's set to "notes" instead of "free."  Now the changes in playback speed will be forced to be perfect semitone shifts up or down from the original playback speed.
+The first thing to do if you want to impose pitch constraint is push the <b>pitch constraint</b> button in the upper right corner so that it's set to "notes" instead of "free."  Now the changes in playback speed will be forced to be perfect semitone shifts up or down from the original playback speed.
 </p>
 
 <p class="desc">
-You can further control Scrubby by allowing only certain semitone transposition intervals within each octave.  You choose which intervals you want to allow by pressing keys on the keyboard picture or by playing <b>notes</b> on a MIDI instrument.  The first key (what you might call C) represents the original speed, or octave transposition speeds, and the rest go up from there.  The slide buttons to the right will shift your note selections up or down one semitone at a time.  There are also a few preset buttons to the right.  If you don't have any notes selected, you get silence.
+You can further control Scrubby by allowing only certain semitone transposition intervals within each octave.  You choose which intervals you want to allow by pressing keys on the <b>pitch control</b> keyboard picture or by playing <b>notes</b> on a MIDI instrument.  The first key (what is represented by C) corresponds to the original speed, or octave transposition speeds, and the rest go up from there.  The slide buttons to the right will shift your note selections up or down one semitone at a time.  There are also a few preset buttons to the right.  If you don't have any notes selected, you get silence.
 </p>
 
 <p class="desc">
@@ -97,7 +104,7 @@ Choosing the notes by playing them on a MIDI instrument is basically the same as
 </p>
 
 <p class="desc">
-You can also constrain the range of speed transposition possibilities by using the <b>octaves</b> slider.  You can set a minimum number of octaves transposition down and set a maximimum number of octaves up that you want to allow.  Note that, unlike the other pitch constraint parameters, the octaves limiters are functional in all contexts (regardless of whether or not pitch constraint is enabled, and also irregardless of the speed mode).
+You can also constrain the range of speed transposition possibilities by using the <b>octaves</b> slider.  You can set a minimum number of octaves transposition down and set a maximimum number of octaves up that you want to allow.  Note that, unlike the other pitch constraint parameters, the octaves limiters are functional in all contexts (regardless of whether or not pitch constraint is enabled, and also regardless of the speed mode).
 </p>
 
 <br />
@@ -106,21 +113,29 @@ You can also constrain the range of speed transposition possibilities by using t
 <p class="label"><i>other stuff:</i></p>
 
 <p class="desc">
-<b>freeze:</b> &nbsp; If you turn freeze on, the incoming audio signal stops being recorded into the delay buffer.  Basically this means that you are stuck with whatever sound you have already captured in the buffer.  It's like you are working with a certain "sample," zipping around within it, until you unfreeze.
+<b>freeze:</b> &nbsp; If you enable freeze mode, the incoming audio stops being recorded into the delay buffer.  Basically this means that you are stuck with whatever sound you have already captured in the buffer.  It's like you are working with a discrete "sample," zipping around within it, until you unfreeze.
 </p>
 
 <p class="desc">
-<b>channels mode:</b> &nbsp; Channels split mode means that separate random target locations are calculated for the left and right channels.  Also, the seek rates and seek durations can be different in either channel if randomized parameter ranges are being used.  In channels link mode, each channel always goes after the same target in the same way.
+<b>channels mode:</b> &nbsp; Channels split mode means that separate random target locations are calculated for each audio channel.  Also, the seek rates and seek durations can be different in each channel if randomized parameter ranges are being used.  In channels link mode, each channel always moves towards the same target in the same manner.
 <br />
 <i>note:</i>  The channels mode parameter is only functional when Scrubby is processing more than one channel of audio.  When Scrubby is processing mono, the parameter is ineffectual.
 </p>
 
+<p class="desc">
+<b>dry level:</b> &nbsp; the mix level of the unprocessed input audio
+</p>
+
+<p class="desc">
+<b>wet level:</b> &nbsp; the mix level of the processed audio
+</p>
+
 <br />
 
 
 <br />
 <p class="desc">
-<i>parameter adjustment tricks:</i> &nbsp; You can make fine adjustments by holding the shift key while adjusting a parameter with your mouse.  You can also reset a parameter to its default value by holding the command key when clicking on it.  You can move both points of a range slider together by holding the control key.  You can move both points of a range slider, preserving their relationship, by holding the option key.  You can make the two points of a range slider converge or diverge by holding the option and control keys while dragging up or down.
+<i>parameter adjustment tricks:</i> &nbsp; You can make fine adjustments by holding the shift key while adjusting a parameter with your mouse.  You can also reset a parameter to its default value by holding the command&nbsp;&#8984; key (control on Windows) when clicking on it.  You can move both points of a range slider together by holding the control key.  You can move both points of a range slider, preserving their relationship, by holding the option key (alt on Windows), or clicking and dragging from a point between the two handles.  You can make the two points of a range slider converge or diverge by holding the option (alt) and control keys while dragging up or down.
 </p>
 <br />
 
@@ -135,14 +150,18 @@ graphics by Tom Murphy 7
 <br /><br />
 Destroy FX #26
 <br />
-<a href="http://destroyfx.org/">http://destroyfx.org/</a>
+<a href="http://destroyfx.org">http://destroyfx.org</a>
 <br /><br />
-Scrubby is Copyright &copy; 2002-2007 Sophia Poirier and Tom Murphy 7
+Scrubby is Copyright &copy; 2002-2021 Sophia Poirier and Tom Murphy 7
 <br />
 <br />
 This software comes with absolutely no warranty, express or implied.  
 <br />
-Use at your own risk.  See the file <a href="COPYING.txt">COPYING</a> for full license terms.
+Use at your own risk.  See the file <a href="COPYING.html">COPYING</a> for full license terms.
+</p>
+
+<p class="footer_fineprint">
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.3 or any later version published by the Free Software Foundation; with no Invariant Sections, no Front-Cover Texts and no Back-Cover Texts.  A copy of the license is included in the file <a href="fdl.html">fdl.html</a>.
 </p>
 
 

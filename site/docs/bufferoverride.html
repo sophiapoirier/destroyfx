@@ -1,13 +1,9 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE html 
-	PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<!doctype html>
 
 <head>
 	<title>Destroy FX: Buffer Override</title>
 	<link rel="Stylesheet" type="text/css" href="dfx-docs.css" />
+	<meta name="AppleTitle" content="Buffer Override Help" />
 </head>
 
 <body style="background-color: #8B4561">
@@ -20,29 +16,37 @@
 
 
 <p class="intro">
-With Buffer Override, you can override your host application's audio processing buffer size and then (unsuccessfully) override that new buffer size to be a smaller buffer size.  You can think of these as the "super-buffer" and then its "sub-buffer."  Listen to what it does and you'll understand more what I'm talking about and what the point of it is.
+With Buffer Override, you can overcome your host application's audio processing buffer size and then (unsuccessfully) override that new buffer size to be a smaller buffer size.  You can think of these as the "super-buffer" and then its "sub-buffer."  Listen to what it does and you'll understand more what I'm talking about and what the point of it is.
 </p>
 
 <p class="intro">
-Additionally, Buffer Override's buffer divisor value can be optionally controlled by MIDI notes and pitchbend messages (optionally because the value can still also be controlled by the parameter slider; and pitchbend messages are always interpreted relative to whatever the current state of things is, regardless of whether you are playing notes or not).
+Additionally, Buffer Override's buffer divisor value can be optionally controlled by MIDI notes and pitch bend messages (optionally because the value can still also be controlled by the parameter slider; and pitch bend messages are always interpreted relative to whatever the current state of things is, regardless of whether you are playing notes or not).
 </p>
 
 <br />
 
 <p class="intro">
-Buffer Override's controls are organized into 5 sections.
+Buffer Override's controls are organized into sections:
 </p>
 
 <p class="intro">
-The center is the most important part.  That is where the big black box is, which is the crux of Buffer Override.  That box is a 2-parameter "XY" control.  Left-right movements control the buffer divisor parameter.  Up-down movements control the forced buffer size parameter.  The tempo sync button above the box corresponds to the forced buffer size.
+The center is the most important part.  That is where the big box is, which is the crux of Buffer Override.  That box is a two-parameter "XY" control.  Left-right movements control the <b>buffer divisor</b> parameter.  Up-down movements control the <b>forced buffer size</b> parameter.  The <b>buffer tempo sync button</b> to the right of the box toggles the behavior of <b>forced buffer size</b>.
 </p>
 
 <p class="intro">
-The lower left corner has controls for an LFO that can modulate the buffer divisor.  The lower right corner has controls for an LFO that can modulate the forced buffer size.
+The lower left corner has controls for an LFO that can modulate the <b>buffer divisor</b>.  The lower right corner has controls for an LFO that can modulate the <b>forced buffer size</b>.
 </p>
 
 <p class="intro">
-The upper left corner has stuff relating to MIDI.  The upper right corner has mix-related stuff.
+The lower middle section has stuff relating to MIDI.
+</p>
+
+<p class="intro">
+The upper right corner has mix-related stuff.
+</p>
+
+<p class="intro">
+The upper left corner provides a visualization of the effect.
 </p>
 
 <br />
@@ -51,11 +55,11 @@ The upper left corner has stuff relating to MIDI.  The upper right corner has mi
 <p class="label">forced buffer size:</p>
 
 <p class="desc">
-This is the size of Buffer Override's own buffer.  It is thrust upon the host with little regard for the real audio buffer size.  You can control it by dragging up and down in the XY box or by clicking and dragging up and down on its numerical value display (which is located underneath the XY box).
+This is the size of Buffer Override's own buffer.  It is thrust upon the host with little regard for the real audio buffer size.  You can control it by dragging up and down in the XY box.
 </p>
 
 <p class="desc">
-If buffer tempo sync is turned on, then the forced buffer size is adapted to the tempo of your song.  The values are in buffers per beat (note:  I mean per single beat, not per measure, so this is time signature independent).  Otherwise the forced buffer size is in milliseconds.
+If <b>buffer tempo sync</b> is turned on, then the <b>forced buffer size</b> is adapted to the tempo of your song.  The values are in buffers per beat (note:  I mean per single beat, not per measure, so this is time signature independent).  Otherwise the <b>forced buffer size</b> is in milliseconds.
 </p>
 
 <br />
@@ -64,7 +68,7 @@ If buffer tempo sync is turned on, then the forced buffer size is adapted to the
 <p class="label">buffer tempo sync:</p>
 
 <p class="desc">
-This switches between "free" and tempo-synced forced buffer size control.  This is the tempo sync button that is directly above the XY box.
+This switches between "free" and tempo-synced <b>forced buffer size</b> control.
 </p>
 
 <br />
@@ -73,7 +77,7 @@ This switches between "free" and tempo-synced forced buffer size control.  This 
 <p class="label">buffer divisor:</p>
 
 <p class="desc">
-This number is divided into the forced buffer size, resulting in the mini-buffer size.  It determines how many times each forced buffer "skips."  You can control it by dragging left and right in the XY box or by clicking and dragging up and down on its numerical value display (which is located to the left of the XY box).
+This number is divided into the <b>forced buffer size</b>, resulting in the mini-buffer size.  It determines how many times each forced buffer repeats.  You can control it by dragging left and right in the XY box.
 </p>
 
 <br />
@@ -82,11 +86,11 @@ This number is divided into the forced buffer size, resulting in the mini-buffer
 <p class="label">buffer interrupt:</p>
 
 <p class="desc">
-When buffer interrupt is turned on, you can adjust the buffer divisor while in the midst of a forced buffer and the changes will kick in immediately.  If buffer interrupt is turned off, then changes to the buffer divisor only affect things after the current forced buffer has finished, meaning that the mini-buffer size is "stuck" during each forced buffer.  This is how Buffer Override version 1.x worked.
+When <b>buffer interrupt</b> is turned on, you can adjust the <b>buffer divisor</b> while in the midst of a forced buffer and the changes will kick in immediately.  If <b>buffer interrupt</b> is turned off, then changes to the buffer divisor only affect things after the current forced buffer has finished, meaning that the mini-buffer size is "stuck" during each forced buffer.  This is how Buffer Override version 1.x worked.
 </p>
 
 <p class="desc">
-If you are using an LFO to modulate the buffer divisor, you probably won't be very happy if you have buffer interrupt turned off.
+If you are using an LFO to modulate the <b>buffer divisor</b>, you probably won't be very pleased if you have <b>buffer interrupt</b> turned off.
 </p>
 
 <br />
@@ -95,15 +99,15 @@ If you are using an LFO to modulate the buffer divisor, you probably won't be ve
 <p class="label">LFOs:</p>
 
 <p class="desc">
-Both LFOs allow you to choose the modulating waveform shape.  The options are sine, triangle, square, sawtooth, reverse sawtooth, thorn (sort of like an exponential triangle waveform), random (chunky style), and random interpolating (smooth style).
+Both LFOs allow you to choose the modulating waveform <b>shape</b>.  The options are sine, triangle, square, sawtooth, reverse sawtooth, thorn (sort of like an exponential triangle waveform), random sample &amp; hold (chunky style), and random interpolating (smooth style).
 </p>
 
 <p class="desc">
-The LFO speeds are controlled by the rate sliders below the shape buttons.  They can be synced to tempo using the tempo sync buttons for each LFO.
+The LFO speeds are controlled by the <b>rate</b> sliders below the <b>shape</b> buttons.  They can be synced to tempo using the <b>tempo sync</b> buttons for each LFO.
 </p>
 
 <p class="desc">
-The amount of LFO modulation can be controlled by the LFO depth sliders.  At 0%, the LFOs are inactive.
+The amount of LFO modulation can be controlled by the LFO <b>depth</b> sliders.  At 0%, the LFOs are inactive.
 </p>
 
 <br />
@@ -112,11 +116,20 @@ The amount of LFO modulation can be controlled by the LFO depth sliders.  At 0%,
 <p class="label">tempo:</p>
 
 <p class="desc">
-The tempo parameter is used to tell Buffer Override what the tempo of your song is.  This parameter defaults to "auto" which means that Buffer Override tries to get the tempo from the host application.  If you move the tempo slider to the right, you exit "auto" mode and can set the tempo manually.  You can also click on the numerical value display and type your tempo in manually.
+This parameter is used to tell Buffer Override what the tempo of your song is.
+</p>
+
+<br />
+
+
+<p class="label">sync to host tempo:</p>
+
+<p class="desc">
+When this parameter is turned on, Buffer Override tries to get the tempo and beat position from the host application (and ignores the value manually selected by the <b>tempo</b> parameter).
 </p>
 
 <p class="desc">
-"Auto" tempo only works if the host application supports sending tempo information to plugins.  If the application can't do this, then the "auto" option will not appear in Buffer Override.
+"Host tempo" only works if the host application supports sending tempo information to plugins.  If tempo is unavailable from the host, then Buffer Override falls back to using the value set with the <b>tempo</b> parameter.
 </p>
 
 <br />
@@ -140,10 +153,10 @@ This lets you adjust the balance of the input audio (unprocessed) and the output
 <br />
 
 
-<p class="label">pitchbend range:</p>
+<p class="label">pitch bend range:</p>
 
 <p class="desc">
-This lets you adjust your MIDI pitchbend wheel's range in semitones.
+This lets you adjust MIDI pitch bend's range in semitones.
 </p>
 
 <br />
@@ -152,11 +165,11 @@ This lets you adjust your MIDI pitchbend wheel's range in semitones.
 <p class="label">MIDI mode:</p>
 
 <p class="desc">
-Buffer Override has two modes for MIDI note control:  nudge and trigger.  In nudge mode, Buffer Override only pays attention to note-on messages.  Whenever you play a note, the divisor jumps to the proper value that results in the frequency of the note.  When you release the note, nothing changes.
+Buffer Override has two modes for MIDI note control:  nudge and trigger.  In nudge mode, Buffer Override only pays attention to note-on messages.  Whenever you play a note, the <b>buffer divisor</b> jumps to the value that results in the mini-buffer frequency matching that of the note.  When you release the note, nothing changes.
 </p>
 
 <p class="desc">
-In trigger mode, Buffer Override pays attention to note-off as well as note-on messages.  When you stop playing notes, the divisor parameter drops down to 1, which basically turns the effect off.  Buffer Override also stops responding to pitchbend messages when no notes are being played in trigger mode.  You can still change the divisor by adjusting the slider with your mouse, host automation, etc.
+In trigger mode, Buffer Override pays attention to note-off as well as note-on messages.  When you stop playing notes, the <b>buffer divisor</b> parameter drops down to 1, which basically turns the effect off.  Buffer Override also stops responding to pitch bend messages in trigger mode when no notes are being played.  You can still change the <b>buffer divisor</b> by adjusting the slider with your mouse, host automation, etc.
 </p>
 
 <br />
@@ -164,7 +177,7 @@ In trigger mode, Buffer Override pays attention to note-off as well as note-on m
 
 <br />
 <p class="desc">
-<i>parameter adjustment tricks:</i> &nbsp; You can lock the forced buffer size value in the XY box by holding the control key and you can lock the buffer divisor value by holding the option key.  You can make fine adjustments by holding the shift key while adjusting a parameter with your mouse.  You can also reset a parameter to its default value by holding the command key when clicking on it.
+<i>parameter adjustment tricks:</i> &nbsp; You can lock the <b>forced buffer size</b> value in the XY box by holding the control key and you can lock the <b>buffer divisor</b> value by holding the option key (alt on Windows).  You can make fine adjustments by holding the shift key while adjusting a parameter with your mouse.  You can also reset a parameter to its default value by holding the command&nbsp;&#8984; key (control on Windows) when clicking on it.
 </p>
 <br />
 
@@ -175,18 +188,22 @@ by Sophia Poirier
 <br />
 March 2001, January - May 2002
 <br />
-graphics by Justin Maxwell ~ <a href="mailto:soc@code404.com">soc@code404.com</a> ~ <a href="http://code404.com/">http://code404.com/</a>
+graphics by Tom Murphy 7
 <br /><br />
 Destroy FX #14
 <br />
-<a href="http://destroyfx.org/">http://destroyfx.org/</a>
+<a href="http://destroyfx.org">http://destroyfx.org</a>
 <br /><br />
-Buffer Override is Copyright &copy; 2001-2007 Sophia Poirier
+Buffer Override is Copyright &copy; 2001-2021 Sophia Poirier and Tom Murphy 7
 <br />
 <br />
 This software comes with absolutely no warranty, express or implied.  
 <br />
-Use at your own risk.  See the file <a href="COPYING.txt">COPYING</a> for full license terms.
+Use at your own risk.  See the file <a href="COPYING.html">COPYING</a> for full license terms.
+</p>
+
+<p class="footer_fineprint">
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.3 or any later version published by the Free Software Foundation; with no Invariant Sections, no Front-Cover Texts and no Back-Cover Texts.  A copy of the license is included in the file <a href="fdl.html">fdl.html</a>.
 </p>
 
 
