@@ -126,8 +126,8 @@ void BufferOverride::reset()
 	// this is a handy value to have during LFO calculations and wasteful to recalculate at every sample
 	mOneDivSR = 1.0f / getsamplerate_f();
 
-	mDivisorLFOValue_viewCache.store(1.f, std::memory_order_relaxed);
-	mBufferLFOValue_viewCache.store(1.f, std::memory_order_relaxed);
+	mDivisorLFOValue_viewCache.store(kLFOValueDefault, std::memory_order_relaxed);
+	mBufferLFOValue_viewCache.store(kLFOValueDefault, std::memory_order_relaxed);
 	updateViewDataCache();
 }
 
@@ -428,9 +428,9 @@ void BufferOverride::updateViewDataCache()
 	viewData.forced_buffer_sec *= mBufferLFOValue_viewCache.load(std::memory_order_relaxed);
 
 	// just the size of the first repetition with no complexity about the boundary case at the end
-	if (auto divisor = static_cast<float>(getparameter_f(kDivisor)); divisor >= 2.f)
+	if (auto divisor = static_cast<float>(getparameter_f(kDivisor)); divisor >= kActiveDivisorMinimum)
 	{
-		divisor = std::max(divisor * mDivisorLFOValue_viewCache.load(std::memory_order_relaxed), 2.f);
+		divisor = std::max(divisor * mDivisorLFOValue_viewCache.load(std::memory_order_relaxed), kActiveDivisorMinimum);
 		viewData.minibuffer_sec = viewData.forced_buffer_sec / divisor;
 	}
 	else

@@ -51,9 +51,12 @@ public:
 
 private:
 	static constexpr long kNumPresets = 16;
-	// We need this stuff to get some maximum buffer size and allocate for that.
+	// the lowest parameter value before it behaves as one (no division)
+	static constexpr float kActiveDivisorMinimum = 2.f;
+	// We need this to get some maximum buffer size and allocate for that.
 	// This is 42 bpm, which should be sufficient.
 	static constexpr double kMinAllowableBPS = 0.7;
+	static constexpr float kLFOValueDefault = 1.f;
 
 	void updateBuffer(unsigned long samplePos);
 
@@ -113,7 +116,7 @@ private:
 	static_assert(decltype(mViewDataCacheTimestamp)::is_always_lock_free);
 	std::atomic<double> mHostTempoBPS_viewCache {0.};
 	static_assert(decltype(mHostTempoBPS_viewCache)::is_always_lock_free);
-	std::atomic<float> mDivisorLFOValue_viewCache {1.f}, mBufferLFOValue_viewCache {1.f};
+	std::atomic<float> mDivisorLFOValue_viewCache {kLFOValueDefault}, mBufferLFOValue_viewCache {kLFOValueDefault};
 	static_assert(decltype(mDivisorLFOValue_viewCache)::is_always_lock_free);
 	static_assert(decltype(mBufferLFOValue_viewCache)::is_always_lock_free);
 };

@@ -113,16 +113,12 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 
 	//-----------------------CALCULATE THE DIVISOR-------------------------
 	auto currentBufferDivisor = mDivisor;
-	// apply the divisor LFO to the divisor value if there's an "active" divisor (i.e. 2 or greater)
-	if (currentBufferDivisor >= 2.0f)
+	// apply the divisor LFO to the divisor value if there's an "active" divisor
+	if (currentBufferDivisor >= kActiveDivisorMinimum)
 	{
-		currentBufferDivisor *= divisorLFOValue;
-		// now it's possible that the LFO could make the divisor less than 2,
-		// which will essentially turn the effect off, so we stop the modulation at 2
-		if (currentBufferDivisor < 2.0f)
-		{
-			currentBufferDivisor = 2.0f;
-		}
+		// now it's possible that the LFO could make the divisor less than the active minimum,
+		// which will essentially turn the effect off, so we limit the modulation there
+		currentBufferDivisor = std::max(currentBufferDivisor * divisorLFOValue, kActiveDivisorMinimum);
 	}
 
 	//-----------------------CALCULATE THE MINIBUFFER SIZE-------------------------
@@ -163,8 +159,8 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 				mBufferLFO.syncToTheBeat(samplesToBar);
 			}
 		}
-		// because there isn't really any division (given my implementation) when the divisor is < 2
-		if (currentBufferDivisor < 2.0f)
+		// because there isn't really any division (given my implementation)
+		if (currentBufferDivisor < kActiveDivisorMinimum)
 		{
 			long const samplesToAlignForcedBufferToBar = samplesToBar % mCurrentForcedBufferSize;
 			if (barSync && (samplesToAlignForcedBufferToBar > 0))
