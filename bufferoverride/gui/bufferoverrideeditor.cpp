@@ -158,6 +158,11 @@ enum
 	kDestroyFXLinkX = 203,
 	kDestroyFXLinkY = 8,
 
+	kTitleAreaX = 18,
+	kTitleAreaY = 14,
+	kTitleAreaWidth = 172,
+	kTitleAreaHeight = 16,
+
 	kVisualizationX = 17,
 	kVisualizationY = 59,
 	kVisualizationW = BufferOverrideView::WIDTH,
@@ -398,6 +403,9 @@ long BufferOverrideEditor::OpenEditor()
 	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkImage->getWidth(), destroyFXLinkImage->getHeight() / 2);
 	emplaceControl<DGWebLink>(this, pos, destroyFXLinkImage, DESTROYFX_URL);
 
+	pos.set(kTitleAreaX, kTitleAreaY, kTitleAreaWidth, kTitleAreaHeight);
+	mTitleArea = emplaceControl<DGNullControl>(this, pos);
+
 
 	// the help mouseover hint thingy
 	pos.set(kHelpDisplayX, kHelpDisplayY, GetBackgroundImage()->getWidth(), kHelpDisplayHeight);
@@ -427,6 +435,7 @@ void BufferOverrideEditor::CloseEditor()
 	mBufferSizeDisplay = nullptr;
 	mDivisorLFORateDisplay = nullptr;
 	mBufferLFORateDisplay = nullptr;
+	mTitleArea = nullptr;
 	mHelpDisplays.fill(nullptr);
 }
 
@@ -498,6 +507,14 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 				currentControlParamID = currentControlUnderMouse->getParameterID();
 			}
 
+			if (currentControlUnderMouse == mTitleArea)
+			{
+				return
+				{
+					PLUGIN_NAME_STRING " can overcome your host application's audio processing buffer size",
+					"and then (unsuccessfully) override that new buffer size to be a smaller buffer size."
+				};
+			}
 			if (currentControlUnderMouse == mDivisorBufferBox)
 			{
 #if TARGET_OS_MAC
