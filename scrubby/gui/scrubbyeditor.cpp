@@ -504,10 +504,10 @@ long ScrubbyEditor::OpenEditor()
 	// .....................MISC..........................
 
 	// turn on/off MIDI learn mode for CC parameter automation
-	mMidiLearnButton = CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);
+	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);
 
 	// clear all MIDI CC assignments
-	mMidiResetButton = CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, midiResetButtonImage);
+	CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, midiResetButtonImage);
 
 	// Destroy FX web page link
 	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkImage->getWidth(), destroyFXLinkImage->getHeight() / 2);
@@ -545,8 +545,6 @@ void ScrubbyEditor::CloseEditor()
 	mSeekRateDisplay = nullptr;
 	mSeekRateRandMinDisplay = nullptr;
 	mHelpBox = nullptr;
-	mMidiLearnButton = nullptr;
-	mMidiResetButton = nullptr;
 	mTitleArea = nullptr;
 	mNotesButtons.clear();
 }
@@ -739,13 +737,13 @@ std::string ScrubbyEditor::GetHelpForControl(IDGControl* inControl) const
 Scrubby will, at a given seek rate, find random target destinations within a
 certain time range and then travel to those destinations.)DELIM";
 	}
-	if (inControl == mMidiLearnButton)
+	if (inControl == GetMidiLearnButton())
 	{
 		return R"DELIM(MIDI learn:  toggle "MIDI learn" mode for CC control of parameters
 When this is enabled, you can click on a parameter control and then the next
 MIDI CC received will be assigned to control that parameter.  (not in all hosts))DELIM";
 	}
-	if (inControl == mMidiResetButton)
+	if (inControl == GetMidiResetButton())
 	{
 		return R"DELIM(MIDI reset:  erase CC assignments
 Push this button to erase all of your MIDI CC -> parameter assignments.

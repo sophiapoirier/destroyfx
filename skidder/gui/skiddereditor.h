@@ -53,7 +53,6 @@ private:
 	DGTextDisplay* mRateRandMinDisplay = nullptr;
 	DGTextDisplay* mPulsewidthRandMinDisplay = nullptr;
 	DGTextDisplay* mFloorRandMinDisplay = nullptr;
-	DGButton* mMidiLearnButton = nullptr, * mMidiResetButton = nullptr;
 	DGHelpBox* mHelpBox = nullptr;
 	IDGControl* mTitleArea = nullptr;
 };

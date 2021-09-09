@@ -52,7 +52,6 @@ private:
 
 	DGSlider* mSepAmountSlider = nullptr, * mBandwidthAmountSlider = nullptr;
 	DGTextDisplay* mSepAmountDisplay = nullptr, * mBandwidthAmountDisplay = nullptr;
-	DGButton* mMidiLearnButton = nullptr, * mMidiResetButton = nullptr;
 	DGHelpBox* mHelpBox = nullptr;
 	IDGControl* mTitleArea = nullptr;
 };

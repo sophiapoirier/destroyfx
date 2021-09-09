@@ -282,10 +282,10 @@ long SkidderEditor::OpenEditor()
 	emplaceControl<DGToggleImageButton>(this, kVelocity, kVelocityButtonX, kVelocityButtonY, velocityButtonImage);
 
 	// turn on/off MIDI learn mode for CC parameter automation
-	mMidiLearnButton = CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);
+	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);
 
 	// clear all MIDI CC assignments
-	mMidiResetButton = CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, midiResetButtonImage);
+	CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, midiResetButtonImage);
 
 	// Destroy FX web page link
 	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkImage->getWidth(), destroyFXLinkImage->getHeight() / 2);
@@ -374,8 +374,6 @@ void SkidderEditor::CloseEditor()
 	mRateRandMinDisplay = nullptr;
 	mPulsewidthRandMinDisplay = nullptr;
 	mFloorRandMinDisplay = nullptr;
-	mMidiLearnButton = nullptr;
-	mMidiResetButton = nullptr;
 	mHelpBox = nullptr;
 	mTitleArea = nullptr;
 }
@@ -517,13 +515,13 @@ It also can randomly pan your choppy chunks of sound all about,
 which is why it's a skidder, like how a rock skids across a frozen
 lake when you throw it, bouncing here and there lopsided-style.)DELIM";
 	}
-	if (inControl == mMidiLearnButton)
+	if (inControl == GetMidiLearnButton())
 	{
 		return R"DELIM(MIDI learn:  toggle "MIDI learn" mode for CC control of parameters
 When enabled, you can click on a parameter control and then the
 next MIDI CC received will be assigned to control that parameter.)DELIM";
 	}
-	if (inControl == mMidiResetButton)
+	if (inControl == GetMidiResetButton())
 	{
 		return R"DELIM(MIDI reset:  erase CC assignments
 Push this button to erase all your MIDI CC -> parameter assignments.

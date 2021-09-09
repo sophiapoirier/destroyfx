@@ -363,10 +363,10 @@ long RezSynthEditor::OpenEditor()
 	addButtonWithNameRegion(kDryWetMixMode, pos, dryWetMixModeButtonImage)->setRadioThresholds({45});
 
 	// turn on/off MIDI learn mode for CC parameter automation
-	mMidiLearnButton = CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);
+	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);
 
 	// clear all MIDI CC assignments
-	mMidiResetButton = CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, midiResetButtonImage);
+	CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, midiResetButtonImage);
 
 	// Destroy FX web page link
 	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkImage->getWidth(), destroyFXLinkImage->getHeight() / 2);
@@ -397,8 +397,6 @@ void RezSynthEditor::CloseEditor()
 	mBandwidthAmountSlider = nullptr;
 	mSepAmountDisplay = nullptr;
 	mBandwidthAmountDisplay = nullptr;
-	mMidiLearnButton = nullptr;
-	mMidiResetButton = nullptr;
 	mHelpBox = nullptr;
 	mTitleArea = nullptr;
 }
@@ -460,7 +458,7 @@ void RezSynthEditor::mouseovercontrolchanged(IDGControl* currentControlUnderMous
 			{
 				return {0, 135, 126};
 			}
-			if ((currentControlUnderMouse == mMidiLearnButton) || (currentControlUnderMouse == mMidiResetButton))
+			if ((currentControlUnderMouse == GetMidiLearnButton()) || (currentControlUnderMouse == GetMidiResetButton()))
 			{
 				return midiColor;
 			}
@@ -508,13 +506,13 @@ std::string RezSynthEditor::GetHelpForControl(IDGControl* inControl) const
 The center frequency of a bank's base filter is controlled by MIDI notes.
 Additional filters in each bank (if any) have ascending center frequencies.)DELIM";
 	}
-	if (inControl == mMidiLearnButton)
+	if (inControl == GetMidiLearnButton())
 	{
 		return R"DELIM(MIDI learn:  toggle "MIDI learn" mode for CC control of parameters
 When enabled, you can click on a parameter control and then the next
 MIDI CC received will be assigned to control that parameter.)DELIM";
 	}
-	if (inControl == mMidiResetButton)
+	if (inControl == GetMidiResetButton())
 	{
 		return R"DELIM(MIDI reset:  erase CC assignments
 Push this button to erase all of your MIDI CC -> parameter assignments.

@@ -52,6 +52,5 @@ private:
 
 	DGHelpBox* mHelpBox = nullptr;
 	std::vector<DGButton*> mNotesButtons;
-	DGButton* mMidiLearnButton = nullptr, * mMidiResetButton = nullptr;
 	IDGControl* mTitleArea = nullptr;
 };
