@@ -29,6 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cmath>
 #include <exception>
 #include <functional>
+#include <locale>
 #include <mutex>
 #include <type_traits>
 
@@ -54,6 +55,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#include "lib/platform/common/fileresourceinputstream.h"
 	#include "lib/platform/platformfactory.h"
 	#include "pluginterfaces/vst2.x/vstfxstore.h"
+	#if TARGET_OS_WIN32
+	#include "uidescription/base64codec.h"
+	#endif
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -2131,8 +2135,14 @@ long DfxGuiEditor::initClipboard()
 class SettingsDataPackage final : public VSTGUI::IDataPackage
 {
 public:
+#if TARGET_OS_WIN32  // https://github.com/steinbergmedia/vstgui/issues/217 workaround
+	static constexpr auto kDataType = kText;
+#else
+	static constexpr auto kDataType = kBinary;
+#endif
+
 	SettingsDataPackage(std::byte const* inSettingsData, VstInt32 inSettingsDataSize)
-	:	mData(inSettingsData, std::next(inSettingsData, inSettingsDataSize))
+	:	mData(encode(inSettingsData, inSettingsDataSize))
 	{
 	}
 
@@ -2156,7 +2166,7 @@ public:
 		{
 			return kError;
 		}
-		return kBinary;
+		return kDataType;
 	}
 
 	uint32_t getData(uint32_t inIndex, void const*& outBuffer, Type& outType) const override
@@ -2166,7 +2176,37 @@ public:
 		return getDataSize(inIndex);
 	}
 
+#if TARGET_OS_WIN32
+	static std::vector<std::byte> decode(void const* inSettingsData, VstInt32 inSettingsDataSize)
+	{
+		// validate input because VSTGUI does not (and 'text' data in clipboard could be anything)
+		auto const matchBase64 = [](char character)
+		{
+			return std::isalnum(character, std::locale::classic()) || (character == '+') || (character == '/') || (character == '=');
+		};
+		auto const base64Data = static_cast<char const*>(inSettingsData);
+		if (!std::all_of(base64Data, std::next(base64Data, inSettingsDataSize), matchBase64))
+		{
+			return {};
+		}
+		auto const binary = VSTGUI::Base64Codec::decode(base64Data, inSettingsDataSize);
+		auto const decodedDataPtr = reinterpret_cast<std::byte const*>(binary.data.get());
+		return {decodedDataPtr, std::next(decodedDataPtr, binary.dataSize)};
+	}
+#endif
+
 private:
+	static std::vector<std::byte> encode(std::byte const* inSettingsData, VstInt32 inSettingsDataSize)
+	{
+#if TARGET_OS_WIN32
+		auto const base64 = VSTGUI::Base64Codec::encode(inSettingsData, inSettingsDataSize);
+		auto const encodedDataPtr = reinterpret_cast<std::byte const*>(base64.data.get());
+		return {encodedDataPtr, std::next(encodedDataPtr, base64.dataSize)};
+#else
+		return {inSettingsData, std::next(inSettingsData, inSettingsDataSize)};
+#endif
+	}
+
 	std::vector<std::byte> const mData;
 };
 #endif  // TARGET_API_VST
@@ -2326,9 +2366,9 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 			}
 			[[maybe_unused]] auto const isAUSettings = UTTypeConformsTo(flavorType, kDfxGui_SettingsPasteboardFlavorType_AU);
 			if (UTTypeConformsTo(flavorType, kDfxGui_SettingsPasteboardFlavorType)
-#ifdef TARGET_API_VST
+	#ifdef TARGET_API_VST
 				|| (isAUSettings && (getEffect()->getAeffect()->flags & effFlagsProgramChunks))
-#endif
+	#endif
 				)
 			{
 				if (inQueryPastabilityOnly)
@@ -2392,13 +2432,18 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 	}
 #else
 	auto const clipboardData = VSTGUI::getPlatformFactory().getClipboard();
+	std::vector<std::byte> decodedDataStorage;
 	if (clipboardData)
 	{
 		constexpr uint32_t dataIndex = 0;  // TODO: should we iterate? can a client add another clipboard atop ours?
-		if (clipboardData->getCount() && clipboardData->getDataSize(dataIndex) && (clipboardData->getDataType(dataIndex) == VSTGUI::IDataPackage::kBinary))
+		if (clipboardData->getCount() && clipboardData->getDataSize(dataIndex) && (clipboardData->getDataType(dataIndex) == SettingsDataPackage::kDataType))
 		{
-			VSTGUI::IDataPackage::Type placeholderType {};
-			vstSettingsDataSize = static_cast<VstInt32>(clipboardData->getData(dataIndex, vstSettingsData, placeholderType));
+			VSTGUI::IDataPackage::Type ignoredType {};
+			vstSettingsDataSize = static_cast<VstInt32>(clipboardData->getData(dataIndex, vstSettingsData, ignoredType));
+			assert(ignoredType == SettingsDataPackage::kDataType);
+			decodedDataStorage = SettingsDataPackage::decode(vstSettingsData, vstSettingsDataSize);
+			vstSettingsData = decodedDataStorage.data();
+			vstSettingsDataSize = decodedDataStorage.size();
 		}
 	}
 #endif  // TARGET_OS_MAC
