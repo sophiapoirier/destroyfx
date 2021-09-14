@@ -136,7 +136,7 @@ void DGControl<T>::setParameterID(long inParameterID)
 	{
 		T::setTag(inParameterID);
 		initValues();
-		T::invalid();
+		T::invalidRect(T::getViewSize());
 	}
 }
 
