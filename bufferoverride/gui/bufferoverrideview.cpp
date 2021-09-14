@@ -87,8 +87,8 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
   //     at the extreme buffer size of 1 sec.
   const CCoord pixels_per_second = width - (MARGIN_HORIZ * 2);
 
-  auto DrawBox = [&](CCoord x, CCoord y, CCoord w, CCoord h,
-                     CColor c) {
+  auto DrawBox = [this](CCoord x, CCoord y, CCoord w, CCoord h,
+                        CColor c) {
       offc->setFrameColor(c);
       // top
       offc->drawLine(CPoint(x, y), CPoint(x + w - 1, y));
@@ -102,8 +102,8 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
       offc->drawLine(CPoint(x + w - 1, y), CPoint(x + w - 1, y + h - 1));
     };
 
-  auto DrawFilledBox = [&](CCoord x, CCoord y, CCoord w, CCoord h,
-                           CColor c) {
+  auto DrawFilledBox = [this](CCoord x, CCoord y, CCoord w, CCoord h,
+                              CColor c) {
       offc->setFillColor(c);
       offc->drawRect(VSTGUI::CRect(x, y, x + w, y + h),
                      VSTGUI::kDrawFilled);
@@ -113,7 +113,7 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
   const CCoord majorbox_width = std::max(pixels_per_second * buffer_sec, 4.);
   const CCoord majorbox_height = height - (MARGIN_VERT * 2);
 
-  const CCoord minorbox_width = std::max(pixels_per_second * minibuffer_sec, 2.);
+  const CCoord minorbox_width = std::clamp(pixels_per_second * minibuffer_sec, 2., majorbox_width);
   const CCoord minorbox_height = majorbox_height - 4;
   {
     // Place boxes in float space but round to integer coordinates

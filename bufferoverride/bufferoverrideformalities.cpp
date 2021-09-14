@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "bufferoverride.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 
 #include "dfxmisc.h"
@@ -437,6 +438,7 @@ void BufferOverride::updateViewDataCache()
 	{
 		viewData.minibuffer_sec = viewData.forced_buffer_sec;
 	}
+	assert(viewData.minibuffer_sec <= viewData.forced_buffer_sec);
 
 	mViewDataCache.store(viewData, std::memory_order_relaxed);
 	mViewDataCacheTimestamp.fetch_add(1, std::memory_order_relaxed);
