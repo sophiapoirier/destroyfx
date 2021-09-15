@@ -115,8 +115,6 @@ void GeometerView::draw(VSTGUI::CDrawContext * ctx) {
 
 void GeometerView::onIdle() {
 
-  /* XXX reevaluate when I should do this. */
-  /* maybe I don't need to do this every frame... */
   assert(editor);
   auto const timestamp = editor->dfxgui_GetProperty<uint64_t>(PROP_LAST_WINDOW_TIMESTAMP).value_or(prevtimestamp);
   if (std::exchange(prevtimestamp, timestamp) != timestamp) {
@@ -125,8 +123,6 @@ void GeometerView::onIdle() {
 }
 
 
-/* XXX use memcpy where applicable. */
-/* XXX don't bother running processw unless the input data have changed. */
 void GeometerView::reflect() {
   /* when idle, copy points out of Geometer */
 
