@@ -157,6 +157,16 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor*							inOwnerEditor,
 }
 
 //-----------------------------------------------------------------------------
+VSTGUI::CMouseEventResult DGTextDisplay::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+{
+	if (!mTextEditEnabled)
+	{
+		return VSTGUI::kMouseEventNotHandled;
+	}
+	return DGControl<VSTGUI::CTextEdit>::onMouseDown(inPos, inButtons);
+}
+
+//-----------------------------------------------------------------------------
 bool DGTextDisplay::onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons)
 {
 	if (getFrame()->getFocusView() == this)
@@ -186,6 +196,12 @@ dfx::TextAlignment DGTextDisplay::getTextAlignment() const noexcept
 	}
 	assert(false);
 	return {};
+}
+
+//-----------------------------------------------------------------------------
+void DGTextDisplay::setTextEditEnabled(bool inEnable) noexcept
+{
+	mTextEditEnabled = inEnable;
 }
 
 //-----------------------------------------------------------------------------
@@ -339,6 +355,10 @@ bool DGTextDisplay::textToValueProcBridge(VSTGUI::UTF8StringPtr inText, float& o
 	assert(inText);
 	assert(textEdit == this);
 	if (!inText)
+	{
+		return false;
+	}
+	if (!mTextEditEnabled)
 	{
 		return false;
 	}

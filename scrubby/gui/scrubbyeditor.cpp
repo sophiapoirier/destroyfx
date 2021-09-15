@@ -655,8 +655,8 @@ void ScrubbyEditor::HandlePitchConstraintChange()
 void ScrubbyEditor::HandleTempoSyncChange()
 {
 	auto const allowTextEdit = !getparameter_b(kTempoSync);
-	mSeekRateDisplay->setMouseEnabled(allowTextEdit);
-	mSeekRateRandMinDisplay->setMouseEnabled(allowTextEdit);
+	mSeekRateDisplay->setTextEditEnabled(allowTextEdit);
+	mSeekRateRandMinDisplay->setTextEditEnabled(allowTextEdit);
 }
 
 //-----------------------------------------------------------------------------

@@ -652,10 +652,10 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 //-----------------------------------------------------------------------------
 void BufferOverrideEditor::HandleTempoSyncChange()
 {
-	auto const updateTextDisplay = [this](VSTGUI::CControl* control, long tempoSyncParameterID)
+	auto const updateTextDisplay = [this](DGTextDisplay* control, long tempoSyncParameterID)
 	{
 		auto const allowTextEdit = !getparameter_b(tempoSyncParameterID);
-		control->setMouseEnabled(allowTextEdit);
+		control->setTextEditEnabled(allowTextEdit);
 	};
 	updateTextDisplay(mBufferSizeDisplay, kBufferTempoSync);
 	updateTextDisplay(mDivisorLFORateDisplay, kDivisorLFOTempoSync);

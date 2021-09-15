@@ -469,8 +469,8 @@ void SkidderEditor::UpdateRandomMinimumDisplays()
 void SkidderEditor::HandleTempoSyncChange()
 {
 	auto const allowTextEdit = !getparameter_b(kTempoSync);
-	mRateDisplay->setMouseEnabled(allowTextEdit);
-	mRateRandMinDisplay->setMouseEnabled(allowTextEdit);
+	mRateDisplay->setTextEditEnabled(allowTextEdit);
+	mRateRandMinDisplay->setTextEditEnabled(allowTextEdit);
 }
 
 //-----------------------------------------------------------------------------

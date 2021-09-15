@@ -51,10 +51,14 @@ public:
 				  dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.0f, 
 				  DGColor inFontColor = VSTGUI::kBlackCColor, char const* inFontName = nullptr);
 
+	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 	bool onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons) override;
 
 	void setTextAlignment(dfx::TextAlignment inTextAlignment);
 	dfx::TextAlignment getTextAlignment() const noexcept;
+
+	// toggle text editability without affecting mouse wheel functionality
+	void setTextEditEnabled(bool inEnable) noexcept;
 
 	// customization point to override the default text entry numerical value parsing with your own
 	using TextToValueProc = std::function<std::optional<float>(std::string const& inText, DGTextDisplay* inTextDisplay)>;
@@ -97,6 +101,7 @@ private:
 	static bool valueToTextProc_Generic(float inValue, char outTextUTF8[], void* inUserData);
 
 	bool const mIsBitmapFont;
+	bool mTextEditEnabled = true;
 };
 
 

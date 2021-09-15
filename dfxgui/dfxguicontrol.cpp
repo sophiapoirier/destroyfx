@@ -34,7 +34,7 @@ bool detail::onWheel(IDGControl* inControl, VSTGUI::CPoint const& /*inPos*/, VST
 	if (inControl->getNumStates() > 0)
 	{
 		long const delta = (inDistance < 0.0f) ? -1 : 1;
-		auto newValue = inControl->getValue_i() + delta;
+		auto const newValue = inControl->getValue_i() + delta;
 		inControl->setValue_i(newValue);
 	}
 	else
