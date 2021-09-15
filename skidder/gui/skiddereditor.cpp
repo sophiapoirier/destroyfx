@@ -47,7 +47,7 @@ enum
 
 	kDisplayX = 334,
 	kDisplayY = kSliderY + 10,
-	kDisplayWidth = 70,
+	kDisplayWidth = 74,
 	kDisplayHeight = 12,
 
 	kRandMinDisplayX = 0,
