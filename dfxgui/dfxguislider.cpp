@@ -718,6 +718,13 @@ VSTGUI::CMouseEventResult DGXYBox::onMouseCancel()
 }
 
 //-----------------------------------------------------------------------------
+bool DGXYBox::onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons)
+{
+	auto const control = (inAxis == VSTGUI::kMouseWheelAxisX) ? mControlX : mControlY;
+	return detail::onWheel(control, inPos, inAxis, inDistance, inButtons);
+}
+
+//-----------------------------------------------------------------------------
 void DGXYBox::setAlternateHandles(VSTGUI::CBitmap* inHandleX, VSTGUI::CBitmap* inHandleY)
 {
 	assert(!inHandleX == !inHandleY);

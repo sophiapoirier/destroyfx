@@ -134,10 +134,7 @@ public:
 	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 	VSTGUI::CMouseEventResult onMouseCancel() override;
-	bool onWheel(VSTGUI::CPoint const&, VSTGUI::CMouseWheelAxis const&, float const&, VSTGUI::CButtonState const&) override
-	{
-		return false;
-	}
+	bool onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons) override;
 
 	void setAlternateHandles(VSTGUI::CBitmap* inHandleX, VSTGUI::CBitmap* inHandleY);
 

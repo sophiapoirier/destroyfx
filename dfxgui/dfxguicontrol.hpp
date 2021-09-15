@@ -170,7 +170,7 @@ bool DGControl<T>::notifyIfChanged()
 	if (entryDirty)
 	{
 		T::valueChanged();
-		T::invalid();
+		T::invalidRect(T::getViewSize());
 	}
 	return entryDirty;
 }
