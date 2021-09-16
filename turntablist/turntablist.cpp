@@ -288,7 +288,7 @@ OSStatus Turntablist::SaveState(CFPropertyListRef* outData)
 		return status;
 	}
 
-	auto const dict = (CFMutableDictionaryRef)(*outData);
+	auto const dict = const_cast<CFMutableDictionaryRef>(reinterpret_cast<CFDictionaryRef>(*outData));
 
 
 // save the path of the loaded audio file, if one is currently loaded

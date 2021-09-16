@@ -1436,7 +1436,8 @@ OSStatus DfxPlugin::SaveState(CFPropertyListRef* outData)
 		if (cfData)
 		{
 			// put the CF data storage thingy into the dfx-data section of the CF dictionary
-			CFDictionarySetValue((CFMutableDictionaryRef)(*outData), DfxSettings::kDfxDataAUClassInfoKeyString, cfData.get());
+			const auto dict = const_cast<CFMutableDictionaryRef>(reinterpret_cast<CFDictionaryRef>(*outData));
+			CFDictionarySetValue(dict, DfxSettings::kDfxDataAUClassInfoKeyString, cfData.get());
 		}
 	}
 #endif
