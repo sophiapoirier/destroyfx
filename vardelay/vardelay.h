@@ -95,7 +95,7 @@ public:
   }
 
   bool getProductString(char *text) {
-    strcpy (text, "Super Destroy FX bipolar VST plugin pack");
+    strcpy (text, PLUGIN_COLLECTION_NAME);
     return true; 
   }
 

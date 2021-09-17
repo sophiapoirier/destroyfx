@@ -53,7 +53,7 @@ somewhere in the include tree for every file for a DfxPlugin.
 #endif
 
 #ifndef PLUGIN_COLLECTION_NAME
-	#define PLUGIN_COLLECTION_NAME	"Super Destroy FX bipolar plugin pack"
+	#define PLUGIN_COLLECTION_NAME	"Super Destroy FX upsetting+delightful plugin pack"
 #endif
 
 /* XXX needs workaround for plugin names with white spaces */

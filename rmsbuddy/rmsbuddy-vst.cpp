@@ -65,7 +65,7 @@ bool RMSbuddy::getVendorString(char *text) {
 
 bool RMSbuddy::getProductString(char *text) {
 	// a string identifying the product name (max 64 char)
-	strcpy(text, "Super Destroy FX bipolar VST plugin pack");
+	strcpy(text, PLUGIN_COLLECTION_NAME);
 	return true; }
 
 //------------------------------------------------------------------------
