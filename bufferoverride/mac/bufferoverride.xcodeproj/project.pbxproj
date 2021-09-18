@@ -148,8 +148,8 @@
 		EC5CC734210EDF41007CCD6B /* idfxguicontrol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxguicontrol.h; sourceTree = "<group>"; };
 		EC5CC735210EDF41007CCD6B /* dfxguicontrol.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxguicontrol.hpp; sourceTree = "<group>"; };
 		EC5FE74B2692717000EC322F /* bufferoverride-base.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "bufferoverride-base.h"; sourceTree = "<group>"; };
-		EC5FE74C2692717B00EC322F /* bufferoverrideview.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = bufferoverrideview.h; path = gui/bufferoverrideview.h; sourceTree = "<group>"; };
-		EC5FE74D2692717B00EC322F /* bufferoverrideview.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = bufferoverrideview.cpp; path = gui/bufferoverrideview.cpp; sourceTree = "<group>"; };
+		EC5FE74C2692717B00EC322F /* bufferoverrideview.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = bufferoverrideview.h; path = gui/bufferoverrideview.h; sourceTree = "<group>"; usesTabs = 0; };
+		EC5FE74D2692717B00EC322F /* bufferoverrideview.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = bufferoverrideview.cpp; path = gui/bufferoverrideview.cpp; sourceTree = "<group>"; usesTabs = 0; };
 		EC76E2321DD828D20025CE41 /* dfxsmoothedvalue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxsmoothedvalue.h; sourceTree = "<group>"; };
 		EC89B338208D2AF800E15129 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		EC89B339208D2AF800E15129 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };

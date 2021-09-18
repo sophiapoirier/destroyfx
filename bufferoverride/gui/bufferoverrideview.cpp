@@ -31,12 +31,10 @@ To contact the author, use the contact form at http://destroyfx.org/
 constexpr auto color_dark = VSTGUI::MakeCColor(0x6f, 0x3f, 0x00);
 constexpr auto color_med = VSTGUI::MakeCColor(0xc8, 0x91, 0x3e);
 constexpr auto color_lite = VSTGUI::MakeCColor(0xe8, 0xd0, 0xaa);
-constexpr auto color_red = VSTGUI::MakeCColor(0xde, 0x7c, 0x70);
 
-using VSTGUI::CPoint;
 using VSTGUI::CColor;
 using VSTGUI::CCoord;
-using VSTGUI::UTF8StringPtr;
+using VSTGUI::CPoint;
 
 BufferOverrideView::BufferOverrideView(VSTGUI::CRect const & size)
   : VSTGUI::CView(size) {
@@ -105,8 +103,7 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
   auto DrawFilledBox = [this](CCoord x, CCoord y, CCoord w, CCoord h,
                               CColor c) {
       offc->setFillColor(c);
-      offc->drawRect(VSTGUI::CRect(x, y, x + w, y + h),
-                     VSTGUI::kDrawFilled);
+      offc->drawRect(DGRect(x, y, w, h), VSTGUI::kDrawFilled);
     };
 
   // draw 'major' boxes.
@@ -122,45 +119,25 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
       const int ixpos = std::lround(xpos);
       const int majw = std::lround(xpos + majorbox_width) - xpos;
 
-      // TODO: When the major buffer size is really small, this draws
-      // occasional slivers (looks ok) or nothing (probably could be
-      // improved). Maybe some kind of "gitching" here.
-      if (majw > 0) {
-        DrawBox(ixpos, MARGIN_VERT, majw, majorbox_height, color_lite);
+      DrawBox(ixpos, MARGIN_VERT, majw, majorbox_height, color_lite);
 
-        // If minibuffers are too narrow to fit, pinstripes.
-        // (could consider other effects here... "ERR0R" etc.)
-        if (minorbox_width < 2) {
-          bool first = true;
+      auto minorbox_color = color_lite;
+      for (CCoord nxpos = 2.0; nxpos < majw - 2; nxpos += minorbox_width) {
+        const int inxpos = std::lround(nxpos);
+        const int minw = std::lround(nxpos + minorbox_width) - inxpos;
 
-          for (int x = 2; x < majw - 1; x += 2) {
-            offc->setFrameColor(first ? color_lite : color_red);
-            offc->drawLine(
-                CPoint(ixpos + x, MARGIN_VERT + 2),
-                CPoint(ixpos + x, MARGIN_VERT + 2 + minorbox_height));
-            first = false;
-          }
-        } else {
-          bool first = true;
-          for (CCoord nxpos = 2.0; nxpos < majw - 2; nxpos += minorbox_width) {
-            const int inxpos = std::lround(nxpos);
-            const int minw = std::lround(nxpos + minorbox_width) - inxpos;
+        // Clip the width of the last minibuffer.
+        // We can reuse the right margin by overlapping it with the
+        // space after the last box, so just majw - 1.
+        const int w = std::min(minw, (majw - 1) - inxpos);
 
-            // Clip the width of the last minibuffer.
-            // We can reuse the right margin by overlapping it with the
-            // space after the last box, so just majw - 1.
-            const int w = std::min(minw, (majw - 1) - inxpos);
+        DrawFilledBox(ixpos + inxpos, MARGIN_VERT + 2,
+                      // leave space between boxes
+                      w - 1, minorbox_height,
+                      minorbox_color);
 
-            DrawFilledBox(ixpos + inxpos, MARGIN_VERT + 2,
-                          // leave space between boxes
-                          w - 1, minorbox_height,
-                          first ? color_lite : color_med);
-
-            first = false;
-          }
-        }
+        minorbox_color = color_med;
       }
-
     }
   }
 
