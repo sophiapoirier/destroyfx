@@ -82,7 +82,7 @@ div.downloads a {
 }
 
 div.downloads a.mac {
-  background-image: url(mac.png);
+  background-image: url(mac.svg);
 }
 div.downloads a.win {
   background-image: url(win32.png);
