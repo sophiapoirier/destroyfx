@@ -91,9 +91,7 @@ div.downloads a.oldmac {
   background-image: url(oldmac.png);
 }
 div.downloads a.source {
-  background-image: url(source.png);
-  width: 64px;
-  min-height: 36px;
+  background-image: url(source.svg);
 }
 div.downloads a.docs {
   background-image: url(docs.png);
