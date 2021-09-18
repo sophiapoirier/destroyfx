@@ -39,6 +39,9 @@ constexpr float kHelpDisplayFontSize = dfx::kFontSize_Wetar16px;
 
 constexpr DGColor kHelpDisplayTextColor(201, 201, 201);
 
+// TODO: This color is too dark when in text edit mode (black
+// background); should add the ability to DGTextDisplay to use
+// an alternate color (#81ba28) when editing.
 static constexpr DGColor kLCDGreenTextColor(0x0B, 0x2A, 0x00);
 static constexpr DGColor kLCDCyanTextColor(0xB5, 0xDF, 0xE4);
 
@@ -80,12 +83,12 @@ enum
 	// "lcd displays" are the green displays: tempo,
 	// smoothing, dry/wet, LFO rate and depth
 	kLCDDisplayWidth = 99,
-	kLCDDisplayHeight = 16 + 4,
+	kLCDDisplayHeight = dfx::kFontContainerHeight_Wetar16px,
 	kPitchbendDisplayWidth = 89,
 	// "oled displays" are the breakout boards for
 	// divisor and buffer
 	kOLEDDisplayWidth = 91,
-	kOLEDDisplayHeight = 2 * (16 + 4),
+	kOLEDDisplayHeight = 2 * dfx::kFontContainerHeight_Wetar16px,
 	kDivisorDisplayX = 249 + 2,
 	kDivisorDisplayY = 343 - (16 + 2),
 	kBufferDisplayX = 684 + 2,
@@ -152,7 +155,7 @@ enum
 	// help display
 	kHelpDisplayX = 0,
 	kHelpDisplayY = 463,
-	kHelpDisplayHeight = 20,
+	kHelpDisplayHeight = dfx::kFontContainerHeight_Wetar16px,
 	kHelpDisplayLineSpacing = 19,
 
 	kDestroyFXLinkX = 203,

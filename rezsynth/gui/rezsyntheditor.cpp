@@ -41,7 +41,7 @@ enum
 	kHorizontalSliderHeight = 23,
 
 	kHorizontalDisplayWidth = kHorizontalSliderWidth / 2,
-	kHorizontalDisplayHeight = 12,
+	kHorizontalDisplayHeight = dfx::kFontContainerHeight_Snooty10px,
 	kHorizontalDisplayX = kHorizontalSliderX + kHorizontalSliderWidth - kHorizontalDisplayWidth - 3,
 	kHorizontalDisplayY = kHorizontalSliderY - kHorizontalDisplayHeight,
 

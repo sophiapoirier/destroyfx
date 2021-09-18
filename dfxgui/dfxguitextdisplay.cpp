@@ -1,21 +1,21 @@
 /*------------------------------------------------------------------------
-Destroy FX Library is a collection of foundation code 
-for creating audio processing plug-ins.  
+Destroy FX Library is a collection of foundation code
+for creating audio processing plug-ins.
 Copyright (C) 2002-2021  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
-Destroy FX Library is free software:  you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 2 of the License, or 
+Destroy FX Library is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
 (at your option) any later version.
 
-Destroy FX Library is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+Destroy FX Library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License 
+You should have received a copy of the GNU General Public License
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
@@ -81,9 +81,13 @@ static bool DFXGUI_IsBitmapFont(char const* inFontName) noexcept
 // constant, we just work around this with some platform-specific
 // tweaks. We don't fully understand what's going on here, but note
 // that both the "YOffsetTweak" and "ViewAdjustments" are necessary
-// (it would naively seem that they could be combined, but this
-// will result in clipping, or 1 offset pixel yielding two pixel
-// movement in rendering?).
+// (it would naively seem that they could be combined, but this will
+// result in clipping, or 1 offset pixel yielding two pixel movement
+// in rendering?).
+//
+// The way to adjust these is to make sure the text looks right on
+// mac in the fonttest plugin, then fiddle with these on windows
+// until it also looks right (exactly in the box with nothing cut off).
 static int DFXGUI_GetYOffsetTweak(char const* inFontName) noexcept
 {
 #if TARGET_OS_WIN32
@@ -136,10 +140,10 @@ DGRect detail::UnAdjustTextViewForPlatform(char const* inFontName,
 
 //-----------------------------------------------------------------------------
 // common constructor-time setup
-static void DFXGUI_ConfigureTextDisplay(DfxGuiEditor* inOwnerEditor, 
-										VSTGUI::CTextLabel* inTextDisplay, 
-										dfx::TextAlignment inTextAlignment, 
-										float inFontSize, DGColor inFontColor, 
+static void DFXGUI_ConfigureTextDisplay(DfxGuiEditor* inOwnerEditor,
+										VSTGUI::CTextLabel* inTextDisplay,
+										dfx::TextAlignment inTextAlignment,
+										float inFontSize, DGColor inFontColor,
 										char const* inFontName)
 {
 	inTextDisplay->setTransparency(true);
@@ -169,7 +173,6 @@ static DGRect DFXGUI_GetTextDrawRegion(DGRect const& inRegion, int inYOffsetTwea
 		textArea.makeIntegral();
 	}
 
-	// textArea.offset(0, inYOffsetTweak);
 	textArea.top += inYOffsetTweak;
 
 	return textArea;
@@ -183,14 +186,14 @@ static DGRect DFXGUI_GetTextDrawRegion(DGRect const& inRegion, int inYOffsetTwea
 // Text Display
 //-----------------------------------------------------------------------------
 DGTextDisplay::DGTextDisplay(DfxGuiEditor*							inOwnerEditor,
-							 long									inParamID, 
+							 long									inParamID,
 							 DGRect const&							inRegion,
-							 VSTGUI::CParamDisplayValueToStringProc	inTextProc, 
+							 VSTGUI::CParamDisplayValueToStringProc	inTextProc,
 							 void*									inUserData,
-							 DGImage*								inBackgroundImage, 
-							 dfx::TextAlignment						inTextAlignment, 
-							 float									inFontSize, 
-							 DGColor								inFontColor, 
+							 DGImage*								inBackgroundImage,
+							 dfx::TextAlignment						inTextAlignment,
+							 float									inFontSize,
+							 DGColor								inFontColor,
 							 char const*							inFontName)
 :	DGControl<VSTGUI::CTextEdit>(inRegion, inOwnerEditor, inParamID, nullptr, inBackgroundImage),
 	mValueToTextProc(inTextProc ? inTextProc : valueToTextProc_Generic),
@@ -200,12 +203,12 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor*							inOwnerEditor,
 {
 	DFXGUI_ConfigureTextDisplay(inOwnerEditor, this, inTextAlignment, inFontSize, inFontColor, inFontName);
 
-	setValueToStringFunction(std::bind(&DGTextDisplay::valueToTextProcBridge, this, 
+	setValueToStringFunction(std::bind(&DGTextDisplay::valueToTextProcBridge, this,
 									   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-	refreshText();  // trigger an initial value->text conversion
+	refreshText();	// trigger an initial value->text conversion
 
 	mTextToValueProc = textToValueProc_Generic;
-	setStringToValueFunction(std::bind(&DGTextDisplay::textToValueProcBridge, this, 
+	setStringToValueFunction(std::bind(&DGTextDisplay::textToValueProcBridge, this,
 									   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 }
 
@@ -439,8 +442,8 @@ bool DGTextDisplay::textToValueProcBridge(VSTGUI::UTF8StringPtr inText, float& o
 #pragma mark DGStaticTextDisplay
 
 //-----------------------------------------------------------------------------
-DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage, 
-										 dfx::TextAlignment inTextAlignment, float inFontSize, 
+DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage,
+										 dfx::TextAlignment inTextAlignment, float inFontSize,
 										 DGColor inFontColor, char const* inFontName)
 :	DGControl<VSTGUI::CTextLabel>(inRegion, nullptr, inBackgroundImage),
 	mYOffsetTweak(DFXGUI_GetYOffsetTweak(inFontName)),
@@ -487,11 +490,11 @@ void DGStaticTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTG
 //-----------------------------------------------------------------------------
 // Static Text Display
 //-----------------------------------------------------------------------------
-DGTextArrayDisplay::DGTextArrayDisplay(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
-									   long inNumStrings, dfx::TextAlignment inTextAlignment, DGImage* inBackground, 
+DGTextArrayDisplay::DGTextArrayDisplay(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion,
+									   long inNumStrings, dfx::TextAlignment inTextAlignment, DGImage* inBackground,
 									   float inFontSize, DGColor inFontColor, char const* inFontName)
-:	DGTextDisplay(inOwnerEditor, inParamID, inRegion, nullptr, nullptr, inBackground, 
-				  inTextAlignment, inFontSize, inFontColor, inFontName), 
+:	DGTextDisplay(inOwnerEditor, inParamID, inRegion, nullptr, nullptr, inBackground,
+				  inTextAlignment, inFontSize, inFontColor, inFontName),
 	mDisplayStrings(std::max(inNumStrings, 1L))
 {
 	setMouseEnabled(false);
@@ -549,11 +552,11 @@ void DGTextArrayDisplay::draw(VSTGUI::CDrawContext* inContext)
 //-----------------------------------------------------------------------------
 // built-in help text region
 //-----------------------------------------------------------------------------
-DGHelpBox::DGHelpBox(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, 
-					 TextForControlProc const& inTextForControlProc, 
+DGHelpBox::DGHelpBox(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion,
+					 TextForControlProc const& inTextForControlProc,
 					 DGImage* inBackground, DGColor inFontColor)
-:	DGStaticTextDisplay(inOwnerEditor, inRegion, inBackground, dfx::TextAlignment::Left, 
-						dfx::kFontSize_Snooty10px, inFontColor, dfx::kFontName_Snooty10px), 
+:	DGStaticTextDisplay(inOwnerEditor, inRegion, inBackground, dfx::TextAlignment::Left,
+						dfx::kFontSize_Snooty10px, inFontColor, dfx::kFontName_Snooty10px),
 	mOwnerEditor(inOwnerEditor),  // DGStaticTextDisplay does not store this
 	mTextForControlProc(inTextForControlProc),
 	mHeaderFontColor(inFontColor)
