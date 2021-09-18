@@ -3,6 +3,7 @@ body
 	margin-top: 8px ;
 	margin-left: 15% ;
 	margin-right: 15% ;
+	font-family: Verdana, Geneva, Arial, sans-serif ;
 }
 
 b { font-weight: bold }
@@ -18,7 +19,6 @@ h1.title
 
 p
 {
-	font-family: Verdana, Geneva, Arial, sans-serif ;
 	text-indent: 0.0em ;
 	color: black ;
 }
