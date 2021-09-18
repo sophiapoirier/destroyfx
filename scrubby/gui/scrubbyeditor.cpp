@@ -78,7 +78,7 @@ enum
 
 	kDisplayWidth = 90,
 	kDisplayWidth_big = 117,  // for seek rate
-	kDisplayHeight = 12,
+	kDisplayHeight = dfx::kFontContainerHeight_Snooty10px,
 	kDisplayInsetX = 0,
 	kDisplayInsetX_leftAlign = 2,
 	kDisplayInsetY = 0,

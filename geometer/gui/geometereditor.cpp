@@ -68,7 +68,7 @@ enum {
   pos_sliderlabelX = 19,
   pos_sliderlabelY = pos_sliderY - 3,
   pos_sliderlabelwidth = 32,
-  pos_sliderlabelheight = 12,
+  pos_sliderlabelheight = dfx::kFontContainerHeight_Snooty10px,
 
   pos_finedownX = 27,
   pos_finedownY = 263,

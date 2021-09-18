@@ -23,30 +23,10 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxmisc.h"
 
-// Even though a font may be actually 16 pixels high, we need some
-// leeway to account for platform-specific rendering differences.
-// VSTGUI clips the text if it exceeds this height; the additional
-// clearance makes sure that descenders in characters like 'g' don't
-// get cut off. Every time we render the font we should use this
-// height for the container element.
-//
-// These are empirically determined from the results of rendering
-// on Mac, which is the reference platform. Windows has additional
-// tweaks off these. (Or perhaps we could just make these constants
-// differ by platform?)
-constexpr int kFontContainerHeight_Wetar16px = 20;
-constexpr int kFontContainerHeight_Snooty10px = 12;
-constexpr int kFontContainerHeight_Pasement9px = 10;
+// Make adjustments to the constants in dfxgui-base.h.
 
-// These offsets allow for precise vertical positioning of the font
-// against some reference pixel. For example, positioning the control
-// at (x, y + kFontYOffset_whatever) will render such that the top
-// left pixel of the font is at (x, y). These are optional; you can
-// also just put the font where it looks good. Internal to dfxgui, the
-// position is adjusted to get the same result on each platform.
-constexpr int kFontYOffset_Wetar16px = -4;
-constexpr int kFontYOffset_Snooty10px = -2;
-constexpr int kFontYOffset_Pasement9px = -1;
+// TODO: We should test the help display here too since it does some hacks
+// to do and undo tweaks.
 
 constexpr auto kDisplayTextColor = DGColor::kBlack;
 
@@ -55,14 +35,14 @@ constexpr auto kDisplayTextColor = DGColor::kBlack;
 enum
 {
   kEvenTextX = 16,
-  kEvenWetarY = 64 + kFontYOffset_Wetar16px,
-  kEvenSnootyY = 128 + kFontYOffset_Snooty10px,
-  kEvenPasementY = 192 + kFontYOffset_Pasement9px,
+  kEvenWetarY = 64 + dfx::kFontYOffset_Wetar16px,
+  kEvenSnootyY = 128 + dfx::kFontYOffset_Snooty10px,
+  kEvenPasementY = 192 + dfx::kFontYOffset_Pasement9px,
 
-  kOddTextX = 160,  
-  kOddWetarY = 63 + kFontYOffset_Wetar16px,
-  kOddSnootyY = 127 + kFontYOffset_Snooty10px,
-  kOddPasementY = 191 + kFontYOffset_Pasement9px,
+  kOddTextX = 160,
+  kOddWetarY = 63 + dfx::kFontYOffset_Wetar16px,
+  kOddSnootyY = 127 + dfx::kFontYOffset_Snooty10px,
+  kOddPasementY = 191 + dfx::kFontYOffset_Pasement9px,
 
   kTextWidth = 128,
 };
@@ -89,7 +69,7 @@ long FontTestEditor::OpenEditor()
   // Even positions
   {
     constexpr DGRect pos(kEvenTextX, kEvenWetarY, kTextWidth,
-                         kFontContainerHeight_Wetar16px);
+                         dfx::kFontContainerHeight_Wetar16px);
 
     emplaceControl<DGStaticTextDisplay>(
         this, pos, /* background */ nullptr,
@@ -101,7 +81,7 @@ long FontTestEditor::OpenEditor()
 
   {
     constexpr DGRect pos(kEvenTextX, kEvenSnootyY, kTextWidth,
-                         kFontContainerHeight_Snooty10px);
+                         dfx::kFontContainerHeight_Snooty10px);
 
     emplaceControl<DGStaticTextDisplay>(
         this, pos, /* background */ nullptr,
@@ -113,7 +93,7 @@ long FontTestEditor::OpenEditor()
 
   {
     constexpr DGRect pos(kEvenTextX, kEvenPasementY, kTextWidth,
-                         kFontContainerHeight_Pasement9px);
+                         dfx::kFontContainerHeight_Pasement9px);
 
     emplaceControl<DGStaticTextDisplay>(
         this, pos, /* background */ nullptr,
@@ -126,7 +106,7 @@ long FontTestEditor::OpenEditor()
   // Odd positions
   {
     constexpr DGRect pos(kOddTextX, kOddWetarY, kTextWidth,
-                         kFontContainerHeight_Wetar16px);
+                         dfx::kFontContainerHeight_Wetar16px);
 
     emplaceControl<DGStaticTextDisplay>(
         this, pos, /* background */ nullptr,
@@ -138,7 +118,7 @@ long FontTestEditor::OpenEditor()
 
   {
     constexpr DGRect pos(kOddTextX, kOddSnootyY, kTextWidth,
-                         kFontContainerHeight_Snooty10px);
+                         dfx::kFontContainerHeight_Snooty10px);
 
     emplaceControl<DGStaticTextDisplay>(
         this, pos, /* background */ nullptr,
@@ -150,7 +130,7 @@ long FontTestEditor::OpenEditor()
 
   {
     constexpr DGRect pos(kOddTextX, kOddPasementY, kTextWidth,
-                         kFontContainerHeight_Pasement9px);
+                         dfx::kFontContainerHeight_Pasement9px);
 
     emplaceControl<DGStaticTextDisplay>(
         this, pos, /* background */ nullptr,
@@ -160,7 +140,6 @@ long FontTestEditor::OpenEditor()
         dfx::kFontName_Pasement9px)->setText(text8);
   }
 
-  
 
   return dfx::kStatus_NoError;
 }

@@ -81,6 +81,30 @@ static constexpr float kFontSize_Snooty10px = 10.0f;
 static constexpr float kFontSize_Pasement9px = 9.0f;
 static constexpr float kFontSize_Wetar16px = 16.0f;
 
+// Even though a font may be actually 16 pixels high, we need some
+// leeway to account for platform-specific rendering differences.
+// VSTGUI clips the text if it exceeds this height; the additional
+// clearance makes sure that descenders in characters like 'g' don't
+// get cut off. Every time we render the font we should use this
+// height for the container element.
+//
+// These are empirically determined from the results of rendering
+// on Mac, which is the reference platform. Windows has additional
+// tweaks off these internal to dfxguitextdisplay.
+inline constexpr int kFontContainerHeight_Wetar16px = 20;
+inline constexpr int kFontContainerHeight_Snooty10px = 12;
+inline constexpr int kFontContainerHeight_Pasement9px = 10;
+
+// These offsets allow for precise vertical positioning of the font
+// against some reference pixel. For example, positioning the text
+// control at (x, y + kFontYOffset_whatever) will render such that the
+// top left pixel of the font is at (x, y). These are optional; you
+// can also just put the font where it looks good. Internal to dfxgui,
+// the position is adjusted to get the same result on each platform.
+inline constexpr int kFontYOffset_Wetar16px = -4;
+inline constexpr int kFontYOffset_Snooty10px = -2;
+inline constexpr int kFontYOffset_Pasement9px = -1;
+
 static constexpr char const* const kFontName_BoringBoron = "Boring Boron";
 
 

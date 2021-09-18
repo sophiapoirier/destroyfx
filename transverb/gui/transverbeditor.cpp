@@ -50,7 +50,7 @@ enum
 
 	kDisplayX = 318 + 1,
 	kDisplayWidth = 180,
-	kDisplayHeight = 12,
+	kDisplayHeight = dfx::kFontContainerHeight_Snooty10px,
 	kDisplayY = kWideFaderY - kDisplayHeight - 1,
 
 	kQualityButtonX = 425,
