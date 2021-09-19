@@ -39,9 +39,9 @@ constexpr float kHelpDisplayFontSize = dfx::kFontSize_Wetar16px;
 
 constexpr DGColor kHelpDisplayTextColor(201, 201, 201);
 
-// TODO: This color is too dark when in text edit mode (black
-// background); should add the ability to DGTextDisplay to use
-// an alternate color (#81ba28) when editing.
+// TODO: This color is too dark when in text edit mode on Windows
+// (black background); should add the ability to DGTextDisplay to
+// use an alternate color (#81ba28) on Windows when editing.
 static constexpr DGColor kLCDGreenTextColor(0x0B, 0x2A, 0x00);
 static constexpr DGColor kLCDCyanTextColor(0xB5, 0xDF, 0xE4);
 

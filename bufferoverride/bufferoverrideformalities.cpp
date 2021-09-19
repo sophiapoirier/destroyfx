@@ -420,25 +420,28 @@ void BufferOverride::updateViewDataCache()
 
 	if (getparameter_b(kBufferTempoSync) && (tempoBPS > 0.))
 	{
-		viewData.forced_buffer_sec = 1. / (tempoBPS * mTempoRateTable.getScalar(getparameter_i(kBufferSize_Sync)));
+		viewData.mPreLFO.mForcedBufferSeconds = 1. / (tempoBPS * mTempoRateTable.getScalar(getparameter_i(kBufferSize_Sync)));
 	}
 	else
 	{
-		viewData.forced_buffer_sec = getparameter_f(kBufferSize_MS) * 0.001;
+		viewData.mPreLFO.mForcedBufferSeconds = getparameter_f(kBufferSize_MS) * 0.001;
 	}
-	viewData.forced_buffer_sec *= mBufferLFOValue_viewCache.load(std::memory_order_relaxed);
+	viewData.mPostLFO.mForcedBufferSeconds = viewData.mPreLFO.mForcedBufferSeconds * mBufferLFOValue_viewCache.load(std::memory_order_relaxed);
 
 	// just the size of the first repetition with no complexity about the boundary case at the end
 	if (auto divisor = static_cast<float>(getparameter_f(kDivisor)); divisor >= kActiveDivisorMinimum)
 	{
+		viewData.mPreLFO.mMinibufferSeconds = viewData.mPreLFO.mForcedBufferSeconds / divisor;
 		divisor = std::max(divisor * mDivisorLFOValue_viewCache.load(std::memory_order_relaxed), kActiveDivisorMinimum);
-		viewData.minibuffer_sec = viewData.forced_buffer_sec / divisor;
+		viewData.mPostLFO.mMinibufferSeconds = viewData.mPostLFO.mForcedBufferSeconds / divisor;
 	}
 	else
 	{
-		viewData.minibuffer_sec = viewData.forced_buffer_sec;
+		viewData.mPreLFO.mMinibufferSeconds = viewData.mPreLFO.mForcedBufferSeconds;
+		viewData.mPostLFO.mMinibufferSeconds = viewData.mPostLFO.mForcedBufferSeconds;
 	}
-	assert(viewData.minibuffer_sec <= viewData.forced_buffer_sec);
+	assert(viewData.mPreLFO.mMinibufferSeconds <= viewData.mPreLFO.mForcedBufferSeconds);
+	assert(viewData.mPostLFO.mMinibufferSeconds <= viewData.mPostLFO.mForcedBufferSeconds);
 
 	mViewDataCache.store(viewData, std::memory_order_relaxed);
 	mViewDataCacheTimestamp.fetch_add(1, std::memory_order_relaxed);

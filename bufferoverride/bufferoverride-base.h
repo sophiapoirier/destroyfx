@@ -22,6 +22,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #pragma once
 
+#include <atomic>
+
 #include "dfxmisc.h"
 #include "dfxpluginproperties.h"
 
@@ -73,11 +75,50 @@ enum : dfx::PropertyID
 
 // Current effective buffer/divisor/etc. after LFOs. Used for
 // the visualization.
-// NOTE: Clang can but GCC cannot lockfree-atomic two doubles, so using floats
 struct BufferOverrideViewData
 {
-	float forced_buffer_sec {};
-	float minibuffer_sec {};
+	struct Segment
+	{
+		float mForcedBufferSeconds {};
+		float mMinibufferSeconds {};
+	} mPreLFO, mPostLFO;
 };
 
 static_assert(dfx::IsTriviallySerializable<BufferOverrideViewData>);
+
+namespace detail
+{
+// where 16-byte lock-free atomics are not supported, we slice it into halves (Clang can but GCC cannot)
+static constexpr auto getAtomicViewDataInstance()
+{
+	using UnifiedT = std::atomic<BufferOverrideViewData>;
+
+	struct CompositeT
+	{
+		using SegmentT = std::atomic<BufferOverrideViewData::Segment>;
+		SegmentT mPreLFO, mPostLFO;
+		static_assert(SegmentT::is_always_lock_free);
+
+		void store(BufferOverrideViewData value, std::memory_order order) noexcept
+		{
+			mPreLFO.store(value.mPreLFO, order);
+			mPostLFO.store(value.mPostLFO, order);
+		}
+		BufferOverrideViewData load(std::memory_order order) const noexcept
+		{
+			return {.mPreLFO = mPreLFO.load(order), .mPostLFO = mPostLFO.load(order)};
+		}
+	};
+
+	if constexpr (UnifiedT::is_always_lock_free)
+	{
+		return UnifiedT{};
+	}
+	else
+	{
+		return CompositeT{};
+	}
+}
+}  // namespace detail
+
+using AtomicBufferOverrideViewData = decltype(detail::getAtomicViewDataInstance());
