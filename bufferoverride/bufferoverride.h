@@ -110,8 +110,7 @@ private:
 
 	float mFadeOutGain = 0.0f, mFadeInGain = 0.0f, mRealFadePart = 0.0f, mImaginaryFadePart = 0.0f;  // for trig crossfading
 
-	std::atomic<BufferOverrideViewData> mViewDataCache;
-	static_assert(decltype(mViewDataCache)::is_always_lock_free);
+	AtomicBufferOverrideViewData mViewDataCache;
 	std::atomic<uint64_t> mViewDataCacheTimestamp {0u};
 	static_assert(decltype(mViewDataCacheTimestamp)::is_always_lock_free);
 	std::atomic<double> mHostTempoBPS_viewCache {0.};

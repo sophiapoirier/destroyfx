@@ -42,9 +42,9 @@ class BufferOverrideView final : public VSTGUI::CView {
   void draw(VSTGUI::CDrawContext *pContext) override;
   void onIdle() override;
 
-  void reflect();
-
  private:
+
+  void reflect();
 
   BufferOverrideViewData data;
   uint64_t prevtimestamp = 0u;

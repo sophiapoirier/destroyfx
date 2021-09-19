@@ -24,17 +24,21 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <tuple>
 #include <utility>
 
 #include "bufferoverride-base.h"
+
+using VSTGUI::CColor;
+using VSTGUI::CCoord;
+using VSTGUI::CPoint;
 
 constexpr auto color_dark = VSTGUI::MakeCColor(0x6f, 0x3f, 0x00);
 constexpr auto color_med = VSTGUI::MakeCColor(0xc8, 0x91, 0x3e);
 constexpr auto color_lite = VSTGUI::MakeCColor(0xe8, 0xd0, 0xaa);
 
-using VSTGUI::CColor;
-using VSTGUI::CCoord;
-using VSTGUI::CPoint;
+constexpr CCoord FORCED_BUFFER_WIDTH_MIN = 4.;
+constexpr CCoord MINIBUFFER_WIDTH_MIN = 2.;
 
 BufferOverrideView::BufferOverrideView(VSTGUI::CRect const & size)
   : VSTGUI::CView(size) {
@@ -58,6 +62,49 @@ bool BufferOverrideView::attached(VSTGUI::CView * parent) {
 }
 
 
+static std::tuple<CCoord, CCoord, CCoord>
+ScaleViewData(BufferOverrideViewData data, CCoord pixels_per_window) {
+
+  constexpr CCoord window_sec_default = 1;
+  auto window_sec = window_sec_default;
+
+  constexpr auto Scale = [](CCoord value, CCoord window) {
+    return value * (window_sec_default / window);
+  };
+
+  // calculate scale using the pre-LFO values so that it remains
+  // stable when not adjusting parameters
+  const CCoord forced_buffer = data.mPreLFO.mForcedBufferSeconds;
+  const CCoord minibuffer = data.mPreLFO.mMinibufferSeconds;
+
+  // zoom out when a single forced buffer exceeds the default window
+  while (forced_buffer > window_sec) {
+    window_sec = std::round(window_sec * 2);
+  }
+
+  // if the mini-buffers are below the pixel threshold and
+  // the forced buffer size is less than the default window,
+  // zoom in (but not smaller than the forced buffer size)
+  if (forced_buffer < window_sec_default) {
+    const auto Pixels = [=](CCoord value, CCoord window) {
+      return Scale(value, window) * pixels_per_window;
+    };
+    while (Pixels(minibuffer, window_sec) < MINIBUFFER_WIDTH_MIN) {
+      const auto next_window_sec = window_sec / 2.;
+      if (next_window_sec < forced_buffer) {
+        break;
+      }
+      window_sec = next_window_sec;
+    }
+  }
+
+  return {
+    Scale(data.mPostLFO.mForcedBufferSeconds, window_sec),
+    Scale(data.mPostLFO.mMinibufferSeconds, window_sec),
+    window_sec
+  };
+}
+
 void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
 
   assert(offc);
@@ -65,9 +112,6 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
   const auto width = getWidth();
   const auto height = getHeight();
 
-
-  const CCoord buffer_sec = data.forced_buffer_sec;
-  const CCoord minibuffer_sec = data.minibuffer_sec;
 
   offc->beginDraw();
 
@@ -83,7 +127,8 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
   //   - Remove the same margin on right. We do draw there, but
   //     this lets us see the beginning of the next buffer when
   //     at the extreme buffer size of 1 sec.
-  const CCoord pixels_per_second = width - (MARGIN_HORIZ * 2);
+  const CCoord pixels_per_window = width - (MARGIN_HORIZ * 2);
+  assert(pixels_per_window > 0);
 
   auto DrawBox = [this](CCoord x, CCoord y, CCoord w, CCoord h,
                         CColor c) {
@@ -106,11 +151,17 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
       offc->drawRect(DGRect(x, y, w, h), VSTGUI::kDrawFilled);
     };
 
+  const auto [forced_buffer, minibuffer, window_sec] =
+    ScaleViewData(data, pixels_per_window);
+
   // draw 'major' boxes.
-  const CCoord majorbox_width = std::max(pixels_per_second * buffer_sec, 4.);
+  const CCoord majorbox_width = std::max(pixels_per_window * forced_buffer,
+                                         FORCED_BUFFER_WIDTH_MIN);
   const CCoord majorbox_height = height - (MARGIN_VERT * 2);
 
-  const CCoord minorbox_width = std::clamp(pixels_per_second * minibuffer_sec, 2., majorbox_width);
+  const CCoord minorbox_width = std::clamp(pixels_per_window * minibuffer,
+                                           MINIBUFFER_WIDTH_MIN,
+                                           majorbox_width);
   const CCoord minorbox_height = majorbox_height - 4;
   {
     // Place boxes in float space but round to integer coordinates
