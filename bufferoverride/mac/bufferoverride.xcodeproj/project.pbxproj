@@ -44,6 +44,7 @@
 		EC2F844024A7C33000F29321 /* dfxmisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC2F843F24A7C33000F29321 /* dfxmisc.mm */; };
 		EC3F0C9A20D2A89F00902FF1 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC3F0C9920D2A89E00902FF1 /* dfxguimisc.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		EC4FB197256AE34C00AFC27A /* AUBufferAllocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC4FB196256AE34C00AFC27A /* AUBufferAllocator.cpp */; };
+		EC5BED1126F7C37B00DC45FB /* dfxpasement9px.ttf in Resources */ = {isa = PBXBuildFile; fileRef = EC5BED1026F7C37B00DC45FB /* dfxpasement9px.ttf */; };
 		EC5FE74E269271C900EC322F /* bufferoverrideview.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC5FE74D2692717B00EC322F /* bufferoverrideview.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		EC89B33F208D2AFB00E15129 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B338208D2AF800E15129 /* Accelerate.framework */; };
 		EC89B340208D2AFB00E15129 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B339208D2AF800E15129 /* OpenGL.framework */; };
@@ -145,6 +146,7 @@
 		EC3F0C9920D2A89E00902FF1 /* dfxguimisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxguimisc.mm; sourceTree = "<group>"; };
 		EC4FB196256AE34C00AFC27A /* AUBufferAllocator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUBufferAllocator.cpp; sourceTree = "<group>"; };
 		EC50A03A20CA258700718651 /* de */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = de; path = "../../dfx-library/de.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
+		EC5BED1026F7C37B00DC45FB /* dfxpasement9px.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = dfxpasement9px.ttf; path = ../../fonts/dfxpasement9px.ttf; sourceTree = "<group>"; };
 		EC5CC734210EDF41007CCD6B /* idfxguicontrol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxguicontrol.h; sourceTree = "<group>"; };
 		EC5CC735210EDF41007CCD6B /* dfxguicontrol.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxguicontrol.hpp; sourceTree = "<group>"; };
 		EC5FE74B2692717000EC322F /* bufferoverride-base.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "bufferoverride-base.h"; sourceTree = "<group>"; };
@@ -257,6 +259,7 @@
 			isa = PBXGroup;
 			children = (
 				4905A972067F716E00000F0C /* graphics */,
+				EC5BED1026F7C37B00DC45FB /* dfxpasement9px.ttf */,
 				EC8C77E126ADEBEA00DD857C /* dfxwetar16px.ttf */,
 				B0AD80DB0D0F315300766C78 /* destroyfx.icns */,
 				EC1227D00FBC910300F013C8 /* dfx-au-utilities.strings */,
@@ -521,6 +524,7 @@
 				ECDB2A6B21BA005900938F5C /* xy-box-handle-buffer-glow.png in Resources */,
 				ECDB2A6C21BA005B00938F5C /* xy-box-handle-divisor-glow.png in Resources */,
 				ECF62EDA26C98A0900B39D9E /* destroy-fx-link.png in Resources */,
+				EC5BED1126F7C37B00DC45FB /* dfxpasement9px.ttf in Resources */,
 				EC8C77E226ADEBEA00DD857C /* dfxwetar16px.ttf in Resources */,
 				B0AD80DC0D0F315300766C78 /* destroyfx.icns in Resources */,
 				EC1227D20FBC910300F013C8 /* dfx-au-utilities.strings in Resources */,

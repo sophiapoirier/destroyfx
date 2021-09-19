@@ -36,7 +36,14 @@ static inline long bufferSize_ms2samples(double inSizeMS, double inSampleRate)
 }
 
 //-----------------------------------------------------------------------------
-void BufferOverride::updateBuffer(unsigned long samplePos)
+template <typename T>
+static void updateViewCacheValue(std::atomic<T>& ioAtomicValue, const T inReplacementValue, bool& ioChanged)
+{
+	ioChanged |= ioAtomicValue.exchange(inReplacementValue, std::memory_order_relaxed) != inReplacementValue;
+};
+
+//-----------------------------------------------------------------------------
+void BufferOverride::updateBuffer(unsigned long samplePos, bool& ioViewDataChanged)
 {
 	bool doSmoothing = true;  // but in some situations, we shouldn't
 	bool barSync = false;  // true if we need to sync up with the next bar start
@@ -57,8 +64,8 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 	// Scale the 0.0 - 1.0 LFO output values to 0.0 - 2.0 (oscillating around 1.0).
 	auto const divisorLFOValue = mDivisorLFO.processZeroToTwo();
 	float const bufferLFOValue = 2.0f - mBufferLFO.processZeroToTwo();  // inverting it makes more pitch sense
-	mDivisorLFOValue_viewCache.store(divisorLFOValue, std::memory_order_relaxed);
-	mBufferLFOValue_viewCache.store(bufferLFOValue, std::memory_order_relaxed);
+	updateViewCacheValue(mDivisorLFOValue_viewCache, divisorLFOValue, ioViewDataChanged);
+	updateViewCacheValue(mBufferLFOValue_viewCache, bufferLFOValue, ioViewDataChanged);
 	// and then update the step size for each LFO, in case the LFO parameters have changed
 	if (mDivisorLFOTempoSync)
 	{
@@ -237,6 +244,8 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 	auto const numChannels = getnumoutputs();
 	auto const entryDivisor = mDivisor;
 
+	bool viewDataChanged = false;
+
 
 //-------------------------INITIALIZATIONS----------------------
 	mDivisorLFO.pickTheWaveform();
@@ -251,7 +260,7 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 		if (mUseHostTempo && hostCanDoTempo() && gettimeinfo().mTempoIsValid)  // get the tempo from the host
 		{
 			mCurrentTempoBPS = gettimeinfo().mTempo_BPS;
-			mHostTempoBPS_viewCache.store(mCurrentTempoBPS, std::memory_order_relaxed);
+			updateViewCacheValue(mHostTempoBPS_viewCache, mCurrentTempoBPS, viewDataChanged);
 			// check if audio playback has just restarted and reset buffer stuff if it has (for measure sync)
 			if (gettimeinfo().mPlaybackChanged)
 			{
@@ -278,7 +287,7 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 		// check if it's the end of this minibuffer
 		if (mReadPos >= mMinibufferSize)
 		{
-			updateBuffer(sampleIndex);
+			updateBuffer(sampleIndex, viewDataChanged);
 		}
 
 		// store the latest input samples into the buffers
@@ -383,5 +392,8 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 	}
 	mDivisorWasChangedByMIDI = false;
 
-	updateViewDataCache();
+	if (viewDataChanged)
+	{
+		updateViewDataCache();
+	}
 }

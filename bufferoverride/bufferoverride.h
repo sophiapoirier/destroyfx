@@ -58,7 +58,7 @@ private:
 	static constexpr double kMinAllowableBPS = 0.7;
 	static constexpr float kLFOValueDefault = 1.f;
 
-	void updateBuffer(unsigned long samplePos);
+	void updateBuffer(unsigned long samplePos, bool& ioViewDataChanged);
 
 	void heedBufferOverrideEvents(unsigned long samplePos);
 	float getDivisorParameterFromNote(int currentNote);

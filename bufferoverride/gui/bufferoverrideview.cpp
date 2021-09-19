@@ -36,6 +36,7 @@ using VSTGUI::CPoint;
 constexpr auto color_dark = VSTGUI::MakeCColor(0x6f, 0x3f, 0x00);
 constexpr auto color_med = VSTGUI::MakeCColor(0xc8, 0x91, 0x3e);
 constexpr auto color_lite = VSTGUI::MakeCColor(0xe8, 0xd0, 0xaa);
+constexpr auto color_legend = VSTGUI::MakeCColor(0xc6, 0x85, 0x3d);
 
 constexpr CCoord FORCED_BUFFER_WIDTH_MIN = 4.;
 constexpr CCoord MINIBUFFER_WIDTH_MIN = 2.;
@@ -53,7 +54,13 @@ bool BufferOverrideView::attached(VSTGUI::CView * parent) {
 
   if (success) {
     editor = dynamic_cast<DfxGuiEditor*>(getEditor());
+    assert(editor);
     offc = VSTGUI::COffscreenContext::create({getWidth(), getHeight()});
+    if (const auto font =
+        editor->CreateVstGuiFont(dfx::kFontSize_Pasement9px,
+                                 dfx::kFontName_Pasement9px)) {
+      offc->setFont(font);
+    }
 
     reflect();
   }
@@ -114,6 +121,7 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
 
 
   offc->beginDraw();
+  offc->setLineWidth(1);
 
   // Clear background.
   offc->setFillColor(color_dark);
@@ -121,7 +129,8 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
 
 
   constexpr CCoord MARGIN_HORIZ = 8.0;
-  constexpr CCoord MARGIN_VERT = 16.0;
+  constexpr CCoord MARGIN_TOP = 9.0;
+  constexpr CCoord MARGIN_BOTTOM = 23.0;
   // We want to fit roughly one second, but:
   //   - Remove margin on left, since we don't draw there
   //   - Remove the same margin on right. We do draw there, but
@@ -157,7 +166,7 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
   // draw 'major' boxes.
   const CCoord majorbox_width = std::max(pixels_per_window * forced_buffer,
                                          FORCED_BUFFER_WIDTH_MIN);
-  const CCoord majorbox_height = height - (MARGIN_VERT * 2);
+  const CCoord majorbox_height = height - (MARGIN_TOP + MARGIN_BOTTOM);
 
   const CCoord minorbox_width = std::clamp(pixels_per_window * minibuffer,
                                            MINIBUFFER_WIDTH_MIN,
@@ -170,7 +179,7 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
       const int ixpos = std::lround(xpos);
       const int majw = std::lround(xpos + majorbox_width) - xpos;
 
-      DrawBox(ixpos, MARGIN_VERT, majw, majorbox_height, color_lite);
+      DrawBox(ixpos, MARGIN_TOP, majw, majorbox_height, color_lite);
 
       auto minorbox_color = color_lite;
       for (CCoord nxpos = 2.0; nxpos < majw - 2; nxpos += minorbox_width) {
@@ -182,7 +191,7 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
         // space after the last box, so just majw - 1.
         const int w = std::min(minw, (majw - 1) - inxpos);
 
-        DrawFilledBox(ixpos + inxpos, MARGIN_VERT + 2,
+        DrawFilledBox(ixpos + inxpos, MARGIN_TOP + 2,
                       // leave space between boxes
                       w - 1, minorbox_height,
                       minorbox_color);
@@ -191,6 +200,60 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
       }
     }
   }
+
+  // draw the time-scale legend
+  constexpr CCoord LEGEND_MARGIN_TOP = 7;
+  constexpr CCoord LEGEND_MARGIN_BOTTOM = 8;
+  const auto legend_height = MARGIN_BOTTOM -
+    (LEGEND_MARGIN_TOP + LEGEND_MARGIN_BOTTOM);
+  assert(legend_height > 0);
+  const auto legend_top = height - LEGEND_MARGIN_BOTTOM - legend_height;
+  const auto legend_bottom = legend_top + legend_height;
+  constexpr auto legend_left = MARGIN_HORIZ;
+  const auto legend_right = width - MARGIN_HORIZ;
+  const auto legend_width = legend_right - legend_left;
+  constexpr CCoord LEGEND_DASH_STRIDE = 2;
+  constexpr CCoord LEGEND_DASH_WIDTH = 1;
+  // TODO: C++20 use std::midpoint
+  const auto legend_dash_y = std::floor((legend_top + legend_bottom) * 0.5);
+
+  // legend bounding
+  offc->setFrameColor(color_legend);
+  offc->drawLine({legend_left, legend_top},
+                 {legend_left, legend_bottom});
+  offc->drawLine({legend_right, legend_top},
+                 {legend_right, legend_bottom});
+  for (auto x = legend_left + LEGEND_DASH_STRIDE;
+       x <= (legend_right - LEGEND_DASH_STRIDE);
+       x += LEGEND_DASH_STRIDE) {
+    DrawFilledBox(x, legend_dash_y,
+                  LEGEND_DASH_WIDTH, LEGEND_DASH_WIDTH,
+                  color_legend);
+  }
+
+  // legend label
+  const auto legend_label = [](auto window_sec) {
+    if (window_sec < 1) {
+      return std::to_string(std::lround(window_sec * 1000)) + " ms";
+    }
+    return std::to_string(std::lround(window_sec)) + " sec";
+  }(window_sec);
+  constexpr bool LABEL_ANTIALIAS = false;
+  constexpr CCoord LABEL_PADDING = 12;
+  const auto label_width = offc->getStringWidth(legend_label.c_str()) +
+    (LABEL_PADDING * 2);
+  const auto label_x = legend_left +
+    ((legend_width - label_width) / 2);
+  const DGRect text_area(label_x, legend_top + 1, label_width,
+                         dfx::kFontContainerHeight_Pasement9px);
+  offc->setFillColor(color_dark);
+  offc->drawRect(text_area, VSTGUI::kDrawFilled);
+  offc->setFontColor(color_lite);
+  const auto adjusted_text_area = detail::AdjustTextViewForPlatform(
+      offc->getFont()->getName(), text_area);
+  offc->drawString(legend_label.c_str(), adjusted_text_area,
+                   VSTGUI::kCenterText, LABEL_ANTIALIAS);
+
 
   offc->endDraw();
   offc->copyFrom(ctx, getViewSize());
@@ -226,6 +289,5 @@ void BufferOverrideView::reflect() {
   assert(status == dfx::kStatus_NoError);
   assert(data_size == sizeof (data));
 
-  // TODO: Only if changed?
   invalid();
 }
