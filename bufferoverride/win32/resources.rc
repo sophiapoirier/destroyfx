@@ -15,6 +15,7 @@ xy-box-handle-buffer-glow.png  PNG DISCARDABLE  "..\\gui\\graphics\\xy-box-handl
 xy-box-handle-divisor-glow.png  PNG DISCARDABLE  "..\\gui\\graphics\\xy-box-handle-divisor-glow.png"
 xy-box-handle.png  PNG DISCARDABLE  "..\\gui\\graphics\\xy-box-handle.png"
 
+dfxpasement9px.ttf  DFX_TTF DISCARDABLE  "..\\..\\fonts\\dfxpasement9px.ttf"
 dfxwetar16px.ttf  DFX_TTF DISCARDABLE  "..\\..\\fonts\\dfxwetar16px.ttf"
 
 #include "../bufferoverridedef.h"
