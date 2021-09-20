@@ -76,8 +76,9 @@ div.plugin div.downloads {
 }
 div.downloads a {
   display: inline-block;
-  width: 32px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
+  margin: 2px 0 2px 4px;
   background-position: center;
   background-repeat: no-repeat;
   flex-grow: 1;
@@ -99,9 +100,7 @@ div.downloads a.source {
   background-image: url(source.svg);
 }
 div.downloads a.docs {
-  background-image: url(docs.png);
-  width: 55px;
-  height: 57px;
+  background-image: url(docs.svg);
 }
 
 /* Two-column layout for e.g. plugin */
