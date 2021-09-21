@@ -36,6 +36,8 @@ class GeometerView final : public VSTGUI::CView {
 
 private:
 
+  void reflect();
+
   GeometerViewData data;
   uint64_t prevtimestamp = 0;
 
@@ -49,6 +51,4 @@ public:
   bool attached(VSTGUI::CView * parent) override;
   void draw(VSTGUI::CDrawContext * pContext) override;
   void onIdle() override;
-
-  void reflect();
 };
