@@ -235,7 +235,7 @@ public:
 
 protected:
 	IDGControl* addChild(long inParameterID);
-	// TODO: C++20 use std::span
+	// TODO: C++23 use std::span?
 	void addChildren(std::vector<long> const& inParameterID);
 
 	template <typename Proc>

@@ -66,7 +66,7 @@ public:
 
 	virtual void setHelpText(char const* inText) = 0;
 
-	// TODO: C++20 use std::span or std::ranges::view?
+	// TODO: C++20 use std::ranges::view?
 	virtual std::vector<IDGControl*> getChildren() = 0;
 	virtual std::vector<IDGControl const*> getChildren() const = 0;
 

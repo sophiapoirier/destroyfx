@@ -370,7 +370,7 @@ public:
 		return parameterisvalid(inParameterIndex) ? mParameters[inParameterIndex].getvaluecfstring(inStringIndex) : nullptr;
 	}
 #endif
-	void addparametergroup(std::string const& inName, std::vector<long> const& inParameterIndices);  // TODO: C++20 use std::span
+	void addparametergroup(std::string const& inName, std::vector<long> const& inParameterIndices);  // TODO: C++23 use std::span?
 
 	void setparameter(long inParameterIndex, DfxParam::Value inValue);
 	void setparameter_f(long inParameterIndex, double inValue);

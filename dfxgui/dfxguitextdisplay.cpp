@@ -99,6 +99,7 @@ static int DFXGUI_GetYOffsetTweak(char const* inFontName) noexcept
 	return 0;
 }
 
+//-----------------------------------------------------------------------------
 static std::tuple<int, int, int> GetPlatformViewAdjustments(char const* inFontName) noexcept
 {
 #if TARGET_OS_WIN32
@@ -117,6 +118,7 @@ static std::tuple<int, int, int> GetPlatformViewAdjustments(char const* inFontNa
 	return std::make_tuple(0, 0, 0);
 }
 
+//-----------------------------------------------------------------------------
 DGRect detail::AdjustTextViewForPlatform(char const* inFontName,
 										 DGRect const& inRect) noexcept
 {
@@ -127,6 +129,7 @@ DGRect detail::AdjustTextViewForPlatform(char const* inFontName,
 	return adjustedRect;
 }
 
+//-----------------------------------------------------------------------------
 // Inverse of the above.
 DGRect detail::UnAdjustTextViewForPlatform(char const* inFontName,
 										   DGRect const& inRect) noexcept
