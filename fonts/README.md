@@ -2,7 +2,7 @@
 
 Some of our plugins' GUIs use special fonts for text display:
 
-* Buffer Override uses "DFX Wetar 16px"
+* Buffer Override uses "DFX Wetar 16px" and "DFX Pasement 9px"
 * Geometer uses "DFX Snooty 10px"
 * Polarizer uses "Boring Boron"
 * Rez Synth uses "DFX Snooty 10px"
