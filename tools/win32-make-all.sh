@@ -22,6 +22,8 @@ function buildplugin() {
     make -s clean
     make -s -j "${THREADS}" "${plugin_dll}" install 2>/dev/null >/dev/null
     test -f "${plugin_dll}" || fail "failed to build ${plugin_dll}"
+    rm -f "../../win32release/${plugin_dll}"
+    cp "${plugin_dll}" ../../win32release/    
     popd >/dev/null
     [[ $PWD = */destroyfx ]] || fail "not in the expected directory?"
     echo "Built ${plugin_dll}."
