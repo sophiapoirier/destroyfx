@@ -32,6 +32,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <locale>
 #include <mutex>
 #include <type_traits>
+#include <string_view>
 
 #include "dfxguibutton.h"
 #include "dfxguidialog.h"
@@ -94,7 +95,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #else
 	using ERect = VSTGUI::ERect;
 #endif
-
 
 //-----------------------------------------------------------------------------
 DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
@@ -2137,6 +2137,19 @@ class SettingsDataPackage final : public VSTGUI::IDataPackage
 public:
 #if TARGET_OS_WIN32  // https://github.com/steinbergmedia/vstgui/issues/217 workaround
 	static constexpr auto kDataType = kText;
+
+	[[maybe_unused]]
+	static constexpr std::string_view kPasteTextPrefix = "[dfx-settings]";
+	[[maybe_unused]]
+	static constexpr std::string_view kPasteTextSuffix = "[/dfx-settings]";
+	// XXX: For unknown reasons on windows, the clipboard we prepare drops
+	// a character from the end of the string when pasting into some apps
+	// (notepad.exe) even though the character appears to be there. The
+	// unsatisfying workaround is to add whitespace to the end of the
+	// string, which we ignore upon paste; if it gets dropped, no harm is
+	// done.
+	[[maybe_unused]]
+	static constexpr std::string_view kPasteTextPadding = "\n\n";
 #else
 	static constexpr auto kDataType = kBinary;
 #endif
@@ -2179,17 +2192,51 @@ public:
 #if TARGET_OS_WIN32
 	static std::vector<std::byte> decode(void const* inSettingsData, VstInt32 inSettingsDataSize)
 	{
+		std::string_view inString(reinterpret_cast<char const*>(inSettingsData), inSettingsDataSize);
 		// validate input because VSTGUI does not (and 'text' data in clipboard could be anything)
+
+		// Strip exterior whitespace. Aside from being convenient, this
+		// also allows us to ignore our padding that we include as a
+		// workaround (kPasteTextPadding).
+		while (!inString.empty() && std::isspace(inString.front()))
+		{
+			inString.remove_prefix(1);
+		}
+		while (!inString.empty() && std::isspace(inString.back()))
+		{
+			inString.remove_suffix(1);
+		}
+		
+		// Must start with [dfx-settings] and end with [/dfx-settings];
+		// this also allows us to reject non-pathological buffers in
+		// constant time.
+		if (inString.size() < kPasteTextPrefix.size() + kPasteTextSuffix.size())
+		{
+			return {};
+		}
+		if (inString.substr(0, kPasteTextPrefix.size()) !=
+			kPasteTextPrefix ||
+			inString.substr(inString.size() - kPasteTextSuffix.size(),
+							std::string_view::npos) !=
+			kPasteTextSuffix)
+		{
+			return {};
+		}
+
+		// Strip prefix and suffix.
+		inString.remove_prefix(kPasteTextPrefix.size());
+		inString.remove_suffix(kPasteTextSuffix.size());
+		
 		auto const matchBase64 = [](char character)
 		{
 			return std::isalnum(character, std::locale::classic()) || (character == '+') || (character == '/') || (character == '=');
 		};
-		auto const base64Data = static_cast<char const*>(inSettingsData);
-		if (!std::all_of(base64Data, std::next(base64Data, inSettingsDataSize), matchBase64))
+
+		if (!std::all_of(inString.begin(), inString.end(), matchBase64))
 		{
 			return {};
 		}
-		auto const binary = VSTGUI::Base64Codec::decode(base64Data, inSettingsDataSize);
+		auto const binary = VSTGUI::Base64Codec::decode(inString);
 		auto const decodedDataPtr = reinterpret_cast<std::byte const*>(binary.data.get());
 		return {decodedDataPtr, std::next(decodedDataPtr, binary.dataSize)};
 	}
@@ -2200,8 +2247,15 @@ private:
 	{
 #if TARGET_OS_WIN32
 		auto const base64 = VSTGUI::Base64Codec::encode(inSettingsData, inSettingsDataSize);
-		auto const encodedDataPtr = reinterpret_cast<std::byte const*>(base64.data.get());
-		return {encodedDataPtr, std::next(encodedDataPtr, base64.dataSize)};
+		std::vector<std::byte> ret;
+		ret.reserve(kPasteTextPrefix.size() +
+					base64.dataSize +
+					kPasteTextSuffix.size());
+		for (char c : kPasteTextPrefix) ret.push_back((std::byte)c);
+		for (size_t i = 0; i < base64.dataSize; i++) ret.push_back((std::byte)base64.data[i]);
+		for (char c : kPasteTextSuffix) ret.push_back((std::byte)c);
+		for (char c : kPasteTextPadding) ret.push_back((std::byte)c);		 
+		return ret;
 #else
 		return {inSettingsData, std::next(inSettingsData, inSettingsDataSize)};
 #endif
