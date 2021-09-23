@@ -282,10 +282,9 @@ Some scripts that we utilize during development.
 
 The files that comprise our website.
 
-### stub-plugin/
+### stub-dfxplugin/
 
-Sources for starting a new plugin. Much nicer than the Steinberg
-examples (in my opinion).
+Sources for starting a new plugin using our DfxPlugin framework.
 
 ### windowingstub/
 
