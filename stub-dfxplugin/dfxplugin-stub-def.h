@@ -59,12 +59,7 @@ or somehow define this stuff another way (in compiler settings, or whatever).
 // 0 or 1	(whether or not the plugin has its own custom graphical interface)
 #define TARGET_PLUGIN_HAS_GUI	1
 
-// optional
-// a description of the effect (for Audio Unit)
-#define PLUGIN_DESCRIPTION_STRING	"demonstration of how to use DfxPlugin"
 #if TARGET_PLUGIN_HAS_GUI
-	// a description of the GUI component of the plugin (for Audio Unit, not important)
-	#define PLUGIN_EDITOR_DESCRIPTION_STRING	"graphics for DfxPlugin stub"
 	// the file name of the GUI's background image
 	#define PLUGIN_BACKGROUND_IMAGE_FILENAME	"dfxplugin-stub-background.png"
 #endif

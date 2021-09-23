@@ -41,9 +41,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define TARGET_PLUGIN_HAS_GUI	1
 #define PLUGIN_BACKGROUND_IMAGE_FILENAME	"transverb-background.png"
 
-// optional
-#define PLUGIN_DESCRIPTION_STRING	"like a delay that can play back the delay buffer at different speeds"
-
 
 #define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2021"
 

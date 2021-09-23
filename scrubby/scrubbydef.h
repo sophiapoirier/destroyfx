@@ -43,8 +43,5 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_COPYRIGHT_YEAR_STRING	"2002-2021"
 #define VST_NUM_CHANNELS	2
 
-// optional
-#define PLUGIN_DESCRIPTION_STRING	PLUGIN_NAME_STRING " goes zipping around through time, doing whatever it takes to reach its destinations on time"
-
 
 #endif

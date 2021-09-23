@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2021  Sophia Poirier and Tom Murphy 7
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -31,8 +31,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 // required
 #define PLUGIN_NAME_STRING	""
-// should be unique among all plugins (!) Official Destroy FX plugins use 'D' 'F'
-// for the first two characters
+// should be unique among all plugins (!)
+// Official Destroy FX plugins use 'D' 'F' for the first two characters
 #define PLUGIN_ID		FOURCC('A', 'B', 'C', 'D')
 #define PLUGIN_VERSION_MAJOR	1
 #define PLUGIN_VERSION_MINOR	0
@@ -40,6 +40,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_VERSION_STRING	"1.0.0"
 #define PLUGIN_CLASS_NAME	CoolPlugin
 #define PLUGIN_ENTRY_POINT	"Entry"
+// required if PLUGIN_NAME_STRING contains whitespace
 #define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX "" DFX_BUNDLE_ID_SUFFIX
 #define PLUGIN_COPYRIGHT_YEAR_STRING	"20XX"
 // Define to 1 or 0
@@ -51,19 +52,13 @@ To contact the author, use the contact form at http://destroyfx.org/
 // only necessary for VST
 // #define VST_NUM_INPUTS	2
 // #define VST_NUM_OUTPUTS	2
-// or you can just define this if numinputs and numoutputs match
+// or you can define just this if numinputs and numoutputs match
 #define VST_NUM_CHANNELS 2
 
-// optional
-#define PLUGIN_DESCRIPTION_STRING	""
-#define PLUGIN_RES_ID
 #if TARGET_PLUGIN_HAS_GUI
+	// required if providing a GUI
 	#define PLUGIN_BACKGROUND_IMAGE_FILENAME	".png"
-	#define PLUGIN_EDITOR_DESCRIPTION_STRING	""
 #endif
-
-// if relevant
-#define DFX_SUPPORT_OLD_VST_SETTINGS 1
 
 
 #endif

@@ -42,7 +42,5 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX PLUGIN_NAME_STRING DFX_BUNDLE_ID_SUFFIX
 #define PLUGIN_COPYRIGHT_YEAR_STRING	"2004-2021"
 
-#define PLUGIN_DESCRIPTION_STRING	PLUGIN_NAME_STRING " is an instrument that can load a sample and perform turntable style effects on it.  You can scratch, change pitch, and even spin the audio up and down, just like on a real turntable."
-
 
 #endif

@@ -14,7 +14,3 @@
 #ifndef TARGET_PLUGIN_HAS_GUI
 #define TARGET_PLUGIN_HAS_GUI	1
 #endif
-
-// optional
-#define PLUGIN_DESCRIPTION_STRING	"i forgot to change the description"
-#define PLUGIN_EDITOR_DESCRIPTION_STRING	"i forgot to change the gui description too"

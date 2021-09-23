@@ -43,8 +43,5 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2021"
 #define VST_NUM_CHANNELS	2
 
-// optional
-#define PLUGIN_DESCRIPTION_STRING	PLUGIN_NAME_STRING " is a ridiculous equalizer.  You have no control over the EQ curve, if you try to adjust the faders they will escape, and the EQ parameters don't make any sense anyway.  The EQ setting changes on its own according to your song's tempo."
-
 
 #endif

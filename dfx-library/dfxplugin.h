@@ -135,16 +135,6 @@ VST_NUM_OUTPUTS
 or if they match, simply define
 VST_NUM_CHANNELS
 	integers representing how many inputs and outputs your plugin has
-
- optional for Audio Unit:
-PLUGIN_DESCRIPTION_STRING
-	a C string description of the plugin
-PLUGIN_RES_ID
-	component resource ID of the base plugin
-PLUGIN_EDITOR_DESCRIPTION_STRING
-	a C string description of the plugin editor
-PLUGIN_EDITOR_RES_ID
-	component resource ID of the base plugin
 ------------------------------------------------------------------------*/
 
 #pragma once

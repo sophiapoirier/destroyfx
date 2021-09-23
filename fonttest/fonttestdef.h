@@ -41,9 +41,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define TARGET_PLUGIN_HAS_GUI	1
 #define PLUGIN_BACKGROUND_IMAGE_FILENAME	"fonttest-background.png"
 
-// optional
-#define PLUGIN_DESCRIPTION_STRING	"a plugin of silence, yet of great diagnostic value"
-
 
 #define PLUGIN_COPYRIGHT_YEAR_STRING	"2021"
 
