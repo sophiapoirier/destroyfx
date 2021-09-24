@@ -26,9 +26,9 @@ This is a template for making a DfxPlugin.
 #pragma once
 
 
-#include "dfxplugin.h"
-
 #include <vector>
+
+#include "dfxplugin.h"
 
 
 //----------------------------------------------------------------------------- 
@@ -45,11 +45,10 @@ enum
 
 
 //----------------------------------------------------------------------------- 
-class DfxStub : public DfxPlugin
+class DfxStub final : public DfxPlugin
 {
 public:
-	DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance);
-	virtual ~DfxStub();
+	explicit DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
 	void dfx_PostConstructor() override;
 	long initialize() override;
@@ -96,16 +95,12 @@ private:
 
 #if TARGET_PLUGIN_USES_DSPCORE
 //----------------------------------------------------------------------------- 
-class DfxStubDSP : public DfxPluginCore
+class DfxStubDSP final : public DfxPluginCore
 {
 public:
-	DfxStubDSP(DfxPlugin* inInstance);
-	virtual ~DfxStubDSP();
+	explicit DfxStubDSP(DfxPlugin* inInstance);
 
 	void reset() override;
-	void createbuffers() override;
-	void releasebuffers() override;
-	void clearbuffers() override;
 
 	void processparameters() override;
 	void process(float const* inStream, float* outStream, unsigned long inNumFrames, bool replacing = true) override;

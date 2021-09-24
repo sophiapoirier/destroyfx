@@ -834,7 +834,7 @@ private:
 #ifdef TARGET_API_AUDIOUNIT
 	ausdk::AUBufferList mAsymmetricalInputBufferList;
 #else
-	[[nodiscard]] std::unique_ptr<DfxPluginCore> dspCoreFactory();
+	[[nodiscard]] std::unique_ptr<DfxPluginCore> dspCoreFactory(unsigned long inChannel);
 	std::vector<std::unique_ptr<DfxPluginCore>> mDSPCores;  // we have to manage this ourselves outside of the AU SDK
 	std::vector<float> mAsymmetricalInputAudioBuffer;
 #endif
@@ -862,6 +862,8 @@ private:
 
 #ifdef TARGET_API_VST
 	bool mIsInitialized = false;
+	std::optional<unsigned long> mLastInputChannelCount, mLastOutputChannelCount, mLastMaxFrameCount;
+	std::optional<double> mLastSampleRate;
 	// VST getChunk() requires that the plugin own the buffer; this contains
 	// the chunk data from the last call to getChunk.
 	std::vector<std::byte> mLastChunk;
@@ -1135,8 +1137,10 @@ public:
 	#ifdef TARGET_API_DSPCORE_CLASS
 		TARGET_API_DSPCORE_CLASS(*inDfxPlugin), 
 	#endif
-		mDfxPlugin(inDfxPlugin)
+		mDfxPlugin(inDfxPlugin),
+		mSampleRate(inDfxPlugin->getsamplerate())
 	{
+		assert(mSampleRate > 0.);
 	}
 
 	virtual ~DfxPluginCore()
@@ -1152,8 +1156,6 @@ public:
 	virtual void process(float const* inStream, float* outStream, unsigned long inNumFrames) = 0;
 	void do_reset()
 	{
-		createbuffers();
-		clearbuffers();
 		reset();
 	}
 	virtual void reset() {}
@@ -1162,24 +1164,17 @@ public:
 	// initially miss that snap if you getValue a smoothed value within processparameters
 	virtual void processparameters() {}
 
-	// ***
-	virtual void createbuffers() {}
-	// ***
-	virtual void clearbuffers() {}
-	// ***
-	virtual void releasebuffers() {}
-
 	auto const getplugin() const noexcept
 	{
 		return mDfxPlugin;
 	}
 	double getsamplerate() const noexcept
 	{
-		return mDfxPlugin->getsamplerate();
+		return mSampleRate;
 	}
 	float getsamplerate_f() const
 	{
-		return mDfxPlugin->getsamplerate_f();
+		return static_cast<float>(mSampleRate);
 	}
 //	DfxParam::Value getparameter(long inParameterIndex) const { return mDfxPlugin->getparameter(inParameterIndex); }
 	double getparameter_f(long inParameterIndex) const
@@ -1269,13 +1264,14 @@ public:
 #else
 	// Mimic what AUKernelBase does here. The channel is just the index
 	// in the mDSPCores vector.
-	void SetChannelNum(unsigned long inChan) noexcept { mChannelNumber = inChan; }
+	void SetChannelNum(unsigned long inChannel) noexcept { mChannelNumber = inChannel; }
 	unsigned long GetChannelNum() const noexcept { return mChannelNumber; }
 #endif
 
 
 private:
 	DfxPlugin* const mDfxPlugin;
+	double const mSampleRate;  // fixed for the lifespan of a DSP core
 
 #ifndef TARGET_API_AUDIOUNIT
 	unsigned long mChannelNumber = 0;
@@ -1395,10 +1391,12 @@ private:
 	// call this in the plugin's constructor if it uses DSP cores for processing
 	#if TARGET_PLUGIN_USES_DSPCORE
 		// DFX_CORE_ENTRY is not useful for APIs other than AU, so it is defined as nothing
-		#define DFX_CORE_ENTRY(PluginCoreClass)											\
-			[[nodiscard]] std::unique_ptr<DfxPluginCore> DfxPlugin::dspCoreFactory()	\
-			{																			\
-				return dspCoreFactory<PluginCoreClass>();								\
+		#define DFX_CORE_ENTRY(PluginCoreClass)																\
+			[[nodiscard]] std::unique_ptr<DfxPluginCore> DfxPlugin::dspCoreFactory(unsigned long inChannel)	\
+			{																								\
+				auto core = dspCoreFactory<PluginCoreClass>();												\
+				core->SetChannelNum(inChannel);																\
+				return core;																				\
 			}
 	#endif
 

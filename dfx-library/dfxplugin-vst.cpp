@@ -61,10 +61,24 @@ void DfxPlugin::resume()
 {
 	updatesamplerate();
 
+	bool const inputChannelCountChanged = !mLastInputChannelCount || (*mLastInputChannelCount != getnuminputs());
+	mLastInputChannelCount = getnuminputs();
+	bool const outputChannelCountChanged = !mLastOutputChannelCount || (*mLastOutputChannelCount != getnumoutputs());
+	mLastOutputChannelCount = getnumoutputs();
+	bool const sampleRateChanged = !mLastSampleRate || (*mLastSampleRate != getsamplerate());
+	mLastSampleRate = getsamplerate();
+	bool const maxFrameCountChanged = !mLastMaxFrameCount || (*mLastMaxFrameCount != getmaxframes());
+	mLastMaxFrameCount = getmaxframes();
+
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this here
 	if (!mIsInitialized)
 	{
+		do_initialize();
+	}
+	else if (inputChannelCountChanged || outputChannelCountChanged || sampleRateChanged || maxFrameCountChanged)
+	{
+		do_cleanup();
 		do_initialize();
 	}
 	else

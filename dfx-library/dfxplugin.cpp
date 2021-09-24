@@ -148,8 +148,7 @@ DfxPlugin::DfxPlugin(
 // setup the constructors of the inherited base classes, for the appropriate API
 #ifdef TARGET_API_AUDIOUNIT
 	#if TARGET_PLUGIN_IS_INSTRUMENT
-//	TARGET_API_BASE_CLASS(inInstance, UInt32 inNumInputs, UInt32 inNumOutputs, UInt32 inNumGroups = 0), 
-	TARGET_API_BASE_CLASS(inInstance, 0, 1), 
+	TARGET_API_BASE_CLASS(inInstance, 0 /*numInputs*/, 1 /*numOutputs*/), 
 	#else
 	TARGET_API_BASE_CLASS(inInstance), 
 	#endif
@@ -253,15 +252,6 @@ void DfxPlugin::do_PostConstructor()
 	mDfxSettings = std::make_unique<DfxSettings>(PLUGIN_ID, this, settings_sizeOfExtendedData());
 #endif
 
-#if TARGET_PLUGIN_USES_DSPCORE && !defined(TARGET_API_AUDIOUNIT)
-	mDSPCores.reserve(getnumoutputs());
-	for (unsigned long ch = 0; ch < getnumoutputs(); ch++)
-	{
-		auto& dspCore = mDSPCores.emplace_back(dspCoreFactory());
-		dspCore->SetChannelNum(ch);
-	}
-#endif
-
 	dfx_PostConstructor();
 
 	DFX_RegisterIdleClient(this);
@@ -332,7 +322,17 @@ long DfxPlugin::do_initialize()
 		mAsymmetricalInputAudioBuffer.assign(getmaxframes(), 0.0f);
 	#endif
 	}
+
+#ifndef TARGET_API_AUDIOUNIT
+	// regenerate the DSP core instances whenever the audio I/O format changes
+	mDSPCores.clear();
+	mDSPCores.reserve(getnumoutputs());
+	for (unsigned long ch = 0; ch < getnumoutputs(); ch++)
+	{
+		mDSPCores.emplace_back(dspCoreFactory(ch));
+	}
 #endif
+#endif  // TARGET_PLUGIN_USES_DSPCORE
 
 	std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), 
 				  [sr = getsamplerate()](auto& value){ value.first->setSampleRate(sr); });
@@ -363,6 +363,7 @@ void DfxPlugin::do_cleanup()
 	#ifdef TARGET_API_AUDIOUNIT
 	mAsymmetricalInputBufferList.Deallocate();
 	#else
+	mDSPCores = {};
 	mAsymmetricalInputAudioBuffer = {};
 	#endif
 #endif

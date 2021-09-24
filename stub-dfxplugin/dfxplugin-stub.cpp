@@ -23,7 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 This is a template for making a DfxPlugin.
 ------------------------------------------------------------------------*/
 
-// The gratiutous use of preprocessor defines is to designate code that 
+// The gratuitous use of preprocessor defines is to designate code that 
 // you would use depending on which features or APIs you are supporting.  
 // You wouldn't use all of that stuff in a single plugin.  
 // In this example, it's just in order to show you all of the options.
@@ -95,15 +95,6 @@ DfxStub::DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// create the other built-in presets, if any
 	// (optional, and not a virtual method, so call it whatever you want)
 	initPresets();
-
-
-// API-specific stuff below
-#ifdef TARGET_API_VST
-	#if TARGET_PLUGIN_HAS_GUI
-	editor = new DfxStubEditor(this);
-	#endif
-#endif
-
 }
 
 void DfxStub::dfx_PostConstructor()
@@ -117,12 +108,6 @@ void DfxStub::dfx_PostConstructor()
 	getsettings().setAllowPitchbendEvents(true);
 	getsettings().setAllowNoteEvents(true);
 #endif
-}
-
-//-------------------------------------------------------------------------
-// do final cleanup here
-DfxStub::~DfxStub()
-{
 }
 
 //-------------------------------------------------------------------------
@@ -154,13 +139,11 @@ void DfxStub::cleanup()
 DfxStubDSP::DfxStubDSP(DfxPlugin* inInstance)
 :	DfxPluginCore(inInstance)
 {
-}
+	auto const bufferSize = std::lround(getsamplerate() * kBufferSize_Seconds);
 
-//-------------------------------------------------------------------------
-DfxStubDSP::~DfxStubDSP()
-{
-	// you must call here because ~DfxPluginCore can't do this for us
-	releasebuffers();
+	// if the sampling rate (and therefore the buffer size) has changed, 
+	// then delete and reallocate the buffers according to the sampling rate
+	buffer.assign(bufferSize, 0.0f);
 }
 
 #endif
@@ -181,8 +164,7 @@ void DfxStubDSP::reset()
 	// reset this buffer position tracker to zero
 	bufferpos = 0;
 
-	// you can confidently access and use any of these values here
-	double audio_sampling_rate = getsamplerate();
+	std::fill(buffer.begin(), buffer.end(), 0.0f);
 }
 
 #else
@@ -198,28 +180,13 @@ void DfxStub::reset()
 }
 #endif
 
+#if !TARGET_PLUGIN_USES_DSPCORE
 //-------------------------------------------------------------------------
 // allocate your audio buffers here
 // this will be called when necessary, handled by DfxPlugin
 // return true on success, false on failure
-// note that createbuffers may be called repeatedly (with no 
-// releasebuffers called in between)
 // createbuffers is called whenever the audio stream format changes 
-// (sampling rate or number of channels), so it is expected that 
-// any implementation will check to see whether or not the 
-// buffers are already allocated and whether or not they need to 
-// be destroyed and reallocated in a different size
-#if TARGET_PLUGIN_USES_DSPCORE
-void DfxStubDSP::createbuffers()
-{
-	auto const bufferSize = std::lround(getsamplerate() * kBufferSize_Seconds);
-
-	// if the sampling rate (and therefore the buffer size) has changed, 
-	// then delete and reallocate the buffers according to the sampling rate
-	buffer.assign(bufferSize, 0.0f);
-}
-
-#else
+// (sampling rate or number of channels)
 void DfxStub::createbuffers()
 {
 	auto const bufferSize = std::lround(getsamplerate() * kBufferSize_Seconds);
@@ -238,29 +205,14 @@ void DfxStub::createbuffers()
 //-------------------------------------------------------------------------
 // deallocate your audio buffers here
 // this will be called when necessary, handled by DfxPlugin
-#if TARGET_PLUGIN_USES_DSPCORE
-void DfxStubDSP::releasebuffers()
-{
-	buffer = {};
-}
-
-#else
 void DfxStub::releasebuffers()
 {
 	buffers = {};
 }
-#endif
 
 //-------------------------------------------------------------------------
 // initialize the values in your audio buffers here
 // this will be called when necessary, handled by DfxPlugin
-#if TARGET_PLUGIN_USES_DSPCORE
-void DfxStubDSP::clearbuffers()
-{
-	std::fill(buffer.begin(), buffer.end(), 0.0f);
-}
-
-#else
 void DfxStub::clearbuffers()
 {
 	for (auto& buffer : buffers)
@@ -268,7 +220,7 @@ void DfxStub::clearbuffers()
 		std::fill(buffer.begin(), buffer.end(), 0.0f);
 	}
 }
-#endif
+#endif  // !TARGET_PLUGIN_USES_DSPCORE
 
 
 

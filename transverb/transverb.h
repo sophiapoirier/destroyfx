@@ -39,9 +39,6 @@ public:
   void process(float const* inAudio, float* outAudio, unsigned long inNumFrames) override;
   void reset() override;
   void processparameters() override;
-  void createbuffers() override;
-  void clearbuffers() override;
-  void releasebuffers() override;
 
 private:
   static constexpr long kAudioSmoothingDur_samples = 42;
@@ -69,7 +66,7 @@ private:
 
   std::vector<float> buf1;
   std::vector<float> buf2;
-  int MAXBUF = 0;  // the size of the audio buffer (dependent on sampling rate)
+  int const MAXBUF;  // the size of the audio buffer (dependent on sampling rate)
 
   dfx::IIRFilter filter1, filter2;
   bool speed1hasChanged = false, speed2hasChanged = false;

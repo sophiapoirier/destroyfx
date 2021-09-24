@@ -94,7 +94,11 @@ void Transverb::dfx_PostConstructor() {
 
 TransverbDSP::TransverbDSP(DfxPlugin* inDfxPlugin)
   : DfxPluginCore(inDfxPlugin),
+    MAXBUF(static_cast<int>(getparametermax_f(kBsize) * 0.001 * getsamplerate())),
     firCoefficientsWindow(dfx::FIRFilter::generateKaiserWindow(kNumFIRTaps, 60.0f)) {
+
+  buf1.assign(MAXBUF, 0.0f);
+  buf2.assign(MAXBUF, 0.0f);
 
   firCoefficients1.assign(kNumFIRTaps, 0.0f);
   firCoefficients2.assign(kNumFIRTaps, 0.0f);
@@ -119,27 +123,9 @@ void TransverbDSP::reset() {
 
   filter1.setSampleRate(getsamplerate());
   filter2.setSampleRate(getsamplerate());
-}
-
-void TransverbDSP::createbuffers() {
-
-  MAXBUF = (int) (getparametermax_f(kBsize) * 0.001 * getsamplerate());
-
-  buf1.assign(MAXBUF, 0.0f);
-  buf2.assign(MAXBUF, 0.0f);
-}
-
-void TransverbDSP::clearbuffers() {
 
   std::fill(buf1.begin(), buf1.end(), 0.0f);
   std::fill(buf2.begin(), buf2.end(), 0.0f);
-}
-
-void TransverbDSP::releasebuffers() {
-
-  MAXBUF = 0;
-  buf1 = {};
-  buf2 = {};
 }
 
 
