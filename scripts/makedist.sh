@@ -88,7 +88,7 @@ productbuild --distribution "${DISTRIBUTIONFILE_AMENDED}" --resources "${DFXDIR}
 OUTPUTFILE_FULLNAME="${OUTPUTFILE}".dmg
 echo
 echo "   creating output file  "$OUTPUTFILE_FULLNAME
-hdiutil create -ov -srcfolder "${IMAGEDIR}" -volname "dfx ${PLUGINNAME}" -format UDBZ -imagekey zlib-level=9 "${OUTPUTFILE}"
+hdiutil create -ov -srcfolder "${IMAGEDIR}" -volname "dfx ${PLUGINNAME}" -format UDBZ -imagekey zlib-level=9 -fs HFS+ "${OUTPUTFILE}"
 
 echo
 echo "   removing temp directory  "$TEMPDIR
