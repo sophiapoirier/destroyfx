@@ -363,7 +363,7 @@ void DfxPlugin::do_cleanup()
 	#ifdef TARGET_API_AUDIOUNIT
 	mAsymmetricalInputBufferList.Deallocate();
 	#else
-	mDSPCores = {};
+	mDSPCores.clear();
 	mAsymmetricalInputAudioBuffer = {};
 	#endif
 #endif
