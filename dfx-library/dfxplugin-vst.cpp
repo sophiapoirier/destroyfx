@@ -334,7 +334,16 @@ VstInt32 DfxPlugin::getChunk(void** data, bool isPreset)
 VstInt32 DfxPlugin::setChunk(void* data, VstInt32 byteSize, bool isPreset)
 {
 	assert(byteSize >= 0);
-	return mDfxSettings->restore(data, static_cast<size_t>(byteSize), isPreset);
+	auto const result = mDfxSettings->restore(data, static_cast<size_t>(byteSize), isPreset);
+	if (!isPreset)
+	{
+		// some hosts (like FL Studio) only load the active program from a bank after setChunk
+		// if it differs from the current program, and others (like REAPER) load it before setChunk,
+		// so explicitly apply parameters from at least the current program after loading a bank
+		// (the host can always still load a different program afterwards)
+		setProgram(getProgram());
+	}
+	return result;
 }
 
 #endif
@@ -511,6 +520,7 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 		}
 		else
 		{
+			assert(mInputOutOfPlaceAudioBuffers.front().size() >= static_cast<size_t>(sampleFrames));
 			std::copy_n(inputs[ch], dfx::math::ToIndex(sampleFrames), mInputOutOfPlaceAudioBuffers[ch].data());
 		}
 	}
@@ -532,6 +542,7 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 			{
 				if (ch == 0)
 				{
+					assert(mAsymmetricalInputAudioBuffer.size() >= static_cast<size_t>(sampleFrames));
 					std::copy_n(mInputAudioStreams[ch], sampleFrames, mAsymmetricalInputAudioBuffer.data());
 				}
 				inputAudio = mAsymmetricalInputAudioBuffer.data();
