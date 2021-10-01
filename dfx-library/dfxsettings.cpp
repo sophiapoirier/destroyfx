@@ -118,7 +118,8 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 	// and a few pointers to elements within that data, just for ease of use
 	auto const firstSharedParameterID = reinterpret_cast<int32_t*>(data.data() + sizeof(SettingsInfo));
 	auto const firstSharedPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(firstSharedParameterID) + mSizeOfParameterIDs);
-	auto const firstSharedParameterAssignment = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<std::byte*>(firstSharedPreset) + (mSizeOfPreset * mNumPresets));
+	auto const savePresetCount = static_cast<size_t>(inIsPreset ? 1 : mNumPresets);
+	auto const firstSharedParameterAssignment = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<std::byte*>(firstSharedPreset) + (mSizeOfPreset * savePresetCount));
 
 	// first store the special chunk infos
 	sharedChunk->mMagic = mSettingsInfo.mMagic;
@@ -141,40 +142,33 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 	if (inIsPreset)
 	{
 		dfx::StrLCpy(firstSharedPreset->mName, mPlugin->getpresetname(mPlugin->getcurrentpresetnum()), std::size(firstSharedPreset->mName));
-		for (long i = 0; i < mNumParameters; i++)
+		for (unsigned long i = 0; i < mNumParameters; i++)
 		{
 			firstSharedPreset->mParameterValues[i] = mPlugin->getparameter_f(i);
-		}
-
-		auto const tempSharedParameterAssignment = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<std::byte*>(firstSharedPreset) + mSizeOfPreset);
-		// store the parameters' MIDI event assignments
-		for (long i = 0; i < mNumParameters; i++)
-		{
-			tempSharedParameterAssignment[i] = mParameterAssignments[i];
 		}
 	}
 	// otherwise store the entire bank of presets and the MIDI event assignments
 	else
 	{
 		auto tempSharedPresets = firstSharedPreset;
-		for (long j = 0; j < mNumPresets; j++)
+		for (long j = 0; j < static_cast<long>(mNumPresets); j++)
 		{
 			// copy the preset name to the chunk
 			dfx::StrLCpy(tempSharedPresets->mName, mPlugin->getpresetname(j), std::size(tempSharedPresets->mName));
 			// copy all of the parameters for this preset to the chunk
-			for (long i = 0; i < mNumParameters; i++)
+			for (unsigned long i = 0; i < mNumParameters; i++)
 			{
 				tempSharedPresets->mParameterValues[i] = mPlugin->getpresetparameter_f(j, i);
 			}
 			// point to the next preset in the data array for the host
 			tempSharedPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(tempSharedPresets) + mSizeOfPreset);
 		}
+	}
 
-		// store the parameters' MIDI event assignments
-		for (long i = 0; i < mNumParameters; i++)
-		{
-			firstSharedParameterAssignment[i] = mParameterAssignments[i];
-		}
+	// store the parameters' MIDI event assignments
+	for (unsigned long i = 0; i < mNumParameters; i++)
+	{
+		firstSharedParameterAssignment[i] = mParameterAssignments[i];
 	}
 
 	// reverse the order of bytes in the data being sent to the host, if necessary
@@ -251,7 +245,7 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 
 	// figure out how many presets we should try to load 
 	// if the incoming chunk doesn't match what we're expecting
-	long const copyPresets = inIsPreset ? 1 : std::min(static_cast<long>(numStoredPresets), mNumPresets);
+	auto const copyPresets = inIsPreset ? 1UL : std::min(static_cast<unsigned long>(numStoredPresets), mNumPresets);
 	// figure out how much of the dfx::ParameterAssignment structure we can import
 	auto const copyParameterAssignmentSize = std::min(newSettingsInfo->mStoredParameterAssignmentSize, mSettingsInfo.mStoredParameterAssignmentSize);
 
@@ -351,7 +345,7 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 		}
 	#endif
 		// copy all of the parameters that we can for this preset from the chunk
-		for (long i = 0; i < static_cast<long>(paramMap.size()); i++)
+		for (size_t i = 0; i < paramMap.size(); i++)
 		{
 			auto const mappedTag = paramMap[i];
 			if (mappedTag != dfx::kParameterID_Invalid)
@@ -380,7 +374,7 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 	{
 		// we're loading an entire bank of presets plus the MIDI event assignments, 
 		// so cycle through all of the presets and load them up, as many as we can
-		for (long j = 0; j < copyPresets; j++)
+		for (unsigned long j = 0; j < copyPresets; j++)
 		{
 			// copy the preset name from the chunk
 			mPlugin->setpresetname(j, newPreset->mName[0] ? newPreset->mName : "(unnamed)");
@@ -392,7 +386,7 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 			}
 		#endif
 			// copy all of the parameters that we can for this preset from the chunk
-			for (long i = 0; i < static_cast<long>(paramMap.size()); i++)
+			for (size_t i = 0; i < paramMap.size(); i++)
 			{
 				auto const mappedTag = paramMap[i];
 				if (mappedTag != dfx::kParameterID_Invalid)
@@ -426,26 +420,16 @@ if (!(oldVST && inIsPreset))
 	clearAssignments();
 	// then point to the last chunk data element, the MIDI event assignment array
 	// (offset by the number of stored presets that were skipped, if any)
-	dfx::ParameterAssignment* newParameterAssignments = nullptr;
-//	if (inIsPreset)
-	{
-//		newParameterAssignments = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<std::byte*>(newPreset) + sizeofStoredPreset);
-	}
-//	else
-	{
-		newParameterAssignments = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<std::byte*>(newPreset) + 
-								  ((numStoredPresets - copyPresets) * sizeofStoredPreset));
-	}
+	auto const newParameterAssignments = reinterpret_cast<std::byte*>(newPreset) + ((numStoredPresets - copyPresets) * sizeofStoredPreset);
 	// and load up as many of them as we can
-	for (long i = 0; i < mNumParameters; i++)
+	for (size_t i = 0; i < mNumParameters; i++)
 	{
 		auto const mappedTag = paramMap[i];
 		if (mappedTag != dfx::kParameterID_Invalid)
 		{
-			memcpy(mParameterAssignments.data() + i, 
-				   reinterpret_cast<std::byte*>(newParameterAssignments) + (mappedTag * newSettingsInfo->mStoredParameterAssignmentSize), 
+			memcpy(&(mParameterAssignments[i]), 
+				   newParameterAssignments + (mappedTag * newSettingsInfo->mStoredParameterAssignmentSize), 
 				   copyParameterAssignmentSize);
-//			mParameterAssignments[i] = newParameterAssignments[mappedTag];
 		}
 	}
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
@@ -517,8 +501,6 @@ void blah(long long x)
 		dfx::ReverseBytes(numStoredPresets);
 		dfx::ReverseBytes(storedVersion);
 	}
-	assert(numStoredParameters >= 0);
-	assert(numStoredPresets >= 0);
 //	if (inIsPreset)
 //	{
 //		numStoredPresets = 1;
@@ -542,7 +524,7 @@ void blah(long long x)
 		debugAlertCorruptData("parameter IDs", sizeof(*dataParameterIDs) * numStoredParameters, inDataSize);
 		return false;
 	}
-	dfx::ReverseBytes(dataParameterIDs, static_cast<size_t>(numStoredParameters));
+	dfx::ReverseBytes(dataParameterIDs, numStoredParameters);
 
 	// reverse the order of bytes for each parameter value, 
 	// but no need to mess with the preset names since they are char arrays
@@ -563,9 +545,9 @@ void blah(long long x)
 		debugAlertCorruptData("presets", sizeofStoredPreset * numStoredPresets, inDataSize);
 		return false;
 	}
-	for (long i = 0; i < numStoredPresets; i++)
+	for (uint32_t i = 0; i < numStoredPresets; i++)
 	{
-		dfx::ReverseBytes(dataPresets->mParameterValues, static_cast<size_t>(numStoredParameters));  //XXX potential floating point machine error?
+		dfx::ReverseBytes(dataPresets->mParameterValues, numStoredParameters);  //XXX potential floating point machine error?
 		// point to the next preset in the data array
 		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataPresets) + sizeofStoredPreset);
 	}
@@ -588,7 +570,7 @@ if (!(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset))
 		debugAlertCorruptData("parameter assignments", sizeof(*dataParameterAssignments) * numStoredParameters, inDataSize);
 		return false;
 	}
-	for (long i = 0; i < numStoredParameters; i++)
+	for (uint32_t i = 0; i < numStoredParameters; i++)
 	{
 		auto& pa = dataParameterAssignments[i];
 		dfx::ReverseBytes(pa.mEventType);
@@ -738,7 +720,7 @@ bool DfxSettings::saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDicti
 		auto const assignmentsCFArray = dfx::MakeUniqueCFType(CFArrayCreateMutable(kCFAllocatorDefault, mNumParameters, &kCFTypeArrayCallBacks));
 		if (assignmentsCFArray)
 		{
-			for (long i = 0; i < mNumParameters; i++)
+			for (unsigned long i = 0; i < mNumParameters; i++)
 			{
 				auto const assignmentCFDictionary = dfx::MakeUniqueCFType(CFDictionaryCreateMutable(kCFAllocatorDefault, 10, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
 				if (assignmentCFDictionary)
@@ -1037,7 +1019,7 @@ void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, long
 
 	// search for parameters that have this MIDI event assigned to them and, 
 	// if any are found, automate them with the event message's value
-	for (long tag = 0; tag < mNumParameters; tag++)
+	for (unsigned long tag = 0; tag < mNumParameters; tag++)
 	{
 		auto const& pa = mParameterAssignments.at(tag);
 
@@ -1149,7 +1131,7 @@ void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, long
 // clear all parameter assignments from the the CCs
 void DfxSettings::clearAssignments()
 {
-	for (long i = 0; i < mNumParameters; i++)
+	for (long i = 0; i < static_cast<long>(mNumParameters); i++)
 	{
 		unassignParam(i);
 	}
@@ -1182,7 +1164,7 @@ void DfxSettings::assignParam(long inParamTag, dfx::MidiEventType inEventType, l
 	// parameter assignment(s) if using stealing
 	if (mStealAssignments)
 	{
-		for (long i = 0; i < mNumParameters; i++)
+		for (unsigned long i = 0; i < mNumParameters; i++)
 		{
 			auto const& pa = mParameterAssignments.at(i);
 			// skip this parameter if the event type doesn't match
@@ -1406,17 +1388,10 @@ long DfxSettings::getParameterAssignmentNum(long inParamTag) const
 }
 
 //-----------------------------------------------------------------------------
-// given a parameter ID, find the tag (index) for that parameter in a table of 
-// parameter IDs (probably our own table, unless a pointer to one was provided)
-long DfxSettings::getParameterTagFromID(long inParamID, long inNumSearchIDs, int32_t const* inSearchIDs) const
+// given a parameter ID, find the tag (index) for that parameter in a table of parameter IDs
+long DfxSettings::getParameterTagFromID(long inParamID, size_t inNumSearchIDs, int32_t const* inSearchIDs)
 {
-	// if nothing was passed for the search table, 
-	// then assume that we're searching our internal table
-	if (!inSearchIDs)
-	{
-		inSearchIDs = mParameterIDs.data();
-		inNumSearchIDs = mNumParameters;
-	}
+	assert(inSearchIDs || (inNumSearchIDs == 0));
 
 	// search for the ID in the table that matches the requested ID
 	for (long i = 0; i < inNumSearchIDs; i++)
@@ -1430,6 +1405,13 @@ long DfxSettings::getParameterTagFromID(long inParamID, long inNumSearchIDs, int
 
 	// if nothing was found, then return the error ID
 	return dfx::kParameterID_Invalid;
+}
+
+//-----------------------------------------------------------------------------
+// search using the internal table
+long DfxSettings::getParameterTagFromID(long inParamID) const
+{
+	return getParameterTagFromID(inParamID, mParameterIDs.size(), mParameterIDs.data());
 }
 
 

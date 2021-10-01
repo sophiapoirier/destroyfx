@@ -217,7 +217,6 @@ public:
 	{
 		return (paramTagIsValid(inParamTag)) ? mParameterIDs[inParamTag] : 0;
 	}
-	long getParameterTagFromID(long inParamID, long inNumSearchIDs = 0, int32_t const* inSearchIDs = nullptr) const;
 
 
 	// - - - - - - - - - optional settings - - - - - - - - -
@@ -362,9 +361,9 @@ protected:
 		// will store in the settings data
 		uint32_t mStoredHeaderSize = 0;
 		// the number of parameters that the plugin will store in the settings data
-		int32_t mNumStoredParameters = 0;
+		uint32_t mNumStoredParameters = 0;
 		// the number of presets that the plugin will store in the settings data
-		int32_t mNumStoredPresets = 0;
+		uint32_t mNumStoredPresets = 0;
 		// the size (in bytes) of each parameter assignment struct 
 		// that the plugin will store in the settings data
 		uint32_t mStoredParameterAssignmentSize = 0;
@@ -399,8 +398,12 @@ protected:
 	// a simple but handy check to see if a parameter tag is valid
 	bool paramTagIsValid(long inParamTag) const noexcept
 	{
-		return (inParamTag >= 0) && (inParamTag < mNumParameters);
+		return (inParamTag >= 0) && (static_cast<unsigned long>(inParamTag) < mNumParameters);
 	}
+
+	// TODO: C++20 use std::span
+	static long getParameterTagFromID(long inParamID, size_t inNumSearchIDs, int32_t const* inSearchIDs);
+	long getParameterTagFromID(long inParamID) const;
 
 #if TARGET_PLUGIN_USES_MIDI
 	void handleMidi_assignParam(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, unsigned long inOffsetFrames);
@@ -409,7 +412,7 @@ protected:
 
 
 	DfxPlugin* const mPlugin;
-	long const mNumParameters, mNumPresets;
+	unsigned long const mNumParameters, mNumPresets;
 
 	// size of one preset (preset name + all parameter values)
 	size_t mSizeOfPreset = 0;
