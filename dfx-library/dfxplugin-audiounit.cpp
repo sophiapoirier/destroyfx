@@ -116,10 +116,7 @@ OSStatus DfxPlugin::Initialize()
 
 #if TARGET_PLUGIN_IS_INSTRUMENT
 	// if this AU supports only specific I/O channel count configs, then check whether the current format is allowed
-	if (!ischannelcountsupported(getnuminputs(), getnumoutputs()))
-	{
-		return kAudioUnitErr_FormatNotSupported;
-	}
+	AUSDK_Require(ischannelcountsupported(getnuminputs(), getnumoutputs()), kAudioUnitErr_FormatNotSupported);
 #else
 	// call the inherited class' Initialize routine
 	status = TARGET_API_BASE_CLASS::Initialize();
@@ -1034,16 +1031,8 @@ OSStatus DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 									 AudioUnitParameterID inParameterID, 
 									 AudioUnitParameterInfo& outParameterInfo)
 {
-	// we're only handling the global scope
-	if (inScope != kAudioUnitScope_Global)
-	{
-		return kAudioUnitErr_InvalidScope;
-	}
-
-	if (!parameterisvalid(inParameterID))
-	{
-		return kAudioUnitErr_InvalidParameter;
-	}
+	AUSDK_Require(inScope == kAudioUnitScope_Global, kAudioUnitErr_InvalidScope);
+	AUSDK_Require(parameterisvalid(inParameterID), kAudioUnitErr_InvalidParameter);
 
 	// then make sure to only copy as much as the ParameterInfo name C string can hold
 	strlcpy(outParameterInfo.name, getparametername(inParameterID).c_str(), std::size(outParameterInfo.name));
@@ -1231,16 +1220,8 @@ OSStatus DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 OSStatus DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope, AudioUnitParameterID inParameterID,  
 											 CFArrayRef* outStrings)
 {
-	// we're only handling the global scope
-	if (inScope != kAudioUnitScope_Global)
-	{
-		return kAudioUnitErr_InvalidScope;
-	}
-
-	if (!parameterisvalid(inParameterID))
-	{
-		return kAudioUnitErr_InvalidParameter;
-	}
+	AUSDK_Require(inScope == kAudioUnitScope_Global, kAudioUnitErr_InvalidScope);
+	AUSDK_Require(parameterisvalid(inParameterID), kAudioUnitErr_InvalidParameter);
 
 	if (getparameterusevaluestrings(inParameterID))
 	{
@@ -1262,10 +1243,7 @@ OSStatus DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope, AudioUnitPa
 		{
 			auto const paramValueString = getparametervaluecfstring(inParameterID, i);
 			// if we don't actually have strings set, exit with an error
-			if (!paramValueString)
-			{
-				return kAudioUnitErr_InvalidPropertyValue;
-			}
+			AUSDK_Require(paramValueString != nullptr, kAudioUnitErr_InvalidPropertyValue);
 			CFArrayAppendValue(array.get(), paramValueString);
 		}
 		*outStrings = array.release();
@@ -1279,24 +1257,17 @@ OSStatus DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope, AudioUnitPa
 OSStatus DfxPlugin::CopyClumpName(AudioUnitScope inScope, UInt32 inClumpID, 
 								  UInt32 inDesiredNameLength, CFStringRef* outClumpName)
 {
+	*outClumpName = nullptr;
 	if (inClumpID < kBaseClumpID)
 	{
 		return TARGET_API_BASE_CLASS::CopyClumpName(inScope, inClumpID, inDesiredNameLength, outClumpName);
 	}
-	if (inScope != kAudioUnitScope_Global)
-	{
-		return kAudioUnitErr_InvalidScope;
-	}
+	AUSDK_Require(inScope == kAudioUnitScope_Global, kAudioUnitErr_InvalidScope);
 
-	try
-	{
-		*outClumpName = CFStringCreateWithCString(kCFAllocatorDefault, mParameterGroups.at(inClumpID - kBaseClumpID).first.c_str(), DfxParam::kDefaultCStringEncoding);
-		return noErr;
-	}
-	catch (...)
-	{
-		return kAudioUnitErr_InvalidPropertyValue;
-	}
+	auto const clumpIndex = inClumpID - kBaseClumpID;
+	AUSDK_Require(clumpIndex < mParameterGroups.size(), kAudioUnitErr_InvalidPropertyValue);
+	*outClumpName = CFStringCreateWithCString(kCFAllocatorDefault, mParameterGroups[clumpIndex].first.c_str(), DfxParam::kDefaultCStringEncoding);
+	return noErr;
 }
 
 //-----------------------------------------------------------------------------
@@ -1304,18 +1275,9 @@ OSStatus DfxPlugin::SetParameter(AudioUnitParameterID inParameterID,
 								 AudioUnitScope inScope, AudioUnitElement inElement, 
 								 Float32 inValue, UInt32 /*inBufferOffsetInFrames*/)
 {
-	if (inScope != kAudioUnitScope_Global)
-	{
-		return kAudioUnitErr_InvalidScope;
-	}
-	if (inElement != 0)
-	{
-		return kAudioUnitErr_InvalidElement;
-	}
-	if (!parameterisvalid(inParameterID))
-	{
-		return kAudioUnitErr_InvalidParameter;
-	}
+	AUSDK_Require(inScope == kAudioUnitScope_Global, kAudioUnitErr_InvalidScope);
+	AUSDK_Require(inElement == 0, kAudioUnitErr_InvalidElement);
+	AUSDK_Require(parameterisvalid(inParameterID), kAudioUnitErr_InvalidParameter);
 
 	setparameter_f(inParameterID, inValue);
 	return noErr;
@@ -1335,20 +1297,17 @@ OSStatus DfxPlugin::SetParameter(AudioUnitParameterID inParameterID,
 OSStatus DfxPlugin::GetPresets(CFArrayRef* outData) const
 {
 	// figure out how many valid (loaded) presets we actually have...
-	long outNumPresets = 0;
+	long validNumPresets = 0;
 	for (long i = 0; i < getnumpresets(); i++)
 	{
 //		if (presetnameisvalid(i))
 		if (!mPresets[i].getname().empty())
 		{
-			outNumPresets++;
+			validNumPresets++;
 		}
 	}
-	if (outNumPresets <= 0)  // woops, looks like we don't actually have any presets
-	{
-//		return kAudioUnitErr_PropertyNotInUse;
-		return kAudioUnitErr_InvalidProperty;
-	}
+	// whoops, looks like we don't actually have any presets
+	AUSDK_Require(validNumPresets > 0, kAudioUnitErr_InvalidProperty);//kAudioUnitErr_PropertyNotInUse?
 
 	// this is just to say that the property is supported (GetPropertyInfo needs this)
 	if (!outData)
@@ -1357,8 +1316,8 @@ OSStatus DfxPlugin::GetPresets(CFArrayRef* outData) const
 	}
 
 	// allocate a mutable array large enough to hold them all
-	auto const outArray = CFArrayCreateMutable(kCFAllocatorDefault, outNumPresets, &kCFAUPresetArrayCallBacks);
-	if (!outArray)
+	auto const presetsArray = CFArrayCreateMutable(kCFAllocatorDefault, validNumPresets, &kCFAUPresetArrayCallBacks);
+	if (!presetsArray)
 	{
 		*outData = nullptr;
 		return coreFoundationUnknownErr;
@@ -1373,12 +1332,12 @@ OSStatus DfxPlugin::GetPresets(CFArrayRef* outData) const
 			if (aupreset)
 			{
 				// insert the AUPreset into the output array
-				CFArrayAppendValue(outArray, aupreset.get());
+				CFArrayAppendValue(presetsArray, aupreset.get());
 			}
 		}
 	}
 
-	*outData = reinterpret_cast<CFArrayRef>(outArray);
+	*outData = reinterpret_cast<CFArrayRef>(presetsArray);
 
 	return noErr;
 }
@@ -1387,24 +1346,15 @@ OSStatus DfxPlugin::GetPresets(CFArrayRef* outData) const
 // this is called as a request to load a preset
 OSStatus DfxPlugin::NewFactoryPresetSet(AUPreset const& inNewFactoryPreset)
 {
-	long newNumber = inNewFactoryPreset.presetNumber;
+	long const newNumber = inNewFactoryPreset.presetNumber;
 
-	if (!presetisvalid(newNumber))
-	{
-		return kAudioUnitErr_InvalidPropertyValue;
-	}
+	AUSDK_Require(presetisvalid(newNumber), kAudioUnitErr_InvalidPropertyValue);
 	// for AU, we are using invalid preset names as a way of saying "not a real preset," 
 	// even though it might be a valid (allocated) preset number
-	if (!presetnameisvalid(newNumber))
-	{
-		return kAudioUnitErr_InvalidPropertyValue;
-	}
+	AUSDK_Require(presetnameisvalid(newNumber), kAudioUnitErr_InvalidPropertyValue);
 
 	// try to load the preset
-	if (!loadpreset(newNumber))
-	{
-		return kAudioUnitErr_InvalidPropertyValue;
-	}
+	AUSDK_Require(loadpreset(newNumber), kAudioUnitErr_InvalidPropertyValue);
 
 	return noErr;
 }
@@ -1419,11 +1369,7 @@ OSStatus DfxPlugin::NewFactoryPresetSet(AUPreset const& inNewFactoryPreset)
 // stores the values of all parameters values, state info, etc. into a CFPropertyListRef
 OSStatus DfxPlugin::SaveState(CFPropertyListRef* outData)
 {
-	auto const status = TARGET_API_BASE_CLASS::SaveState(outData);
-	if (status != noErr)
-	{
-		return status;
-	}
+	AUSDK_Require_noerr(TARGET_API_BASE_CLASS::SaveState(outData));
 
 #if TARGET_PLUGIN_USES_MIDI
 	// fetch our special data
@@ -1449,12 +1395,7 @@ OSStatus DfxPlugin::SaveState(CFPropertyListRef* outData)
 // restores all parameter values, state info, etc. from the CFPropertyListRef
 OSStatus DfxPlugin::RestoreState(CFPropertyListRef inData)
 {
-	auto const status = TARGET_API_BASE_CLASS::RestoreState(inData);
-	// bail if the base implementation of RestoreState failed
-	if (status != noErr)
-	{
-		return status;
-	}
+	AUSDK_Require_noerr(TARGET_API_BASE_CLASS::RestoreState(inData));
 
 #if TARGET_PLUGIN_USES_MIDI
 	// look for a data section keyed with our custom data key
@@ -1482,11 +1423,7 @@ OSStatus DfxPlugin::RestoreState(CFPropertyListRef inData)
 			auto const dfxDataSize = static_cast<size_t>(CFDataGetLength(cfData));
 			// try to restore the saved settings data
 			success = mDfxSettings->restore(dfxData, dfxDataSize, true);
-
-//			if (!success)
-			{
-//				return kAudioUnitErr_InvalidPropertyValue;
-			}
+			//AUSDK_Require(success, kAudioUnitErr_InvalidPropertyValue);
 		}
 	}
 	if (!success)
@@ -1564,12 +1501,8 @@ OSStatus DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitElement 
 					return kAudioUnitErr_InvalidScope;
 			}
 		}
-		// if the incoming channel count can't possibly work in 
-		// any of the allowed channel configs, return an error
-		if (!foundMatch)
-		{
-			return kAudioUnitErr_FormatNotSupported;
-		}
+		// fail if the incoming channel count cannot work in any of the allowed channel configs
+		AUSDK_Require(foundMatch, kAudioUnitErr_FormatNotSupported);
 	}
 
 	// use the inherited base class implementation
@@ -1605,8 +1538,6 @@ void DfxPlugin::UpdateInPlaceProcessingState()
 OSStatus DfxPlugin::Render(AudioUnitRenderActionFlags& ioActionFlags, 
 						   AudioTimeStamp const& inTimeStamp, UInt32 inFramesToProcess)
 {
-	OSStatus status = noErr;
-
 	// do any pre-DSP prep
 	preprocessaudio();
 
@@ -1622,16 +1553,9 @@ OSStatus DfxPlugin::Render(AudioUnitRenderActionFlags& ioActionFlags,
 	// do stuff to prepare the audio inputs, if we use any
 	if (getnuminputs() > 0)
 	{
-		if (!HasInput(0))
-		{
-			return kAudioUnitErr_NoConnection;
-		}
+		AUSDK_Require(HasInput(0), kAudioUnitErr_NoConnection);
 		auto& theInput = Input(0);
-		status = theInput.PullInput(ioActionFlags, inTimeStamp, AudioUnitElement(0), inFramesToProcess);
-		if (status != noErr)
-		{
-			return status;
-		}
+		AUSDK_Require_noerr(theInput.PullInput(ioActionFlags, inTimeStamp, AudioUnitElement(0), inFramesToProcess));
 
 		auto const numInputBuffers = theInput.GetBufferList().mNumberBuffers;
 		// set up our more convenient audio stream pointers
@@ -1650,7 +1574,7 @@ OSStatus DfxPlugin::Render(AudioUnitRenderActionFlags& ioActionFlags,
 	// do any post-DSP stuff
 	postprocessaudio();
 
-	return status;
+	return noErr;
 }
 
 #else

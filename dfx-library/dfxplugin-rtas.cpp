@@ -837,8 +837,8 @@ void DfxPlugin::SetViewOrigin(Point anOrigin)
 
 #ifndef TARGET_API_AUDIOSUITE
 
-extern CEffectProcess* DFX_NewEffectProcess();
-extern CEffectProcess* DFX_NewEffectProcessAS();
+extern CEffectProcess* DFX_NewEffectProcess() noexcept;
+extern CEffectProcess* DFX_NewEffectProcessAS() noexcept;
 
 #if PT_SDK_VERSION < 0x08000000
 enum

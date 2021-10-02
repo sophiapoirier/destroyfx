@@ -1424,17 +1424,15 @@ private:
 	#ifdef TARGET_API_AUDIOSUITE
 		#define DFX_NewEffectProcess	DFX_NewEffectProcessAS
 	#endif
-	#define DFX_EFFECT_ENTRY(PluginClass)						\
-		[[nodiscard]] CEffectProcess* DFX_NewEffectProcess()	\
-		{														\
-			try													\
-			{													\
-				return new PluginClass(nullptr);				\
-			}													\
-			catch (...)											\
-			{													\
-				return nullptr;									\
-			}													\
+	#define DFX_EFFECT_ENTRY(PluginClass)								\
+		[[nodiscard]] CEffectProcess* DFX_NewEffectProcess() noexcept	\
+		try																\
+		{																\
+			return new PluginClass(nullptr);							\
+		}																\
+		catch (...)														\
+		{																\
+			return nullptr;												\
 		}
 
 #endif  // TARGET_API_RTAS
@@ -1475,17 +1473,15 @@ template <class DSPCoreClass>
 #ifdef TARGET_API_VST
 template <class PluginClass>
 AudioEffect* DfxPlugin::audioEffectFactory(audioMasterCallback inAudioMaster) noexcept
+try
 {
 	static_assert(std::is_base_of_v<AudioEffect, PluginClass>);
-	try
-	{
-		auto const effect = new PluginClass(inAudioMaster);
-		effect->do_PostConstructor();
-		return effect;
-	}
-	catch (...)
-	{
-		return nullptr;
-	}
+	auto const effect = new PluginClass(inAudioMaster);
+	effect->do_PostConstructor();
+	return effect;
+}
+catch (...)
+{
+	return nullptr;
 }
 #endif  // TARGET_API_VST

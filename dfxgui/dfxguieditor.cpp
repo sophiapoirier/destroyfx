@@ -466,11 +466,7 @@ VSTGUI::SharedPointer<DGImage> DfxGuiEditor::LoadImage(std::string const& inFile
 //-----------------------------------------------------------------------------
 OSStatus DfxGuiEditor::SendAUParameterEvent(AudioUnitParameterID inParameterID, AudioUnitEventType inEventType)
 {
-	// we're not actually prepared to do anything at this point if we don't yet know which AU we are controlling
-	if (!dfxgui_GetEffectInstance())
-	{
-		return kAudioUnitErr_Uninitialized;
-	}
+	AUSDK_Require(dfxgui_GetEffectInstance(), kAudioUnitErr_Uninitialized);
 
 	AudioUnitEvent paramEvent = {};
 	paramEvent.mEventType = inEventType;
@@ -1355,10 +1351,7 @@ long DfxGuiEditor::dfxgui_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Sco
 										  size_t& outDataSize, dfx::PropertyFlags& outFlags)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	if (!dfxgui_GetEffectInstance())
-	{
-		return kAudioUnitErr_Uninitialized;
-	}
+	AUSDK_Require(dfxgui_GetEffectInstance(), kAudioUnitErr_Uninitialized);
 
 	UInt32 auDataSize {};
 	Boolean writable {};
@@ -1383,10 +1376,7 @@ long DfxGuiEditor::dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope i
 									  void* outData, size_t& ioDataSize)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	if (!dfxgui_GetEffectInstance())
-	{
-		return kAudioUnitErr_Uninitialized;
-	}
+	AUSDK_Require(dfxgui_GetEffectInstance(), kAudioUnitErr_Uninitialized);
 
 	UInt32 auDataSize = ioDataSize;
 	auto const status = AudioUnitGetProperty(dfxgui_GetEffectInstance(), inPropertyID, inScope, inItemIndex, outData, &auDataSize);
@@ -1405,10 +1395,7 @@ long DfxGuiEditor::dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope i
 									  void const* inData, size_t inDataSize)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	if (!dfxgui_GetEffectInstance())
-	{
-		return kAudioUnitErr_Uninitialized;
-	}
+	AUSDK_Require(dfxgui_GetEffectInstance(), kAudioUnitErr_Uninitialized);
 
 	return AudioUnitSetProperty(dfxgui_GetEffectInstance(), inPropertyID, inScope, inItemIndex, inData, inDataSize);
 #else
@@ -2137,19 +2124,6 @@ class SettingsDataPackage final : public VSTGUI::IDataPackage
 public:
 #if TARGET_OS_WIN32  // https://github.com/steinbergmedia/vstgui/issues/217 workaround
 	static constexpr auto kDataType = kText;
-
-	[[maybe_unused]]
-	static constexpr std::string_view kPasteTextPrefix = "[dfx-settings]";
-	[[maybe_unused]]
-	static constexpr std::string_view kPasteTextSuffix = "[/dfx-settings]";
-	// XXX: For unknown reasons on windows, the clipboard we prepare drops
-	// a character from the end of the string when pasting into some apps
-	// (notepad.exe) even though the character appears to be there. The
-	// unsatisfying workaround is to add whitespace to the end of the
-	// string, which we ignore upon paste; if it gets dropped, no harm is
-	// done.
-	[[maybe_unused]]
-	static constexpr std::string_view kPasteTextPadding = "\n\n";
 #else
 	static constexpr auto kDataType = kBinary;
 #endif
@@ -2192,7 +2166,7 @@ public:
 #if TARGET_OS_WIN32
 	static std::vector<std::byte> decode(void const* inSettingsData, VstInt32 inSettingsDataSize)
 	{
-		std::string_view inString(reinterpret_cast<char const*>(inSettingsData), inSettingsDataSize);
+		std::string_view inString(static_cast<char const*>(inSettingsData), inSettingsDataSize);
 		// validate input because VSTGUI does not (and 'text' data in clipboard could be anything)
 
 		// Strip exterior whitespace. Aside from being convenient, this
@@ -2243,6 +2217,18 @@ public:
 #endif
 
 private:
+#if TARGET_OS_WIN32
+	static constexpr std::string_view kPasteTextPrefix = "[dfx-settings]";
+	static constexpr std::string_view kPasteTextSuffix = "[/dfx-settings]";
+	// XXX: For unknown reasons on windows, the clipboard we prepare drops
+	// a character from the end of the string when pasting into some apps
+	// (notepad.exe) even though the character appears to be there. The
+	// unsatisfying workaround is to add whitespace to the end of the
+	// string, which we ignore upon paste; if it gets dropped, no harm is
+	// done.
+	static constexpr std::string_view kPasteTextPadding = "\n\n";
+#endif
+
 	static std::vector<std::byte> encode(std::byte const* inSettingsData, VstInt32 inSettingsDataSize)
 	{
 #if TARGET_OS_WIN32
@@ -2296,12 +2282,8 @@ long DfxGuiEditor::copySettings()
 #ifdef TARGET_API_AUDIOUNIT
 	CFPropertyListRef auSettingsPropertyList = nullptr;
 	size_t dataSize = sizeof(auSettingsPropertyList);
-	status = dfxgui_GetProperty(kAudioUnitProperty_ClassInfo, kAudioUnitScope_Global, 0, 
-								&auSettingsPropertyList, dataSize);
-	if (status != noErr)
-	{
-		return status;
-	}
+	AUSDK_Require_noerr(dfxgui_GetProperty(kAudioUnitProperty_ClassInfo, kAudioUnitScope_Global, 0, 
+										   &auSettingsPropertyList, dataSize));
 	if (!auSettingsPropertyList)
 	{
 		return coreFoundationUnknownErr;
