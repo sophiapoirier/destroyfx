@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "skidder.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 
 #include "dfxmath.h"
@@ -289,6 +290,8 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 	auto const numOutputs = getnumoutputs();
 	float const channelScalar = 1.0f / static_cast<float>(numOutputs);
 	auto const filterSmoothingStride = dfx::math::GetFrequencyBasedSmoothingStride(getsamplerate());
+	assert(std::all_of(mEffectualInputAudioBuffers.cbegin(), mEffectualInputAudioBuffers.cend(),
+					   [inNumFrames](auto const& buffer){ return buffer.size() >= inNumFrames; }));
 
 	auto const entryCrossoverFrequency = mCrossoverFrequency_gen;
 	mCrossover->setFrequency(getCrossoverFrequency());
@@ -335,6 +338,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 		}
 		else if (ch == 0)
 		{
+			assert(mAsymmetricalInputAudioBuffer.size() >= inNumFrames);
 			// handle the special case of mismatched input/output channel counts that we allow
 			// by repeating the mono-input to multiple (faked) input channels
 			// (copying to an intermediate input buffer in case processing in-place)

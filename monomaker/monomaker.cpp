@@ -204,6 +204,7 @@ void Monomaker::processaudio(float const* const* inAudio, float* const* outAudio
 	}
 	else
 	{
+		assert(mAsymmetricalInputAudioBuffer.size() >= inNumFrames);
 		// copy to an intermediate input buffer in case processing in-place
 		std::copy_n(inAudio[0], inNumFrames, mAsymmetricalInputAudioBuffer.data());
 		inAudioL = inAudioR = mAsymmetricalInputAudioBuffer.data();
