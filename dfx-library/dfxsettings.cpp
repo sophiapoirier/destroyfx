@@ -184,18 +184,18 @@ constexpr size_t kDfxOldPresetNameMaxLength = 32;
 // this gets called when the host wants to load settings data, 
 // like when restoring settings while opening a song, 
 // or loading a preset file
-bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPreset)
+bool DfxSettings::restore(void const* inData, size_t inDataSize, bool inIsPreset)
 {
 	// create our own copy of the data before we muck with it (e.g. reversing endianness, etc.)
-	auto const incomingData_copy = dfx::MakeUniqueMemoryBlock<void>(inBufferSize);
+	auto const incomingData_copy = dfx::MakeUniqueMemoryBlock<void>(inDataSize);
 	if (!incomingData_copy)
 	{
 		return false;
 	}
-	memcpy(incomingData_copy.get(), inData, inBufferSize);
+	memcpy(incomingData_copy.get(), inData, inDataSize);
 
 	// un-reverse the order of bytes in the received data, if necessary
-	auto const endianSuccess = correctEndian(incomingData_copy.get(), inBufferSize, true, inIsPreset);
+	auto const endianSuccess = correctEndian(incomingData_copy.get(), inDataSize, true, inIsPreset);
 	if (!endianSuccess)
 	{
 		return false;
@@ -259,22 +259,22 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 	}
 	if (inIsPreset)
 	{
-		if (inBufferSize < mSizeOfPresetChunk)
+		if (inDataSize < mSizeOfPresetChunk)
 		{
 			crisisFlags = crisisFlags | kCrisisReasonFlag_SmallerByteSize;
 		}
-		else if (inBufferSize > mSizeOfPresetChunk)
+		else if (inDataSize > mSizeOfPresetChunk)
 		{
 			crisisFlags = crisisFlags | kCrisisReasonFlag_LargerByteSize;
 		}
 	}
 	else
 	{
-		if (inBufferSize < mSizeOfChunk)
+		if (inDataSize < mSizeOfChunk)
 		{
 			crisisFlags = crisisFlags | kCrisisReasonFlag_SmallerByteSize;
 		}
-		else if (inBufferSize > mSizeOfChunk)
+		else if (inDataSize > mSizeOfChunk)
 		{
 			crisisFlags = crisisFlags | kCrisisReasonFlag_LargerByteSize;
 		}
@@ -427,17 +427,17 @@ if (!(oldVST && inIsPreset))
 #endif
 
 	// allow for the retrieval of extra data
-	mPlugin->settings_restoreExtendedData(static_cast<std::byte*>(incomingData_copy.get()) + inBufferSize - newSettingsInfo->mStoredExtendedDataSize, 
+	mPlugin->settings_restoreExtendedData(static_cast<std::byte*>(incomingData_copy.get()) + inDataSize - newSettingsInfo->mStoredExtendedDataSize, 
 										 newSettingsInfo->mStoredExtendedDataSize, newSettingsInfo->mVersion, inIsPreset);
 
 	return true;
 }
 
 //-----------------------------------------------------------------------------
-bool DfxSettings::minimalValidate(void const* inData, size_t inBufferSize) const noexcept
+bool DfxSettings::minimalValidate(void const* inData, size_t inDataSize) const noexcept
 {
 	SettingsInfo settingsInfo;
-	if (!inData || (inBufferSize < sizeof(settingsInfo)))
+	if (!inData || (inDataSize < sizeof(settingsInfo)))
 	{
 		return false;
 	}
@@ -697,7 +697,7 @@ bool DfxSettings::saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDicti
 	}
 
 	bool assignmentsFound = false;
-	for (long i = 0; i < mNumParameters; i++)
+	for (long i = 0; i < static_cast<long>(mNumParameters); i++)
 	{
 		if (getParameterAssignmentType(i) != dfx::MidiEventType::None)
 		{
@@ -870,7 +870,7 @@ void DfxSettings::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVeloci
 	}
 
 	handleMidi_assignParam(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inOffsetFrames);
-	handleMidi_automateParams(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inVelocity, inOffsetFrames, false);
+	handleMidi_automateParams(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inVelocity, inOffsetFrames, true);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -898,7 +898,7 @@ void DfxSettings::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVeloc
 	{
 		handleMidi_assignParam(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inOffsetFrames);
 	}
-	handleMidi_automateParams(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inVelocity, inOffsetFrames, true);
+	handleMidi_automateParams(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inVelocity, inOffsetFrames, false);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -911,7 +911,7 @@ void DfxSettings::handleAllNotesOff(int inMidiChannel, unsigned long inOffsetFra
 
 	for (int i = 0; i < DfxMidi::kNumNotes; i++)
 	{
-		handleMidi_automateParams(dfx::MidiEventType::Note, inMidiChannel, i, 0, inOffsetFrames, true);
+		handleMidi_automateParams(dfx::MidiEventType::Note, inMidiChannel, i, 0, inOffsetFrames, false);
 	}
 }
 
@@ -981,7 +981,7 @@ void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long in
 
 //-----------------------------------------------------------------------------------------
 // automate assigned parameters in response to a MIDI event
-void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inByte2, unsigned long inOffsetFrames, bool inIsNoteOff)
+void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inByte2, unsigned long inOffsetFrames, bool inIsNoteOn)
 {
 	float valueNormalized = static_cast<float>(inByte2) * DfxMidi::kValueScalar;
 	if (inEventType == dfx::MidiEventType::ChannelAftertouch)
@@ -1037,7 +1037,7 @@ void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, long
 				{
 					continue;
 				}
-				valueNormalized = inIsNoteOff ? 0.0f : 1.0f;
+				valueNormalized = inIsNoteOn ? 1.f : 0.f;
 			}
 			// toggle the parameter's states
 			else if (pa.mEventBehaviorFlags & dfx::kMidiEventBehaviorFlag_Toggle)
@@ -1048,7 +1048,7 @@ void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, long
 					continue;
 				}
 				// don't use note-offs in non-hold note toggle mode
-				if (inIsNoteOff)
+				if (!inIsNoteOn)
 				{
 					continue;
 				}
@@ -1315,22 +1315,19 @@ void DfxSettings::setParameterMidiLearn(bool inValue)
 //-----------------------------------------------------------------------------
 // a plugin editor should call this upon a value change of a "MIDI reset" control 
 // to clear MIDI event assignments
-void DfxSettings::setParameterMidiReset(bool inValue)
+void DfxSettings::setParameterMidiReset()
 {
-	if (inValue)
+	// if we're in MIDI learn mode and a parameter has been selected, 
+	// then erase its MIDI event assigment (if it has one)
+	if (mMidiLearn && (mLearner != kNoLearner))
 	{
-		// if we're in MIDI learn mode and a parameter has been selected, 
-		// then erase its MIDI event assigment (if it has one)
-		if (mMidiLearn && (mLearner != kNoLearner))
-		{
-			unassignParam(mLearner);
-			setLearner(kNoLearner);
-		}
-		// otherwise erase all of the MIDI event assignments
-		else
-		{
-			clearAssignments();
-		}
+		unassignParam(mLearner);
+		setLearner(kNoLearner);
+	}
+	// otherwise erase all of the MIDI event assignments
+	else
+	{
+		clearAssignments();
 	}
 }
 
@@ -1363,18 +1360,6 @@ dfx::MidiEventType DfxSettings::getParameterAssignmentType(long inParamTag) cons
 	}
 
 	return mParameterAssignments[inParamTag].mEventType;
-}
-
-//-----------------------------------------------------------------------------
-long DfxSettings::getParameterAssignmentNum(long inParamTag) const
-{
-	// if what we got is not a valid parameter index
-	if (!paramTagIsValid(inParamTag))
-	{
-		return 0;  // XXX is there a better value to return on error?
-	}
-
-	return mParameterAssignments[inParamTag].mEventNum;
 }
 
 //-----------------------------------------------------------------------------

@@ -137,8 +137,8 @@ public:
 
 	// for adding to your base plugin class methods
 	std::vector<std::byte> save(bool inIsPreset);
-	bool restore(void const* inData, size_t inBufferSize, bool inIsPreset);
-	bool minimalValidate(void const* inData, size_t inBufferSize) const noexcept;
+	bool restore(void const* inData, size_t inDataSize, bool inIsPreset);
+	bool minimalValidate(void const* inData, size_t inDataSize) const noexcept;
 
 #if TARGET_PLUGIN_USES_MIDI
 #ifdef TARGET_API_AUDIOUNIT
@@ -188,12 +188,11 @@ public:
 
 	// call these from valueChanged in the plugin editor
 	void setParameterMidiLearn(bool inValue);
-	void setParameterMidiReset(bool inValue = true);
+	void setParameterMidiReset();
 
 	// potentially useful accessors
 	dfx::ParameterAssignment getParameterAssignment(long inParamTag) const;
 	dfx::MidiEventType getParameterAssignmentType(long inParamTag) const;
-	long getParameterAssignmentNum(long inParamTag) const;
 #endif // TARGET_PLUGIN_USES_MIDI
 
 
@@ -234,7 +233,7 @@ public:
 	}
 	long getParameterID(long inParamTag) const
 	{
-		return (paramTagIsValid(inParamTag)) ? mParameterIDs[inParamTag] : 0;
+		return (paramTagIsValid(inParamTag)) ? mParameterIDs[inParamTag] : dfx::kParameterID_Invalid;
 	}
 
 
@@ -383,7 +382,7 @@ private:
 #pragma pack(pop)
 
 	// reverse the byte order of data
-	bool correctEndian(void* ioData, size_t inDataSize, bool inIsReversed, bool inIsPreset = false);
+	bool correctEndian(void* ioData, size_t inDataSize, bool inIsReversed, bool inIsPreset);
 
 	// investigates what to do when a data is received in 
 	// restore() that doesn't match what we are expecting
@@ -403,7 +402,7 @@ private:
 
 #if TARGET_PLUGIN_USES_MIDI
 	void handleMidi_assignParam(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, unsigned long inOffsetFrames);
-	void handleMidi_automateParams(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inByte2, unsigned long inOffsetFrames, bool inIsNoteOff = false);
+	void handleMidi_automateParams(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inByte2, unsigned long inOffsetFrames, bool inIsNoteOn = false);
 #endif // TARGET_PLUGIN_USES_MIDI
 
 
