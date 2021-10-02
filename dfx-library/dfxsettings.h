@@ -136,14 +136,14 @@ public:
 	// - - - - - - - - - API-connect methods - - - - - - - - -
 
 	// for adding to your base plugin class methods
-	std::vector<std::byte> save(bool inIsPreset);
-	bool restore(void const* inData, size_t inDataSize, bool inIsPreset);
-	bool minimalValidate(void const* inData, size_t inDataSize) const noexcept;
+	[[nodiscard]] std::vector<std::byte> save(bool inIsPreset);
+	[[nodiscard]] bool restore(void const* inData, size_t inDataSize, bool inIsPreset);
+	[[nodiscard]] bool minimalValidate(void const* inData, size_t inDataSize) const noexcept;
 
 #if TARGET_PLUGIN_USES_MIDI
 #ifdef TARGET_API_AUDIOUNIT
-	bool saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDictionary);
-	bool restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDictionary);
+	[[nodiscard]] bool saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDictionary);
+	[[nodiscard]] bool restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDictionary);
 #endif
 
 	// handlers for the types of MIDI events that we support
@@ -382,13 +382,14 @@ private:
 #pragma pack(pop)
 
 	// reverse the byte order of data
-	bool correctEndian(void* ioData, size_t inDataSize, bool inIsReversed, bool inIsPreset);
+	[[nodiscard]] bool correctEndian(void* ioData, size_t inDataSize, bool inIsReversed, bool inIsPreset);
 
 	// investigates what to do when a data is received in 
 	// restore() that doesn't match what we are expecting
 	CrisisError handleCrisis(CrisisReasonFlags inFlags);
 
-	void debugAlertCorruptData(char const* inDataItemName, size_t inDataItemSize, size_t inDataTotalSize);
+	void validateRange(void const* inData, size_t inDataSize, void const* inAddress, size_t inAddressSize, char const* inDataItemName) const;
+	void debugAlertCorruptData(char const* inDataItemName, size_t inDataItemSize, size_t inDataTotalSize) const;
 
 	// a simple but handy check to see if a parameter tag is valid
 	bool paramTagIsValid(long inParamTag) const noexcept

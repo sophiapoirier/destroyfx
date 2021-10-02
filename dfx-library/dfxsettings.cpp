@@ -27,11 +27,15 @@ Welcome to our settings persistance mess.
 #include "dfxsettings.h"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <numeric>
 #include <optional>
+#include <stdexcept>
 #include <type_traits>
 #include <vector>
 
@@ -123,10 +127,7 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 	sharedChunk->mGlobalBehaviorFlags = mSettingsInfo.mGlobalBehaviorFlags;
 
 	// store the parameters' IDs
-	for (size_t i = 0; i < mParameterIDs.size(); i++)
-	{
-		firstSharedParameterID[i] = mParameterIDs[i];
-	}
+	std::copy(mParameterIDs.cbegin(), mParameterIDs.cend(), firstSharedParameterID);
 
 	// store only one preset setting if inIsPreset is true
 	if (inIsPreset)
@@ -156,13 +157,11 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 	}
 
 	// store the parameters' MIDI event assignments
-	for (unsigned long i = 0; i < mNumParameters; i++)
-	{
-		firstSharedParameterAssignment[i] = mParameterAssignments[i];
-	}
+	std::copy(mParameterAssignments.cbegin(), mParameterAssignments.cend(), firstSharedParameterAssignment);
 
 	// reverse the order of bytes in the data being sent to the host, if necessary
-	correctEndian(data.data(), data.size() - mSizeOfExtendedData, false, inIsPreset);
+	[[maybe_unused]] auto const endianSuccess = correctEndian(data.data(), data.size() - mSizeOfExtendedData, false, inIsPreset);
+	assert(endianSuccess);
 	// allow for the storage of extra data
 	mPlugin->settings_saveExtendedData(data.data() + data.size() - mSizeOfExtendedData, inIsPreset);
 
@@ -184,25 +183,44 @@ constexpr size_t kDfxOldPresetNameMaxLength = 32;
 // this gets called when the host wants to load settings data, 
 // like when restoring settings while opening a song, 
 // or loading a preset file
-bool DfxSettings::restore(void const* inData, size_t inDataSize, bool inIsPreset)
+bool DfxSettings::restore(void const* inData, size_t const inDataSize, bool inIsPreset)
+try
 {
+	auto const require = [](bool condition)
+	{
+		if (!condition)
+		{
+			throw std::invalid_argument("bad data");
+		}
+	};
+
+	constexpr auto kMinimumHeaderSize = offsetof(SettingsInfo, mGlobalBehaviorFlags);
+	require(inDataSize >= kMinimumHeaderSize);
+
 	// create our own copy of the data before we muck with it (e.g. reversing endianness, etc.)
 	auto const incomingData_copy = dfx::MakeUniqueMemoryBlock<void>(inDataSize);
-	if (!incomingData_copy)
-	{
-		return false;
-	}
+	require(incomingData_copy.get());
 	memcpy(incomingData_copy.get(), inData, inDataSize);
 
 	// un-reverse the order of bytes in the received data, if necessary
-	auto const endianSuccess = correctEndian(incomingData_copy.get(), inDataSize, true, inIsPreset);
-	if (!endianSuccess)
+	require(correctEndian(incomingData_copy.get(), inDataSize, true, inIsPreset));
+
+	auto const validateRange = [&incomingData_copy, inDataSize, this](void const* address, size_t length, char const* name)
 	{
-		return false;
-	}
+		this->validateRange(incomingData_copy.get(), inDataSize, address, length, name);
+	};
 
 	// point to the start of the chunk data:  the SettingsInfo header
-	auto const newSettingsInfo = static_cast<SettingsInfo*>(incomingData_copy.get());
+	auto const newSettingsInfo = static_cast<SettingsInfo const*>(incomingData_copy.get());
+
+	// copies to make the values simpler to access (no need for newSettingsInfo-> so often)
+	auto const storedHeaderSize = newSettingsInfo->mStoredHeaderSize;
+	validateRange(newSettingsInfo, storedHeaderSize, "header");
+	require(storedHeaderSize >= kMinimumHeaderSize);
+	auto const numStoredParameters = newSettingsInfo->mNumStoredParameters;
+	auto const numStoredPresets = newSettingsInfo->mNumStoredPresets;
+	auto const storedParameterAssignmentSize = newSettingsInfo->mStoredParameterAssignmentSize;
+	auto const storedExtendedDataSize = newSettingsInfo->mStoredExtendedDataSize;
 
 	// The following situations are basically considered to be 
 	// irrecoverable "crisis" situations.  Regardless of what 
@@ -211,15 +229,9 @@ bool DfxSettings::restore(void const* inData, size_t inDataSize, bool inIsPreset
 	// Incorrect magic signature basically means that these settings are 
 	// probably for some other plugin.  And the whole point of setting a 
 	// lowest loadable version value is that it should be taken seriously.
-	if (newSettingsInfo->mMagic != mSettingsInfo.mMagic)
-	{
-		return false;
-	}
-	if ((newSettingsInfo->mVersion < mSettingsInfo.mLowestLoadableVersion) || 
-		(mSettingsInfo.mVersion < newSettingsInfo->mLowestLoadableVersion))  // XXX ummm does this second part make any sense?
-	{
-		return false;
-	}
+	require(newSettingsInfo->mMagic == mSettingsInfo.mMagic);
+	require((newSettingsInfo->mVersion >= mSettingsInfo.mLowestLoadableVersion) && 
+			(mSettingsInfo.mVersion >= newSettingsInfo->mLowestLoadableVersion));  // TODO: does this second test make sense?
 
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 	// we started using hex format versions (like below) with the advent 
@@ -228,16 +240,11 @@ bool DfxSettings::restore(void const* inData, size_t inDataSize, bool inIsPreset
 	auto const oldVST = DFX_IsOldVstVersionNumber(newSettingsInfo->mVersion);
 #endif
 
-	// these just make the values easier to work with (no need for newSettingsInfo-> so often)
-	auto const numStoredParameters = newSettingsInfo->mNumStoredParameters;
-	auto const numStoredPresets = newSettingsInfo->mNumStoredPresets;
-	auto const storedHeaderSize = newSettingsInfo->mStoredHeaderSize;
-
 	// figure out how many presets we should try to load 
 	// if the incoming chunk doesn't match what we're expecting
-	auto const copyPresets = inIsPreset ? 1UL : std::min(static_cast<unsigned long>(numStoredPresets), mNumPresets);
+	auto const copyPresets = std::min(static_cast<unsigned long>(numStoredPresets), inIsPreset ? 1UL : mNumPresets);
 	// figure out how much of the dfx::ParameterAssignment structure we can import
-	auto const copyParameterAssignmentSize = std::min(newSettingsInfo->mStoredParameterAssignmentSize, mSettingsInfo.mStoredParameterAssignmentSize);
+	auto const copyParameterAssignmentSize = std::min(storedParameterAssignmentSize, mSettingsInfo.mStoredParameterAssignmentSize);
 
 	// check for conflicts and keep track of them
 	CrisisReasonFlags crisisFlags = kCrisisReasonFlag_None;
@@ -288,10 +295,7 @@ bool DfxSettings::restore(void const* inData, size_t inDataSize, bool inIsPreset
 		}
 	}
 	// handle the crisis situations (if any) and stop trying to load if we're told to
-	if (handleCrisis(crisisFlags) == CrisisError::QuitError)
-	{
-		return false;
-	}
+	require(handleCrisis(crisisFlags) != CrisisError::QuitError);
 
 	// check for availability of later extensions to the header
 	if (storedHeaderSize >= (offsetof(SettingsInfo, mGlobalBehaviorFlags) + sizeof(mSettingsInfo.mGlobalBehaviorFlags)))
@@ -301,7 +305,9 @@ bool DfxSettings::restore(void const* inData, size_t inDataSize, bool inIsPreset
 	}
 
 	// point to the next data element after the chunk header:  the first parameter ID
-	auto const newParameterIDs = reinterpret_cast<int32_t*>(reinterpret_cast<std::byte*>(newSettingsInfo) + storedHeaderSize);
+	auto const newParameterIDs = reinterpret_cast<int32_t const*>(reinterpret_cast<std::byte const*>(newSettingsInfo) + storedHeaderSize);
+	size_t const sizeOfStoredParameterIDs = sizeof(*newParameterIDs) * numStoredParameters;
+	validateRange(newParameterIDs, sizeOfStoredParameterIDs, "parameter IDs");
 	// create a mapping table for corresponding the incoming parameters to the 
 	// destination parameters (in case the parameter IDs don't all match up)
 	//  [ the index of paramMap is the same as our parameter tag/index and the value 
@@ -309,13 +315,13 @@ bool DfxSettings::restore(void const* inData, size_t inDataSize, bool inIsPreset
 	std::vector<long> paramMap(mNumParameters, dfx::kParameterID_Invalid);
 	for (size_t tag = 0; tag < mParameterIDs.size(); tag++)
 	{
-		paramMap[tag] = getParameterTagFromID(mParameterIDs[tag], numStoredParameters, newParameterIDs);
+		paramMap[tag] = getParameterTagFromID(mParameterIDs[tag], {newParameterIDs, numStoredParameters});
 	}
 
 	// point to the next data element after the parameter IDs:  the first preset name
-	auto newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(newParameterIDs) + (sizeof(mParameterIDs.front()) * numStoredParameters));
-	// handy for incrementing the data pointer
+	auto newPreset = reinterpret_cast<GenPreset const*>(reinterpret_cast<std::byte const*>(newParameterIDs) + sizeOfStoredParameterIDs);
 	size_t const sizeofStoredPreset = sizeof(GenPreset) + (sizeof(*GenPreset::mParameterValues) * numStoredParameters) - sizeof(GenPreset::mParameterValues);
+	validateRange(newPreset, sizeofStoredPreset * numStoredPresets, "presets");
 
 	// the chunk being received only contains one preset
 	if (inIsPreset)
@@ -331,7 +337,7 @@ bool DfxSettings::restore(void const* inData, size_t inDataSize, bool inIsPreset
 		// back up the pointer to account for shorter preset names
 		if (oldVST)
 		{
-			newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(newPreset) + kDfxOldPresetNameMaxLength - dfx::kPresetNameMaxLength);
+			newPreset = reinterpret_cast<GenPreset const*>(reinterpret_cast<std::byte const*>(newPreset) + kDfxOldPresetNameMaxLength - dfx::kPresetNameMaxLength);
 		}
 	#endif
 		// copy all of the parameters that we can for this preset from the chunk
@@ -355,8 +361,8 @@ bool DfxSettings::restore(void const* inData, size_t inDataSize, bool inIsPreset
 				mPlugin->settings_doChunkRestoreSetParameterStuff(i, newPreset->mParameterValues[mappedTag], newSettingsInfo->mVersion);
 			}
 		}
-		// point to the next preset in the received data array
-		newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(newPreset) + sizeofStoredPreset);
+		// point past the preset
+		newPreset = reinterpret_cast<GenPreset const*>(reinterpret_cast<std::byte const*>(newPreset) + sizeofStoredPreset);
 	}
 
 	// the chunk being received has all of the presets plus the MIDI event assignments
@@ -372,7 +378,7 @@ bool DfxSettings::restore(void const* inData, size_t inDataSize, bool inIsPreset
 			// back up the pointer to account for shorter preset names
 			if (oldVST)
 			{
-				newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(newPreset) + kDfxOldPresetNameMaxLength - dfx::kPresetNameMaxLength);
+				newPreset = reinterpret_cast<GenPreset const*>(reinterpret_cast<std::byte const*>(newPreset) + kDfxOldPresetNameMaxLength - dfx::kPresetNameMaxLength);
 			}
 		#endif
 			// copy all of the parameters that we can for this preset from the chunk
@@ -397,10 +403,14 @@ bool DfxSettings::restore(void const* inData, size_t inDataSize, bool inIsPreset
 				}
 			}
 			// point to the next preset in the received data array
-			newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(newPreset) + sizeofStoredPreset);
+			newPreset = reinterpret_cast<GenPreset const*>(reinterpret_cast<std::byte const*>(newPreset) + sizeofStoredPreset);
 		}
 	}
 
+	// point to the last chunk data element, the MIDI event assignment array
+	// (offset by the number of stored presets that were skipped, if any)
+	auto const newParameterAssignments = reinterpret_cast<std::byte const*>(newPreset) + ((numStoredPresets - copyPresets) * sizeofStoredPreset);
+	size_t sizeOfStoredParameterAssignments = 0;  // until we establish that they are present
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 if (!(oldVST && inIsPreset))
 {
@@ -408,17 +418,16 @@ if (!(oldVST && inIsPreset))
 	// completely clear our table of parameter assignments before loading the new 
 	// table since the new one might not have all of the data members
 	clearAssignments();
-	// then point to the last chunk data element, the MIDI event assignment array
-	// (offset by the number of stored presets that were skipped, if any)
-	auto const newParameterAssignments = reinterpret_cast<std::byte*>(newPreset) + ((numStoredPresets - copyPresets) * sizeofStoredPreset);
+	sizeOfStoredParameterAssignments = storedParameterAssignmentSize * numStoredParameters;
+	validateRange(newParameterAssignments, sizeOfStoredParameterAssignments, "parameter assignments");
 	// and load up as many of them as we can
-	for (size_t i = 0; i < mNumParameters; i++)
+	for (size_t i = 0; i < std::min(paramMap.size(), mParameterAssignments.size()); i++)
 	{
 		auto const mappedTag = paramMap[i];
-		if (mappedTag != dfx::kParameterID_Invalid)
+		if ((mappedTag != dfx::kParameterID_Invalid) && (mappedTag >= 0) && (mappedTag < numStoredParameters))
 		{
 			memcpy(&(mParameterAssignments[i]), 
-				   newParameterAssignments + (mappedTag * newSettingsInfo->mStoredParameterAssignmentSize), 
+				   newParameterAssignments + (mappedTag * storedParameterAssignmentSize), 
 				   copyParameterAssignmentSize);
 		}
 	}
@@ -427,10 +436,15 @@ if (!(oldVST && inIsPreset))
 #endif
 
 	// allow for the retrieval of extra data
-	mPlugin->settings_restoreExtendedData(static_cast<std::byte*>(incomingData_copy.get()) + inDataSize - newSettingsInfo->mStoredExtendedDataSize, 
-										 newSettingsInfo->mStoredExtendedDataSize, newSettingsInfo->mVersion, inIsPreset);
+	auto const newExtendedData = newParameterAssignments + sizeOfStoredParameterAssignments;
+	validateRange(newExtendedData, storedExtendedDataSize, "extended data");
+	mPlugin->settings_restoreExtendedData(newExtendedData, storedExtendedDataSize, newSettingsInfo->mVersion, inIsPreset);
 
 	return true;
+}
+catch (...)
+{
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -457,7 +471,8 @@ bool DfxSettings::minimalValidate(void const* inData, size_t inDataSize) const n
 // this function, if called for the non-reference endian architecture, 
 // will reverse the order of bytes in each variable/value of the data 
 // to correct endian differences and make a uniform data chunk
-bool DfxSettings::correctEndian(void* ioData, size_t inDataSize, bool inIsReversed, bool inIsPreset)
+bool DfxSettings::correctEndian(void* const ioData, size_t const inDataSize, bool inIsReversed, bool inIsPreset)
+try
 {
 /*
 // XXX another idea...
@@ -491,29 +506,25 @@ void blah(long long x)
 		dfx::ReverseBytes(numStoredPresets);
 		dfx::ReverseBytes(storedVersion);
 	}
-//	if (inIsPreset)
-//	{
-//		numStoredPresets = 1;
-//	}
 
-	// use this to pre-test for out-of-bounds memory addressing, probably from corrupt data
-	void const* const dataEndAddress = static_cast<std::byte*>(ioData) + inDataSize;
+	auto const validateRange = [ioData, inDataSize, this](void const* address, size_t length, char const* name)
+	{
+		this->validateRange(ioData, inDataSize, address, length, name);
+	};
 
 	// reverse the order of bytes of the header values
-	if ((reinterpret_cast<std::byte*>(dataHeader) + storedHeaderSize) > dataEndAddress)  // the data is somehow corrupt
+	validateRange(dataHeader, storedHeaderSize, "header");
+	constexpr auto headerItemSize = sizeof(dataHeader->mMagic);
+	if ((storedHeaderSize % headerItemSize) != 0)
 	{
-		debugAlertCorruptData("header", storedHeaderSize, inDataSize);
+		debugAlertCorruptData("header divisibility", storedHeaderSize, inDataSize);
 		return false;
 	}
-	dfx::ReverseBytes(dataHeader, sizeof(dataHeader->mMagic), storedHeaderSize / sizeof(dataHeader->mMagic));
+	dfx::ReverseBytes(dataHeader, headerItemSize, storedHeaderSize / headerItemSize);
 
 	// reverse the byte order for each of the parameter IDs
 	auto const dataParameterIDs = reinterpret_cast<int32_t*>(static_cast<std::byte*>(ioData) + storedHeaderSize);
-	if ((reinterpret_cast<std::byte*>(dataParameterIDs) + (sizeof(*dataParameterIDs) * numStoredParameters)) > dataEndAddress)  // the data is somehow corrupt
-	{
-		debugAlertCorruptData("parameter IDs", sizeof(*dataParameterIDs) * numStoredParameters, inDataSize);
-		return false;
-	}
+	validateRange(dataParameterIDs, sizeof(*dataParameterIDs) * numStoredParameters, "parameter IDs");
 	dfx::ReverseBytes(dataParameterIDs, numStoredParameters);
 
 	// reverse the order of bytes for each parameter value, 
@@ -526,15 +537,16 @@ void blah(long long x)
 		// back up the pointer to account for shorter preset names
 		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataPresets) - dfx::kPresetNameMaxLength + kDfxOldPresetNameMaxLength);
 		// and shrink the size to account for shorter preset names
+		if (sizeofStoredPreset < dfx::kPresetNameMaxLength)
+		{
+			debugAlertCorruptData("old VST presets", sizeofStoredPreset, inDataSize);
+			return false;
+		}
 		sizeofStoredPreset -= dfx::kPresetNameMaxLength;
 		sizeofStoredPreset += kDfxOldPresetNameMaxLength;
 	}
 #endif
-	if ((reinterpret_cast<std::byte*>(dataPresets) + (sizeofStoredPreset * numStoredPresets)) > dataEndAddress)  // the data is somehow corrupt
-	{
-		debugAlertCorruptData("presets", sizeofStoredPreset * numStoredPresets, inDataSize);
-		return false;
-	}
+	validateRange(dataPresets, sizeofStoredPreset * numStoredPresets, "presets");
 	for (uint32_t i = 0; i < numStoredPresets; i++)
 	{
 		dfx::ReverseBytes(dataPresets->mParameterValues, numStoredParameters);  //XXX potential floating point machine error?
@@ -555,11 +567,7 @@ if (!(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset))
 #endif
 	// and reverse the byte order of each event assignment
 	auto const dataParameterAssignments = reinterpret_cast<dfx::ParameterAssignment*>(dataPresets);
-	if ((reinterpret_cast<std::byte*>(dataParameterAssignments) + (sizeof(*dataParameterAssignments) * numStoredParameters)) > dataEndAddress)  // the data is somehow corrupt
-	{
-		debugAlertCorruptData("parameter assignments", sizeof(*dataParameterAssignments) * numStoredParameters, inDataSize);
-		return false;
-	}
+	validateRange(dataParameterAssignments, sizeof(*dataParameterAssignments) * numStoredParameters, "parameter assignments");
 	for (uint32_t i = 0; i < numStoredParameters; i++)
 	{
 		auto& pa = dataParameterAssignments[i];
@@ -578,6 +586,10 @@ if (!(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset))
 #endif
 
 	return true;
+}
+catch (...)
+{
+	return false;
 }
 
 
@@ -1452,8 +1464,24 @@ DfxSettings::CrisisError DfxSettings::handleCrisis(CrisisReasonFlags inFlags)
 }
 
 //-----------------------------------------------------------------------------
-// XXX temporary (for testing)
-void DfxSettings::debugAlertCorruptData(char const* inDataItemName, size_t inDataItemSize, size_t inDataTotalSize)
+// use this to pre-test for out-of-bounds memory addressing, probably from corrupt data
+void DfxSettings::validateRange(void const* inData, size_t inDataSize, void const* inAddress, size_t inAddressSize, char const* inDataItemName) const
+{
+	auto const dataStart = reinterpret_cast<uintptr_t>(inData);
+	uintptr_t dataEnd {};
+	auto overflowed = __builtin_add_overflow(dataStart, inDataSize, &dataEnd);
+	auto const addressStart = reinterpret_cast<uintptr_t>(inAddress);
+	uintptr_t addressEnd {};
+	overflowed |= __builtin_add_overflow(addressStart, inAddressSize, &addressEnd);
+	if (overflowed || (inAddressSize > inDataSize) || (addressStart < dataStart) || (addressStart >= dataEnd) || (addressEnd > dataEnd))
+	{
+		debugAlertCorruptData(inDataItemName, inAddressSize, inDataSize);
+		throw std::invalid_argument("bad data");
+	}
+};
+
+//-----------------------------------------------------------------------------
+void DfxSettings::debugAlertCorruptData(char const* inDataItemName, size_t inDataItemSize, size_t inDataTotalSize) const
 {
 #if TARGET_OS_MAC
 	CFStringRef const title = CFSTR("settings data fuct");
@@ -1470,11 +1498,12 @@ void DfxSettings::debugAlertCorruptData(char const* inDataItemName, size_t inDat
 		CFUserNotificationDisplayNotice(0.0, kCFUserNotificationStopAlertLevel, iconURL.get(), nullptr, nullptr, title, message.get(), nullptr);
 	}
 #elif TARGET_OS_WIN32
-	char msg[512] = {};
-	snprintf(msg, 511, "Something is wrong with the settings data! "
+	std::array<char, 512> msg {};
+	snprintf(msg.data(), msg.size(),
+			 "Something is wrong with the settings data! "
 			 "Info for bug reports: name: %s size: %zu total: %zu",
 			 inDataItemName, inDataItemSize, inDataTotalSize);
-	MessageBoxA(nullptr, msg, "DFX Error!", 0);
+	MessageBoxA(nullptr, msg.data(), "DFX Error!", 0);
 #else
 	#warning "implementation missing"
 #endif

@@ -25,6 +25,7 @@ To contact the developer, use the contact form at http://destroyfx.org/
 #include "turntablist.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 
 #include "dfxmath.h"
@@ -330,7 +331,8 @@ OSStatus Turntablist::SaveState(CFPropertyListRef* outData)
 
 
 // save the MIDI CC -> parameter assignments
-	getsettings().saveMidiAssignmentsToDictionary(dict);
+	[[maybe_unused]] auto const midiSuccess = getsettings().saveMidiAssignmentsToDictionary(dict);
+	assert(midiSuccess);
 
 	return noErr;
 }
@@ -429,7 +431,8 @@ OSStatus Turntablist::RestoreState(CFPropertyListRef inData)
 
 
 // restore the MIDI CC -> parameter assignments
-	getsettings().restoreMidiAssignmentsFromDictionary(dict);
+	[[maybe_unused]] auto const midiSuccess = getsettings().restoreMidiAssignmentsFromDictionary(dict);
+	assert(midiSuccess);
 
 	return noErr;
 }
