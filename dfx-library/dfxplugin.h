@@ -232,8 +232,6 @@ public:
 
 	// ***
 	DfxPlugin(TARGET_API_BASE_INSTANCE_TYPE inInstance, long inNumParameters, long inNumPresets = 1);
-	// ***
-	virtual ~DfxPlugin() = default;
 
 	void do_PostConstructor();
 	// ***
@@ -661,9 +659,8 @@ public:
 	// its return value must stay the same for the lifetime of a plugin instance
 	virtual size_t settings_sizeOfExtendedData() const noexcept { return 0; }
 	//
-	// these allow for additional constructor or destructor stuff, if necessary
+	// this allows for additional constructor stuff, if necessary
 	virtual void settings_init() {}
-	virtual void settings_cleanup() {}
 	//
 	// these can be overridden to store and restore more data during 
 	// save() and restore() respectively
@@ -695,6 +692,10 @@ public:
 	{
 		return {};
 	}
+	//
+	// can be overridden to display an alert dialog or something
+	// if CrisisBehavior::LoadButComplain is being used
+	virtual void settings_crisisAlert(DfxSettings::CrisisReasonFlags /*inFlags*/) {}
 #endif
 
 	// handling of AU properties specific to Logic
@@ -1118,6 +1119,7 @@ protected:
 	void RenderAudio(float** inAudioStreams, float** outAudioStreams, long inNumFramesToProcess) override;
 #endif
 };
+static_assert(std::has_virtual_destructor_v<DfxPlugin>);
 
 
 
@@ -1277,6 +1279,7 @@ private:
 	unsigned long mChannelNumber = 0;
 #endif
 };
+static_assert(std::has_virtual_destructor_v<DfxPluginCore>);
 #endif  // TARGET_PLUGIN_USES_DSPCORE
 
 

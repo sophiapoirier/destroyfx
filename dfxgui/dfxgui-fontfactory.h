@@ -47,7 +47,12 @@ public:
   // work. :( TODO: Is there some way to wait until the fonts are all
   // found before returning?
   static std::unique_ptr<FontFactory> Create();
-  virtual ~FontFactory() {}
+  virtual ~FontFactory() = default;
+
+  FontFactory(FontFactory const&) = delete;
+  void operator=(FontFactory const&) = delete;
+  FontFactory(FontFactory&&) = delete;
+  FontFactory& operator=(FontFactory&&) = delete;
 
   // Create a VSTGUI font descriptor. If the font name is null, uses
   // the "system font."
@@ -58,10 +63,7 @@ public:
 
 protected:
   // Use Create().
-  FontFactory() {}
-private:
-  FontFactory(const FontFactory&) = delete;
-  void operator=(const FontFactory&) = delete;
+  FontFactory() = default;
 };
 
 }  // namespace dfx

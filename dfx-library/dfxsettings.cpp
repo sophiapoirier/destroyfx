@@ -90,16 +90,6 @@ DfxSettings::DfxSettings(uint32_t inMagic, DfxPlugin* inPlugin, size_t inSizeofE
 	mPlugin->settings_init();
 }
 
-//-----------------------------------------------------------------------------
-DfxSettings::~DfxSettings()
-{
-	// wipe the signature from memory
-	mSettingsInfo.mMagic = 0;
-
-	// allow for further destructor stuff, if necessary
-	mPlugin->settings_cleanup();
-}
-
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #pragma mark -
@@ -1464,7 +1454,7 @@ DfxSettings::CrisisError DfxSettings::handleCrisis(CrisisReasonFlags inFlags)
 			return CrisisError::QuitError;
 
 		case CrisisBehavior::LoadButComplain:
-			crisisAlert(inFlags);
+			mPlugin->settings_crisisAlert(inFlags);
 			return CrisisError::ComplainError;
 
 		case CrisisBehavior::CrashTheHostApplication:

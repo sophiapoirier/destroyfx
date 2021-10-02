@@ -105,13 +105,32 @@ public:
 		CrashTheHostApplication
 	};
 
+	using CrisisReasonFlags = unsigned int;
+	enum : CrisisReasonFlags
+	{
+		// crisis situation flags
+		kCrisisReasonFlag_None				= 0,
+		kCrisisReasonFlag_MismatchedMagic	= 1,		// the magic signatures don't match
+		kCrisisReasonFlag_SmallerByteSize	= 1 << 1,	// the incoming data size is smaller
+		kCrisisReasonFlag_LargerByteSize	= 1 << 2,	// the incoming data size is larger
+		kCrisisReasonFlag_FewerParameters	= 1 << 3,	// the incoming data has fewer parameters
+		kCrisisReasonFlag_MoreParameters	= 1 << 4,	// the incoming data has more parameters
+		kCrisisReasonFlag_FewerPresets		= 1 << 5,	// the incoming data has fewer presets
+		kCrisisReasonFlag_MorePresets		= 1 << 6,	// the incoming data has more presets
+		kCrisisReasonFlag_LowerVersion		= 1 << 7,	// the incoming data has a lower version number
+		kCrisisReasonFlag_HigherVersion		= 1 << 8,	// the incoming data has a higher version number
+		kCrisisReasonFlag_VersionIsTooLow	= 1 << 9,	// the incoming data's version number is lower than our lowest loadable version number
+		kCrisisReasonFlag_VersionIsTooHigh	= 1 << 10,	// our version number is lower than the incoming data's lowest loadable version number
+		kCrisisReasonFlag_SmallerHeader		= 1 << 11,	// the incoming data's header size is smaller
+		kCrisisReasonFlag_LargerHeader		= 1 << 12	// the incoming data's header size is larger
+	};
+
 #if TARGET_OS_MAC
 	static inline CFStringRef const kDfxDataAUClassInfoKeyString = CFSTR("destroyfx-data");
 #endif
 
 
 	DfxSettings(uint32_t inMagic, DfxPlugin* inPlugin, size_t inSizeofExtendedData = 0);
-	virtual ~DfxSettings();
 
 
 	// - - - - - - - - - API-connect methods - - - - - - - - -
@@ -300,7 +319,7 @@ public:
 	}
 
 
-protected:
+private:
 	enum class CrisisError
 	{
 		// crisis-handling errors
@@ -308,26 +327,6 @@ protected:
 		QuitError,
 		ComplainError,
 		FailedCrashError
-	};
-
-	using CrisisReasonFlags = unsigned int;
-	enum : CrisisReasonFlags
-	{
-		// crisis situation flags
-		kCrisisReasonFlag_None				= 0,
-		kCrisisReasonFlag_MismatchedMagic	= 1,		// the magic signatures don't match
-		kCrisisReasonFlag_SmallerByteSize	= 1 << 1,	// the incoming data size is smaller
-		kCrisisReasonFlag_LargerByteSize	= 1 << 2,	// the incoming data size is larger
-		kCrisisReasonFlag_FewerParameters	= 1 << 3,	// the incoming data has fewer parameters
-		kCrisisReasonFlag_MoreParameters	= 1 << 4,	// the incoming data has more parameters
-		kCrisisReasonFlag_FewerPresets		= 1 << 5,	// the incoming data has fewer presets
-		kCrisisReasonFlag_MorePresets		= 1 << 6,	// the incoming data has more presets
-		kCrisisReasonFlag_LowerVersion		= 1 << 7,	// the incoming data has a lower version number
-		kCrisisReasonFlag_HigherVersion		= 1 << 8,	// the incoming data has a higher version number
-		kCrisisReasonFlag_VersionIsTooLow	= 1 << 9,	// the incoming data's version number is lower than our lowest loadable version number
-		kCrisisReasonFlag_VersionIsTooHigh	= 1 << 10,	// our version number is lower than the incoming data's lowest loadable version number
-		kCrisisReasonFlag_SmallerHeader		= 1 << 11,	// the incoming data's header size is smaller
-		kCrisisReasonFlag_LargerHeader		= 1 << 12	// the incoming data's header size is larger
 	};
 
 	enum GlobalBehaviorFlags : uint32_t
@@ -389,9 +388,6 @@ protected:
 	// investigates what to do when a data is received in 
 	// restore() that doesn't match what we are expecting
 	CrisisError handleCrisis(CrisisReasonFlags inFlags);
-	// can be implemented to display an alert dialogue or something 
-	// if CrisisBehavior::LoadButComplain crisis behavior is being used
-	virtual void crisisAlert(CrisisReasonFlags /*inFlags*/) {}
 
 	void debugAlertCorruptData(char const* inDataItemName, size_t inDataItemSize, size_t inDataTotalSize);
 

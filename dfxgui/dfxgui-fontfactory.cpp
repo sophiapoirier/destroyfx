@@ -193,10 +193,6 @@ public:
     InstallAllFonts();
   }
 
-  ~FFImpl() override {
-    // (unique pointers in installed vector clean up font resources)
-  }
-
   // Try to register a font from its resource name.
   void RegisterFont(ResourceRef ref) {
 #if TARGET_OS_MAC
