@@ -36,6 +36,7 @@ Welcome to our settings persistance mess.
 #include <numeric>
 #include <optional>
 #include <stdexcept>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 
@@ -162,8 +163,12 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 	// reverse the order of bytes in the data being sent to the host, if necessary
 	[[maybe_unused]] auto const endianSuccess = correctEndian(data.data(), data.size() - mSizeOfExtendedData, false, inIsPreset);
 	assert(endianSuccess);
+
 	// allow for the storage of extra data
-	mPlugin->settings_saveExtendedData(data.data() + data.size() - mSizeOfExtendedData, inIsPreset);
+	if (mSizeOfExtendedData > 0)
+	{
+		mPlugin->settings_saveExtendedData(data.data() + data.size() - mSizeOfExtendedData, inIsPreset);
+	}
 
 	return data;
 }
@@ -323,6 +328,11 @@ try
 	size_t const sizeofStoredPreset = sizeof(GenPreset) + (sizeof(*GenPreset::mParameterValues) * numStoredParameters) - sizeof(GenPreset::mParameterValues);
 	validateRange(newPreset, sizeofStoredPreset * numStoredPresets, "presets");
 
+	auto const getPresetNameWithFallback = [](GenPreset const& preset) -> std::string_view
+	{
+		return preset.mName[0] ? preset.mName : "(unnamed)";
+	};
+
 	// the chunk being received only contains one preset
 	if (inIsPreset)
 	{
@@ -331,7 +341,7 @@ try
 		// we are restoring the last user state
 		#ifndef TARGET_API_AUDIOUNIT
 		// copy the preset name from the chunk
-		mPlugin->setpresetname(mPlugin->getcurrentpresetnum(), newPreset->mName);
+		mPlugin->setpresetname(mPlugin->getcurrentpresetnum(), getPresetNameWithFallback(*newPreset));
 		#endif
 	#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 		// back up the pointer to account for shorter preset names
@@ -364,7 +374,6 @@ try
 		// point past the preset
 		newPreset = reinterpret_cast<GenPreset const*>(reinterpret_cast<std::byte const*>(newPreset) + sizeofStoredPreset);
 	}
-
 	// the chunk being received has all of the presets plus the MIDI event assignments
 	else
 	{
@@ -373,7 +382,7 @@ try
 		for (unsigned long j = 0; j < copyPresets; j++)
 		{
 			// copy the preset name from the chunk
-			mPlugin->setpresetname(j, newPreset->mName[0] ? newPreset->mName : "(unnamed)");
+			mPlugin->setpresetname(j, getPresetNameWithFallback(*newPreset));
 		#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 			// back up the pointer to account for shorter preset names
 			if (oldVST)
@@ -436,9 +445,12 @@ if (!(oldVST && inIsPreset))
 #endif
 
 	// allow for the retrieval of extra data
-	auto const newExtendedData = newParameterAssignments + sizeOfStoredParameterAssignments;
-	validateRange(newExtendedData, storedExtendedDataSize, "extended data");
-	mPlugin->settings_restoreExtendedData(newExtendedData, storedExtendedDataSize, newSettingsInfo->mVersion, inIsPreset);
+	if (storedExtendedDataSize > 0)
+	{
+		auto const newExtendedData = newParameterAssignments + sizeOfStoredParameterAssignments;
+		validateRange(newExtendedData, storedExtendedDataSize, "extended data");
+		mPlugin->settings_restoreExtendedData(newExtendedData, storedExtendedDataSize, newSettingsInfo->mVersion, inIsPreset);
+	}
 
 	return true;
 }
@@ -1473,6 +1485,11 @@ void DfxSettings::validateRange(void const* inData, size_t inDataSize, void cons
 	auto const addressStart = reinterpret_cast<uintptr_t>(inAddress);
 	uintptr_t addressEnd {};
 	overflowed |= __builtin_add_overflow(addressStart, inAddressSize, &addressEnd);
+
+	if ((inAddressSize == 0) && (addressStart >= dataStart) && (addressStart <= dataEnd))
+	{
+		return;
+	}
 	if (overflowed || (inAddressSize > inDataSize) || (addressStart < dataStart) || (addressStart >= dataEnd) || (addressEnd > dataEnd))
 	{
 		debugAlertCorruptData(inDataItemName, inAddressSize, inDataSize);

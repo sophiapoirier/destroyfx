@@ -48,11 +48,10 @@ This is our Destroy FX plugin data storage stuff
 //
 // If you have other stuff that you need to store as special data aside 
 // from MIDI event assignments, it is quite easy to extend this class.  
-// Supply a value for the optional DfxSettings constructor argument 
-// sizeofExtendedData.  This should be the size of the extra data 
-// (in bytes) of your additional data.  Then implement or override 
-// (if inheriting) the saveExtendedData() and restoreExtendedData() 
-// methods to take care of your extra data.
+// Supply the size of the extra data (in bytes) of your additional data 
+// by overriding settings_sizeOfExtendedData.  Then override the 
+// settings_saveExtendedData and settings_restoreExtendedData methods 
+// to handle your extra data.
 //
 // If you need to do anything special when parameter settings are restored 
 // from particular versions of your plugin (for example, remapping the 
@@ -130,10 +129,10 @@ public:
 #endif
 
 
-	DfxSettings(uint32_t inMagic, DfxPlugin* inPlugin, size_t inSizeofExtendedData = 0);
+	DfxSettings(uint32_t inMagic, DfxPlugin* inPlugin, size_t inSizeofExtendedData);
 
 
-	// - - - - - - - - - API-connect methods - - - - - - - - -
+	// - - - - - - - - - plugin API glue methods - - - - - - - - -
 
 	// for adding to your base plugin class methods
 	[[nodiscard]] std::vector<std::byte> save(bool inIsPreset);
@@ -421,7 +420,7 @@ private:
 
 	// This is how much larger (beyond the regular stuff) the settings data 
 	// memory allocation should be (for extending the basic data stuff).
-	// It is set with an optional constructor argument (default it 0).
+	// It is set with a constructor argument.
 	size_t const mSizeOfExtendedData;
 
 	// the header info for the settings data
