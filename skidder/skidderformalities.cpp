@@ -99,7 +99,7 @@ void Skidder::dfx_PostConstructor()
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::createbuffers()
+long Skidder::initialize()
 {
 	mInputAudio.assign(getnumoutputs(), nullptr);  // allocating output channel count is intentional, for mono fan-out
 	mOutputAudio.assign(getnumoutputs(), nullptr);
@@ -110,10 +110,12 @@ void Skidder::createbuffers()
 	}
 
 	mCrossover = std::make_unique<dfx::Crossover>(getnuminputs(), getsamplerate(), getparameter_f(kCrossoverFrequency));
+
+	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::releasebuffers()
+void Skidder::cleanup()
 {
 	mInputAudio = {};
 	mOutputAudio = {};

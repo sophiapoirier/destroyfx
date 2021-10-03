@@ -102,6 +102,29 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 }
 
 //-------------------------------------------------------------------------
+long BufferOverride::initialize()
+{
+	auto const numChannels = getnumoutputs();
+	auto const maxAudioBufferSize = static_cast<size_t>(getsamplerate() / (kMinAllowableBPS * mTempoRateTable.getScalar(0)));
+
+	mBuffers.resize(numChannels);
+	for (auto& buffer : mBuffers)
+	{
+		buffer.assign(maxAudioBufferSize, 0.0f);
+	}
+	mAudioOutputValues.assign(numChannels, 0.0f);
+
+	return dfx::kStatus_NoError;
+}
+
+//-------------------------------------------------------------------------
+void BufferOverride::cleanup()
+{
+	mBuffers = {};
+	mAudioOutputValues = {};
+}
+
+//-------------------------------------------------------------------------
 void BufferOverride::reset()
 {
 	// setting the values like this will restart the forced buffer in the next process()
@@ -130,27 +153,6 @@ void BufferOverride::reset()
 	mDivisorLFOValue_viewCache.store(kLFOValueDefault, std::memory_order_relaxed);
 	mBufferLFOValue_viewCache.store(kLFOValueDefault, std::memory_order_relaxed);
 	updateViewDataCache();
-}
-
-//-------------------------------------------------------------------------
-void BufferOverride::createbuffers()
-{
-	auto const numChannels = getnumoutputs();
-	auto const maxAudioBufferSize = static_cast<size_t>(getsamplerate() / (kMinAllowableBPS * mTempoRateTable.getScalar(0)));
-
-	mBuffers.resize(numChannels);
-	for (auto& buffer : mBuffers)
-	{
-		buffer.assign(maxAudioBufferSize, 0.0f);
-	}
-	mAudioOutputValues.assign(numChannels, 0.0f);
-}
-
-//-------------------------------------------------------------------------
-void BufferOverride::releasebuffers()
-{
-	mBuffers = {};
-	mAudioOutputValues = {};
 }
 
 

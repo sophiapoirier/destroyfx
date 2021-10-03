@@ -67,21 +67,8 @@ EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	mCurrentTempoBPS = getparameter_f(kTempo) / 60.0;
 }
 
-//-----------------------------------------------------------------------------------------
-void EQSync::reset()
-{
-	mCycleSamples = 1;
-	mSmoothSamples = 1;
-	mSmoothDur = 1;
-
-	mPrevA0 = mPrevA1 = mPrevA2 = mPrevB1 = mPrevB2 = 0.0f;
-	mCurA0 = mCurA1 = mCurA2 = mCurB1 = mCurB2 = 0.0f;
-
-	mNeedResync = true;  // some hosts may call resume when restarting playback
-}
-
 //-----------------------------------------------------------------------------
-void EQSync::createbuffers()
+long EQSync::initialize()
 {
 	auto const numChannels = getnumoutputs();
 
@@ -89,10 +76,12 @@ void EQSync::createbuffers()
 	mPrevPrevIn.assign(numChannels, 0.0f);
 	mPrevOut.assign(numChannels, 0.0f);
 	mPrevPrevOut.assign(numChannels, 0.0f);
+
+	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------
-void EQSync::releasebuffers()
+void EQSync::cleanup()
 {
 	mPrevIn = {};
 	mPrevPrevIn = {};
@@ -100,13 +89,22 @@ void EQSync::releasebuffers()
 	mPrevPrevOut = {};
 }
 
-//-----------------------------------------------------------------------------
-void EQSync::clearbuffers()
+//-----------------------------------------------------------------------------------------
+void EQSync::reset()
 {
+	mCycleSamples = 1;
+	mSmoothSamples = 1;
+	mSmoothDur = 1;
+
 	std::fill(mPrevIn.begin(), mPrevIn.end(), 0.0f);
 	std::fill(mPrevPrevIn.begin(), mPrevPrevIn.end(), 0.0f);
 	std::fill(mPrevOut.begin(), mPrevOut.end(), 0.0f);
 	std::fill(mPrevPrevOut.begin(), mPrevPrevOut.end(), 0.0f);
+
+	mPrevA0 = mPrevA1 = mPrevA2 = mPrevB1 = mPrevB2 = 0.0f;
+	mCurA0 = mCurA1 = mCurA2 = mCurB1 = mCurB2 = 0.0f;
+
+	mNeedResync = true;  // some hosts may call resume when restarting playback
 }
 
 //-----------------------------------------------------------------------------

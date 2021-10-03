@@ -71,8 +71,8 @@ class Monomaker final : public DfxPlugin
 public:
 	explicit Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
-	void createbuffers() override;
-	void releasebuffers() override;
+	long initialize() override;
+	void cleanup() override;
 
 	void processparameters() override;
 	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;

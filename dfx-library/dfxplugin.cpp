@@ -337,7 +337,6 @@ long DfxPlugin::do_initialize()
 	std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), 
 				  [sr = getsamplerate()](auto& value){ value.first->setSampleRate(sr); });
 
-	createbuffers();
 	do_reset();
 
 	return dfx::kStatus_NoError;
@@ -356,8 +355,6 @@ void DfxPlugin::do_cleanup()
 		return;
 	}
 #endif
-
-	releasebuffers();
 
 #if TARGET_PLUGIN_USES_DSPCORE
 	#ifdef TARGET_API_AUDIOUNIT
@@ -418,7 +415,6 @@ void DfxPlugin::do_reset()
 #endif
 
 	reset();
-	clearbuffers();
 }
 
 

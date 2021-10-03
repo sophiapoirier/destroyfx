@@ -37,14 +37,13 @@ class BufferOverride final : public DfxPlugin
 public:
 	explicit BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
+	long initialize() override;
+	void cleanup() override;
 	void reset() override;
 
 	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
 	void processparameters() override;
 	void parameterChanged(long inParameterIndex) override;
-
-	void createbuffers() override;
-	void releasebuffers() override;
 
 	long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
 	long dfx_GetProperty(dfx::PropertyID, dfx::Scope inScope, unsigned long inItemIndex, void* outData) override;

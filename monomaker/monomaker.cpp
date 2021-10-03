@@ -90,16 +90,17 @@ The -3 dB setting uses a constant power curve based on sin/cos, while other two 
 }
 
 //-----------------------------------------------------------------------------------------
-void Monomaker::createbuffers()
+long Monomaker::initialize()
 {
 	if (asymmetricalchannels())
 	{
 		mAsymmetricalInputAudioBuffer.assign(getmaxframes(), 0.0f);
 	}
+	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------------------
-void Monomaker::releasebuffers()
+void Monomaker::cleanup()
 {
 	mAsymmetricalInputAudioBuffer = {};
 }

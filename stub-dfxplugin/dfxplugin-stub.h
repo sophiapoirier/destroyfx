@@ -51,17 +51,14 @@ public:
 	explicit DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
 	void dfx_PostConstructor() override;
+
+#if !TARGET_PLUGIN_USES_DSPCORE
 	long initialize() override;
 	void cleanup() override;
 	void reset() override;
 
-#if !TARGET_PLUGIN_USES_DSPCORE
 	void processaudio(float const* const* in, float** out, unsigned long inNumFrames, bool replacing = true) override;
 	void processparameters() override;
-
-	void createbuffers() override;
-	void releasebuffers() override;
-	void clearbuffers() override;
 #endif
 
 private:

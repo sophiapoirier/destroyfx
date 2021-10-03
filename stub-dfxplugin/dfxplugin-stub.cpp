@@ -34,7 +34,7 @@ This is a template for making a DfxPlugin.
 #include <cmath>
 
 
-#pragma mark _________base_initializations_________
+#pragma mark base initializations
 
 // these macros do boring entry point stuff for us
 DFX_EFFECT_ENTRY(DfxStub);
@@ -110,31 +110,41 @@ void DfxStub::dfx_PostConstructor()
 #endif
 }
 
+#if !TARGET_PLUGIN_USES_DSPCORE
 //-------------------------------------------------------------------------
 // create stuff that is only necessary for audio processing here
-// (the triggering of creation and destruction of audio buffers 
-// is handled for you, though)
-// no need to initialize audio stuff, though; that is done in reset
-// return 0 for success, otherwise return an error code
+// return dfx::kStatus_NoError for success, otherwise return an error code
 long DfxStub::initialize()
 {
-	return kDfxErr_NoError;
+	// you can reliably access any of these audio format values upon "initialized" state
+	auto const bufferSize = std::lround(getsamplerate() * kBufferSize_Seconds);
+	auto const numChannels = getnumoutputs();
+
+	// if the sampling rate (and therefore the buffer size) has changed, 
+	// or if the number of channels to process has changed, 
+	// then delete and reallocate the buffers according to the sampling rate
+	buffers.assign(numChannels);
+	for (auto& buffer : buffers)
+	{
+		buffer.assign(bufferSize, 0.f);
+	}
+
+	return dfx::kStatus_NoError;
 }
 
 //-------------------------------------------------------------------------
 // clean up stuff that is only necessary for audio processing here
-// (the triggering of creation and destruction of audio buffers 
-// is handled for you, though)
 void DfxStub::cleanup()
 {
+	buffers = {};
 }
+#endif  // !TARGET_PLUGIN_USES_DSPCORE
 
 
 
-#pragma mark _________DSP_initializations_________
+#pragma mark DSP initializations
 
 #if TARGET_PLUGIN_USES_DSPCORE
-
 //-------------------------------------------------------------------------
 DfxStubDSP::DfxStubDSP(DfxPlugin* inInstance)
 :	DfxPluginCore(inInstance)
@@ -145,9 +155,7 @@ DfxStubDSP::DfxStubDSP(DfxPlugin* inInstance)
 	// then delete and reallocate the buffers according to the sampling rate
 	buffer.assign(bufferSize, 0.0f);
 }
-
 #endif
-
 
 //-------------------------------------------------------------------------
 // this is where you can reset state variables and in general 
@@ -156,8 +164,6 @@ DfxStubDSP::DfxStubDSP(DfxPlugin* inInstance)
 // you can assume that this will be called before any 
 // audio processing ever happens and that things like 
 // the current sampling rate and number of channels will be valid here
-// (the triggering of creation and clearing of audio buffers is 
-// handled for you, though)
 #if TARGET_PLUGIN_USES_DSPCORE
 void DfxStubDSP::reset()
 {
@@ -173,58 +179,16 @@ void DfxStub::reset()
 	// reset this buffer position tracker to zero
 	bufferpos = 0;
 
-	// you can confidently access and use any of these values here
-	auto const number_of_inputs = getnuminputs();
-	auto const number_of_outputs = getnumoutputs();
-	auto const audio_sampling_rate = getsamplerate();
-}
-#endif
-
-#if !TARGET_PLUGIN_USES_DSPCORE
-//-------------------------------------------------------------------------
-// allocate your audio buffers here
-// this will be called when necessary, handled by DfxPlugin
-// return true on success, false on failure
-// createbuffers is called whenever the audio stream format changes 
-// (sampling rate or number of channels)
-void DfxStub::createbuffers()
-{
-	auto const bufferSize = std::lround(getsamplerate() * kBufferSize_Seconds);
-	auto const numChannels = getnumoutputs();
-
-	// if the sampling rate (and therefore the buffer size) has changed, 
-	// or if the number of channels to process has changed, 
-	// then delete and reallocate the buffers according to the sampling rate
-	buffers.assign(numChannels);
-	for (auto& buffer : buffers)
-	{
-		buffer.assign(bufferSize, 0.0f);
-	}
-}
-
-//-------------------------------------------------------------------------
-// deallocate your audio buffers here
-// this will be called when necessary, handled by DfxPlugin
-void DfxStub::releasebuffers()
-{
-	buffers = {};
-}
-
-//-------------------------------------------------------------------------
-// initialize the values in your audio buffers here
-// this will be called when necessary, handled by DfxPlugin
-void DfxStub::clearbuffers()
-{
 	for (auto& buffer : buffers)
 	{
 		std::fill(buffer.begin(), buffer.end(), 0.0f);
 	}
 }
-#endif  // !TARGET_PLUGIN_USES_DSPCORE
+#endif // if/else TARGET_PLUGIN_USES_DSPCORE
 
 
 
-#pragma mark _________presets_________
+#pragma mark presets
 
 //-------------------------------------------------------------------------
 // you can assume that all values for every parameter in every preset 
@@ -253,7 +217,7 @@ void DfxStub::initPresets()
 
 
 
-#pragma mark _________audio_processing_________
+#pragma mark audio processing
 
 //-------------------------------------------------------------------------
 // here you can fetch your current parameter values before doing audio processing
@@ -311,4 +275,4 @@ void DfxStub::processaudio(float const* const* in, float** out, unsigned long in
 	// to see how many events there are for this processing block
 #endif
 }
-#endif
+#endif  // if/else TARGET_PLUGIN_USES_DSPCORE

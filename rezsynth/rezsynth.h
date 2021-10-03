@@ -125,11 +125,8 @@ public:
 	explicit RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
 	long initialize() override;
+	void cleanup() override;
 	void reset() override;
-
-	void createbuffers() override;
-	void releasebuffers() override;
-	void clearbuffers() override;
 
 	void processparameters() override;
 	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;

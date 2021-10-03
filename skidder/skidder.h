@@ -88,10 +88,10 @@ public:
 
 	void dfx_PostConstructor() override;
 
-	void createbuffers() override;
-	void releasebuffers() override;
-
+	long initialize() override;
+	void cleanup() override;
 	void reset() override;
+
 	void processparameters() override;
 	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
 

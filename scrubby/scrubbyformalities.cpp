@@ -140,34 +140,6 @@ void Scrubby::dfx_PostConstructor()
 //-------------------------------------------------------------------------
 long Scrubby::initialize()
 {
-	setlatency_seconds((getparameter_f(kSeekRange) * 0.001) * getparameter_scalar(kPredelay));
-	return dfx::kStatus_NoError;
-}
-
-//-------------------------------------------------------------------------
-void Scrubby::reset()
-{
-	std::for_each(mHighpassFilters.begin(), mHighpassFilters.end(), [](auto& filter){ filter.reset(); });
-
-	// reset these position trackers thingies and whatnot
-	mWritePos = 0;
-
-	// delete any stored active notes
-	for (size_t i = 0; i < mActiveNotesTable.size(); i++)
-	{
-		if (std::exchange(mActiveNotesTable[i], 0) > 0)
-		{
-			setparameterquietly_b(i + kPitchStep0, false);
-			postupdate_parameter(i + kPitchStep0);
-		}
-	}
-
-mSineCount = 0;
-}
-
-//-----------------------------------------------------------------------------
-void Scrubby::createbuffers()
-{
 	// the number of samples in the maximum seek range,
 	// dividing by the minimum seek rate for extra leeway while moving
 	mMaxAudioBufferSize = std::lround(getparametermax_f(kSeekRange) * 0.001 * getsamplerate_f() / getparametermin_f(kSeekRate_Hz));
@@ -192,10 +164,14 @@ void Scrubby::createbuffers()
 		filter.setSampleRate(getsamplerate());
 		filter.setHighpassCoefficients(kHighpassFilterCutoff);
 	});
+
+	setlatency_seconds((getparameter_f(kSeekRange) * 0.001) * getparameter_scalar(kPredelay));
+
+	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------
-void Scrubby::releasebuffers()
+void Scrubby::cleanup()
 {
 	mAudioBuffers = {};
 	mReadPos = {};
@@ -207,8 +183,8 @@ void Scrubby::releasebuffers()
 	mHighpassFilters = {};
 }
 
-//-----------------------------------------------------------------------------
-void Scrubby::clearbuffers()
+//-------------------------------------------------------------------------
+void Scrubby::reset()
 {
 	// clear out the buffers
 	for (auto& buffer : mAudioBuffers)
@@ -226,6 +202,23 @@ void Scrubby::clearbuffers()
 	std::fill(mSeekCount.begin(), mSeekCount.end(), 0);
 	// some hosts may call reset when restarting playback
 	std::fill(mNeedResync.begin(), mNeedResync.end(), true);
+
+	std::for_each(mHighpassFilters.begin(), mHighpassFilters.end(), [](auto& filter){ filter.reset(); });
+
+	// reset the position tracker
+	mWritePos = 0;
+
+	// delete any stored active notes
+	for (size_t i = 0; i < mActiveNotesTable.size(); i++)
+	{
+		if (std::exchange(mActiveNotesTable[i], 0) > 0)
+		{
+			setparameterquietly_b(i + kPitchStep0, false);
+			postupdate_parameter(i + kPitchStep0);
+		}
+	}
+
+mSineCount = 0;
 }
 
 

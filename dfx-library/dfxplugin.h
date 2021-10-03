@@ -71,17 +71,7 @@ specifying any properties, anything that other stuff depends on, etc.  You
 can save creating/destroying stuff that is only needed for audio
 processing for the initialize and cleanup methods.  Although in many
 cases, you won't even need to implement those, it just depends on the
-plugin in question.  One exception is audio buffers.  There are
-additionally handy functions called createbuffers, clearbuffers, and
-releasebuffers.  The base DfxPlugin class knows when to call these, so you
-don't need to (not from initialize or cleanup or anything).  Note that
-createbuffers is also recreate buffers.  In other words, it is called when
-the sampling rate changes or when the number of channels to process
-changes.  So your plugin's implementation of createbuffers should be aware
-of what you currently have allocated and then check for sr or numchannels
-changes, if the buffers have dependencies there, and then call
-releasebuffers and then reallocate if necessary.  dfxplugin-stub has an
-example of this.
+plugin in question.
 
 When using DSPcore approach, the constructor and destructor of you DSP
 class are essentially what initialize and cleanup are for a plugin that
@@ -252,27 +242,6 @@ public:
 	void do_reset();
 	// ***
 	virtual void reset() {}
-
-	// ***
-	// override this if the plugin uses audio buffers
-	// this will be called at the correct times
-	// it may be called repeatedly when the audio stream format changes 
-	// (sampling rate or number of channels), so it is expected that 
-	// the implementation will check to see whether or not the 
-	// buffers are already allocated and whether or not they need to 
-	// be destroyed and reallocated in a different size
-	virtual void createbuffers() {}
-	// ***
-	// override this if the plugin uses audio buffers and 
-	// ever requires the buffer contents to be zeroed 
-	// (like when the DSP state is reset)
-	// this will be called at the correct times
-	virtual void clearbuffers() {}
-	// ***
-	// override this if the plugin uses audio buffers
-	// this will be called at the correct times
-	// release any allocated audio buffers
-	virtual void releasebuffers() {}
 
 	// insures that processparameters (and perhaps other related stuff) 
 	// is called at the correct moments

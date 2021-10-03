@@ -105,11 +105,8 @@ public:
 	void dfx_PostConstructor() override;
 
 	long initialize() override;
+	void cleanup() override;
 	void reset() override;
-
-	void createbuffers() override;
-	void releasebuffers() override;
-	void clearbuffers() override;
 
 	void randomizeparameters() override;
 

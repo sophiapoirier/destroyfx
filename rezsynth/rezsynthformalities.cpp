@@ -130,24 +130,7 @@ long RezSynth::initialize()
 
 	mFreqSmoothingStride = dfx::math::GetFrequencyBasedSmoothingStride(getsamplerate());
 
-	return dfx::kStatus_NoError;
-}
-
-//-----------------------------------------------------------------------------------------
-void RezSynth::reset()
-{
-	// reset the unaffected between audio stuff
-	mUnaffectedState = UnaffectedState::FadeIn;
-	mUnaffectedFadeSamples = 0;
-
-	mNoteActiveLastRender.fill(false);
-}
-
-//-----------------------------------------------------------------------------------------
-void RezSynth::createbuffers()
-{
 	auto const numChannels = getnumoutputs();
-
 	mPrevOutValue.assign(numChannels, {});
 	mPrevPrevOutValue.assign(numChannels, {});
 	mPrevInValue.assign(numChannels, {});
@@ -160,10 +143,12 @@ void RezSynth::createbuffers()
 			channelFilters.emplace_back(getsamplerate());
 		}
 	});
+
+	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------------------
-void RezSynth::releasebuffers()
+void RezSynth::cleanup()
 {
 	mPrevOutValue = {};
 	mPrevPrevOutValue = {};
@@ -177,8 +162,14 @@ void RezSynth::releasebuffers()
 }
 
 //-----------------------------------------------------------------------------------------
-void RezSynth::clearbuffers()
+void RezSynth::reset()
 {
+	// reset the unaffected between audio stuff
+	mUnaffectedState = UnaffectedState::FadeIn;
+	mUnaffectedFadeSamples = 0;
+
+	mNoteActiveLastRender.fill(false);
+
 	clearChannelsOfNotesOfBands(mPrevOutValue);
 	clearChannelsOfNotesOfBands(mPrevPrevOutValue);
 	for (auto& values : mPrevInValue)
