@@ -37,8 +37,6 @@ namespace detail
 {
 DGRect AdjustTextViewForPlatform(char const* inFontName,
 								 DGRect const& inRect) noexcept;
-DGRect UnAdjustTextViewForPlatform(char const* inFontName,
-								   DGRect const& inRect) noexcept;
 }
 
 
@@ -174,6 +172,8 @@ public:
 	void setHeaderFontColor(DGColor inColor);
 	void setTextMargin(VSTGUI::CPoint const& inMargin);
 	void setLineSpacing(VSTGUI::CCoord inSpacing);
+	// additional line spacing only after the header line
+	void setHeaderSpacing(VSTGUI::CCoord inSpacing);
 
 	CLASS_METHODS(DGHelpBox, DGStaticTextDisplay)
 
@@ -183,4 +183,5 @@ private:
 	DGColor mHeaderFontColor;
 	VSTGUI::CPoint mTextMargin;
 	VSTGUI::CCoord mLineSpacing = 1;
+	VSTGUI::CCoord mHeaderSpacing = 2;
 };

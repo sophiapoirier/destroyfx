@@ -120,70 +120,41 @@ enum {
 
 //--------------------------------------------------------------------------
 GeometerHelpBox::GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect const & inRegion, DGImage * inBackground)
-  : DGStaticTextDisplay(inOwnerEditor, inRegion, inBackground, dfx::TextAlignment::Left,
-			dfx::kFontSize_Snooty10px, DGColor::kBlack, dfx::kFontName_Snooty10px),
-   helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY)
+  : DGHelpBox(inOwnerEditor, inRegion,
+              std::bind(&GeometerHelpBox::textForControl, this, std::placeholders::_1),
+              inBackground, DGColor::kWhite),
+    helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY)
 {
-  // HACK: duplicated from DGHelpBox (TODO: unify this code with DGHelpBox)
-  auto const adjustedRegion =
-    detail::UnAdjustTextViewForPlatform(getFont()->getName(), getViewSize());
-  setViewSize(adjustedRegion, false);
+  setHeaderFontColor(DGColor::kBlack);
+  setTextMargin({4, 1});
+  setLineSpacing(2);
+  setHeaderSpacing(4);
 }
 
 //--------------------------------------------------------------------------
-void GeometerHelpBox::draw(VSTGUI::CDrawContext * inContext) {
+std::string GeometerHelpBox::textForControl(IDGControl * /*inControl*/) const {
 
-  if (itemNum < 0)
-    return;
-  if ((helpCategory == HELP_CATEGORY_GENERAL) && (itemNum == HELP_EMPTY))
-    return;
-
-  if (auto const image = getDrawBackground())
-    image->draw(inContext, getViewSize());
-
-  DGRect textpos(getViewSize());
-  textpos.setSize(textpos.getWidth() - 5, getFont()->getSize() + 2);
-  textpos.offset(4, 1);
-  // HACK: duplicated from DGHelpBox (TODO: unify this code with DGHelpBox)
-  textpos = detail::AdjustTextViewForPlatform(getFont()->getName(), textpos);
-
-  auto const helpstrings = [this]() -> char const * {
-    switch (helpCategory) {
-      case HELP_CATEGORY_GENERAL:
-        return general_helpstrings.at(itemNum);
-      case HELP_CATEGORY_WINDOWSHAPE:
-        return windowshape_helpstrings.at(itemNum);
-      case HELP_CATEGORY_LANDMARKS:
-        return landmarks_helpstrings.at(itemNum);
-      case HELP_CATEGORY_OPS:
-        return ops_helpstrings.at(itemNum);
-      case HELP_CATEGORY_RECREATE:
-        return recreate_helpstrings.at(itemNum);
-      default:
-        return nullptr;
-    }
-  }();
-
-  if (helpstrings) {
-    std::istringstream stream(helpstrings);
-    std::string line;
-    bool headerDrawn = false;
-    while (std::getline(stream, line)) {
-      if (!std::exchange(headerDrawn, true)) {
-        setFontColor(DGColor::kBlack);
-        drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
-        textpos.offset(-1, 0);
-        drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
-        textpos.offset(1, 16);
-        setFontColor(DGColor::kWhite);
-      } else {
-        drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
-        textpos.offset(0, 12);
-      }
-    }
+  if (itemNum < 0) {
+    return {};
+  }
+  if ((helpCategory == HELP_CATEGORY_GENERAL) && (itemNum == HELP_EMPTY)) {
+    return {};
   }
 
-  setDirty(false);
+  switch (helpCategory) {
+    case HELP_CATEGORY_GENERAL:
+      return general_helpstrings.at(itemNum);
+    case HELP_CATEGORY_WINDOWSHAPE:
+      return windowshape_helpstrings.at(itemNum);
+    case HELP_CATEGORY_LANDMARKS:
+      return landmarks_helpstrings.at(itemNum);
+    case HELP_CATEGORY_OPS:
+      return ops_helpstrings.at(itemNum);
+    case HELP_CATEGORY_RECREATE:
+      return recreate_helpstrings.at(itemNum);
+    default:
+      return {};
+  }
 }
 
 //--------------------------------------------------------------------------

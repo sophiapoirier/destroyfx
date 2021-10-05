@@ -27,17 +27,17 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //--------------------------------------------------------------------------
-class GeometerHelpBox final : public DGStaticTextDisplay {
+class GeometerHelpBox final : public DGHelpBox {
 public:
   GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect const & inRegion, DGImage * inBackground);
 
-  void draw(VSTGUI::CDrawContext * inContext) override;
-
   void setDisplayItem(int inHelpCategory, int inItemNum);
 
-  CLASS_METHODS(GeometerHelpBox, DGStaticTextDisplay)
+  CLASS_METHODS(GeometerHelpBox, DGHelpBox)
 
 private:
+  std::string textForControl(IDGControl * inControl) const;
+
   int helpCategory;
   int itemNum;
 };

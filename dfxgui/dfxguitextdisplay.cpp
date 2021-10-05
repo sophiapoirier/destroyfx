@@ -123,7 +123,7 @@ DGRect detail::AdjustTextViewForPlatform(char const* inFontName,
 										 DGRect const& inRect) noexcept
 {
 	DGRect adjustedRect = inRect;
-	const auto [x, y, h] = GetPlatformViewAdjustments(inFontName);
+	auto const [x, y, h] = GetPlatformViewAdjustments(inFontName);
 	adjustedRect.offset(x, y);
 	adjustedRect.setHeight(adjustedRect.getHeight() + h);
 	return adjustedRect;
@@ -131,11 +131,11 @@ DGRect detail::AdjustTextViewForPlatform(char const* inFontName,
 
 //-----------------------------------------------------------------------------
 // Inverse of the above.
-DGRect detail::UnAdjustTextViewForPlatform(char const* inFontName,
-										   DGRect const& inRect) noexcept
+static DGRect UnAdjustTextViewForPlatform(char const* inFontName,
+										  DGRect const& inRect) noexcept
 {
 	DGRect adjustedRect = inRect;
-	const auto [x, y, h] = GetPlatformViewAdjustments(inFontName);
+	auto const [x, y, h] = GetPlatformViewAdjustments(inFontName);
 	adjustedRect.offset(-x, -y);
 	adjustedRect.setHeight(adjustedRect.getHeight() - h);
 	return inRect;
@@ -569,7 +569,7 @@ DGHelpBox::DGHelpBox(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion,
 
 	// HACK part 1: undo "view platform offset", because at the control level, that includes the background,
 	// but what we more narrowly want is to offset the individual regions of each line of text
-	auto const adjustedRegion = detail::UnAdjustTextViewForPlatform(getFont()->getName(), getViewSize());
+	auto const adjustedRegion = UnAdjustTextViewForPlatform(getFont()->getName(), getViewSize());
 	setViewSize(adjustedRegion, false);
 }
 
@@ -608,7 +608,7 @@ void DGHelpBox::draw(VSTGUI::CDrawContext* inContext)
 			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textArea);
 			textArea.offset(1, 0);
 			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textArea);
-			textArea.offset(-1, fontHeight + mLineSpacing + 2);
+			textArea.offset(-1, fontHeight + mLineSpacing + mHeaderSpacing);
 			setFontColor(entryFontColor);
 		}
 		else
@@ -643,6 +643,15 @@ void DGHelpBox::setTextMargin(VSTGUI::CPoint const& inMargin)
 void DGHelpBox::setLineSpacing(VSTGUI::CCoord inSpacing)
 {
 	if (std::exchange(mLineSpacing, inSpacing) != inSpacing)
+	{
+		setDirty();
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DGHelpBox::setHeaderSpacing(VSTGUI::CCoord inSpacing)
+{
+	if (std::exchange(mHeaderSpacing, inSpacing) != inSpacing)
 	{
 		setDirty();
 	}
