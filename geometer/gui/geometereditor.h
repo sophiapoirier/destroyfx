@@ -27,23 +27,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //--------------------------------------------------------------------------
-class GeometerHelpBox final : public DGHelpBox {
-public:
-  GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect const & inRegion, DGImage * inBackground);
-
-  void setDisplayItem(int inHelpCategory, int inItemNum);
-
-  CLASS_METHODS(GeometerHelpBox, DGHelpBox)
-
-private:
-  std::string textForControl(IDGControl * inControl) const;
-
-  int helpCategory;
-  int itemNum;
-};
-
-
-//--------------------------------------------------------------------------
 class GeometerEditor final : public DfxGuiEditor {
 public:
   explicit GeometerEditor(DGEditorListenerInstance inInstance);
@@ -53,9 +36,9 @@ public:
   void parameterChanged(long inParameterID) override;
   void mouseovercontrolchanged(IDGControl * currentControlUnderMouse) override;
 
-  void changehelp(IDGControl * currentControlUnderMouse);
-
 private:
+  std::string changehelp(IDGControl * currentControlUnderMouse);
+  static std::string helptext(int inHelpCategory, int inItemNum);
   long choose_multiparam(long baseParamID) {
     return getparameter_i(baseParamID) + baseParamID + 1;
   }
@@ -69,5 +52,5 @@ private:
   std::vector<IDGControl *> genhelpitemcontrols;
   std::vector<VSTGUI::SharedPointer<DGImage>> g_helpicons;
   DGButton * helpicon = nullptr;
-  GeometerHelpBox * helpbox = nullptr;
+  DGHelpBox * helpbox = nullptr;
 };

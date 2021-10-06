@@ -118,64 +118,6 @@ enum {
 
 #pragma mark -
 
-//--------------------------------------------------------------------------
-GeometerHelpBox::GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect const & inRegion, DGImage * inBackground)
-  : DGHelpBox(inOwnerEditor, inRegion,
-              std::bind(&GeometerHelpBox::textForControl, this, std::placeholders::_1),
-              inBackground, DGColor::kWhite),
-    helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY)
-{
-  setHeaderFontColor(DGColor::kBlack);
-  setTextMargin({4, 1});
-  setLineSpacing(2);
-  setHeaderSpacing(4);
-}
-
-//--------------------------------------------------------------------------
-std::string GeometerHelpBox::textForControl(IDGControl * /*inControl*/) const {
-
-  if (itemNum < 0) {
-    return {};
-  }
-  if ((helpCategory == HELP_CATEGORY_GENERAL) && (itemNum == HELP_EMPTY)) {
-    return {};
-  }
-
-  switch (helpCategory) {
-    case HELP_CATEGORY_GENERAL:
-      return general_helpstrings.at(itemNum);
-    case HELP_CATEGORY_WINDOWSHAPE:
-      return windowshape_helpstrings.at(itemNum);
-    case HELP_CATEGORY_LANDMARKS:
-      return landmarks_helpstrings.at(itemNum);
-    case HELP_CATEGORY_OPS:
-      return ops_helpstrings.at(itemNum);
-    case HELP_CATEGORY_RECREATE:
-      return recreate_helpstrings.at(itemNum);
-    default:
-      return {};
-  }
-}
-
-//--------------------------------------------------------------------------
-void GeometerHelpBox::setDisplayItem(int inHelpCategory, int inItemNum) {
-
-  bool const changed = ((helpCategory != inHelpCategory) || (itemNum != inItemNum));
-
-  helpCategory = inHelpCategory;
-  itemNum = inItemNum;
-
-  if (changed)
-    redraw();
-}
-
-
-
-
-
-
-#pragma mark -
-
 //-----------------------------------------------------------------------------
 DFX_EDITOR_ENTRY(GeometerEditor)
 
@@ -344,9 +286,6 @@ long GeometerEditor::OpenEditor() {
     fupos.offset(xoff, yoff);
     dpos.offset(xoff, yoff);
     lpos.offset(xoff, yoff);
-
-    // HACK: shortcut to fix up the initial alpha state for any disabled slider controls
-    parameterChanged(baseparam);
   }
 
 
@@ -373,8 +312,19 @@ long GeometerEditor::OpenEditor() {
   helpicon->setValue_i(HELP_EMPTY);
 
   pos.set(pos_helpboxX, pos_helpboxY, g_helpbackground->getWidth(), g_helpbackground->getHeight());
-  helpbox = emplaceControl<GeometerHelpBox>(this, pos, g_helpbackground);
+  helpbox = emplaceControl<DGHelpBox>(this, pos,
+                                      std::bind(&GeometerEditor::changehelp, this, std::placeholders::_1),
+                                      g_helpbackground, DGColor::kWhite);
+  helpbox->setHeaderFontColor(DGColor::kBlack);
+  helpbox->setTextMargin({4, 1});
+  helpbox->setLineSpacing(2);
+  helpbox->setHeaderSpacing(4);
 
+
+  // HACK: shortcut to fix up the initial alpha state for any disabled slider controls
+  for (size_t i = 0; i < NUM_SLIDERS; i++) {
+    parameterChanged(get_base_param_for_slider(i));
+  }
 
 
   return dfx::kStatus_NoError;
@@ -431,18 +381,21 @@ void GeometerEditor::parameterChanged(long inParameterID) {
   }
 
   if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Int) {
-    changehelp(getCurrentControl_mouseover());
+    assert(helpbox);
+    helpbox->redraw();
   }
 }
 
 //-----------------------------------------------------------------------------
-void GeometerEditor::mouseovercontrolchanged(IDGControl * currentControlUnderMouse) {
+void GeometerEditor::mouseovercontrolchanged(IDGControl * /*currentControlUnderMouse*/) {
 
-  changehelp(currentControlUnderMouse);
+  if (helpbox) {
+    helpbox->redraw();
+  }
 }
 
 //-----------------------------------------------------------------------------
-void GeometerEditor::changehelp(IDGControl * currentControlUnderMouse) {
+std::string GeometerEditor::changehelp(IDGControl * currentControlUnderMouse) {
 
   auto const updatehelp = [this](int category, int item, long numitems) {
     if (helpicon) {
@@ -450,8 +403,7 @@ void GeometerEditor::changehelp(IDGControl * currentControlUnderMouse) {
       helpicon->setButtonImage(g_helpicons[category]);
       helpicon->setValue_i(item);
     }
-    if (helpbox)
-      helpbox->setDisplayItem(category, item);
+    return helptext(category, item);
   };
 
   auto paramID = dfx::kParameterID_Invalid;
@@ -461,31 +413,55 @@ void GeometerEditor::changehelp(IDGControl * currentControlUnderMouse) {
   if (auto const matchedGenHelp = std::find(genhelpitemcontrols.cbegin(), genhelpitemcontrols.cend(), currentControlUnderMouse);
       matchedGenHelp != genhelpitemcontrols.cend()) {
     auto const index = std::distance(genhelpitemcontrols.cbegin(), matchedGenHelp);
-    updatehelp(HELP_CATEGORY_GENERAL, index, NUM_GEN_HELP_ITEMS);
+    return updatehelp(HELP_CATEGORY_GENERAL, index, NUM_GEN_HELP_ITEMS);
   }
-  else if (paramID == P_BUFSIZE) {
-    updatehelp(HELP_CATEGORY_GENERAL, HELP_WINDOWSIZE, NUM_GEN_HELP_ITEMS);
+  if (paramID == P_BUFSIZE) {
+    return updatehelp(HELP_CATEGORY_GENERAL, HELP_WINDOWSIZE, NUM_GEN_HELP_ITEMS);
   }
-  else if (paramID == P_SHAPE) {
-    updatehelp(HELP_CATEGORY_WINDOWSHAPE, getparameter_i(P_SHAPE), NUM_WINDOWSHAPES);
+  if (paramID == P_SHAPE) {
+    return updatehelp(HELP_CATEGORY_WINDOWSHAPE, getparameter_i(P_SHAPE), NUM_WINDOWSHAPES);
   }
-  else if ((paramID >= P_POINTSTYLE) && (paramID < (P_POINTPARAMS + MAX_POINTSTYLES))) {
-    updatehelp(HELP_CATEGORY_LANDMARKS, getparameter_i(P_POINTSTYLE), NUM_POINTSTYLES);
+  if ((paramID >= P_POINTSTYLE) && (paramID < (P_POINTPARAMS + MAX_POINTSTYLES))) {
+    return updatehelp(HELP_CATEGORY_LANDMARKS, getparameter_i(P_POINTSTYLE), NUM_POINTSTYLES);
   }
-  else if ((paramID >= P_INTERPSTYLE) && (paramID < (P_INTERPARAMS + MAX_INTERPSTYLES))) {
-    updatehelp(HELP_CATEGORY_RECREATE, getparameter_i(P_INTERPSTYLE), NUM_INTERPSTYLES);
+  if ((paramID >= P_INTERPSTYLE) && (paramID < (P_INTERPARAMS + MAX_INTERPSTYLES))) {
+    return updatehelp(HELP_CATEGORY_RECREATE, getparameter_i(P_INTERPSTYLE), NUM_INTERPSTYLES);
   }
-  else if ((paramID >= P_POINTOP1) && (paramID < (P_OPPAR1S + MAX_OPS))) {
-    updatehelp(HELP_CATEGORY_OPS, getparameter_i(P_POINTOP1), NUM_OPS);
+  if ((paramID >= P_POINTOP1) && (paramID < (P_OPPAR1S + MAX_OPS))) {
+    return updatehelp(HELP_CATEGORY_OPS, getparameter_i(P_POINTOP1), NUM_OPS);
   }
-  else if ((paramID >= P_POINTOP2) && (paramID < (P_OPPAR2S + MAX_OPS))) {
-    updatehelp(HELP_CATEGORY_OPS, getparameter_i(P_POINTOP2), NUM_OPS);
+  if ((paramID >= P_POINTOP2) && (paramID < (P_OPPAR2S + MAX_OPS))) {
+    return updatehelp(HELP_CATEGORY_OPS, getparameter_i(P_POINTOP2), NUM_OPS);
   }
-  else if ((paramID >= P_POINTOP3) && (paramID < (P_OPPAR3S + MAX_OPS))) {
-    updatehelp(HELP_CATEGORY_OPS, getparameter_i(P_POINTOP3), NUM_OPS);
+  if ((paramID >= P_POINTOP3) && (paramID < (P_OPPAR3S + MAX_OPS))) {
+    return updatehelp(HELP_CATEGORY_OPS, getparameter_i(P_POINTOP3), NUM_OPS);
   }
-  else {
-    updatehelp(HELP_CATEGORY_GENERAL, HELP_EMPTY, NUM_GEN_HELP_ITEMS);
+  return updatehelp(HELP_CATEGORY_GENERAL, HELP_EMPTY, NUM_GEN_HELP_ITEMS);
+}
+
+//--------------------------------------------------------------------------
+std::string GeometerEditor::helptext(int inHelpCategory, int inItemNum) {
+
+  if (inItemNum < 0) {
+    return {};
+  }
+  if ((inHelpCategory == HELP_CATEGORY_GENERAL) && (inItemNum == HELP_EMPTY)) {
+    return {};
+  }
+
+  switch (inHelpCategory) {
+    case HELP_CATEGORY_GENERAL:
+      return general_helpstrings.at(inItemNum);
+    case HELP_CATEGORY_WINDOWSHAPE:
+      return windowshape_helpstrings.at(inItemNum);
+    case HELP_CATEGORY_LANDMARKS:
+      return landmarks_helpstrings.at(inItemNum);
+    case HELP_CATEGORY_OPS:
+      return ops_helpstrings.at(inItemNum);
+    case HELP_CATEGORY_RECREATE:
+      return recreate_helpstrings.at(inItemNum);
+    default:
+      return {};
   }
 }
 
