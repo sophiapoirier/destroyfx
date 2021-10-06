@@ -30,6 +30,7 @@ This is where we connect the Audio Unit API to our DfxPlugin system.
 #include <AudioUnit/AudioUnitCarbonView.h>
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 
 #include "dfx-au-utilities.h"
 #include "dfxmisc.h"
@@ -1382,7 +1383,7 @@ OSStatus DfxPlugin::SaveState(CFPropertyListRef* outData)
 		if (cfData)
 		{
 			// put the CF data storage thingy into the dfx-data section of the CF dictionary
-			const auto dict = const_cast<CFMutableDictionaryRef>(reinterpret_cast<CFDictionaryRef>(*outData));
+			auto const dict = const_cast<CFMutableDictionaryRef>(reinterpret_cast<CFDictionaryRef>(*outData));
 			CFDictionarySetValue(dict, DfxSettings::kDfxDataAUClassInfoKeyString, cfData.get());
 		}
 	}
@@ -1398,33 +1399,24 @@ OSStatus DfxPlugin::RestoreState(CFPropertyListRef inData)
 	AUSDK_Require_noerr(TARGET_API_BASE_CLASS::RestoreState(inData));
 
 #if TARGET_PLUGIN_USES_MIDI
-	// look for a data section keyed with our custom data key
-	CFDataRef cfData = nullptr;
-	auto dataFound = CFDictionaryGetValueIfPresent(reinterpret_cast<CFDictionaryRef>(inData), DfxSettings::kDfxDataAUClassInfoKeyString, reinterpret_cast<void const**>(&cfData));
+	// look for our custom data section
+	auto const dict = reinterpret_cast<CFDictionaryRef>(inData);
+	auto cfData = static_cast<CFDataRef>(CFDictionaryGetValue(dict, DfxSettings::kDfxDataAUClassInfoKeyString));
 
-	// there was an error in AUBas::RestoreState or trying to find "destroyfx-data", 
-	// but maybe some keys were missing and kAUPresetVSTDataKey is there...
-	if (!dataFound || !cfData)
+	// failed to find our custom data, but maybe old VST chunk data was provided...
+	if (!cfData)
 	{
-		// failing that, try to see if old VST chunk data is being fed to us
 		// TODO: this implementation may be incorrect and the data may be the entire fxProgram, not just the chunk
-		dataFound = CFDictionaryGetValueIfPresent(reinterpret_cast<CFDictionaryRef>(inData), CFSTR(kAUPresetVSTPresetKey), reinterpret_cast<void const**>(&cfData));
+		cfData = static_cast<CFDataRef>(CFDictionaryGetValue(dict, CFSTR(kAUPresetVSTPresetKey)));
 	}
 
 	bool success = false;
-	if (dataFound && cfData)
+	if (cfData && (CFGetTypeID(cfData) == CFDataGetTypeID()))
 	{
-		// make sure that the settings item is the CoreFoundation type that we are expecting it to be
-		if (CFGetTypeID(cfData) == CFDataGetTypeID())
-		{
-			// a pointer to our special data
-			auto const dfxData = CFDataGetBytePtr(cfData);
-			// the number of bytes of our data
-			auto const dfxDataSize = static_cast<size_t>(CFDataGetLength(cfData));
-			// try to restore the saved settings data
-			success = mDfxSettings->restore(dfxData, dfxDataSize, true);
-			//AUSDK_Require(success, kAudioUnitErr_InvalidPropertyValue);
-		}
+		auto const dfxData = CFDataGetBytePtr(cfData);
+		auto const dfxDataSize = static_cast<size_t>(CFDataGetLength(cfData));
+		success = mDfxSettings->restore(dfxData, dfxDataSize, true);
+		//AUSDK_Require(success, kAudioUnitErr_InvalidPropertyValue);
 	}
 	if (!success)
 	{
