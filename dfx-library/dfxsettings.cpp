@@ -320,7 +320,7 @@ try
 	std::vector<long> paramMap(mNumParameters, dfx::kParameterID_Invalid);
 	for (size_t tag = 0; tag < mParameterIDs.size(); tag++)
 	{
-		paramMap[tag] = getParameterTagFromID(mParameterIDs[tag], {newParameterIDs, numStoredParameters});
+		paramMap[tag] = getParameterTagFromID(mParameterIDs[tag], numStoredParameters, newParameterIDs);
 	}
 
 	// point to the next data element after the parameter IDs:  the first preset name
