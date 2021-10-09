@@ -419,12 +419,13 @@ long BufferOverrideEditor::OpenEditor()
 	}
 
 
-	HandleTempoSyncChange();
-	HandleTempoAutoChange();
-
 	// Visualization
 	pos.set(kVisualizationX, kVisualizationY, kVisualizationW, kVisualizationH);
 	getFrame()->addView(new BufferOverrideView(pos));
+
+
+	HandleTempoSyncChange();
+	HandleTempoAutoChange();
 
 	return dfx::kStatus_NoError;
 }
@@ -559,13 +560,13 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 				return
 				{
 					"Buffer divisor is the value divided into the forced buffer size, resulting in the mini-buffer size.",
-					"It determines how many times each forced buffer repeats."
+					"It determines how many times you hear the audio repeat within a forced buffer."
 				};
 			case kBufferSize_MS:
 			case kBufferSize_Sync:
 				return
 				{
-					"Forced buffer size is the length of the sound chunks within which a mini-buffer repeats.",
+					"Forced buffer size is the length of time within which audio \"mini-buffers\" repeat.",
 					"If buffer tempo sync is enabled, then the forced buffer size is adapted to the tempo of your song."
 				};
 			case kBufferTempoSync:

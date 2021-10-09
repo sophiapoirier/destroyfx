@@ -59,7 +59,7 @@ private:
 
 	void updateBuffer(unsigned long samplePos, bool& ioViewDataChanged);
 
-	void heedBufferOverrideEvents(unsigned long samplePos);
+	void heedMidiEvents(unsigned long samplePos);
 	float getDivisorParameterFromNote(int currentNote);
 	float getDivisorParameterFromPitchbend(int valueLSB, int valueMSB);
 

@@ -49,8 +49,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos, bool& ioViewDataChang
 	bool barSync = false;  // true if we need to sync up with the next bar start
 
 
-	// take care of MIDI
-	heedBufferOverrideEvents(samplePos);
+	heedMidiEvents(samplePos);
 
 	mReadPos = 0;  // reset for starting a new minibuffer
 	mPrevMinibufferSize = mMinibufferSize;

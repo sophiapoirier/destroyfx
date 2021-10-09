@@ -76,7 +76,7 @@ float BufferOverride::getDivisorParameterFromPitchbend(int valueLSB, int valueMS
 
 //-----------------------------------------------------------------------------
 // this function implements the changes that new MIDI events demand
-void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
+void BufferOverride::heedMidiEvents(unsigned long samplePos)
 {
 	auto& midiState = getmidistate();
 	// look at the events if we have any
