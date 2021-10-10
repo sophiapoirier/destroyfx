@@ -80,7 +80,6 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	addchannelconfig(kChannelConfig_AnyMatchedIO);  // N-in/N-out
 	addchannelconfig(1, 2);  // 1-in/2-out
 
-	// give mCurrentTempoBPS a value in case that's useful for a freshly opened GUI
 	mCurrentTempoBPS = getparameter_f(kTempo) / 60.0;
 
 	// start off with split CC automation of both range slider points

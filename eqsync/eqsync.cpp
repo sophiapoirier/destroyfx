@@ -63,7 +63,6 @@ EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	setpresetname(0, "with motors");  // default preset name
 
-	// give mCurrentTempoBPS a value in case that's useful for a freshly opened GUI
 	mCurrentTempoBPS = getparameter_f(kTempo) / 60.0;
 }
 

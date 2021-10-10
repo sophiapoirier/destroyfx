@@ -89,7 +89,6 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	settailsize_seconds(1.0 / (mTempoRateTable.getScalar(0) * kMinAllowableBPS));
 
 
-	// give a value in case that's useful for a freshly opened GUI
 	mCurrentTempoBPS = getparameter_f(kTempo) / 60.0;
 
 	setpresetname(0, "self-determined");  // default preset name

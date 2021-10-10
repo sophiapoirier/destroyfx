@@ -123,7 +123,6 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	registerSmoothedAudioValue(&mInputGain);
 	registerSmoothedAudioValue(&mOutputGain);
 
-	// give mCurrentTempoBPS a value in case that's useful for a freshly opened GUI
 	mCurrentTempoBPS = getparameter_f(kTempo) / 60.0;
 }
 
