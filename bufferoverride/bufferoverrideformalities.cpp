@@ -83,6 +83,8 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparametervaluestring(kMidiMode, kMidiMode_Nudge, "nudge");
 	setparametervaluestring(kMidiMode, kMidiMode_Trigger, "trigger");
 
+	addparameterattributes(kMidiMode, DfxParam::kAttribute_OmitFromRandomizeAll);
+
 	addparametergroup("buffer divisor LFO", {kDivisorLFORate_Hz, kDivisorLFORate_Sync, kDivisorLFODepth, kDivisorLFOShape, kDivisorLFOTempoSync});
 	addparametergroup("forced buffer size LFO", {kBufferLFORate_Hz, kBufferLFORate_Sync, kBufferLFODepth, kBufferLFOShape, kBufferLFOTempoSync});
 

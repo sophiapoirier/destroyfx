@@ -72,6 +72,8 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparametervaluestring(kMidiMode, kMidiMode_Trigger, "trigger");
 	setparametervaluestring(kMidiMode, kMidiMode_Apply, "apply");
 
+	addparameterattributes(kMidiMode, DfxParam::kAttribute_OmitFromRandomizeAll);
+
 
 	setpresetname(0, "thip thip thip");  // default preset name
 
