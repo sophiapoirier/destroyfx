@@ -973,8 +973,8 @@ void DfxPlugin::PropertyChanged(AudioUnitPropertyID inPropertyID,
 	}
 #endif
 
-	// NOTE: this will bite you if running debug builds in hosts that offline render audio (e.g. auval)
-	assert(std::this_thread::get_id() != mAudioRenderThreadID);  // this method is not realtime-safe
+	// NOTE: this will bite you if running debug builds in hosts that offline render audio (hence the validator exception)
+	assert((std::this_thread::get_id() != mAudioRenderThreadID) || dfx::IsHostValidator());  // this method is not realtime-safe
 
 	return TARGET_API_BASE_CLASS::PropertyChanged(inPropertyID, inScope, inElement);
 }

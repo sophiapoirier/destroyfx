@@ -38,13 +38,14 @@ These are some generally useful functions.
 #include "dfxdefines.h"
 
 #if TARGET_OS_MAC
-	#include <CoreServices/CoreServices.h>
-	#import <Foundation/NSFileManager.h>
 	#if !__OBJC__
 		#error "you must compile the version of this file with a .mm filename extension, not this file"
 	#elif !__has_feature(objc_arc)
 		#error "you must compile this file with Automatic Reference Counting (ARC) enabled"
 	#endif
+	#include <CoreServices/CoreServices.h>
+	#import <Foundation/NSFileManager.h>
+	#import <Foundation/NSProcessInfo.h>
 #endif
 
 #if _WIN32
@@ -320,7 +321,14 @@ std::unique_ptr<char[]> CreateCStringFromCFString(CFStringRef inCFString, CFStri
 	}
 	return outputString;
 }
-#endif
+
+//-----------------------------------------------------------------------------
+bool IsHostValidator()
+{
+	auto const processName = NSProcessInfo.processInfo.processName;
+	return [processName isEqual:@"auvaltool"] || [processName isEqual:@"pluginval"];
+}
+#endif  // TARGET_OS_MAC
 
 
 }  // namespace

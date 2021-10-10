@@ -122,6 +122,7 @@ std::string GetNameForMIDINote(int inMidiNote);
 
 #if TARGET_OS_MAC
 std::unique_ptr<char[]> CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding inCStringEncoding = kCFStringEncodingUTF8);
+bool IsHostValidator();
 #endif
 
 // coming up with these sets of short parameter names can be annoying, so here are some sets we use repeatedly
