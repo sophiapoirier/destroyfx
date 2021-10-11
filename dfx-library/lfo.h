@@ -51,19 +51,18 @@ public:
 		kShape_RandomInterpolating,
 		kNumShapes
 	};
-	typedef int Shape;
+	using Shape = int;
 
 	LFO();
 
 	void reset();
 
-	void pickTheWaveform();  // TODO: omigoddess please remove this horrid method and handle state changes automatically
 	static std::string getShapeName(Shape inShape);
 
-	void setDepth(float inDepth);
-	void setShape(Shape inShape);
+	void setDepth(float inDepth) noexcept;
+	void setShape(Shape inShape) noexcept;
 
-	void setStepSize(float inStepSize);
+	void setStepSize(float inStepSize) noexcept;
 	void syncToTheBeat(long inSamplesToBar);
 
 	void updatePosition(long inNumSteps = 1);
@@ -80,6 +79,9 @@ public:
 private:
 	static constexpr long kSmoothDur = 48;
 
+	using Generator = float(*)(float);
+
+	static Generator getGeneratorForShape(Shape inShape) noexcept;
 	static float sineGenerator(float inPosition);
 	static float triangleGenerator(float inPosition);
 	static float squareGenerator(float inPosition);
@@ -88,7 +90,7 @@ private:
 	static float thornGenerator(float inPosition);
 
 
-	float(*mGenerator)(float) = nullptr;  // LFO waveform generator function pointer
+	Generator mGenerator = nullptr;  // LFO waveform generator function pointer
 	float mPosition = 0.0f;  // the position in the LFO cycle
 	float mStepSize = 0.0f;  // size of the steps through the LFO cycle
 	float mRandomNumber = 0.0f;  // random values for the random LFO waveforms

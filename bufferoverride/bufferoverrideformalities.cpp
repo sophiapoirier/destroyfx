@@ -115,6 +115,9 @@ long BufferOverride::initialize()
 	}
 	mAudioOutputValues.assign(numChannels, 0.0f);
 
+	// this is a handy value to have during LFO calculations and wasteful to recalculate at every sample
+	mOneDivSR = 1.f / getsamplerate_f();
+
 	return dfx::kStatus_NoError;
 }
 
@@ -148,9 +151,6 @@ void BufferOverride::reset()
 
 	mNeedResync = true;  // some hosts may call resume when restarting playback
 
-	// this is a handy value to have during LFO calculations and wasteful to recalculate at every sample
-	mOneDivSR = 1.0f / getsamplerate_f();
-
 	mDivisorLFOValue_viewCache.store(kLFOValueDefault, std::memory_order_relaxed);
 	mBufferLFOValue_viewCache.store(kLFOValueDefault, std::memory_order_relaxed);
 	updateViewDataCache();
@@ -162,7 +162,7 @@ void BufferOverride::reset()
 //-------------------------------------------------------------------------
 void BufferOverride::initPresets()
 {
-	int i = 1;
+	long i = 1;
 
 	setpresetname(i, "drum roll");
 	setpresetparameter_f(i, kDivisor, 4.0);

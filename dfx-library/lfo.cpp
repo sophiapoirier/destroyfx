@@ -36,7 +36,7 @@ Welcome to our Low Frequency Oscillator.
 //------------------------------------------------------------------------
 dfx::LFO::LFO()
 {
-	pickTheWaveform();
+	mGenerator = getGeneratorForShape(mShape);
 	reset();
 }
 
@@ -63,54 +63,50 @@ std::string dfx::LFO::getShapeName(Shape inShape)
 		case kShape_Thorn               : return "thorn";
 		case kShape_Random              : return "random";
 		case kShape_RandomInterpolating : return "random interpolating";
-		default: assert(false); return {};
+		default:
+			assert(false);
+			return {};
 	}
 }
 
 //--------------------------------------------------------------------------------------
 // this function points the LFO generator function pointer to the correct waveform generator
-void dfx::LFO::pickTheWaveform()
+dfx::LFO::Generator dfx::LFO::getGeneratorForShape(Shape inShape) noexcept
 {
-	switch (mShape)
+	switch (inShape)
 	{
 		case kShape_Sine:
-			mGenerator = sineGenerator;
-			break;
+			return sineGenerator;
 		case kShape_Triangle:
-			mGenerator = triangleGenerator;
-			break;
+			return triangleGenerator;
 		case kShape_Square:
-			mGenerator = squareGenerator;
-			break;
+			return squareGenerator;
 		case kShape_Saw:
-			mGenerator = sawGenerator;
-			break;
+			return sawGenerator;
 		case kShape_ReverseSaw:
-			mGenerator = reverseSawGenerator;
-			break;
+			return reverseSawGenerator;
 		case kShape_Thorn:
-			mGenerator = thornGenerator;
-			break;
+			return thornGenerator;
 		default:
-			mGenerator = nullptr;
-			break;
+			return nullptr;
 	}
 }
 
 //--------------------------------------------------------------------------------------
-void dfx::LFO::setDepth(float inDepth)
+void dfx::LFO::setDepth(float inDepth) noexcept
 {
 	mDepth = inDepth;
 }
 
 //--------------------------------------------------------------------------------------
-void dfx::LFO::setShape(Shape inShape)
+void dfx::LFO::setShape(Shape inShape) noexcept
 {
 	mShape = inShape;
+	mGenerator = getGeneratorForShape(inShape);
 }
 
 //--------------------------------------------------------------------------------------
-void dfx::LFO::setStepSize(float inStepSize)
+void dfx::LFO::setStepSize(float inStepSize) noexcept
 {
 	mStepSize = inStepSize;
 }

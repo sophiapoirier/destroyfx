@@ -246,11 +246,6 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 	bool viewDataChanged = false;
 
 
-//-------------------------INITIALIZATIONS----------------------
-	mDivisorLFO.pickTheWaveform();
-	mBufferLFO.pickTheWaveform();
-
-
 //-----------------------TEMPO STUFF---------------------------
 	// figure out the current tempo if we're doing tempo sync
 	if (mBufferTempoSync || mDivisorLFOTempoSync || mBufferLFOTempoSync)
