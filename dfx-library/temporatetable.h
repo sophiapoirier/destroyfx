@@ -36,7 +36,7 @@ namespace dfx
 
 
 //-------------------------------------------------------------------------- 
-// this holds the beat scalar values & textual displays for the tempo rates
+// this holds the beat scalar values and textual displays for the tempo rates
 class TempoRateTable
 {
 public:
@@ -58,14 +58,6 @@ public:
 	{
 		return mDisplays[safeIndex(inIndex)];
 	}
-	float getScalar_gen(float inGenValue) const
-	{
-		return mScalars[float2index(inGenValue)];
-	}
-	std::string const& getDisplay_gen(float inGenValue) const
-	{
-		return mDisplays[float2index(inGenValue)];
-	}
 	long getNumRates() const noexcept
 	{
 		return mScalars.size();
@@ -73,18 +65,6 @@ public:
 	long getNearestTempoRateIndex(float inTempoRateValue) const;
 
 private:
-	long float2index(float inValue) const
-	{
-		if (inValue <= 0.0f)
-		{
-			return 0;
-		}
-		else if (inValue >= 1.0f)
-		{
-			return getNumRates() - 1;
-		}
-		return static_cast<long>(inValue * (static_cast<float>(getNumRates()) - 0.9f));
-	}
 	size_t safeIndex(long inIndex) const noexcept
 	{
 		return std::clamp(inIndex, 0L, getNumRates() - 1);
