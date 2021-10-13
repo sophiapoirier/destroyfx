@@ -30,8 +30,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_ID	FOURCC('M', 'g', 'a', 't')
 #define PLUGIN_VERSION_MAJOR	2
 #define PLUGIN_VERSION_MINOR	0
-#define PLUGIN_VERSION_BUGFIX	0
-#define PLUGIN_VERSION_STRING	"2.0.0"
+#define PLUGIN_VERSION_BUGFIX	1
+#define PLUGIN_VERSION_STRING	"2.0.1"
 #define PLUGIN_CLASS_NAME	MIDIGater
 #define PLUGIN_ENTRY_POINT	"MIDIGaterEntry"
 #define TARGET_PLUGIN_USES_MIDI	1

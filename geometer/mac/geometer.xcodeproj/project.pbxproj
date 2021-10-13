@@ -630,7 +630,7 @@
 				DFX_PLUGIN_FULL_NAME = Geometer;
 				DFX_PLUGIN_ID = DFgr;
 				DFX_PLUGIN_SHORT_NAME = geometer;
-				DFX_PLUGIN_VERSION_STRING = 1.2.0;
+				DFX_PLUGIN_VERSION_STRING = 1.2.1;
 			};
 			name = Development;
 		};
@@ -641,7 +641,7 @@
 				DFX_PLUGIN_FULL_NAME = Geometer;
 				DFX_PLUGIN_ID = DFgr;
 				DFX_PLUGIN_SHORT_NAME = geometer;
-				DFX_PLUGIN_VERSION_STRING = 1.2.0;
+				DFX_PLUGIN_VERSION_STRING = 1.2.1;
 			};
 			name = Deployment;
 		};

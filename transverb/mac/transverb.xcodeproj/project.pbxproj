@@ -638,7 +638,7 @@
 				DFX_PLUGIN_FULL_NAME = Transverb;
 				DFX_PLUGIN_ID = DFtv;
 				DFX_PLUGIN_SHORT_NAME = transverb;
-				DFX_PLUGIN_VERSION_STRING = 1.5.1;
+				DFX_PLUGIN_VERSION_STRING = 1.5.2;
 			};
 			name = Development;
 		};
@@ -649,7 +649,7 @@
 				DFX_PLUGIN_FULL_NAME = Transverb;
 				DFX_PLUGIN_ID = DFtv;
 				DFX_PLUGIN_SHORT_NAME = transverb;
-				DFX_PLUGIN_VERSION_STRING = 1.5.1;
+				DFX_PLUGIN_VERSION_STRING = 1.5.2;
 			};
 			name = Deployment;
 		};

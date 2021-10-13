@@ -637,7 +637,7 @@
 				DFX_PLUGIN_FULL_NAME = "Rez Synth";
 				DFX_PLUGIN_ID = RezS;
 				DFX_PLUGIN_SHORT_NAME = rezsynth;
-				DFX_PLUGIN_VERSION_STRING = 2.0.0;
+				DFX_PLUGIN_VERSION_STRING = 2.0.1;
 			};
 			name = Development;
 		};
@@ -647,7 +647,7 @@
 				DFX_PLUGIN_FULL_NAME = "Rez Synth";
 				DFX_PLUGIN_ID = RezS;
 				DFX_PLUGIN_SHORT_NAME = rezsynth;
-				DFX_PLUGIN_VERSION_STRING = 2.0.0;
+				DFX_PLUGIN_VERSION_STRING = 2.0.1;
 			};
 			name = Deployment;
 		};

@@ -30,8 +30,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_ID	FOURCC('p', 'o', 'l', 'a')
 #define PLUGIN_VERSION_MAJOR	1
 #define PLUGIN_VERSION_MINOR	1
-#define PLUGIN_VERSION_BUGFIX	0
-#define PLUGIN_VERSION_STRING	"1.1.0"
+#define PLUGIN_VERSION_BUGFIX	1
+#define PLUGIN_VERSION_STRING	"1.1.1"
 #define PLUGIN_CLASS_NAME	Polarizer
 #define PLUGIN_ENTRY_POINT	"PolarizerEntry"
 #define TARGET_PLUGIN_USES_MIDI	0

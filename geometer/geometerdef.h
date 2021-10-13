@@ -30,8 +30,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_ID		FOURCC('D', 'F', 'g', 'r')
 #define PLUGIN_VERSION_MAJOR	1
 #define PLUGIN_VERSION_MINOR	2
-#define PLUGIN_VERSION_BUGFIX	0
-#define PLUGIN_VERSION_STRING	"1.2.0"
+#define PLUGIN_VERSION_BUGFIX	1
+#define PLUGIN_VERSION_STRING	"1.2.1"
 #define PLUGIN_CLASS_NAME	Geometer
 #define PLUGIN_ENTRY_POINT	"GeometerEntry"
 #define TARGET_PLUGIN_USES_MIDI	1

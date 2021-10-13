@@ -531,7 +531,7 @@
 				DFX_PLUGIN_FULL_NAME = Polarizer;
 				DFX_PLUGIN_ID = pola;
 				DFX_PLUGIN_SHORT_NAME = polarizer;
-				DFX_PLUGIN_VERSION_STRING = 1.1.0;
+				DFX_PLUGIN_VERSION_STRING = 1.1.1;
 			};
 			name = Development;
 		};
@@ -541,7 +541,7 @@
 				DFX_PLUGIN_FULL_NAME = Polarizer;
 				DFX_PLUGIN_ID = pola;
 				DFX_PLUGIN_SHORT_NAME = polarizer;
-				DFX_PLUGIN_VERSION_STRING = 1.1.0;
+				DFX_PLUGIN_VERSION_STRING = 1.1.1;
 			};
 			name = Deployment;
 		};

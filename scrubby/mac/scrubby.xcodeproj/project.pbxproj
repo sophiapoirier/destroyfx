@@ -692,7 +692,7 @@
 				DFX_PLUGIN_FULL_NAME = Scrubby;
 				DFX_PLUGIN_ID = scub;
 				DFX_PLUGIN_SHORT_NAME = scrubby;
-				DFX_PLUGIN_VERSION_STRING = 1.1.0;
+				DFX_PLUGIN_VERSION_STRING = 1.1.1;
 			};
 			name = Development;
 		};
@@ -703,7 +703,7 @@
 				DFX_PLUGIN_FULL_NAME = Scrubby;
 				DFX_PLUGIN_ID = scub;
 				DFX_PLUGIN_SHORT_NAME = scrubby;
-				DFX_PLUGIN_VERSION_STRING = 1.1.0;
+				DFX_PLUGIN_VERSION_STRING = 1.1.1;
 			};
 			name = Deployment;
 		};

@@ -539,7 +539,7 @@
 				DFX_PLUGIN_FULL_NAME = Monomaker;
 				DFX_PLUGIN_ID = mono;
 				DFX_PLUGIN_SHORT_NAME = monomaker;
-				DFX_PLUGIN_VERSION_STRING = 1.1.0;
+				DFX_PLUGIN_VERSION_STRING = 1.1.1;
 			};
 			name = Development;
 		};
@@ -549,7 +549,7 @@
 				DFX_PLUGIN_FULL_NAME = Monomaker;
 				DFX_PLUGIN_ID = mono;
 				DFX_PLUGIN_SHORT_NAME = monomaker;
-				DFX_PLUGIN_VERSION_STRING = 1.1.0;
+				DFX_PLUGIN_VERSION_STRING = 1.1.1;
 			};
 			name = Deployment;
 		};
