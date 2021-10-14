@@ -191,6 +191,11 @@ Adds noise to your sound based on its RMS volume; can also swap
 samples around. Again, Geometer probably has more flexible effects
 that are similar in sound.
 
+### thrush/
+
+modulatable and channel-splittable phase shifter (a collaboration
+with [Keith Fullerton Whitman](https://keithfullertonwhitman.com))
+
 ---
 
 In the source package, each plugin has a corresponding directory, as
