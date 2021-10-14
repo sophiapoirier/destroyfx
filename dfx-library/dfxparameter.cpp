@@ -767,7 +767,7 @@ std::string DfxParam::getunitstring() const
 		case Unit::Samples:
 			return "samples";
 		case Unit::Scalar:
-			return "";
+			return "x";
 		case Unit::Divisor:
 			return "";
 		case Unit::Exponent:

@@ -93,9 +93,21 @@ dfx::LFO::Generator dfx::LFO::getGeneratorForShape(Shape inShape) noexcept
 }
 
 //--------------------------------------------------------------------------------------
+float dfx::LFO::getDepth() const noexcept
+{
+	return mDepth;
+}
+
+//--------------------------------------------------------------------------------------
 void dfx::LFO::setDepth(float inDepth) noexcept
 {
 	mDepth = inDepth;
+}
+
+//--------------------------------------------------------------------------------------
+dfx::LFO::Shape dfx::LFO::getShape() const noexcept
+{
+	return mShape;
 }
 
 //--------------------------------------------------------------------------------------

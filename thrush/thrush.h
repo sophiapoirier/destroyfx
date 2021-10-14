@@ -19,11 +19,13 @@ along with Thrush.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#ifndef __thrush
-#define __thrush
+#pragma once
 
-#include "dfxmisc.h"
+#include <vector>
+
+#include "dfxplugin.h"
 #include "lfo.h"
+#include "temporatetable.h"
 
 
 //-------------------------------------------------------------------------------------
@@ -32,154 +34,104 @@ enum
 {
 	kDelay,
 	kTempo,
+	kTempoAuto,
 
-	kLFOonOff,
+	kLFOEnable1,
 	kLFO1tempoSync,
-	kLFO1rate,
+	kLFO1Rate_Hz,
+	kLFO1Rate_Sync,
 	kLFO1depth,
 	kLFO1shape,
 
 	kLFO2tempoSync,
-	kLFO2rate,
+	kLFO2Rate_Hz,
+	kLFO2Rate_Sync,
 	kLFO2depth,
 	kLFO2shape,
 
 	kStereoLink,
 	kDelay2,
 
-	kLFOonOff2,
+	kLFOEnable2,
 	kLFO1tempoSync2,
-	kLFO1rate2,
+	kLFO1Rate2_Hz,
+	kLFO1Rate2_Sync,
 	kLFO1depth2,
 	kLFO1shape2,
 
 	kLFO2tempoSync2,
-	kLFO2rate2,
+	kLFO2Rate2_Hz,
+	kLFO2Rate2_Sync,
 	kLFO2depth2,
 	kLFO2shape2,
 
 	kDryWetMix,
 
-	NUM_PARAMETERS
+	kParameterCount
 };
 
 
 //-------------------------------------------------------------------------------------
-// constants
-
-#define DELAY_MIN 1
-#define DELAY_MAX 128
-const long DELAY_BUFFER_SIZE = DELAY_MAX * 2;
-#define delayScaled(A)   ( (long)((A)*(float)(DELAY_MAX-DELAY_MIN)) + DELAY_MIN )
-#define delayUnscaled(A)   ( (float)((A) - DELAY_MIN) / (float)(DELAY_MAX-DELAY_MIN) )
-
-#define TEMPO_MIN 39.0f
-#define TEMPO_MAX 480.0f
-// this is for converting from parameter entries to the real values
-#define tempoScaled(A) ( paramRangeScaled((A), TEMPO_MIN, TEMPO_MAX) )
-#define tempoUnscaled(A) ( paramRangeUnscaled((A), TEMPO_MIN, TEMPO_MAX) )
-
-#define LFO_RATE_MIN 0.09f
-#define LFO_RATE_MAX 21.0f
-#define LFOrateScaled(A)   ( paramRangeScaled((A), LFO_RATE_MIN, LFO_RATE_MAX) )
-#define LFOrateUnscaled(A)   ( paramRangeUnscaled((A), LFO_RATE_MIN, LFO_RATE_MAX) )
-
-#define LFO2_DEPTH_MIN 1.0f
-#define LFO2_DEPTH_MAX 9.0f
-#define LFO2depthScaled(A) ( paramRangeScaled((A), LFO2_DEPTH_MIN, LFO2_DEPTH_MAX) )
-#define LFO2depthUnscaled(A) ( paramRangeUnscaled((A), LFO2_DEPTH_MIN, LFO2_DEPTH_MAX) )
-
-#define NUM_PROGRAMS 16
-#define PLUGIN_VERSION 1000
-#define PLUGIN_ID 'thsh'
-
-
-//----------------------------------------------------------------------------- 
-class ThrushProgram
+class Thrush final : public DfxPlugin
 {
-friend class Thrush;
 public:
-	ThrushProgram();
-	~ThrushProgram();
+	Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+
+	long initialize() override;
+	void cleanup() override;
+	void reset() override;
+
+	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
+	void processparameters() override;
+
 private:
-	float *param;
-	char *name;
-};
+	static constexpr long kPresetCount = 16;
+	static constexpr long kDelaySamplesMin = 1;
+	static constexpr long kDelaySamplesMax = 128;
+	static constexpr long kDelayBufferSize = kDelaySamplesMax * 2;
+	static constexpr float kLFORateMin = 0.09f;
+	static constexpr float kLFORateMax = 21.f;
+	static constexpr float kLFO2DepthMin = 1.f;
+	static constexpr float kLFO2DepthMax = 9.f;
 
-
-
-//-------------------------------------------------------------------------------------
-
-class Thrush : public AudioEffectX
-{
-friend class ThrushEditor;
-public:
-	Thrush(audioMasterCallback audioMaster);
-	~Thrush();
-
-	virtual void process(float **inputs, float **outputs, long sampleFrames);
-	virtual void processReplacing(float **inputs, float **outputs, long sampleFrames);
-
-	virtual void suspend();
-	virtual void resume();
-
-	virtual void setProgram(long programNum);
-	virtual void setProgramName(char *name);
-	virtual void getProgramName(char *name);
-	virtual bool getProgramNameIndexed(long category, long index, char *text);
-	virtual bool copyProgram(long destination);
-
-	virtual void setParameter(long index, float value);
-	virtual float getParameter(long index);
-	virtual void getParameterLabel(long index, char *label);
-	virtual void getParameterDisplay(long index, char *text);
-	virtual void getParameterName(long index, char *text);
-
-	virtual long getTailSize();
-	// there was a typo in the VST header files versions 2.0 through 2.2, 
-	// so some hosts will still call this incorrectly named version...
-	virtual long getGetTailSize() { return getTailSize(); }
-	virtual bool getInputProperties(long index, VstPinProperties* properties);
-	virtual bool getOutputProperties(long index, VstPinProperties* properties);
-
-	virtual bool getEffectName(char *name);
-	virtual long getVendorVersion();
-	virtual bool getErrorText(char *text);
-	virtual bool getVendorString(char *text);
-	virtual bool getProductString(char *text);
-
-	virtual long canDo(char* text);
-
-protected:
-	// the parameters
-	float fDelay, fTempo, fStereoLink, fDelay2, fDryWetMix;
-
-	LFO *lfo1, *lfo2, *lfo1_2, *lfo2_2;
-
-	void doTheProcess(float **inputs, float **outputs, long sampleFrames, bool replacing);
-	void calculateTheTempo();
-	void calculateTheLFOcycleSize(LFO *lfo);
-	float processTheLFOs(LFO *lfoLayer1, LFO *lfoLayer2);
+	class ThrushLFO final : public dfx::LFO
+	{
+	private:
+		friend class Thrush;
+		float mRateHz {};
+		float mTempoRateScalar {};
+		bool mTempoSync {};
+		float mEffectiveRateHz {};
+		bool mEnable = true;
+	};
 
 	void initPresets();
-	ThrushProgram *programs;
 
-	// these track the input & delay buffer positions
-	long inputPosition, delayPosition, delayPosition2, oldDelayPosition, oldDelayPosition2;
-	float *delayBuffer, *delayBuffer2;	// left & right channel delay buffers
+	void calculateTheTempo();
+	float calculateTheLFOcycleSize(ThrushLFO& lfo) const;
+	float processTheLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const;
 
-	float numLFOpointsDivSR;	// the number of LFO table points divided by the sampling rate
+	static constexpr float lfo2DepthScaled(float value)
+	{
+		return (value * (kLFO2DepthMax - kLFO2DepthMin)) + kLFO2DepthMin;
+	}
 
-	bool stereoLink;	// onOffTest(fStereoLink) stored as a bool to save on calculations
+	// the parameters
+	float mDelay_gen {}, mDelay2_gen {}, mUserTempoBPM {}, mDryWetMix {};
+	bool mUseHostTempo = false, mStereoLink = false;
 
-	bool needLastSample, needLastSample2;
-	float lastSample, lastSample2;
+	ThrushLFO mLFO1, mLFO2, mLFO1_2, mLFO2_2;
 
-	TempoRateTable *tempoRateTable;	// a table of tempo rate values
-	float currentTempoBPS;	// tempo in beats per second
-	long hostCanDoTempo;	// my semi-booly dude who knows something about the host's VstTimeInfo implementation
-	VstTimeInfo *timeInfo;
-	bool needResync;	// true when playback has just started up again
+	// these track the input and delay buffer positions
+	long mInputPosition, mDelayPosition, mDelayPosition2, mOldDelayPosition, mOldDelayPosition2;
+	std::vector<float> mDelayBuffer, mDelayBuffer2; // left and right channel delay buffers
+
+	float mOneDivSR;  // the inverse of the sampling rate
+
+	float mLastSample, mLastSample2;
+
+	dfx::TempoRateTable const mTempoRateTable;	// a table of tempo rate values
+	float mCurrentTempoBPS;	// tempo in beats per second
+//	VstTimeInfo* mTimeInfo;
+	bool mNeedResync;	// true when playback has just started up again
 };
-
-#endif

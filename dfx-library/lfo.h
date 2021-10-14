@@ -59,7 +59,9 @@ public:
 
 	static std::string getShapeName(Shape inShape);
 
+	float getDepth() const noexcept;
 	void setDepth(float inDepth) noexcept;
+	Shape getShape() const noexcept;
 	void setShape(Shape inShape) noexcept;
 
 	void setStepSize(float inStepSize) noexcept;
@@ -75,10 +77,13 @@ public:
 		return (process() * 2.0f) - mDepth + 1.0f;
 	}
 
+protected:
+	static constexpr long kSmoothDur = 48;
+	[[maybe_unused]] static constexpr float kSmoothStep = 1.f / static_cast<float>(kSmoothDur);
+
+	long mSmoothSamples = 0;  // TODO: a counter for the position during a smoothing fade
 
 private:
-	static constexpr long kSmoothDur = 48;
-
 	using Generator = float(*)(float);
 
 	static Generator getGeneratorForShape(Shape inShape) noexcept;
@@ -90,16 +95,15 @@ private:
 	static float thornGenerator(float inPosition);
 
 
+	float mDepth = 0.0f;
+	Shape mShape {};
+
 	Generator mGenerator = nullptr;  // LFO waveform generator function pointer
 	float mPosition = 0.0f;  // the position in the LFO cycle
 	float mStepSize = 0.0f;  // size of the steps through the LFO cycle
 	float mRandomNumber = 0.0f;  // random values for the random LFO waveforms
 	float mPrevRandomNumber = 0.0f;  // previous random values for the random interpolating LFO waveform
 	dfx::math::RandomGenerator<decltype(mRandomNumber)> mRandomGenerator {dfx::math::RandomSeed::Entropic};
-	long mSmoothSamples = 0;  // TODO: a counter for the position during a smoothing fade
-
-	float mDepth = 0.0f;
-	Shape mShape {};
 };
 
 
