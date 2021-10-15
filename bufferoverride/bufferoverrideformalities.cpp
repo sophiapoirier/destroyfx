@@ -72,7 +72,7 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 		setparametervaluestring(kBufferLFOShape, i, shapeName);
 	}
 	// set the value strings for the sync rate parameters
-	for (int i = 0; i < mTempoRateTable.getNumRates(); i++)
+	for (long i = 0; i < mTempoRateTable.getNumRates(); i++)
 	{
 		auto const& tempoRateName = mTempoRateTable.getDisplay(i);
 		setparametervaluestring(kBufferSize_Sync, i, tempoRateName);

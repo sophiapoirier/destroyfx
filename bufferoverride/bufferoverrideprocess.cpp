@@ -195,7 +195,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos, bool& ioViewDataChang
 			}
 		}
 	}
-	// avoid madness such as 0-sized minibuffers
+	// avoid zero-sized minibuffers
 	mMinibufferSize = std::max(mMinibufferSize, 1L);
 
 	//-----------------------CALCULATE SMOOTHING DURATION-------------------------
