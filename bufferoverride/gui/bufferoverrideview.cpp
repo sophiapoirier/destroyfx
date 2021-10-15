@@ -172,32 +172,31 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
                                            MINIBUFFER_WIDTH_MIN,
                                            majorbox_width);
   const CCoord minorbox_height = majorbox_height - 4;
-  {
-    // Place boxes in float space but round to integer coordinates
-    // since we leave some thin pixel borders.
-    for (CCoord xpos = MARGIN_HORIZ; xpos < width; xpos += majorbox_width) {
-      const int ixpos = std::lround(xpos);
-      const int majw = std::lround(xpos + majorbox_width) - xpos;
 
-      DrawBox(ixpos, MARGIN_TOP, majw, majorbox_height, color_lite);
+  // Place boxes in float space but round to integer coordinates
+  // since we leave some thin pixel borders.
+  for (CCoord xpos = MARGIN_HORIZ; xpos < width; xpos += majorbox_width) {
+    const int ixpos = std::lround(xpos);
+    const int majw = std::lround(xpos + majorbox_width) - xpos;
 
-      auto minorbox_color = color_lite;
-      for (CCoord nxpos = 2.0; nxpos < majw - 2; nxpos += minorbox_width) {
-        const int inxpos = std::lround(nxpos);
-        const int minw = std::lround(nxpos + minorbox_width) - inxpos;
+    DrawBox(ixpos, MARGIN_TOP, majw, majorbox_height, color_lite);
 
-        // Clip the width of the last minibuffer.
-        // We can reuse the right margin by overlapping it with the
-        // space after the last box, so just majw - 1.
-        const int w = std::min(minw, (majw - 1) - inxpos);
+    auto minorbox_color = color_lite;
+    for (CCoord nxpos = 2.0; nxpos < majw - 2; nxpos += minorbox_width) {
+      const int inxpos = std::lround(nxpos);
+      const int minw = std::lround(nxpos + minorbox_width) - inxpos;
 
-        DrawFilledBox(ixpos + inxpos, MARGIN_TOP + 2,
-                      // leave space between boxes
-                      w - 1, minorbox_height,
-                      minorbox_color);
+      // Clip the width of the last minibuffer.
+      // We can reuse the right margin by overlapping it with the
+      // space after the last box, so just majw - 1.
+      const int w = std::min(minw, (majw - 1) - inxpos);
 
-        minorbox_color = color_med;
-      }
+      DrawFilledBox(ixpos + inxpos, MARGIN_TOP + 2,
+                    // leave space between boxes
+                    w - 1, minorbox_height,
+                    minorbox_color);
+
+      minorbox_color = color_med;
     }
   }
 
