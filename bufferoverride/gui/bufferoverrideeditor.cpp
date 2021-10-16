@@ -259,6 +259,7 @@ DFX_EDITOR_ENTRY(BufferOverrideEditor)
 BufferOverrideEditor::BufferOverrideEditor(DGEditorListenerInstance inInstance)
 :	DfxGuiEditor(inInstance)
 {
+	rect.bottom += 64;
 }
 
 //-----------------------------------------------------------------------------
@@ -421,7 +422,52 @@ void BufferOverrideEditor::OpenEditor()
 
 	// Visualization
 	pos.set(kVisualizationX, kVisualizationY, kVisualizationW, kVisualizationH);
-	getFrame()->addView(new BufferOverrideView(pos));
+	getFrame()->addView(mDataView = new BufferOverrideView(pos));
+
+
+#if 1
+	auto const appendixY = kHelpDisplayY + (kHelpDisplayHeight * mHelpDisplays.size()) + kHelpDisplayLineSpacing;
+	constexpr int spacingX = 64;
+	auto const valueFont = CreateVstGuiFont(kValueDisplayFontSize, kValueDisplayFont);
+
+	pos.set(16, appendixY, 90, dfx::kFontSize_Wetar16px * 2);
+	emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Left, dfx::kFontSize_Wetar16px * 2, DGColor::kBlack, dfx::kFontName_Wetar16px)->setText("DECAY");
+
+	pos.set(pos.right + spacingX, appendixY, kDryWetSliderWidth, kSliderHeight);
+	auto const decayDepthSlider = emplaceControl<DGSlider>(this, kDecayDepth, pos, dfx::kAxis_Horizontal, sliderHandleImage, GetBackgroundImage());
+	decayDepthSlider->setAlternateHandle(sliderHandleImage_glowing);
+	decayDepthSlider->setBackgroundOffset({kDryWetMixSliderX, kDryWetMixSliderY});
+	pos.set(pos.left + kDryWetMixDisplayX - kDryWetMixSliderX, appendixY + 24 + kVTextOffset, kLCDDisplayWidth, kLCDDisplayHeight);
+	emplaceControl<DGTextDisplay>(this, kDecayDepth, pos, dryWetMixDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+
+	class BOOptionMenu : public DGControl<VSTGUI::COptionMenu>
+	{
+	public:
+		BOOptionMenu(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion)
+		:	DGControl<VSTGUI::COptionMenu>(inRegion, inOwnerEditor, dfx::ParameterID_ToVST(inParameterID)) {}
+		CLASS_METHODS(BOOptionMenu, VSTGUI::COptionMenu)
+	};
+	pos.set(pos.right + spacingX, appendixY, 160, 32);
+	auto const decayTypeMenu = emplaceControl<BOOptionMenu>(this, kDecayType, pos);
+	decayTypeMenu->setFont(valueFont);
+	for (int64_t stringIndex = 0; stringIndex <= GetParameter_maxValue(kDecayType); stringIndex++)
+	{
+		auto const valueString = getparametervaluestring(kDecayType, stringIndex);
+		assert(valueString);
+		decayTypeMenu->addEntry(valueString->c_str());
+	}
+	decayTypeMenu->setValue(getparameter_i(kDecayType));
+
+	class BOTextButton : public DGControl<VSTGUI::CTextButton>
+	{
+	public:
+		BOTextButton(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion, VSTGUI::UTF8StringPtr inTitle, VSTGUI::CTextButton::Style inStyle)
+		:	DGControl<VSTGUI::CTextButton>(inRegion, inOwnerEditor, dfx::ParameterID_ToVST(inParameterID), inTitle, inStyle) {}
+		CLASS_METHODS(BOTextButton, VSTGUI::CTextButton)
+	};
+	pos.set(pos.right + spacingX, appendixY, 110, 32);
+	emplaceControl<BOTextButton>(this, kDecayRandomize, pos, "randomize", VSTGUI::CTextButton::kOnOffStyle)->setFont(valueFont);
+#endif
 
 
 	HandleTempoSyncChange();
@@ -438,6 +484,7 @@ void BufferOverrideEditor::CloseEditor()
 	mDivisorLFORateDisplay = nullptr;
 	mBufferLFORateDisplay = nullptr;
 	mTitleArea = nullptr;
+	mDataView = nullptr;
 	mHelpDisplays.fill(nullptr);
 }
 
@@ -475,6 +522,13 @@ void BufferOverrideEditor::parameterChanged(dfx::ParameterID inParameterID)
 			break;
 		case kTempoAuto:
 			HandleTempoAutoChange();
+			break;
+		case kDecayDepth:
+		case kDecayRandomize:
+			if (mDataView)
+			{
+				mDataView->invalid();
+			}
 			break;
 		default:
 			return;

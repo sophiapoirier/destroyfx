@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "bufferoverride.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <numbers>
 
@@ -122,6 +123,8 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 
 		// untrue this so that we don't do the measure sync calculations again unnecessarily
 		mNeedResync = false;
+
+		ioViewDataChanged |= mDecayRandomize;
 	}
 
 	//-----------------------CALCULATE THE DIVISOR-------------------------
@@ -207,6 +210,57 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 	}
 	// avoid zero-sized minibuffers
 	mMinibufferSize = std::max(mMinibufferSize, 1L);
+
+	//-----------------------CALCULATE BUFFER DECAY-------------------------
+	mPrevMinibufferDecay = mMinibufferDecay;
+	std::swap(mCurrentDecayFilters, mPrevDecayFilters);
+	std::for_each(mCurrentDecayFilters.begin(), mCurrentDecayFilters.end(), [](auto& filter){ filter.reset(); });
+
+	auto const positionNormalized = static_cast<float>(mWritePos) / static_cast<float>(mCurrentForcedBufferSize);
+	auto const decay = GetBufferDecay(positionNormalized, mDecayDepth, mDecayRandomize, mRandomEngine);
+	if (mDecayType == kDecayType_Gain)
+	{
+		mMinibufferDecay = decay * decay;
+		std::for_each(mCurrentDecayFilters.begin(), mCurrentDecayFilters.end(), [](auto& filter)
+		{
+			filter.setCoefficients(dfx::IIRFilter::kUnityCoeff);
+		});
+	}
+	else
+	{
+		mMinibufferDecay = 1.f;
+		mDecayFilterIsLowpass = [this]
+		{
+			switch (mDecayType)
+			{
+				case kDecayType_Lowpass:
+					return true;
+				case kDecayType_Highpass:
+					return false;
+				case kDecayType_LP_HP_PingPong:
+					return !mDecayFilterIsLowpass;
+				default:
+					assert(false);
+					return false;
+			}
+		}();
+		if (mDecayFilterIsLowpass)
+		{
+			auto const cutoff = DfxParam::expand(decay, 40, 20'000., DfxParam::Curve::Log);
+			std::for_each(mCurrentDecayFilters.begin(), mCurrentDecayFilters.end(), [cutoff](auto& filter)
+			{
+				filter.setLowpassCoefficients(cutoff);
+			});
+		}
+		else
+		{
+			auto const cutoff = DfxParam::expand(1.f - decay, 20., 20'000., DfxParam::Curve::Log);
+			std::for_each(mCurrentDecayFilters.begin(), mCurrentDecayFilters.end(), [cutoff](auto& filter)
+			{
+				filter.setHighpassCoefficients(cutoff);
+			});
+		}
+	}
 
 	//-----------------------CALCULATE SMOOTHING DURATION-------------------------
 	// no smoothing if the previous forced buffer wasn't divided
@@ -303,7 +357,7 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 		// get the current output without any smoothing
 		for (size_t ch = 0; ch < numChannels; ch++)
 		{
-			mAudioOutputValues[ch] = mBuffers[ch][mReadPos];
+			mAudioOutputValues[ch] = mCurrentDecayFilters[ch].process(mBuffers[ch][mReadPos]) * mMinibufferDecay;
 		}
 
 		// and if smoothing is taking place, get the smoothed audio output
@@ -312,14 +366,15 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 			for (size_t ch = 0; ch < numChannels; ch++)
 			{
 				// crossfade between the current input and its corresponding overlap sample
+				auto const tailOutputValue = mPrevDecayFilters[ch].process(mBuffers[ch][mReadPos + mPrevMinibufferSize]) * mPrevMinibufferDecay;
 //				mAudioOutputValues[ch] *= 1.0f - (mSmoothStep * static_cast<float>(mSmoothCount));  // current
-//				mAudioOutputValues[ch] += mBuffers[ch][mReadPos + mPrevMinibufferSize] * mSmoothStep * static_cast<float>(mSmoothCount);  // + previous
+//				mAudioOutputValues[ch] += tailOutputValue * mSmoothStep * static_cast<float>(mSmoothCount);  // + previous
 //				float const mSmoothFract = mSmoothStep * static_cast<float>(mSmoothCount);
 //				float const newgain = std::sqrt(1.0f - mSmoothFract);
 //				float const oldgain = std::sqrt(mSmoothFract);
-//				mAudioOutputValues[ch] = (mAudioOutputValues[ch] * newgain) + (mBuffers[ch][mReadPos + mPrevMinibufferSize] * oldgain);
-//				mAudioOutputValues[ch] = (mAudioOutputValues[ch] * mSqrtFadeIn) + (mBuffers[ch][mReadPos + mPrevMinibufferSize] * mSqrtFadeOut);
-				mAudioOutputValues[ch] = (mAudioOutputValues[ch] * mFadeInGain) + (mBuffers[ch][mReadPos + mPrevMinibufferSize] * mFadeOutGain);
+//				mAudioOutputValues[ch] = (mAudioOutputValues[ch] * newgain) + (tailOutputValue * oldgain);
+//				mAudioOutputValues[ch] = (mAudioOutputValues[ch] * mSqrtFadeIn) + (tailOutputValue * mSqrtFadeOut);
+				mAudioOutputValues[ch] = (mAudioOutputValues[ch] * mFadeInGain) + (tailOutputValue * mFadeOutGain);
 			}
 			mSmoothCount--;
 //			mSmoothFract += mSmoothStep;

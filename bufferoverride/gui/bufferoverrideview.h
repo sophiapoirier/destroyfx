@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "bufferoverride-base.h"
 #include "dfxgui.h"
+#include "dfxmath.h"
 
 
 // Visualizes how Buffer Override overrides yer buffers.
@@ -48,6 +49,7 @@ class BufferOverrideView final : public VSTGUI::CView {
 
   BufferOverrideViewData data;
   uint64_t prevtimestamp = 0u;
+  dfx::math::RandomEngine random_engine {dfx::math::RandomSeed::Monotonic};
 
   DfxGuiEditor *editor = nullptr;
 

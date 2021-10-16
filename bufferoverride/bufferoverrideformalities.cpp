@@ -63,6 +63,9 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_list(kMidiMode, dfx::MakeParameterNames(dfx::kParameterNames_MidiMode), kMidiMode_Nudge, kMidiMode_Nudge, kNumMidiModes);
 	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 57.0, 480.0, DfxParam::Unit::BPM);
 	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true);
+	initparameter_f(kDecayDepth, {"decay depth", "DecaDep", "DecDep", "DecD"}, 0., 0., -100., 100., DfxParam::Unit::Percent);
+	initparameter_list(kDecayType, {"decay type", "DecaTyp", "DecTyp", "DecT"}, kDecayType_Gain, kDecayType_Gain, kDecayTypeCount);
+	initparameter_b(kDecayRandomize, {"decay randomize", "DecaRnd", "DecRnd", "DecR"}, false);
 
 	// set the value strings for the LFO shape parameters
 	for (dfx::LFO::Shape i = 0; i < dfx::LFO::kNumShapes; i++)
@@ -82,11 +85,17 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// set the value strings for the MIDI mode parameter
 	setparametervaluestring(kMidiMode, kMidiMode_Nudge, "nudge");
 	setparametervaluestring(kMidiMode, kMidiMode_Trigger, "trigger");
+	// decay type value strings
+	setparametervaluestring(kDecayType, kDecayType_Gain, "gain");
+	setparametervaluestring(kDecayType, kDecayType_Lowpass, "low-pass");
+	setparametervaluestring(kDecayType, kDecayType_Highpass, "high-pass");
+	setparametervaluestring(kDecayType, kDecayType_LP_HP_PingPong, "LP/HP ping pong");
 
 	addparameterattributes(kMidiMode, DfxParam::kAttribute_OmitFromRandomizeAll);
 
 	addparametergroup("buffer divisor LFO", {kDivisorLFORate_Hz, kDivisorLFORate_Sync, kDivisorLFODepth, kDivisorLFOShape, kDivisorLFOTempoSync});
 	addparametergroup("forced buffer size LFO", {kBufferLFORate_Hz, kBufferLFORate_Sync, kBufferLFODepth, kBufferLFOShape, kBufferLFOTempoSync});
+	addparametergroup("buffer decay", {kDecayDepth, kDecayType, kDecayRandomize});
 
 	settailsize_seconds(1.0 / (mTempoRateTable.getScalar(0) * kMinAllowableBPS));
 
@@ -117,6 +126,17 @@ void BufferOverride::initialize()
 	}
 	mAudioOutputValues.assign(numChannels, 0.0f);
 
+	std::for_each(mDecayFilters.begin(), mDecayFilters.end(), [this, numChannels](auto& filters)
+	{
+		filters.assign(numChannels, {});
+		std::for_each(filters.begin(), filters.end(), [this](auto& filter)
+		{
+			filter.setSampleRate(getsamplerate());
+		});
+	});
+	mCurrentDecayFilters = mDecayFilters.front();
+	mPrevDecayFilters = mDecayFilters.back();
+
 	// this is a handy value to have during LFO calculations and wasteful to recalculate at every sample
 	mOneDivSR = 1. / getsamplerate();
 }
@@ -126,6 +146,8 @@ void BufferOverride::cleanup()
 {
 	mBuffers = {};
 	mAudioOutputValues = {};
+	mDecayFilters.fill({});
+	mCurrentDecayFilters = mPrevDecayFilters = {};
 }
 
 //-------------------------------------------------------------------------
@@ -137,10 +159,17 @@ void BufferOverride::reset()
 	mMinibufferSize = 1;
 	mPrevMinibufferSize = 0;
 	mSmoothCount = mSmoothDur = 0;
+	mMinibufferDecay = 1.f;
 //	mSqrtFadeIn = mSqrtFadeOut = 1.0f;
 
 	mDivisorLFO.reset();
 	mBufferLFO.reset();
+
+	std::for_each(mDecayFilters.begin(), mDecayFilters.end(), [](auto& filters)
+	{
+		std::for_each(filters.begin(), filters.end(), [](auto& filter){ filter.reset(); });
+	});
+	mDecayFilterIsLowpass = true;
 
 	mOldNote = false;
 	mLastNoteOn.reset();
@@ -357,6 +386,9 @@ void BufferOverride::processparameters()
 	mMidiMode = getparameter_i(kMidiMode);
 	mUserTempoBPM = getparameter_f(kTempo);
 	mUseHostTempo = getparameter_b(kTempoAuto);
+	mDecayDepth = getparameter_scalar(kDecayDepth);
+	mDecayType = getparameter_i(kDecayType);
+	mDecayRandomize = getparameter_b(kDecayRandomize);
 
 	if (getparameterchanged(kDivisor))
 	{

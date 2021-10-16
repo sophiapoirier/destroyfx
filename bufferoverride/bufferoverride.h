@@ -21,13 +21,17 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #pragma once
 
+#include <array>
 #include <atomic>
 #include <optional>
+#include <span>
 #include <vector>
 
 #include "bufferoverride-base.h"
+#include "dfxmath.h"
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
+#include "iirfilter.h"
 #include "lfo.h"
 #include "temporatetable.h"
 
@@ -80,6 +84,9 @@ private:
 	bool mDivisorLFOTempoSync = false, mBufferLFOTempoSync = false;
 	double mDivisorLFORateHz = 0., mBufferLFORateHz = 0.;  // LFO rate (in Hz)
 	double mDivisorLFOTempoRate = 0., mBufferLFOTempoRate = 0.;  // LFO rate (in cycles per beat)
+	float mDecayDepth = 0.f;
+	long mDecayType = 0;
+	bool mDecayRandomize = false;
 
 	dfx::SmoothedValue<float> mInputGain, mOutputGain;  // the effective states of the dry/wet mix
 
@@ -91,6 +98,12 @@ private:
 	long mMinibufferSize = 0;  // the current size of the divided "mini" buffer
 	long mPrevMinibufferSize = 0;  // the previous size
 	long mReadPos = 0;  // the current sample position within the minibuffer
+
+	float mMinibufferDecay = 1.f, mPrevMinibufferDecay = 1.f;
+	std::array<std::vector<dfx::IIRFilter>, 2> mDecayFilters;
+	std::span<dfx::IIRFilter> mCurrentDecayFilters, mPrevDecayFilters;
+	bool mDecayFilterIsLowpass = true;
+	dfx::math::RandomEngine mRandomEngine {dfx::math::RandomSeed::Entropic};
 
 	double mOneDivSR = 0.;  // the inverse of the sampling rate
 

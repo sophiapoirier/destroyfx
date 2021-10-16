@@ -23,9 +23,11 @@ To contact the author, use the contact form at http://destroyfx.org
 #pragma once
 
 #include <atomic>
+#include <cmath>
 #include <type_traits>
 
 #include "dfx-base.h"
+#include "dfxmath.h"
 #include "dfxmisc.h"
 #include "dfxpluginproperties.h"
 
@@ -59,6 +61,10 @@ enum : dfx::ParameterID
 	kTempo,
 	kTempoAuto,
 
+	kDecayDepth,
+	kDecayType,
+	kDecayRandomize,
+
 	kNumParameters
 };
 
@@ -67,6 +73,15 @@ enum
 	kMidiMode_Nudge,
 	kMidiMode_Trigger,
 	kNumMidiModes
+};
+
+enum
+{
+	kDecayType_Gain,
+	kDecayType_Lowpass,
+	kDecayType_Highpass,
+	kDecayType_LP_HP_PingPong,
+	kDecayTypeCount
 };
 
 enum : dfx::PropertyID
@@ -112,3 +127,23 @@ struct CompositeT
 }  // namespace detail
 
 using AtomicBufferOverrideViewData = std::conditional_t<detail::UnifiedT::is_always_lock_free, detail::UnifiedT, detail::CompositeT>;
+
+template <typename T>
+T GetBufferDecay(T normalizedPosition, T depth, bool randomize, dfx::math::RandomEngine& randomEngine)
+{
+	static_assert(std::is_floating_point_v<T>);
+	constexpr T maxValue = 1;
+	auto const negativeDepth = std::signbit(depth);
+	if (randomize)
+	{
+		// always maintain full level for the first minibuffer iteration
+		// (like accent on the downbeat) when depth is nonnegative
+		if (!negativeDepth && (normalizedPosition <= T(0)))
+		{
+			return maxValue;
+		}
+		return randomEngine.next(maxValue - std::abs(depth), maxValue);
+	}
+	return std::lerp(maxValue - std::abs(depth), maxValue,
+					 negativeDepth ? normalizedPosition : (maxValue - normalizedPosition));
+}

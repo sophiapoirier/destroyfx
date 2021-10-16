@@ -51,6 +51,7 @@ private:
 	DGTextDisplay* mDivisorLFORateDisplay = nullptr;
 	DGTextDisplay* mBufferLFORateDisplay = nullptr;
 	IDGControl* mTitleArea = nullptr;
+	class BufferOverrideView* mDataView = nullptr;
 
 	std::array<DGStaticTextDisplay*, kHelpDisplayLineCount> mHelpDisplays {};
 };

@@ -163,6 +163,8 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
 
   const auto [forced_buffer, minibuffer, window_sec] =
     ScaleViewData(data, pixels_per_window);
+  auto const decay_depth = editor->getparameter_f(kDecayDepth) * 0.01;
+  auto const decay_randomize = editor->getparameter_b(kDecayRandomize);
 
   // draw 'major' boxes.
   const CCoord majorbox_width = std::max(pixels_per_window * forced_buffer,
@@ -183,7 +185,10 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
     DrawBox(ixpos, MARGIN_TOP, majw, majorbox_height, color_lite);
 
     auto minorbox_color = color_lite;
-    for (CCoord nxpos = 2.0; nxpos < majw - 2; nxpos += minorbox_width) {
+    constexpr CCoord xstart = 2;
+    const CCoord xend = majw - xstart;
+    // TODO: reflect that a fractional minibuffer extends the final one
+    for (CCoord nxpos = xstart; nxpos < xend; nxpos += minorbox_width) {
       const auto inxpos = std::lround(nxpos);
       const auto minw = std::lround(nxpos + minorbox_width) - inxpos;
 
@@ -192,9 +197,14 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
       // space after the last box, so just majw - 1.
       const auto w = std::min(minw, (majw - 1) - inxpos);
 
-      DrawFilledBox(ixpos + inxpos, MARGIN_TOP + 2,
+      const auto pos_normalized = (nxpos - xstart) / (xend - xstart);
+      const auto decay = GetBufferDecay(pos_normalized, decay_depth,
+                                        decay_randomize, random_engine);
+      const auto decayed_height = std::round(minorbox_height * decay);
+      const auto ypos = MARGIN_TOP + 2 + (minorbox_height - decayed_height);
+      DrawFilledBox(ixpos + inxpos, ypos,
                     // leave space between boxes
-                    w - 1, minorbox_height,
+                    w - 1, decayed_height,
                     minorbox_color);
 
       minorbox_color = color_med;
