@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 45;
+	objectVersion = 53;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -26,12 +26,12 @@
 		49BB471A07E538C000861708 /* bboron.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 49BB471907E538C000861708 /* bboron.ttf */; };
 		B028C2B10D0F321E00ADA1DA /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B028C2B00D0F321E00ADA1DA /* destroyfx.icns */; };
 		EC2F843624A7C29500F29321 /* dfxmisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC2F843524A7C29500F29321 /* dfxmisc.mm */; };
+		EC3FC337271CF913002D61C6 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC3FC336271CF913002D61C6 /* AppKit.framework */; };
 		EC40EDB020DB4B8600F5C0A7 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC40EDAF20DB4B8600F5C0A7 /* dfxguimisc.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		EC4FB182256AE26100AFC27A /* AUBufferAllocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC4FB181256AE26100AFC27A /* AUBufferAllocator.cpp */; };
 		EC89B34D208D2B4600E15129 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B346208D2B4300E15129 /* Accelerate.framework */; };
 		EC89B34E208D2B4600E15129 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B347208D2B4400E15129 /* OpenGL.framework */; };
 		EC89B34F208D2B4600E15129 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B348208D2B4400E15129 /* QuartzCore.framework */; };
-		EC89B350208D2B4600E15129 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B349208D2B4400E15129 /* Cocoa.framework */; };
 		EC89B351208D2B4600E15129 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B34A208D2B4500E15129 /* AudioUnit.framework */; };
 		EC89B352208D2B4600E15129 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B34B208D2B4500E15129 /* AudioToolbox.framework */; };
 		EC89B353208D2B4600E15129 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B34C208D2B4500E15129 /* Carbon.framework */; };
@@ -96,13 +96,13 @@
 		EC1D5DF3220BDB56005492F7 /* dfxsmoothedvalue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxsmoothedvalue.h; sourceTree = "<group>"; };
 		EC2F843524A7C29500F29321 /* dfxmisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxmisc.mm; sourceTree = "<group>"; };
 		EC390FF320CCAA4900A62FDE /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
+		EC3FC336271CF913002D61C6 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		EC40EDAF20DB4B8600F5C0A7 /* dfxguimisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxguimisc.mm; sourceTree = "<group>"; };
 		EC4FB181256AE26100AFC27A /* AUBufferAllocator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUBufferAllocator.cpp; sourceTree = "<group>"; };
 		EC834E36210D13F50049D2FA /* dfxguicontrol.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxguicontrol.hpp; sourceTree = "<group>"; };
 		EC89B346208D2B4300E15129 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		EC89B347208D2B4400E15129 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		EC89B348208D2B4400E15129 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
-		EC89B349208D2B4400E15129 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		EC89B34A208D2B4500E15129 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		EC89B34B208D2B4500E15129 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		EC89B34C208D2B4500E15129 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
@@ -158,10 +158,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				EC89B34D208D2B4600E15129 /* Accelerate.framework in Frameworks */,
+				EC3FC337271CF913002D61C6 /* AppKit.framework in Frameworks */,
 				EC89B352208D2B4600E15129 /* AudioToolbox.framework in Frameworks */,
 				EC89B351208D2B4600E15129 /* AudioUnit.framework in Frameworks */,
 				EC89B353208D2B4600E15129 /* Carbon.framework in Frameworks */,
-				EC89B350208D2B4600E15129 /* Cocoa.framework in Frameworks */,
 				EC89B34E208D2B4600E15129 /* OpenGL.framework in Frameworks */,
 				EC89B34F208D2B4600E15129 /* QuartzCore.framework in Frameworks */,
 			);
@@ -189,10 +189,10 @@
 			isa = PBXGroup;
 			children = (
 				EC89B346208D2B4300E15129 /* Accelerate.framework */,
+				EC3FC336271CF913002D61C6 /* AppKit.framework */,
 				EC89B34B208D2B4500E15129 /* AudioToolbox.framework */,
 				EC89B34A208D2B4500E15129 /* AudioUnit.framework */,
 				EC89B34C208D2B4500E15129 /* Carbon.framework */,
-				EC89B349208D2B4400E15129 /* Cocoa.framework */,
 				EC89B347208D2B4400E15129 /* OpenGL.framework */,
 				EC89B348208D2B4400E15129 /* QuartzCore.framework */,
 			);
@@ -391,6 +391,7 @@
 		089C1669FE841209C02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 			};
 			buildConfigurationList = B025B53F08AA880D00A9CCAE /* Build configuration list for PBXProject "polarizer" */;
 			compatibilityVersion = "Xcode 2.4";
@@ -555,7 +556,7 @@
 				B025B53D08AA880D00A9CCAE /* Deployment */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
+			defaultConfigurationName = Deployment;
 		};
 		B025B53F08AA880D00A9CCAE /* Build configuration list for PBXProject "polarizer" */ = {
 			isa = XCConfigurationList;
@@ -564,7 +565,7 @@
 				B025B54108AA880D00A9CCAE /* Deployment */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
+			defaultConfigurationName = Deployment;
 		};
 /* End XCConfigurationList section */
 	};

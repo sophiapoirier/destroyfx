@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 45;
+	objectVersion = 53;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -30,13 +30,13 @@
 		EC1195A121BC92A800909132 /* slider-handle-floor-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = EC11959E21BC92A800909132 /* slider-handle-floor-glowing.png */; };
 		EC1195A221BC92A800909132 /* slider-handle-slope-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = EC11959F21BC92A800909132 /* slider-handle-slope-glowing.png */; };
 		EC2F843A24A7C2D100F29321 /* dfxmisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC2F843924A7C2D100F29321 /* dfxmisc.mm */; };
+		EC3FC333271CF89C002D61C6 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC3FC332271CF89C002D61C6 /* AppKit.framework */; };
 		EC40EDB420DB4BB600F5C0A7 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC40EDB320DB4BB600F5C0A7 /* dfxguimisc.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		EC4FB18B256AE2C900AFC27A /* AUBufferAllocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC4FB18A256AE2C900AFC27A /* AUBufferAllocator.cpp */; };
 		EC4FFDD5209B9693000F2A30 /* dfxenvelope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC4FFDD4209B9692000F2A30 /* dfxenvelope.cpp */; };
 		EC89B307208D291900E15129 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B300208D291700E15129 /* Accelerate.framework */; };
 		EC89B308208D291900E15129 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B301208D291800E15129 /* OpenGL.framework */; };
 		EC89B309208D291900E15129 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B302208D291800E15129 /* QuartzCore.framework */; };
-		EC89B30A208D291900E15129 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B303208D291800E15129 /* Cocoa.framework */; };
 		EC89B30B208D291900E15129 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B304208D291800E15129 /* AudioUnit.framework */; };
 		EC89B30C208D291900E15129 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B305208D291900E15129 /* AudioToolbox.framework */; };
 		EC89B30D208D291900E15129 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B306208D291900E15129 /* Carbon.framework */; };
@@ -114,6 +114,7 @@
 		EC1D5DF4220BDEEC005492F7 /* idfxsmoothedvalue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxsmoothedvalue.h; sourceTree = "<group>"; };
 		EC2F843924A7C2D100F29321 /* dfxmisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxmisc.mm; sourceTree = "<group>"; };
 		EC390FF520CCAAC300A62FDE /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
+		EC3FC332271CF89C002D61C6 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		EC40EDB320DB4BB600F5C0A7 /* dfxguimisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxguimisc.mm; sourceTree = "<group>"; };
 		EC4FB18A256AE2C900AFC27A /* AUBufferAllocator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUBufferAllocator.cpp; sourceTree = "<group>"; };
 		EC4FFDD3209B9692000F2A30 /* dfxenvelope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxenvelope.h; sourceTree = "<group>"; };
@@ -123,7 +124,6 @@
 		EC89B300208D291700E15129 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		EC89B301208D291800E15129 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		EC89B302208D291800E15129 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
-		EC89B303208D291800E15129 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		EC89B304208D291800E15129 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		EC89B305208D291900E15129 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		EC89B306208D291900E15129 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
@@ -186,10 +186,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				EC89B307208D291900E15129 /* Accelerate.framework in Frameworks */,
+				EC3FC333271CF89C002D61C6 /* AppKit.framework in Frameworks */,
 				EC89B30C208D291900E15129 /* AudioToolbox.framework in Frameworks */,
 				EC89B30B208D291900E15129 /* AudioUnit.framework in Frameworks */,
 				EC89B30D208D291900E15129 /* Carbon.framework in Frameworks */,
-				EC89B30A208D291900E15129 /* Cocoa.framework in Frameworks */,
 				EC89B308208D291900E15129 /* OpenGL.framework in Frameworks */,
 				EC89B309208D291900E15129 /* QuartzCore.framework in Frameworks */,
 			);
@@ -217,10 +217,10 @@
 			isa = PBXGroup;
 			children = (
 				EC89B300208D291700E15129 /* Accelerate.framework */,
+				EC3FC332271CF89C002D61C6 /* AppKit.framework */,
 				EC89B305208D291900E15129 /* AudioToolbox.framework */,
 				EC89B304208D291800E15129 /* AudioUnit.framework */,
 				EC89B306208D291900E15129 /* Carbon.framework */,
-				EC89B303208D291800E15129 /* Cocoa.framework */,
 				EC89B301208D291800E15129 /* OpenGL.framework */,
 				EC89B302208D291800E15129 /* QuartzCore.framework */,
 			);
@@ -436,6 +436,7 @@
 		089C1669FE841209C02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 			};
 			buildConfigurationList = B025B06108A96DE800A9CCAE /* Build configuration list for PBXProject "midigater" */;
 			compatibilityVersion = "Xcode 2.4";
@@ -613,7 +614,7 @@
 				B025B05F08A96DE800A9CCAE /* Deployment */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
+			defaultConfigurationName = Deployment;
 		};
 		B025B06108A96DE800A9CCAE /* Build configuration list for PBXProject "midigater" */ = {
 			isa = XCConfigurationList;
@@ -622,7 +623,7 @@
 				B025B06308A96DE800A9CCAE /* Deployment */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
+			defaultConfigurationName = Deployment;
 		};
 /* End XCConfigurationList section */
 	};

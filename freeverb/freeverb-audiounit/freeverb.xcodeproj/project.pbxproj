@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 53;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -213,6 +213,7 @@
 		089C1669FE841209C02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1240;
 			};
 			buildConfigurationList = B025B63A08ACE20600A9CCAE /* Build configuration list for PBXProject "freeverb" */;
@@ -482,7 +483,7 @@
 				B025B63808ACE20600A9CCAE /* Deployment */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
+			defaultConfigurationName = Deployment;
 		};
 		B025B63A08ACE20600A9CCAE /* Build configuration list for PBXProject "freeverb" */ = {
 			isa = XCConfigurationList;
@@ -491,7 +492,7 @@
 				B025B63C08ACE20600A9CCAE /* Deployment */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
+			defaultConfigurationName = Deployment;
 		};
 /* End XCConfigurationList section */
 	};

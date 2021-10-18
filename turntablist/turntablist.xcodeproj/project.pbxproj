@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 45;
+	objectVersion = 53;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -41,7 +41,6 @@
 		B05F9D2B0D36A96A00F9B816 /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B05F9D2A0D36A96A00F9B816 /* destroyfx.icns */; };
 		B09A20F608E5089C000285F6 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = B09A20F408E5089C000285F6 /* dfx-au-utilities.strings */; };
 		EC0EF45D2524FBAC00864283 /* iirfilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC0EF4522524FB0600864283 /* iirfilter.cpp */; };
-		EC0F0976208D26BA00E06672 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC0F0973208D269100E06672 /* Cocoa.framework */; };
 		EC0F0977208D26BD00E06672 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC0F0974208D269500E06672 /* OpenGL.framework */; };
 		EC0F0978208D26C000E06672 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC0F0975208D269A00E06672 /* QuartzCore.framework */; };
 		EC0F0979208D26C300E06672 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC0F0972208D263600E06672 /* Accelerate.framework */; };
@@ -66,6 +65,7 @@
 		EC89B500208D371000E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4FF208D371000E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -Wno-four-char-constants -fno-objc-arc"; }; };
 		EC89B50F208D371700E15129 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B508208D371600E15129 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-deprecated-declarations -Wno-four-char-constants"; }; };
 		EC8AB22F24CDF3F9000504F0 /* dfxgui-fontfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC8AB22C24CDF3F9000504F0 /* dfxgui-fontfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		ECCBAEA7271CF63200DD5588 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECCBAEA6271CF63200DD5588 /* AppKit.framework */; };
 		ECD1CD5626A6764900AFAAE2 /* dfxmutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD1CD5526A6764900AFAAE2 /* dfxmutex.cpp */; };
 		ECE4CBE520D0CA430026E215 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECE4CBE420D0CA430026E215 /* dfxguimisc.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 /* End PBXBuildFile section */
@@ -130,7 +130,6 @@
 		EC0EF4522524FB0600864283 /* iirfilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = iirfilter.cpp; sourceTree = "<group>"; };
 		EC0EF4532524FB0600864283 /* iirfilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iirfilter.h; sourceTree = "<group>"; };
 		EC0F0972208D263600E06672 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
-		EC0F0973208D269100E06672 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		EC0F0974208D269500E06672 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		EC0F0975208D269A00E06672 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		EC0F0981208D270100E06672 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
@@ -182,6 +181,7 @@
 		EC8AB22E24CDF3F9000504F0 /* dfxgui-fontfactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = "dfxgui-fontfactory.cpp"; sourceTree = "<group>"; usesTabs = 0; };
 		EC9841851030C44A00FA3B2B /* dfxplugin-au-debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-debug.xcconfig"; path = "xcode/dfxplugin-au-debug.xcconfig"; sourceTree = "<group>"; };
 		EC9841861030C44A00FA3B2B /* dfxplugin-au-release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-release.xcconfig"; path = "xcode/dfxplugin-au-release.xcconfig"; sourceTree = "<group>"; };
+		ECCBAEA6271CF63200DD5588 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		ECD0B24F20CC2F7B006CD7D1 /* de */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = de; path = "../dfx-library/de.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECD1CD5426A6764900AFAAE2 /* dfxmutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmutex.h; sourceTree = "<group>"; };
 		ECD1CD5526A6764900AFAAE2 /* dfxmutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmutex.cpp; sourceTree = "<group>"; };
@@ -194,10 +194,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				EC0F0979208D26C300E06672 /* Accelerate.framework in Frameworks */,
+				ECCBAEA7271CF63200DD5588 /* AppKit.framework in Frameworks */,
 				EC0F0984208D271200E06672 /* AudioToolbox.framework in Frameworks */,
 				EC0F0985208D271600E06672 /* AudioUnit.framework in Frameworks */,
 				EC0F0986208D271A00E06672 /* Carbon.framework in Frameworks */,
-				EC0F0976208D26BA00E06672 /* Cocoa.framework in Frameworks */,
 				EC0F0977208D26BD00E06672 /* OpenGL.framework in Frameworks */,
 				EC0F0978208D26C000E06672 /* QuartzCore.framework in Frameworks */,
 			);
@@ -225,10 +225,10 @@
 			isa = PBXGroup;
 			children = (
 				EC0F0972208D263600E06672 /* Accelerate.framework */,
+				ECCBAEA6271CF63200DD5588 /* AppKit.framework */,
 				EC0F0982208D270100E06672 /* AudioToolbox.framework */,
 				EC0F0983208D270100E06672 /* AudioUnit.framework */,
 				EC0F0981208D270100E06672 /* Carbon.framework */,
-				EC0F0973208D269100E06672 /* Cocoa.framework */,
 				EC0F0974208D269500E06672 /* OpenGL.framework */,
 				EC0F0975208D269A00E06672 /* QuartzCore.framework */,
 			);
@@ -452,6 +452,7 @@
 		089C1669FE841209C02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 			};
 			buildConfigurationList = B025B97E08AD315300A9CCAE /* Build configuration list for PBXProject "turntablist" */;
 			compatibilityVersion = "Xcode 2.4";
@@ -701,7 +702,7 @@
 				B025B97C08AD315300A9CCAE /* Deployment */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
+			defaultConfigurationName = Deployment;
 		};
 		B025B97E08AD315300A9CCAE /* Build configuration list for PBXProject "turntablist" */ = {
 			isa = XCConfigurationList;
@@ -710,7 +711,7 @@
 				B025B98008AD315300A9CCAE /* Deployment */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
+			defaultConfigurationName = Deployment;
 		};
 /* End XCConfigurationList section */
 	};

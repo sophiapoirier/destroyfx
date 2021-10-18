@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 45;
+	objectVersion = 53;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -459,6 +459,7 @@
 		089C1669FE841209C02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 			};
 			buildConfigurationList = B025B9AE08AD328F00A9CCAE /* Build configuration list for PBXProject "skidder" */;
 			compatibilityVersion = "Xcode 2.4";
@@ -645,7 +646,7 @@
 				B025B9AC08AD328F00A9CCAE /* Deployment */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
+			defaultConfigurationName = Deployment;
 		};
 		B025B9AE08AD328F00A9CCAE /* Build configuration list for PBXProject "skidder" */ = {
 			isa = XCConfigurationList;
@@ -654,7 +655,7 @@
 				B025B9B008AD328F00A9CCAE /* Deployment */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
+			defaultConfigurationName = Deployment;
 		};
 /* End XCConfigurationList section */
 	};

@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 45;
+	objectVersion = 53;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -48,6 +48,7 @@
 		ECC0F376200BC5F100B1B463 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECC0F375200BC5F100B1B463 /* AudioToolbox.framework */; };
 		ECC0F378200BC5F900B1B463 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECC0F377200BC5F800B1B463 /* AudioUnit.framework */; };
 		ECC0F37A200BC62200B1B463 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECC0F379200BC62100B1B463 /* Carbon.framework */; };
+		ECCBAEA9271CF6F200DD5588 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECCBAEA8271CF6F200DD5588 /* AppKit.framework */; };
 		ECCEE54B25323309007251C9 /* ComponentBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECCEE51E25323309007251C9 /* ComponentBase.cpp */; };
 		ECCEE54D25323309007251C9 /* AUScopeElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECCEE52025323309007251C9 /* AUScopeElement.cpp */; };
 		ECCEE54E25323309007251C9 /* AUBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECCEE52225323309007251C9 /* AUBase.cpp */; };
@@ -70,7 +71,6 @@
 		ECF7D8F52002B7F300DCE42E /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECF7D8F42002B7F300DCE42E /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -Wno-four-char-constants -fno-objc-arc"; }; };
 		ECF7D8F92002D2F900DCE42E /* dfxenvelope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECF7D8F72002D2F900DCE42E /* dfxenvelope.cpp */; };
 		ECF7D8FC2002D34C00DCE42E /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECF7D8FB2002D34C00DCE42E /* Accelerate.framework */; };
-		ECF7D9042002D3A000DCE42E /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECF7D9032002D3A000DCE42E /* Cocoa.framework */; };
 		ECF7D9062002D3F600DCE42E /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECF7D9052002D3F600DCE42E /* OpenGL.framework */; };
 		ECF7D90C2002D45F00DCE42E /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECF7D90B2002D45F00DCE42E /* QuartzCore.framework */; };
 		ECF9620B22F740170085D618 /* freeze-button.png in Resources */ = {isa = PBXBuildFile; fileRef = ECF9620A22F740170085D618 /* freeze-button.png */; };
@@ -151,6 +151,7 @@
 		ECC0F375200BC5F100B1B463 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		ECC0F377200BC5F800B1B463 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		ECC0F379200BC62100B1B463 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
+		ECCBAEA8271CF6F200DD5588 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		ECCEE51E25323309007251C9 /* ComponentBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ComponentBase.cpp; sourceTree = "<group>"; };
 		ECCEE52025323309007251C9 /* AUScopeElement.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUScopeElement.cpp; sourceTree = "<group>"; };
 		ECCEE52125323309007251C9 /* ComponentBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ComponentBase.h; sourceTree = "<group>"; };
@@ -198,7 +199,6 @@
 		ECF7D8F62002D2F800DCE42E /* dfxenvelope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxenvelope.h; sourceTree = "<group>"; };
 		ECF7D8F72002D2F900DCE42E /* dfxenvelope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxenvelope.cpp; sourceTree = "<group>"; };
 		ECF7D8FB2002D34C00DCE42E /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
-		ECF7D9032002D3A000DCE42E /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		ECF7D9052002D3F600DCE42E /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		ECF7D9072002D42D00DCE42E /* dfxmisc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmisc.cpp; sourceTree = "<group>"; };
 		ECF7D9082002D42E00DCE42E /* dfxmisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmisc.h; sourceTree = "<group>"; };
@@ -212,10 +212,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				ECF7D8FC2002D34C00DCE42E /* Accelerate.framework in Frameworks */,
+				ECCBAEA9271CF6F200DD5588 /* AppKit.framework in Frameworks */,
 				ECC0F376200BC5F100B1B463 /* AudioToolbox.framework in Frameworks */,
 				ECC0F378200BC5F900B1B463 /* AudioUnit.framework in Frameworks */,
 				ECC0F37A200BC62200B1B463 /* Carbon.framework in Frameworks */,
-				ECF7D9042002D3A000DCE42E /* Cocoa.framework in Frameworks */,
 				ECF7D9062002D3F600DCE42E /* OpenGL.framework in Frameworks */,
 				ECF7D90C2002D45F00DCE42E /* QuartzCore.framework in Frameworks */,
 			);
@@ -438,10 +438,10 @@
 			isa = PBXGroup;
 			children = (
 				ECF7D8FB2002D34C00DCE42E /* Accelerate.framework */,
+				ECCBAEA8271CF6F200DD5588 /* AppKit.framework */,
 				ECC0F375200BC5F100B1B463 /* AudioToolbox.framework */,
 				ECC0F377200BC5F800B1B463 /* AudioUnit.framework */,
 				ECC0F379200BC62100B1B463 /* Carbon.framework */,
-				ECF7D9032002D3A000DCE42E /* Cocoa.framework */,
 				ECF7D9052002D3F600DCE42E /* OpenGL.framework */,
 				ECF7D90B2002D45F00DCE42E /* QuartzCore.framework */,
 			);
@@ -476,6 +476,7 @@
 		089C1669FE841209C02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 			};
 			buildConfigurationList = B03470E108883BD2000C575D /* Build configuration list for PBXProject "transverb" */;
 			compatibilityVersion = "Xcode 2.4";
@@ -663,7 +664,7 @@
 				B03470DF08883BD2000C575D /* Deployment */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
+			defaultConfigurationName = Deployment;
 		};
 		B03470E108883BD2000C575D /* Build configuration list for PBXProject "transverb" */ = {
 			isa = XCConfigurationList;
@@ -672,7 +673,7 @@
 				B03470E308883BD2000C575D /* Deployment */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Development;
+			defaultConfigurationName = Deployment;
 		};
 /* End XCConfigurationList section */
 	};
