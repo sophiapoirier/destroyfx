@@ -40,7 +40,6 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_i(kDelay, {"inverse delay", "seven", "six", "four"}, 9, 9, kDelaySamplesMin, kDelaySamplesMax, DfxParam::Unit::Samples);
 	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120., 120., 39.f, 480.f, DfxParam::Unit::BPM);
 	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true, true);
-	initparameter_b(kLFOEnable1, {"LFO enable", "seven", "six", "four"}, false, false);
 	initparameter_f(kLFO1Rate_Hz, {"LFO1 rate (free)", "seven", "six", "four"}, 3., 3., kLFORateMin, kLFORateMax, DfxParam::Unit::Hz, DfxParam::Curve::Squared);
 	initparameter_list(kLFO1Rate_Sync, {"LFO1 rate (sync)", "seven", "six", "four"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
 	initparameter_b(kLFO1tempoSync, {"LFO1 tempo sync", "seven", "six", "four"}, false, false);
@@ -53,7 +52,6 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_list(kLFO2shape, {"LFO2 shape", "seven", "six", "four"}, dfx::LFO::kShape_Triangle, dfx::LFO::kShape_Triangle, dfx::LFO::kNumShapes);
 	initparameter_b(kStereoLink, {"stereo link", "seven", "six", "four"}, true, true);
 	initparameter_i(kDelay2, {"inverse delay R", "seven", "six", "four"}, 3, 3, kDelaySamplesMin, kDelaySamplesMax, DfxParam::Unit::Samples);
-	initparameter_b(kLFOEnable2, {"LFO enable R", "seven", "six", "four"}, false, false);
 	initparameter_f(kLFO1Rate2_Hz, {"LFO1 rate R (free)", "seven", "six", "four"}, 9., 9., kLFORateMin, kLFORateMax, DfxParam::Unit::Hz, DfxParam::Curve::Squared);
 	initparameter_list(kLFO1Rate2_Sync, {"LFO1 rate R (sync)", "seven", "six", "four"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
 	initparameter_b(kLFO1tempoSync2, {"LFO1 tempo sync R", "seven", "six", "four"}, false, false);
@@ -87,13 +85,13 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	addparametergroup("global/left",
 	{
-		kDelay, kLFOEnable1,
+		kDelay,
 		kLFO1Rate_Hz, kLFO1Rate_Sync, kLFO1tempoSync, kLFO1depth, kLFO1shape,
 		kLFO2Rate_Hz, kLFO2Rate_Sync, kLFO2tempoSync, kLFO2depth, kLFO2shape
 	});
 	addparametergroup("right",
 	{
-		kStereoLink, kDelay2, kLFOEnable2,
+		kStereoLink, kDelay2,
 		kLFO1Rate2_Hz, kLFO1Rate2_Sync, kLFO1tempoSync2, kLFO1depth2, kLFO1shape2,
 		kLFO2Rate2_Hz, kLFO2Rate2_Sync, kLFO2tempoSync2, kLFO2depth2, kLFO2shape2
 	});
@@ -151,14 +149,12 @@ void Thrush::initPresets()
 
 	setpresetname(i, "vibber");
 //	setpresetparameter_i(i, kDelay, );
-	setpresetparameter_b(i, kLFOEnable1, true);
 	setpresetparameter_b(i, kLFO1tempoSync, false);
 //	setpresetparameter_f(i, kLFO1Rate_Hz, );
 //	setpresetparameter_f(i, kLFO1depth, );
 	setpresetparameter_i(i, kLFO1shape, dfx::LFO::kShape_Saw);
 	setpresetparameter_b(i, kStereoLink, false);
 //	setpresetparameter_i(i, kDelay2, );
-	setpresetparameter_b(i, kLFOEnable2, true);
 	setpresetparameter_b(i, kLFO1tempoSync2, false);
 //	setpresetparameter_f(i, kLFO1Rate2_Hz, );
 //	setpresetparameter_f(i, kLFO1depth2, );
@@ -171,8 +167,7 @@ void Thrush::initPresets()
 #pragma mark -
 
 //-------------------------------------------------------------------------
-// calculates the tempo
-void Thrush::calculateTheTempo()
+void Thrush::calculateEffectiveTempo()
 {
 	// figure out the current tempo if any of our LFOs are tempo synced
 	if ((mLFO1.mTempoSync || mLFO2.mTempoSync) || 
@@ -183,10 +178,7 @@ void Thrush::calculateTheTempo()
 		{
 			mCurrentTempoBPS = gettimeinfo().mTempo_BPS;
 			// check if audio playback has just restarted and reset cycle state stuff if it has (for measure sync)
-			if (gettimeinfo().mPlaybackChanged)
-			{
-				mNeedResync = true;
-			}
+			mNeedResync |= gettimeinfo().mPlaybackChanged;
 		}
 		// get the tempo from the user parameter
 		else
@@ -198,27 +190,16 @@ void Thrush::calculateTheTempo()
 }
 
 //-------------------------------------------------------------------------
-// calculates the duration, in samples, of each LFO cycle
-float Thrush::calculateTheLFOcycleSize(ThrushLFO& lfo) const
+void Thrush::calculateEffectiveRate(ThrushLFO& lfo) const
 {
-	float cycleRate {};
-	// calculate the size of the LFO cycle
-	if (lfo.mTempoSync)  // the user wants to do tempo sync / beat division rate
-	{
-		cycleRate = mCurrentTempoBPS * lfo.mTempoRateScalar;
-	}
-	else  // use the manual/Hz rate
-	{
-		cycleRate = lfo.mRateHz;
-	}
-	// get a float increment value for each step through the LFO table at the current LFO frequency
-	lfo.setStepSize(cycleRate * mOneDivSR);
-	return cycleRate;
+	lfo.mEffectiveRateHz = lfo.mTempoSync ? (mCurrentTempoBPS * lfo.mTempoRateScalar) : lfo.mRateHz;
+	// get the increment for each step through the LFO's cycle phase at its current frequency
+	lfo.setStepSize(lfo.mEffectiveRateHz * mOneDivSR);
 }
 
 //-------------------------------------------------------------------------
-// modulates the first layer LFO with the second layer and then gets the first layer LFO output
-float Thrush::processTheLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const
+// modulate the first layer LFO's rate with the second layer LFO and then output the first layer LFO output
+float Thrush::processLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const
 {
 	// do beat sync if it ought to be done
 	if (mNeedResync && lfoLayer2.mTempoSync && gettimeinfo().mSamplesToNextBarIsValid)
@@ -232,10 +213,10 @@ float Thrush::processTheLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const
 	// scale the 0 - 1 LFO output value to the depth range of the second layer LFO
 	lfoOffset = lfo2DepthScaled(lfoOffset);
 
-	// update the first layer LFO's table step size as modulated by the second layer LFO
+	// update the first layer LFO's cycle phase step size as modulated by the second layer LFO
 	lfoLayer1.setStepSize(lfoLayer1.mEffectiveRateHz * lfoOffset * mOneDivSR);
 	// do beat sync if it must be done (don't do it if the 2nd layer LFO is active; that's too much to deal with)
-	if (mNeedResync && (lfoLayer1.mTempoSync && (lfoLayer2.getDepth() < 0.0001f)) && gettimeinfo().mSamplesToNextBarIsValid)
+	if (mNeedResync && (lfoLayer1.mTempoSync && !lfoLayer2.isActive()) && gettimeinfo().mSamplesToNextBarIsValid)
 	{
 		lfoLayer1.syncToTheBeat(gettimeinfo().mSamplesToNextBar);
 	}
@@ -251,7 +232,6 @@ void Thrush::processparameters()
 	mDelay_gen = getparameter_gen(kDelay);
 	mUserTempoBPM = getparameter_f(kTempo);
 	mUseHostTempo = getparameter_b(kTempoAuto);
-	mLFO1.mEnable = getparameter_b(kLFOEnable1);
 
 	mLFO1.mRateHz = getparameter_f(kLFO1Rate_Hz);
 	// make sure the cycles match up if the tempo rate has changed
@@ -264,11 +244,8 @@ void Thrush::processparameters()
 	if (auto const value = getparameterifchanged_b(kLFO1tempoSync))
 	{
 		mLFO1.mTempoSync = *value;
-		// set mNeedResync true if tempo sync mode has just been switched on
-		if (*value)
-		{
-			mNeedResync = true;
-		}
+		// need to resync if tempo sync mode has just been switched on
+		mNeedResync |= *value;
 	}
 
 	mLFO1.setDepth(getparameter_scalar(kLFO1depth));
@@ -285,11 +262,8 @@ void Thrush::processparameters()
 	if (auto const value = getparameterifchanged_b(kLFO2tempoSync))
 	{
 		mLFO2.mTempoSync = *value;
-		// set mNeedResync true if tempo sync mode has just been switched on
-		if (*value)
-		{
-			mNeedResync = true;
-		}
+		// need to resync if tempo sync mode has just been switched on
+		mNeedResync |= *value;
 	}
 
 	mLFO2.setDepth(getparameter_gen(kLFO2depth));
@@ -298,18 +272,14 @@ void Thrush::processparameters()
 	mStereoLink = getparameter_b(kStereoLink);
 
 	mDelay2_gen = getparameter_gen(kDelay2);
-	mLFO1_2.mEnable = getparameter_b(kLFOEnable2);
 	mLFO1_2.mRateHz = getparameter_f(kLFO1Rate2_Hz);
 	mLFO1_2.mTempoRateScalar = mTempoRateTable.getScalar(getparameter_i(kLFO1Rate2_Sync));
 
 	if (auto const value = getparameterifchanged_b(kLFO1tempoSync2))
 	{
 		mLFO1_2.mTempoSync = *value;
-		// set mNeedResync true if tempo sync mode has just been switched on
-		if (!mStereoLink && *value)
-		{
-			mNeedResync = true;
-		}
+		// need to resync if tempo sync mode has just been switched on
+		mNeedResync |= (!mStereoLink && *value);
 	}
 
 	mLFO1_2.setDepth(getparameter_scalar(kLFO1depth2));
@@ -320,11 +290,8 @@ void Thrush::processparameters()
 	if (auto const value = getparameterifchanged_b(kLFO2tempoSync2))
 	{
 		mLFO2_2.mTempoSync = *value;
-		// set mNeedResync true if tempo sync mode has just been switched on
-		if (!mStereoLink && *value)
-		{
-			mNeedResync = true;
-		}
+		// need to resync if tempo sync mode has just been switched on
+		mNeedResync |= (!mStereoLink && *value);
 	}
 
 	mLFO2_2.setDepth(getparameter_gen(kLFO2depth2));
@@ -340,14 +307,11 @@ void Thrush::processaudio(float const* const* inAudio, float* const* outAudio, u
 
 
 	// set up the basic startup conditions of all of the LFOs if any LFOs are turned on
-	if (mLFO1.mEnable || (!mStereoLink && mLFO1_2.mEnable))
-	{
-		calculateTheTempo();
-		mLFO1.mEffectiveRateHz = calculateTheLFOcycleSize(mLFO1);
-		mLFO2.mEffectiveRateHz = calculateTheLFOcycleSize(mLFO2);
-		mLFO1_2.mEffectiveRateHz = calculateTheLFOcycleSize(mLFO1_2);
-		mLFO2_2.mEffectiveRateHz = calculateTheLFOcycleSize(mLFO2_2);
-	}
+	calculateEffectiveTempo();
+	calculateEffectiveRate(mLFO1);
+	calculateEffectiveRate(mLFO2);
+	calculateEffectiveRate(mLFO1_2);
+	calculateEffectiveRate(mLFO2_2);
 
 	for (unsigned long samplecount = 0; samplecount < inNumFrames; samplecount++)
 	{
@@ -356,7 +320,7 @@ void Thrush::processaudio(float const* const* inAudio, float* const* outAudio, u
 			return static_cast<long>(expandparametervalue(parameterID, normalizedValue * offset) + DfxParam::kIntegerPadding);
 		};
 		// evaluate the sample-by-sample output of the LFOs
-		auto delayOffset = mLFO1.mEnable ? processTheLFOs(mLFO1, mLFO2) : 1.f;
+		auto delayOffset = processLFOs(mLFO1, mLFO2);
 		// update the delay position(s)   (this is done every sample in case LFOs are active)
 		mDelayPosition = (mInputPosition - normalizedOffset(kDelay, mDelay_gen, delayOffset) + kDelayBufferSize) % kDelayBufferSize;
 		if (mStereoLink)
@@ -365,7 +329,7 @@ void Thrush::processaudio(float const* const* inAudio, float* const* outAudio, u
 		}
 		else
 		{
-			delayOffset = mLFO1_2.mEnable ? processTheLFOs(mLFO1_2, mLFO2_2) : 1.f;
+			delayOffset = processLFOs(mLFO1_2, mLFO2_2);
 			mDelayPosition2 = (mInputPosition - normalizedOffset(kDelay2, mDelay2_gen, delayOffset) + kDelayBufferSize) % kDelayBufferSize;
 		}
 		mNeedResync = false;  // make sure it gets set false so that it doesn't happen again when it shouldn't

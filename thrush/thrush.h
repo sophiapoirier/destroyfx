@@ -36,7 +36,6 @@ enum
 	kTempo,
 	kTempoAuto,
 
-	kLFOEnable1,
 	kLFO1tempoSync,
 	kLFO1Rate_Hz,
 	kLFO1Rate_Sync,
@@ -52,7 +51,6 @@ enum
 	kStereoLink,
 	kDelay2,
 
-	kLFOEnable2,
 	kLFO1tempoSync2,
 	kLFO1Rate2_Hz,
 	kLFO1Rate2_Sync,
@@ -96,27 +94,31 @@ private:
 
 	class ThrushLFO final : public dfx::LFO
 	{
+	public:
+		bool isActive() const noexcept
+		{
+			return getDepth() != 0.f;
+		}
 	private:
 		friend class Thrush;
 		float mRateHz {};
 		float mTempoRateScalar {};
 		bool mTempoSync {};
 		float mEffectiveRateHz {};
-		bool mEnable = true;
 	};
 
 	void initPresets();
 
-	void calculateTheTempo();
-	float calculateTheLFOcycleSize(ThrushLFO& lfo) const;
-	float processTheLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const;
+	void calculateEffectiveTempo();
+	void calculateEffectiveRate(ThrushLFO& lfo) const;
+	float processLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const;
 
 	static constexpr float lfo2DepthScaled(float value)
 	{
 		return (value * (kLFO2DepthMax - kLFO2DepthMin)) + kLFO2DepthMin;
 	}
 
-	// the parameters
+	// parameter values
 	float mDelay_gen {}, mDelay2_gen {}, mUserTempoBPM {}, mDryWetMix {};
 	bool mUseHostTempo = false, mStereoLink = false;
 
