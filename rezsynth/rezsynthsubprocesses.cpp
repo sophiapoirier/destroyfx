@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <cmath>
 #include <tuple>
+#include <type_traits>
 
 //-----------------------------------------------------------------------------------------
 // this function tries to even out the wildly erratic resonant amplitudes
@@ -74,7 +75,7 @@ int RezSynth::calculateCoefficients(int currentNote)
 	for (int bandcount = 0; bandcount < mNumBands; bandcount++)
 	{
 // GET THE CURRENT BAND'S CENTER FREQUENCY
-		mBandCenterFreq[currentNote][bandcount] = [this, baseFreq, bandcount]()
+		mBandCenterFreq[currentNote][bandcount] = [this, baseFreq, bandcount]
 		{
 			// do logarithmic band separation, octave-style
 			if (mSepMode == kSeparationMode_Octaval)
@@ -207,18 +208,33 @@ void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outA
 
 		for (unsigned long ch = 0; ch < numChannels; ch++)
 		{
+			auto const clampInfinities = [](double value)
+			{
+#if __GNUC__
+				if (__builtin_expect(std::isinf(value), 0))  // TODO: C++20 [[unlikely]]
+#else
+				if (std::isinf(value))
+#endif
+				{
+					return std::copysign(std::numeric_limits<decltype(value)>::max(), value);
+				}
+				return value;
+			};
+
 			double bandOutputSum = 0.;
 			for (int bandIndex = 0; bandIndex < numBands; bandIndex++)
 			{
 				// filter using the input, delayed values, and their filter coefficients
-				double const curBandOutValue = (mInputAmp[bandIndex] * (inAudio[ch][sampleIndex] - mPrevPrevInCoeff[bandIndex] * mPrevPrevInValue[ch][currentNote]))
-											   + (mPrevOutCoeff[bandIndex] * mPrevOutValue[ch][currentNote][bandIndex])
-											   - (mPrevPrevOutCoeff[bandIndex] * mPrevPrevOutValue[ch][currentNote][bandIndex]);
+				double curBandOutValue = (mInputAmp[bandIndex] * (inAudio[ch][sampleIndex] - mPrevPrevInCoeff[bandIndex] * mPrevPrevInValue[ch][currentNote]))
+										 + (mPrevOutCoeff[bandIndex] * mPrevOutValue[ch][currentNote][bandIndex])
+										 - (mPrevPrevOutCoeff[bandIndex] * mPrevPrevOutValue[ch][currentNote][bandIndex]);
+				curBandOutValue = clampInfinities(curBandOutValue);
 
 				bandOutputSum += curBandOutValue;
 				// very old outValue gets old outValue and old outValue gets current outValue (no longer current)
 				mPrevPrevOutValue[ch][currentNote][bandIndex] = std::exchange(mPrevOutValue[ch][currentNote][bandIndex], curBandOutValue);
 			}
+			bandOutputSum = clampInfinities(bandOutputSum);
 			auto const scaledBandOutputSum = static_cast<float>(bandOutputSum * ampEvener);
 
 			// add the latest resonator to the output collection, scaled by my evener and user gain
