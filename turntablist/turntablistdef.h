@@ -31,7 +31,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_VERSION_MAJOR	1
 #define PLUGIN_VERSION_MINOR	1
 #define PLUGIN_VERSION_BUGFIX	0
-#define PLUGIN_VERSION_STRING	"1.1.0"
 #define PLUGIN_CLASS_NAME	Turntablist
 #define PLUGIN_ENTRY_POINT	"TurntablistEntry"
 #define TARGET_PLUGIN_USES_MIDI	1
