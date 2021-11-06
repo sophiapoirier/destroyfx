@@ -41,7 +41,6 @@ or somehow define this stuff another way (in compiler settings, or whatever).
 #define PLUGIN_VERSION_MAJOR	1
 #define PLUGIN_VERSION_MINOR	0
 #define PLUGIN_VERSION_BUGFIX	0
-#define PLUGIN_VERSION_STRING	"1.0.0"
 // your subclass of DfxPlugin
 #define PLUGIN_CLASS_NAME	DfxStub
 // Audio Unit entry point:  plugin class name appended with "Entry"

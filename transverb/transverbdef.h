@@ -32,7 +32,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_VERSION_MAJOR	1
 #define PLUGIN_VERSION_MINOR	5
 #define PLUGIN_VERSION_BUGFIX	2
-#define PLUGIN_VERSION_STRING	"1.5.2"
 #define PLUGIN_CLASS_NAME	Transverb
 #define PLUGIN_ENTRY_POINT	"TransverbEntry"
 #define TARGET_PLUGIN_USES_MIDI	1
