@@ -24,8 +24,12 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <vector>
 
 #include "dfxplugin.h"
+#include "dfxsmoothedvalue.h"
 #include "lfo.h"
 #include "temporatetable.h"
+
+
+#define THRUSH_LFO_DISCONTINUITY_SMOOTHING 0  // the current implementation is quite flawed
 
 
 //-------------------------------------------------------------------------------------
@@ -119,21 +123,29 @@ private:
 	}
 
 	// parameter values
-	float mDelay_gen {}, mDelay2_gen {}, mUserTempoBPM {}, mDryWetMix {};
+	float mDelay_gen {}, mDelay2_gen {}, mUserTempoBPM {};
+	dfx::SmoothedValue<float> mInputGain, mInverseGain;  // the effective states of the dry/wet mix
 	bool mUseHostTempo = false, mStereoLink = false;
 
 	ThrushLFO mLFO1, mLFO2, mLFO1_2, mLFO2_2;
 
 	// these track the input and delay buffer positions
-	long mInputPosition, mDelayPosition, mDelayPosition2, mOldDelayPosition, mOldDelayPosition2;
+	long mInputPosition {};
+	// TODO: smoothing the delay position offsets is a bit overkill because it is only really LFO
+	// discontinuity points that need smoothing, and this approach causes all LFO movement to lag
+	dfx::SmoothedValue<double> mDelayOffset {}, mDelayOffset2 {};
+#if THRUSH_LFO_DISCONTINUITY_SMOOTHING
+	long mOldDelayPosition {}, mOldDelayPosition2 {};
+#endif
 	std::vector<float> mDelayBuffer, mDelayBuffer2; // left and right channel delay buffers
 
-	float mOneDivSR;  // the inverse of the sampling rate
+	float mOneDivSR {};  // the inverse of the sampling rate
 
-	float mLastSample, mLastSample2;
+#if THRUSH_LFO_DISCONTINUITY_SMOOTHING
+	float mLastSample {}, mLastSample2 {};  // TODO: these are not actually used in a stateful fashion
+#endif
 
 	dfx::TempoRateTable const mTempoRateTable;	// a table of tempo rate values
-	float mCurrentTempoBPS;	// tempo in beats per second
-//	VstTimeInfo* mTimeInfo;
-	bool mNeedResync;	// true when playback has just started up again
+	float mCurrentTempoBPS {};	// tempo in beats per second
+	bool mNeedResync {};	// true when playback has just started up again
 };

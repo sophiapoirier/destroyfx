@@ -105,6 +105,11 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	setpresetname(0, "thrush");  // default preset name
 	initPresets();
+
+	registerSmoothedAudioValue(&mInputGain);
+	registerSmoothedAudioValue(&mInverseGain);
+	registerSmoothedAudioValue(&mDelayOffset);
+	registerSmoothedAudioValue(&mDelayOffset2);
 }
 
 //-------------------------------------------------------------------------
@@ -134,7 +139,11 @@ void Thrush::reset()
 	mLFO2.reset();
 	mLFO1_2.reset();
 	mLFO2_2.reset();
-	mDelayPosition = mDelayPosition2 = mOldDelayPosition = mOldDelayPosition2 = 0;
+	mDelayOffset.setValueNow(0.);
+	mDelayOffset2.setValueNow(0.);
+#if THRUSH_LFO_DISCONTINUITY_SMOOTHING
+	mOldDelayPosition = mOldDelayPosition2 = 0;
+#endif
 
 	std::fill(mDelayBuffer.begin(), mDelayBuffer.end(), 0.f);
 	std::fill(mDelayBuffer2.begin(), mDelayBuffer2.end(), 0.f);
@@ -296,16 +305,18 @@ void Thrush::processparameters()
 
 	mLFO2_2.setDepth(getparameter_gen(kLFO2depth2));
 	mLFO2_2.setShape(getparameter_i(kLFO2shape2));
-	mDryWetMix = getparameter_scalar(kDryWetMix);
+
+	if (auto const value = getparameterifchanged_scalar(kDryWetMix))
+	{
+		auto const dryWetMix = static_cast<float>(*value);
+		mInputGain = 1.f - (dryWetMix * 0.5f);
+		mInverseGain = dryWetMix * 0.5f;
+	}
 }
 
 //-------------------------------------------------------------------------
 void Thrush::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
 {
-	float const inputGain = 1.f - (mDryWetMix * 0.5f);
-	float const inverseGain = mDryWetMix * 0.5f;
-
-
 	// set up the basic startup conditions of all of the LFOs if any LFOs are turned on
 	calculateEffectiveTempo();
 	calculateEffectiveRate(mLFO1);
@@ -315,25 +326,32 @@ void Thrush::processaudio(float const* const* inAudio, float* const* outAudio, u
 
 	for (unsigned long samplecount = 0; samplecount < inNumFrames; samplecount++)
 	{
-		auto const normalizedOffset = [this](long parameterID, float normalizedValue, float offset)
-		{
-			return static_cast<long>(expandparametervalue(parameterID, normalizedValue * offset) + DfxParam::kIntegerPadding);
-		};
 		// evaluate the sample-by-sample output of the LFOs
-		auto delayOffset = processLFOs(mLFO1, mLFO2);
-		// update the delay position(s)   (this is done every sample in case LFOs are active)
-		mDelayPosition = (mInputPosition - normalizedOffset(kDelay, mDelay_gen, delayOffset) + kDelayBufferSize) % kDelayBufferSize;
+		auto const normalizedOffset = [this](long parameterID, float normalizedValue, ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2)
+		{
+			auto const delayOffset = processLFOs(lfoLayer1, lfoLayer2);
+			return expandparametervalue(parameterID, normalizedValue * delayOffset);
+		};
+		mDelayOffset = normalizedOffset(kDelay, mDelay_gen, mLFO1, mLFO2);
 		if (mStereoLink)
 		{
-			mDelayPosition2 = mDelayPosition;
+			mDelayOffset2 = mDelayOffset;
 		}
 		else
 		{
-			delayOffset = processLFOs(mLFO1_2, mLFO2_2);
-			mDelayPosition2 = (mInputPosition - normalizedOffset(kDelay2, mDelay2_gen, delayOffset) + kDelayBufferSize) % kDelayBufferSize;
+			mDelayOffset2 = normalizedOffset(kDelay2, mDelay2_gen, mLFO1_2, mLFO2_2);
 		}
+		// update the delay position(s) (this is done every sample in case LFOs are active)
+		auto const delayedPosition = [this](auto const& delayOffset)
+		{
+			auto const delayOffset_i = static_cast<long>(delayOffset.getValue() + DfxParam::kIntegerPadding);
+			return (mInputPosition - delayOffset_i + kDelayBufferSize) % kDelayBufferSize;
+		};
+		auto const delayPosition = delayedPosition(mDelayOffset);
+		auto const delayPosition2 = delayedPosition(mDelayOffset2);
 		mNeedResync = false;  // make sure it gets set false so that it doesn't happen again when it shouldn't
 
+#if THRUSH_LFO_DISCONTINUITY_SMOOTHING
 		// audio output ... first reckon with the anything that needs to be smoothed (this is a mess)
 		if ((mLFO1.mSmoothSamples > 0) || (!mStereoLink && (mLFO1_2.mSmoothSamples > 0)))
 		{
@@ -348,8 +366,8 @@ void Thrush::processaudio(float const* const* inAudio, float* const* outAudio, u
 			// Instead take the current output sample and store it as the blending out value.
 			if (mLFO1.mSmoothSamples == ThrushLFO::kSmoothDur)
 			{
-				mOldDelayPosition = mDelayPosition;
-				mLastSample = (inAudio[0][samplecount] * inputGain) - (mDelayBuffer[mDelayPosition] * inverseGain);
+				mOldDelayPosition = delayPosition;
+				mLastSample = (inAudio[0][samplecount] * mInputGain.getValue()) - (mDelayBuffer[delayPosition] * mInverseGain.getValue());
 				outAudio[0][samplecount] = mLastSample;
 			}
 			// do regular fade-out/mixing stuff
@@ -358,23 +376,23 @@ void Thrush::processaudio(float const* const* inAudio, float* const* outAudio, u
 				mOldDelayPosition = (mOldDelayPosition + 1) % kDelayBufferSize;
 				auto const oldGain = static_cast<float>(mLFO1.mSmoothSamples) * ThrushLFO::kSmoothStep;
 				auto const newGain = 1.f - oldGain;
-				outAudio[0][samplecount] = (inAudio[0][samplecount] * inputGain) - 
-											((mDelayBuffer[mDelayPosition] * inverseGain) * newGain) - 
-											((mDelayBuffer[mOldDelayPosition] * inverseGain) * oldGain);
+				outAudio[0][samplecount] = (inAudio[0][samplecount] * mInputGain.getValue()) - 
+											((mDelayBuffer[delayPosition] * mInverseGain.getValue()) * newGain) - 
+											((mDelayBuffer[mOldDelayPosition] * mInverseGain.getValue()) * oldGain);
 			}
 			// if neither of the first two conditions were true, then the left channel 
 			// is not fading/blending at all - the right channel must be - do regular output
 			else
 			{
-				outAudio[0][samplecount] = (inAudio[0][samplecount] * inputGain) - 
-											(mDelayBuffer[mDelayPosition] * inverseGain);
+				outAudio[0][samplecount] = (inAudio[0][samplecount] * mInputGain.getValue()) - 
+											(mDelayBuffer[delayPosition] * mInverseGain.getValue());
 			}
 
 			////////////   now the right channel - same stuff as above   ////////////
 			if (mLFO1_2.mSmoothSamples == ThrushLFO::kSmoothDur)
 			{
-				mOldDelayPosition2 = mDelayPosition2;
-				mLastSample2 = (inAudio[1][samplecount] * inputGain) - (mDelayBuffer2[mDelayPosition2] * inverseGain);
+				mOldDelayPosition2 = delayPosition2;
+				mLastSample2 = (inAudio[1][samplecount] * mInputGain.getValue()) - (mDelayBuffer2[delayPosition2] * mInverseGain.getValue());
 				outAudio[1][samplecount] = mLastSample2;
 			}
 			else if (mLFO1_2.mSmoothSamples > 0)
@@ -382,14 +400,14 @@ void Thrush::processaudio(float const* const* inAudio, float* const* outAudio, u
 				mOldDelayPosition2 = (mOldDelayPosition2 + 1) % kDelayBufferSize;
 				auto const oldGain = static_cast<float>(mLFO1_2.mSmoothSamples) * ThrushLFO::kSmoothStep;
 				auto const newGain = 1.f - oldGain;
-				outAudio[1][samplecount] = (inAudio[1][samplecount] * inputGain) - 
-											((mDelayBuffer2[mDelayPosition2] * inverseGain) * newGain) - 
-											((mDelayBuffer2[mOldDelayPosition2] * inverseGain) * oldGain);
+				outAudio[1][samplecount] = (inAudio[1][samplecount] * mInputGain.getValue()) - 
+											((mDelayBuffer2[delayPosition2] * mInverseGain.getValue()) * newGain) - 
+											((mDelayBuffer2[mOldDelayPosition2] * mInverseGain.getValue()) * oldGain);
 			}
 			else
 			{
-				outAudio[1][samplecount] = (inAudio[1][samplecount] * inputGain) - 
-											(mDelayBuffer2[mDelayPosition2] * inverseGain);
+				outAudio[1][samplecount] = (inAudio[1][samplecount] * mInputGain.getValue()) - 
+											(mDelayBuffer2[delayPosition2] * mInverseGain.getValue());
 			}
 
 			// decrement the counters if they are currently counting
@@ -404,13 +422,14 @@ void Thrush::processaudio(float const* const* inAudio, float* const* outAudio, u
 		}
 
 
-		// no smoothing is going on   (this is much simpler)
+		// no smoothing is going on (this is much simpler)
 		else
+#endif  // THRUSH_LFO_DISCONTINUITY_SMOOTHING
 		{
-			outAudio[0][samplecount] = (inAudio[0][samplecount] * inputGain) - 
-									(mDelayBuffer[mDelayPosition] * inverseGain);
-			outAudio[1][samplecount] = (inAudio[1][samplecount] * inputGain) - 
-									(mDelayBuffer2[mDelayPosition2] * inverseGain);
+			outAudio[0][samplecount] = (inAudio[0][samplecount] * mInputGain.getValue()) - 
+									(mDelayBuffer[delayPosition] * mInverseGain.getValue());
+			outAudio[1][samplecount] = (inAudio[1][samplecount] * mInputGain.getValue()) - 
+									(mDelayBuffer2[delayPosition2] * mInverseGain.getValue());
 		}
 
 		// put the latest input samples into the delay buffer
@@ -420,5 +439,7 @@ void Thrush::processaudio(float const* const* inAudio, float* const* outAudio, u
 		// incremement the input position in the delay buffer and wrap it around 
 		// if it has reached the end of the buffer
 		mInputPosition = (mInputPosition + 1) % kDelayBufferSize;
+
+		incrementSmoothedAudioValues();
 	}
 }
