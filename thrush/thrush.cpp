@@ -309,8 +309,8 @@ void Thrush::processparameters()
 	if (auto const value = getparameterifchanged_scalar(kDryWetMix))
 	{
 		auto const dryWetMix = static_cast<float>(*value);
-		mInputGain = 1.f - (dryWetMix * 0.5f);
-		mInverseGain = dryWetMix * 0.5f;
+		mInputGain = 1.f - std::pow(dryWetMix * 0.75f, 1.5f);
+		mInverseGain = std::pow(dryWetMix * 0.87f, 1.5f);
 	}
 }
 
