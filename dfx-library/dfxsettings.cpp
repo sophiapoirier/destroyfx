@@ -40,6 +40,7 @@ Welcome to our settings persistance mess.
 #include <type_traits>
 #include <vector>
 
+#include "dfxmath.h"
 #include "dfxmidi.h"
 #include "dfxmisc.h"
 #include "dfxplugin.h"
@@ -720,52 +721,59 @@ bool DfxSettings::saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDicti
 		return false;
 	}
 
-	bool assignmentsFound = false;
+	unsigned long assignmentsFoundCount = 0;
 	for (long i = 0; i < static_cast<long>(mNumParameters); i++)
 	{
 		if (getParameterAssignmentType(i) != dfx::MidiEventType::None)
 		{
-			assignmentsFound = true;
+			assignmentsFoundCount++;
 		}
 	}
-
-	if (assignmentsFound)
+	// nothing to do
+	if (assignmentsFoundCount == 0)
 	{
-		auto const assignmentsCFArray = dfx::MakeUniqueCFType(CFArrayCreateMutable(kCFAllocatorDefault, mNumParameters, &kCFTypeArrayCallBacks));
-		if (assignmentsCFArray)
-		{
-			for (unsigned long i = 0; i < mNumParameters; i++)
-			{
-				auto const assignmentCFDictionary = dfx::MakeUniqueCFType(CFDictionaryCreateMutable(kCFAllocatorDefault, 10, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
-				if (assignmentCFDictionary)
-				{
-					if (getParameterID(i) == dfx::kParameterID_Invalid)
-					{
-						continue;
-					}
-					DFX_AddNumberToCFDictionary_i(getParameterID(i), assignmentCFDictionary.get(), kDfxSettings_ParameterIDKey);
-					DFX_AddNumberToCFDictionary_i(static_cast<SInt64>(mParameterAssignments[i].mEventType), 
-												  assignmentCFDictionary.get(), kDfxSettings_MidiAssignment_mEventTypeKey);
-#define ADD_ASSIGNMENT_VALUE_TO_DICT(inMember, inTypeSuffix)	\
-					DFX_AddNumberToCFDictionary_##inTypeSuffix(mParameterAssignments[i].inMember, assignmentCFDictionary.get(), kDfxSettings_MidiAssignment_##inMember##Key);
-					ADD_ASSIGNMENT_VALUE_TO_DICT(mEventChannel, i)
-					ADD_ASSIGNMENT_VALUE_TO_DICT(mEventNum, i)
-					ADD_ASSIGNMENT_VALUE_TO_DICT(mEventNum2, i)
-					ADD_ASSIGNMENT_VALUE_TO_DICT(mEventBehaviorFlags, i)
-					ADD_ASSIGNMENT_VALUE_TO_DICT(mDataInt1, i)
-					ADD_ASSIGNMENT_VALUE_TO_DICT(mDataInt2, i)
-					ADD_ASSIGNMENT_VALUE_TO_DICT(mDataFloat1, f)
-					ADD_ASSIGNMENT_VALUE_TO_DICT(mDataFloat2, f)
-#undef ADD_ASSIGNMENT_VALUE_TO_DICT
-					CFArraySetValueAtIndex(assignmentsCFArray.get(), i, assignmentCFDictionary.get());
-				}
-			}
-			CFDictionarySetValue(inDictionary, kDfxSettings_MidiAssignmentsKey, assignmentsCFArray.get());
-			return true;
-		}
+		return true;
 	}
 
-	return false;
+	auto const assignmentsCFArray = dfx::MakeUniqueCFType(CFArrayCreateMutable(kCFAllocatorDefault, mNumParameters, &kCFTypeArrayCallBacks));
+	if (!assignmentsCFArray)
+	{
+		return false;
+	}
+
+	for (unsigned long i = 0; i < mNumParameters; i++)
+	{
+		auto const assignmentCFDictionary = dfx::MakeUniqueCFType(CFDictionaryCreateMutable(kCFAllocatorDefault, 10, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
+		if (assignmentCFDictionary)
+		{
+			if (getParameterID(i) == dfx::kParameterID_Invalid)
+			{
+				continue;
+			}
+			DFX_AddNumberToCFDictionary_i(getParameterID(i), assignmentCFDictionary.get(), kDfxSettings_ParameterIDKey);
+			DFX_AddNumberToCFDictionary_i(static_cast<SInt64>(mParameterAssignments[i].mEventType), 
+										  assignmentCFDictionary.get(), kDfxSettings_MidiAssignment_mEventTypeKey);
+#define ADD_ASSIGNMENT_VALUE_TO_DICT(inMember, inTypeSuffix)	\
+			DFX_AddNumberToCFDictionary_##inTypeSuffix(mParameterAssignments[i].inMember, assignmentCFDictionary.get(), kDfxSettings_MidiAssignment_##inMember##Key);
+			ADD_ASSIGNMENT_VALUE_TO_DICT(mEventChannel, i)
+			ADD_ASSIGNMENT_VALUE_TO_DICT(mEventNum, i)
+			ADD_ASSIGNMENT_VALUE_TO_DICT(mEventNum2, i)
+			ADD_ASSIGNMENT_VALUE_TO_DICT(mEventBehaviorFlags, i)
+			ADD_ASSIGNMENT_VALUE_TO_DICT(mDataInt1, i)
+			ADD_ASSIGNMENT_VALUE_TO_DICT(mDataInt2, i)
+			ADD_ASSIGNMENT_VALUE_TO_DICT(mDataFloat1, f)
+			ADD_ASSIGNMENT_VALUE_TO_DICT(mDataFloat2, f)
+#undef ADD_ASSIGNMENT_VALUE_TO_DICT
+			CFArraySetValueAtIndex(assignmentsCFArray.get(), i, assignmentCFDictionary.get());
+		}
+	}
+	auto const arraySize = CFArrayGetCount(assignmentsCFArray.get());
+	if (arraySize > 0)
+	{
+		CFDictionarySetValue(inDictionary, kDfxSettings_MidiAssignmentsKey, assignmentsCFArray.get());
+	}
+
+	return (dfx::math::ToUnsigned(arraySize) == assignmentsFoundCount);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -777,60 +785,62 @@ bool DfxSettings::restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDiction
 	}
 
 	auto const assignmentsCFArray = static_cast<CFArrayRef>(CFDictionaryGetValue(inDictionary, kDfxSettings_MidiAssignmentsKey));
-	if (assignmentsCFArray && (CFGetTypeID(assignmentsCFArray) == CFArrayGetTypeID()))
+	// nothing to do
+	if (!assignmentsCFArray)
 	{
-		// completely clear our table of parameter assignments before loading the new 
-		// table since the new one might not have all of the data members
-		clearAssignments();
-
-		auto const arraySize = CFArrayGetCount(assignmentsCFArray);
-		for (CFIndex i = 0; i < arraySize; i++)
-		{
-			auto const assignmentCFDictionary = static_cast<CFDictionaryRef>(CFArrayGetValueAtIndex(assignmentsCFArray, i));
-			if (assignmentCFDictionary)
-			{
-				auto const paramID_optional = DFX_GetNumberFromCFDictionary_i(assignmentCFDictionary, kDfxSettings_ParameterIDKey);
-				if (!paramID_optional)
-				{
-					continue;
-				}
-				auto const paramTag = getParameterTagFromID(*paramID_optional);
-				if (!paramTagIsValid(paramTag))
-				{
-					continue;
-				}
-#define GET_ASSIGNMENT_VALUE_FROM_DICT(inMember, inTypeSuffix)	\
-				{	\
-					auto const optionalValue = DFX_GetNumberFromCFDictionary_##inTypeSuffix(assignmentCFDictionary, kDfxSettings_MidiAssignment_##inMember##Key);	\
-					mParameterAssignments[paramTag].inMember = static_cast<decltype(mParameterAssignments[paramTag].inMember)>(optionalValue.value_or(0));	\
-					numberSuccess = optionalValue ? true : false;	\
-				}
-				bool numberSuccess = false;
-				GET_ASSIGNMENT_VALUE_FROM_DICT(mEventType, i)
-				if (!numberSuccess)
-				{
-					unassignParam(paramTag);
-					continue;
-				}
-				GET_ASSIGNMENT_VALUE_FROM_DICT(mEventChannel, i)
-				GET_ASSIGNMENT_VALUE_FROM_DICT(mEventNum, i)
-				GET_ASSIGNMENT_VALUE_FROM_DICT(mEventNum2, i)
-				GET_ASSIGNMENT_VALUE_FROM_DICT(mEventBehaviorFlags, i)
-				GET_ASSIGNMENT_VALUE_FROM_DICT(mDataInt1, i)
-				GET_ASSIGNMENT_VALUE_FROM_DICT(mDataInt2, i)
-				GET_ASSIGNMENT_VALUE_FROM_DICT(mDataFloat1, f)
-				GET_ASSIGNMENT_VALUE_FROM_DICT(mDataFloat2, f)
-#undef GET_ASSIGNMENT_VALUE_FROM_DICT
-			}
-		}
-		// this seems like a good enough sign that we at least partially succeeded
-		if (arraySize > 0)
-		{
-			return true;
-		}
+		return true;
+	}
+	if (CFGetTypeID(assignmentsCFArray) != CFArrayGetTypeID())
+	{
+		return false;
 	}
 
-	return false;
+	// completely clear our table of parameter assignments before loading the new 
+	// table since the new one might not have all of the data members
+	clearAssignments();
+
+	auto const arraySize = CFArrayGetCount(assignmentsCFArray);
+	for (CFIndex i = 0; i < arraySize; i++)
+	{
+		auto const assignmentCFDictionary = static_cast<CFDictionaryRef>(CFArrayGetValueAtIndex(assignmentsCFArray, i));
+		if (assignmentCFDictionary)
+		{
+			auto const paramID_optional = DFX_GetNumberFromCFDictionary_i(assignmentCFDictionary, kDfxSettings_ParameterIDKey);
+			if (!paramID_optional)
+			{
+				continue;
+			}
+			auto const paramTag = getParameterTagFromID(*paramID_optional);
+			if (!paramTagIsValid(paramTag))
+			{
+				continue;
+			}
+#define GET_ASSIGNMENT_VALUE_FROM_DICT(inMember, inTypeSuffix)	\
+			{	\
+				auto const optionalValue = DFX_GetNumberFromCFDictionary_##inTypeSuffix(assignmentCFDictionary, kDfxSettings_MidiAssignment_##inMember##Key);	\
+				mParameterAssignments[paramTag].inMember = static_cast<decltype(mParameterAssignments[paramTag].inMember)>(optionalValue.value_or(0));	\
+				numberSuccess = optionalValue ? true : false;	\
+			}
+			bool numberSuccess = false;
+			GET_ASSIGNMENT_VALUE_FROM_DICT(mEventType, i)
+			if (!numberSuccess)
+			{
+				unassignParam(paramTag);
+				continue;
+			}
+			GET_ASSIGNMENT_VALUE_FROM_DICT(mEventChannel, i)
+			GET_ASSIGNMENT_VALUE_FROM_DICT(mEventNum, i)
+			GET_ASSIGNMENT_VALUE_FROM_DICT(mEventNum2, i)
+			GET_ASSIGNMENT_VALUE_FROM_DICT(mEventBehaviorFlags, i)
+			GET_ASSIGNMENT_VALUE_FROM_DICT(mDataInt1, i)
+			GET_ASSIGNMENT_VALUE_FROM_DICT(mDataInt2, i)
+			GET_ASSIGNMENT_VALUE_FROM_DICT(mDataFloat1, f)
+			GET_ASSIGNMENT_VALUE_FROM_DICT(mDataFloat2, f)
+#undef GET_ASSIGNMENT_VALUE_FROM_DICT
+		}
+	}
+	// this seems like a good enough sign that we at least partially succeeded
+	return (arraySize > 0);
 }
 #endif  // TARGET_API_AUDIOUNIT
 
