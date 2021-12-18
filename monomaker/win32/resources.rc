@@ -5,6 +5,8 @@ monomerge-blobs.png  PNG DISCARDABLE  "..\\gui\\graphics\\monomerge-blobs.png"
 monomerge-mode-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\monomerge-mode-button.png"
 pan-blobs.png  PNG DISCARDABLE  "..\\gui\\graphics\\pan-blobs.png"
 pan-mode-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\pan-mode-button.png"
+phase-invert-left-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\phase-invert-left-button.png"
+phase-invert-right-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\phase-invert-right-button.png"
 slider-handle.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle.png"
 
 #include "../monomakerdef.h"

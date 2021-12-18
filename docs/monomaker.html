@@ -34,13 +34,16 @@ You can then tilt your audio more to the left or right using the <b>pan</b> para
 That panning volume rebalancing strategy can be selected with the <b>pan mode</b> parameter.  In recenter mode, as you pan further over to one direction, sound from the opposite channel is copied over to the first channel, retaining the overall volume of audio from each channel's input.  Balance mode increases the volume level of one channel's audio when panning towards its direction while reducing the level of the opposite channel.
 </p>
 
+<p class="desc">
+Prior to all of that processing, you can invert the audio signal on either or both input channels by enabling their respective <b>phase invert</b> parameters.
+</p>
 
 <p class="desc">
 Also, in case it's useful, you can re-route the two input audio channels in a variety of ways by using the <b>input selection</b> parameter.  "Left-right" means that everything is normal, "right-left" means that the left and right channels are swapped, "left-left" means that you lose the right channel and get the left channel copied to both inputs, and "right-right" means that you lose the left channel and get the right channel copied to both inputs.
 </p>
 
 <p class="desc">
-Monomaker's signal path is <b>input selection</b> first, then <b>mono merge</b>, then <b>pan</b>.
+Monomaker's signal path is <b>phase inversion</b> first, then <b>input selection</b>, then <b>mono merge</b>, and then <b>pan</b>.
 </p>
 
 <p class="desc">

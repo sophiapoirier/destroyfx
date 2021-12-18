@@ -40,7 +40,9 @@ Monomaker::Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_list(kMonomergeMode, {"monomix mode", "MonoMod", "MonMod", "MMod"}, kMonomergeMode_EqualPower, kMonomergeMode_Linear, kNumMonomergeModes);
 	initparameter_f(kPan, {"pan"}, 0.0, 0.0, -1.0, 1.0, DfxParam::Unit::Pan);
 	initparameter_list(kPanMode, {"pan mode", "PanMode", "PanMod", "PMod"}, kPanMode_Recenter, kPanMode_Recenter, kNumPanModes);
-//	initparameter_list(kPanLaw, {"pan law", "PanLaw", "PLaw"}, kPanLaw_, kPanLaw_, kNumPanLaws);
+	initparameter_list(kPanLaw, {"pan law", "PanLaw", "PLaw"}, kPanLaw_0dB, kPanLaw_0dB, kNumPanLaws);
+	initparameter_b(kPhaseInvert_LeftChannel, {"phase invert left channel", "PhaseLt", "PhaseL", "PhsL"}, false, false);
+	initparameter_b(kPhaseInvert_RightChannel, {"phase invert right channel", "PhaseRt", "PhaseR", "PhsR"}, false, false);
 
 	// set the parameter value display strings
 	setparametervaluestring(kInputSelection, kInputSelection_Stereo, "left-right");
@@ -54,9 +56,11 @@ Monomaker::Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparametervaluestring(kPanMode, kPanMode_Recenter, "recenter");
 	setparametervaluestring(kPanMode, kPanMode_Balance, "balance");
 	//
-//	setparametervaluestring(kPanLaw, kPanLaw_, "-3 dB");
-//	setparametervaluestring(kPanLaw, kPanLaw_, "-6 dB");
-//	setparametervaluestring(kPanLaw, kPanLaw_, "sine-cosine");
+	setparametervaluestring(kPanLaw, kPanLaw_0dB, "0 dB");
+	setparametervaluestring(kPanLaw, kPanLaw_Minus3dB, "-3 dB");
+	setparametervaluestring(kPanLaw, kPanLaw_Minus6dB, "-6 dB");
+	setparametervaluestring(kPanLaw, kPanLaw_SineCosine, "sine-cosine");
+	setparameterattributes(kPanLaw, DfxParam::kAttribute_Unused);
 /*
 left_output = cos(p) * input
 right_output = sin(p) * input
@@ -108,32 +112,36 @@ void Monomaker::cleanup()
 //-----------------------------------------------------------------------------------------
 void Monomaker::processparameters()
 {
-	if (auto const inputSelection = getparameterifchanged_i(kInputSelection))
+	if (getparameterchanged(kInputSelection)
+		|| getparameterchanged(kPhaseInvert_LeftChannel)
+		|| getparameterchanged(kPhaseInvert_RightChannel))
 	{
-		switch (*inputSelection)
+		float const phaseLeft = getparameter_b(kPhaseInvert_LeftChannel) ? -1.f : 1.f;
+		float const phaseRight = getparameter_b(kPhaseInvert_RightChannel) ? -1.f : 1.f;
+		switch (getparameter_i(kInputSelection))
 		{
 			case kInputSelection_Stereo:
-				mInputSelection_left2left = 1.0f;
+				mInputSelection_left2left = phaseLeft;
 				mInputSelection_left2right = 0.0f;
 				mInputSelection_right2left = 0.0f;
-				mInputSelection_right2right = 1.0f;
+				mInputSelection_right2right = phaseRight;
 				break;
 			case kInputSelection_Left:
-				mInputSelection_left2left = 1.0f;
-				mInputSelection_left2right = 1.0f;
+				mInputSelection_left2left = phaseLeft;
+				mInputSelection_left2right = phaseLeft;
 				mInputSelection_right2left = 0.0f;
 				mInputSelection_right2right = 0.0f;
 				break;
 			case kInputSelection_Right:
 				mInputSelection_left2left = 0.0f;
 				mInputSelection_left2right = 0.0f;
-				mInputSelection_right2left = 1.0f;
-				mInputSelection_right2right = 1.0f;
+				mInputSelection_right2left = phaseRight;
+				mInputSelection_right2right = phaseRight;
 				break;
 			case kInputSelection_Swap:
 				mInputSelection_left2left = 0.0f;
-				mInputSelection_left2right = 1.0f;
-				mInputSelection_right2left = 1.0f;
+				mInputSelection_left2right = phaseLeft;
+				mInputSelection_right2left = phaseRight;
 				mInputSelection_right2right = 0.0f;
 				break;
 			default:
@@ -149,7 +157,7 @@ void Monomaker::processparameters()
 
 		// calculate monomerge gain scalars
 		bool const useEqualPower = (monomergeMode == kMonomergeMode_EqualPower) && (getnuminputs() > 1);
-		auto const mapMonomergeMode = useEqualPower ? sqrtf : [](float a){ return a; };
+		auto const mapMonomergeMode = useEqualPower ? sqrtf : +[](float a){ return a; };
 		mMonomerge_main = mapMonomergeMode(1.0f - (monomerge * 0.5f));
 		mMonomerge_other = mapMonomergeMode(monomerge * 0.5f);
 	}

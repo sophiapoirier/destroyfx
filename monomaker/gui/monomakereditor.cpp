@@ -42,9 +42,13 @@ enum
 	kPanAnimationX = 15,
 	kPanAnimationY = 116,
 
-	kButtonX = 21,
-	kButtonY = 184,
-	kButtonInc = 110,
+	kPhaseInvertButtonX = 249 + 24,
+	kPhaseInvertButtonY = 30,
+	kPhaseInvertButtonIncX = 29,
+
+	kModeButtonX = 21,
+	kModeButtonY = 184,
+	kModeButtonIncX = 110,
 
 	kDestroyFXLinkX = 270,
 	kDestroyFXLinkY = 3
@@ -90,6 +94,8 @@ long MonomakerEditor::OpenEditor()
 	auto const monomergeAnimationImage = LoadImage("monomerge-blobs.png");
 	auto const panAnimationImage = LoadImage("pan-blobs.png");
 
+	auto const phaseInvertButtonImage_left = LoadImage("phase-invert-left-button.png");
+	auto const phaseInvertButtonImage_right = LoadImage("phase-invert-right-button.png");
 	auto const inputSelectionButtonImage = LoadImage("input-selection-button.png");
 	auto const monomergeModeButtonImage = LoadImage("monomerge-mode-button.png");
 	auto const panModeButtonImage = LoadImage("pan-mode-button.png");
@@ -140,17 +146,23 @@ long MonomakerEditor::OpenEditor()
 
 	// --- buttons ---
 
+	// phase invert button (left)
+	emplaceControl<DGToggleImageButton>(this, kPhaseInvert_LeftChannel, kPhaseInvertButtonX, kPhaseInvertButtonY, phaseInvertButtonImage_left);
+
+	// phase invert button (right)
+	emplaceControl<DGToggleImageButton>(this, kPhaseInvert_RightChannel, kPhaseInvertButtonX + kPhaseInvertButtonIncX, kPhaseInvertButtonY, phaseInvertButtonImage_right);
+
 	// input selection button
-	pos.set(kButtonX, kButtonY, inputSelectionButtonImage->getWidth(), inputSelectionButtonImage->getHeight() / kNumInputSelections);
+	pos.set(kModeButtonX, kModeButtonY, inputSelectionButtonImage->getWidth(), inputSelectionButtonImage->getHeight() / kNumInputSelections);
 	emplaceControl<DGButton>(this, kInputSelection, pos, inputSelectionButtonImage, DGButton::Mode::Increment);
 
 	// monomerge mode button
-	pos.offset(kButtonInc, 0);
+	pos.offset(kModeButtonIncX, 0);
 	pos.setSize(monomergeModeButtonImage->getWidth(), monomergeModeButtonImage->getHeight() / kNumMonomergeModes);
 	emplaceControl<DGButton>(this, kMonomergeMode, pos, monomergeModeButtonImage, DGButton::Mode::Increment);
 
 	// pan mode button
-	pos.offset(kButtonInc, 0);
+	pos.offset(kModeButtonIncX, 0);
 	pos.setSize(panModeButtonImage->getWidth(), panModeButtonImage->getHeight() / kNumPanModes);
 	emplaceControl<DGButton>(this, kPanMode, pos, panModeButtonImage, DGButton::Mode::Increment);
 

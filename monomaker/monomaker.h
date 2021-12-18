@@ -36,7 +36,9 @@ enum
 	kMonomergeMode,
 	kPan,
 	kPanMode,
-//	kPanLaw,
+	kPanLaw,
+	kPhaseInvert_LeftChannel,
+	kPhaseInvert_RightChannel,
 
 	kNumParameters
 };
@@ -62,6 +64,15 @@ enum
 	kPanMode_Recenter,
 	kPanMode_Balance,
 	kNumPanModes
+};
+
+enum
+{
+	kPanLaw_0dB,
+	kPanLaw_Minus3dB,
+	kPanLaw_Minus6dB,
+	kPanLaw_SineCosine,
+	kNumPanLaws
 };
 
 

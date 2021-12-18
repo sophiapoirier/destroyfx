@@ -30,6 +30,8 @@
 		EC2F843824A7C2BB00F29321 /* dfxmisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC2F843724A7C2BB00F29321 /* dfxmisc.mm */; };
 		EC3FC335271CF8D1002D61C6 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC3FC334271CF8D1002D61C6 /* AppKit.framework */; };
 		EC40EDB220DB4B9C00F5C0A7 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC40EDB120DB4B9C00F5C0A7 /* dfxguimisc.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		EC4CCDCE276E6EF900139ADB /* phase-invert-left-button.png in Resources */ = {isa = PBXBuildFile; fileRef = EC4CCDCC276E6EF900139ADB /* phase-invert-left-button.png */; };
+		EC4CCDCF276E6EF900139ADB /* phase-invert-right-button.png in Resources */ = {isa = PBXBuildFile; fileRef = EC4CCDCD276E6EF900139ADB /* phase-invert-right-button.png */; };
 		EC4FB187256AE2A200AFC27A /* AUBufferAllocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC4FB186256AE2A200AFC27A /* AUBufferAllocator.cpp */; };
 		EC89B2EB208D28A000E15129 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B2E4208D289E00E15129 /* Accelerate.framework */; };
 		EC89B2EC208D28A000E15129 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B2E5208D289F00E15129 /* OpenGL.framework */; };
@@ -99,6 +101,8 @@
 		EC390FF420CCAA8400A62FDE /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		EC3FC334271CF8D1002D61C6 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		EC40EDB120DB4B9C00F5C0A7 /* dfxguimisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxguimisc.mm; sourceTree = "<group>"; };
+		EC4CCDCC276E6EF900139ADB /* phase-invert-left-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "phase-invert-left-button.png"; sourceTree = "<group>"; };
+		EC4CCDCD276E6EF900139ADB /* phase-invert-right-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "phase-invert-right-button.png"; sourceTree = "<group>"; };
 		EC4FB186256AE2A200AFC27A /* AUBufferAllocator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUBufferAllocator.cpp; sourceTree = "<group>"; };
 		EC63C981210EE619006279D2 /* idfxguicontrol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxguicontrol.h; sourceTree = "<group>"; };
 		EC63C982210EE619006279D2 /* dfxguicontrol.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxguicontrol.hpp; sourceTree = "<group>"; };
@@ -308,6 +312,8 @@
 				B04621EB08C4E7F200C3D95E /* input-selection-button.png */,
 				B04621EC08C4E7F200C3D95E /* monomerge-mode-button.png */,
 				B04621ED08C4E7F200C3D95E /* pan-mode-button.png */,
+				EC4CCDCC276E6EF900139ADB /* phase-invert-left-button.png */,
+				EC4CCDCD276E6EF900139ADB /* phase-invert-right-button.png */,
 				B04620CA08C4B4EA00C3D95E /* destroy-fx-link.png */,
 			);
 			name = graphics;
@@ -433,6 +439,8 @@
 				B04621EE08C4E7F200C3D95E /* input-selection-button.png in Resources */,
 				B04621EF08C4E7F200C3D95E /* monomerge-mode-button.png in Resources */,
 				B04621F008C4E7F200C3D95E /* pan-mode-button.png in Resources */,
+				EC4CCDCE276E6EF900139ADB /* phase-invert-left-button.png in Resources */,
+				EC4CCDCF276E6EF900139ADB /* phase-invert-right-button.png in Resources */,
 				B028C2A60D0F320A00ADA1DA /* destroyfx.icns in Resources */,
 				ECC43141102F5518000B05A1 /* dfx-au-utilities.strings in Resources */,
 			);
