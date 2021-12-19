@@ -91,7 +91,7 @@ public:
 		mPrevPrevOut = mPrevOut;
 		mPrevOut = mCurrentOut;
 
-#ifdef USE_OPTIMIZATION_THAT_ONLY_WORKS_FOR_LP_HP_NOTCH
+#ifdef DFX_IIRFILTER_USE_OPTIMIZATION_FOR_EXCLUSIVELY_LP_HP_NOTCH  // one fewer multiplication
 		mCurrentOut = ((inSample + mPrevPrevIn) * mCoeff.mIn) + (mPrevIn * mCoeff.mPrevIn) 
 						- (mPrevOut * mCoeff.mPrevOut) - (mPrevPrevOut * mCoeff.mPrevPrevOut);
 #else
@@ -110,7 +110,7 @@ public:
 	{
 		// store four samples of history if we're preprocessing for Hermite interpolation
 		mPrevPrevPrevOut = mPrevPrevOut;
-		(void) process(inSample);
+		std::ignore = process(inSample);
 	}
 
 // start of pre-Hermite-specific functions

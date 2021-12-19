@@ -96,7 +96,7 @@ void DfxEnvelope::beginAttack()
 	else
 	{
 		mSectionLength_inv = 1.0;
-		(void) process();  // do this to move ahead to the next envelope segment, since there is no attack
+		std::ignore = process();  // do this to move ahead to the next envelope segment, since there is no attack
 	}
 }
 
@@ -190,7 +190,7 @@ void DfxEnvelope::beginRelease()
 //-----------------------------------------------------------------------------
 std::pair<dfx::IIRFilter::Coefficients, float> DfxEnvelope::processLowpassGate()
 {
-	float const postFilterGain = [this]()
+	float const postFilterGain = [this]
 	{
 		if (mState == State::Dormant)
 		{

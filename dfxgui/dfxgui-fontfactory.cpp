@@ -138,7 +138,7 @@ std::optional<std::string> InstallFontWin32(const char *resource_name) {
                           0)) {
     // If we didn't actually install the font, then try to remove the
     // temp file, as we won't try to clean up the resource later.
-    (void)DeleteFileA(temp_filename);
+    std::ignore = DeleteFileA(temp_filename);
     return {};
   }
 
@@ -220,7 +220,7 @@ public:
     // instances of the plugin in that process will have access to the
     // fonts registered here.
     static std::once_flag once;
-    std::call_once(once, [this]() {
+    std::call_once(once, [this] {
       auto const pluginBundle =
         CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
       assert(pluginBundle);

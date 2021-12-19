@@ -328,7 +328,7 @@ struct PCGRandomEngine
 	void discard(unsigned long long z)
 	{
 		// Just run operator() z times.
-		while (z--) (void)(*this)();
+		while (z--) std::ignore = (*this)();
 	}
 
 private:
@@ -397,14 +397,15 @@ private:
 	{
 		switch (inSeedType)
 		{
-			default:
-				assert(false);
 			case RandomSeed::Static:
 				return 1729;
 			case RandomSeed::Monotonic:
 				return std::chrono::steady_clock::now().time_since_epoch().count();
 			case RandomSeed::Entropic:
 				return std::random_device()();
+			default:
+				assert(false);
+				return 0;
 		}
 	}
 
