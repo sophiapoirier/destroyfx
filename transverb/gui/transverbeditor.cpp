@@ -367,6 +367,7 @@ long TransverbEditor::OpenEditor()
 			displayProc = distDisplayProcedure;
 			userData = this;
 		}
+		assert(displayProc);
 		emplaceControl<DGSlider>(this, tag, pos, dfx::kAxis_Horizontal, horizontalSliderHandleImage, horizontalSliderBackgroundImage, sliderRangeMargin)->setAlternateHandle(horizontalSliderHandleImage_glowing);
 
 		auto const textDisplay = emplaceControl<DGTextDisplay>(this, tag, textDisplayPos, displayProc, userData, nullptr,
@@ -464,6 +465,25 @@ long TransverbEditor::OpenEditor()
 	// Super Destroy FX web link
 	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkButtonImage->getWidth(), destroyFXLinkButtonImage->getHeight() / 2);
 	emplaceControl<DGWebLink>(this, pos, destroyFXLinkButtonImage, DESTROYFX_URL);
+
+
+	SetParameterHelpText(kBsize, "the size of the buffer that both delays use");
+	constexpr char const* const speedHelpText = "how quickly or slowly the delay playback moves through the delay buffer";
+	SetParameterHelpText(kSpeed1, speedHelpText);
+	SetParameterHelpText(kSpeed2, speedHelpText);
+	std::for_each(mSpeedModeButtons.begin(), mSpeedModeButtons.end(), [](auto* control){ control->setHelpText(speedHelpText); });
+	constexpr char const* const feedbackHelpText = "how much of the delay sound gets mixed back into the delay buffer";
+	SetParameterHelpText(kFeed1, feedbackHelpText);
+	SetParameterHelpText(kFeed2, feedbackHelpText);
+	constexpr char const* const distanceHelpText = "how far behind the delay is from the input signal (only really makes a difference when the speed is at zero)";
+	SetParameterHelpText(kDist1, distanceHelpText);
+	SetParameterHelpText(kDist2, distanceHelpText);
+	SetParameterHelpText(kDrymix, "input audio mix level");
+	SetParameterHelpText(kMix1, "delay head #1 mix level");
+	SetParameterHelpText(kMix2, "delay head #2 mix level");
+	SetParameterHelpText(kQuality, "level of transposition quality of the delays' speed");
+	SetParameterHelpText(kTomsound, "megaharsh sound");
+	SetParameterHelpText(kFreeze, "pause recording new audio into the delay buffer");
 
 
 	return dfx::kStatus_NoError;

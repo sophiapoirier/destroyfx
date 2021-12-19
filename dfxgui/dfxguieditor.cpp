@@ -31,8 +31,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <functional>
 #include <locale>
 #include <mutex>
-#include <type_traits>
 #include <string_view>
+#include <type_traits>
 
 #include "dfxguibutton.h"
 #include "dfxguidialog.h"
@@ -749,6 +749,18 @@ void DfxGuiEditor::TextEntryForParameterValue(long inParameterID)
 		if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
 		{
 			ShowMessage("could not display text entry dialog");
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::SetParameterHelpText(long inParameterID, char const* inText)
+{
+	for (auto& control : mControlsList)
+	{
+		if (control->getParameterID() == inParameterID)
+		{
+			control->setHelpText(inText);
 		}
 	}
 }
@@ -2900,7 +2912,7 @@ void DfxGuiEditor::RestoreVSTStateFromProgramFile(char const* inFilePath)
 		auto const amountRead = fileStream->readRaw(buffer, size);
 		Require(amountRead == size, "failed to read enough file data");
 	};
-	auto const requireReadCompletion = [&fileStream]()
+	auto const requireReadCompletion = [&fileStream]
 	{
 		Require(fileStream->tell() == fileStream->seek(0, VSTGUI::SeekMode::End), 
 				"file contains unexpected excess data");
