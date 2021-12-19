@@ -147,10 +147,10 @@ long MonomakerEditor::OpenEditor()
 	// --- buttons ---
 
 	// phase invert button (left)
-	emplaceControl<DGToggleImageButton>(this, kPhaseInvert_LeftChannel, kPhaseInvertButtonX, kPhaseInvertButtonY, phaseInvertButtonImage_left);
+	emplaceControl<DGToggleImageButton>(this, kPhaseInvert_LeftChannel, kPhaseInvertButtonX, kPhaseInvertButtonY, phaseInvertButtonImage_left)->setHelpText("invert left channel phase");
 
 	// phase invert button (right)
-	emplaceControl<DGToggleImageButton>(this, kPhaseInvert_RightChannel, kPhaseInvertButtonX + kPhaseInvertButtonIncX, kPhaseInvertButtonY, phaseInvertButtonImage_right);
+	emplaceControl<DGToggleImageButton>(this, kPhaseInvert_RightChannel, kPhaseInvertButtonX + kPhaseInvertButtonIncX, kPhaseInvertButtonY, phaseInvertButtonImage_right)->setHelpText("invert right channel phase");
 
 	// input selection button
 	pos.set(kModeButtonX, kModeButtonY, inputSelectionButtonImage->getWidth(), inputSelectionButtonImage->getHeight() / kNumInputSelections);
