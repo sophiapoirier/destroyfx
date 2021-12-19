@@ -283,6 +283,7 @@ public:
 	bool dfxgui_SetParameterValueWithString(long inParameterID, std::string const& inText);
 	bool dfxgui_IsValidParamID(long inParameterID);
 	void TextEntryForParameterValue(long inParameterID);
+	void SetParameterHelpText(long inParameterID, char const* inText);
 	void SetParameterAlpha(long inParameterID, float inAlpha);
 #ifdef TARGET_API_AUDIOUNIT
 	AudioUnitParameter dfxgui_MakeAudioUnitParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope = kAudioUnitScope_Global, AudioUnitElement inElement = 0);
