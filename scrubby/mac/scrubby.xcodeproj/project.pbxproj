@@ -592,6 +592,7 @@
 			);
 			inputPaths = (
 				"$(INSTALL_PATH)/$(INFOPLIST_PATH)",
+				"$(DFX_ROOT_SOURCE_PATH)/dfx-library/dfxplugin-metadata.cpp",
 			);
 			outputPaths = (
 			);
@@ -668,7 +669,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = B0F21BC00B694E5D00B43CA8 /* dfxplugin-au-debug.xcconfig */;
 			buildSettings = {
-				DFX_PLUGIN_AUDIOUNIT_TYPE_ID = aumf;
 				DFX_PLUGIN_COPYRIGHT_NAME = "Sophia Poirier & Tom Murphy 7 [$(DFX_PLUGIN_CREATOR_NAME)]";
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2002-";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(DFX_PLUGIN_BUNDLE_IDENTIFIER)";
@@ -679,7 +679,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = B0F21BC10B694E5D00B43CA8 /* dfxplugin-au-release.xcconfig */;
 			buildSettings = {
-				DFX_PLUGIN_AUDIOUNIT_TYPE_ID = aumf;
 				DFX_PLUGIN_COPYRIGHT_NAME = "Sophia Poirier & Tom Murphy 7 [$(DFX_PLUGIN_CREATOR_NAME)]";
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2002-";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(DFX_PLUGIN_BUNDLE_IDENTIFIER)";
@@ -691,9 +690,7 @@
 			baseConfigurationReference = B0F21BC00B694E5D00B43CA8 /* dfxplugin-au-debug.xcconfig */;
 			buildSettings = {
 				DFX_PLUGIN_FULL_NAME = Scrubby;
-				DFX_PLUGIN_ID = scub;
 				DFX_PLUGIN_SHORT_NAME = scrubby;
-				DFX_PLUGIN_VERSION_STRING = 1.1.1;
 			};
 			name = Development;
 		};
@@ -702,9 +699,7 @@
 			baseConfigurationReference = B0F21BC10B694E5D00B43CA8 /* dfxplugin-au-release.xcconfig */;
 			buildSettings = {
 				DFX_PLUGIN_FULL_NAME = Scrubby;
-				DFX_PLUGIN_ID = scub;
 				DFX_PLUGIN_SHORT_NAME = scrubby;
-				DFX_PLUGIN_VERSION_STRING = 1.1.1;
 			};
 			name = Deployment;
 		};

@@ -16,9 +16,9 @@
 			<key>sandboxSafe</key>
 			<true/>
 			<key>subtype</key>
-			<string>$(DFX_PLUGIN_ID)</string>
+			<string>????</string>
 			<key>type</key>
-			<string>$(DFX_PLUGIN_AUDIOUNIT_TYPE_ID)</string>
+			<string>????</string>
 			<key>version</key>
 			<integer>0</integer>
 		</dict>
@@ -38,11 +38,11 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>$(DFX_PLUGIN_VERSION_STRING)</string>
+	<string>0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>$(DFX_PLUGIN_VERSION_STRING)</string>
+	<string>0</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>me</string>
 </dict>

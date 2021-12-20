@@ -536,6 +536,7 @@
 			);
 			inputPaths = (
 				"$(INSTALL_PATH)/$(INFOPLIST_PATH)",
+				"$(DFX_ROOT_SOURCE_PATH)/dfx-library/dfxplugin-metadata.cpp",
 			);
 			outputPaths = (
 			);
@@ -612,7 +613,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = EC9841871030C46000FA3B2B /* dfxplugin-au-debug.xcconfig */;
 			buildSettings = {
-				DFX_PLUGIN_AUDIOUNIT_TYPE_ID = aumf;
 				DFX_PLUGIN_COPYRIGHT_NAME = "Sophia Poirier [$(DFX_PLUGIN_CREATOR_NAME)]";
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2001-";
 				DFX_PLUGIN_FULL_NAME_WITHOUT_BREAKS = RezSynth;
@@ -624,7 +624,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = EC9841881030C46000FA3B2B /* dfxplugin-au-release.xcconfig */;
 			buildSettings = {
-				DFX_PLUGIN_AUDIOUNIT_TYPE_ID = aumf;
 				DFX_PLUGIN_COPYRIGHT_NAME = "Sophia Poirier [$(DFX_PLUGIN_CREATOR_NAME)]";
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2001-";
 				DFX_PLUGIN_FULL_NAME_WITHOUT_BREAKS = RezSynth;
@@ -636,9 +635,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				DFX_PLUGIN_FULL_NAME = "Rez Synth";
-				DFX_PLUGIN_ID = RezS;
 				DFX_PLUGIN_SHORT_NAME = rezsynth;
-				DFX_PLUGIN_VERSION_STRING = 2.0.1;
 			};
 			name = Development;
 		};
@@ -646,9 +643,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				DFX_PLUGIN_FULL_NAME = "Rez Synth";
-				DFX_PLUGIN_ID = RezS;
 				DFX_PLUGIN_SHORT_NAME = rezsynth;
-				DFX_PLUGIN_VERSION_STRING = 2.0.1;
 			};
 			name = Deployment;
 		};

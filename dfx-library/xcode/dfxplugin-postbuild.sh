@@ -1,7 +1,10 @@
 #!/bin/sh
 
+DFX_METADATA_TOOL="${BUILT_PRODUCTS_DIR}"/dfxplugin-metadata
+cc "${DFX_ROOT_SOURCE_PATH}"/dfx-library/dfxplugin-metadata.cpp -o "${DFX_METADATA_TOOL}" -std=${CLANG_CXX_LANGUAGE_STANDARD} -l"${CLANG_CXX_LIBRARY##lib}" -include "${GCC_PREFIX_HEADER}" -I "${DFX_ROOT_SOURCE_PATH}"/dfx-library
+
 #VERSION=`/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "${BUILT_PRODUCTS_DIR}"/"${INFOPLIST_PATH}"`
-VERSION="${DFX_PLUGIN_VERSION_STRING}"
+VERSION=`"${DFX_METADATA_TOOL}" version`
 BUILD_NUM=`date "+%Y.%m.%d"`
 COPYRIGHT="©${DFX_PLUGIN_COPYRIGHT_PREFIX}"`date "+%Y"`" ${DFX_PLUGIN_COPYRIGHT_NAME}"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_NUM}" "${BUILT_PRODUCTS_DIR}"/"${INFOPLIST_PATH}"

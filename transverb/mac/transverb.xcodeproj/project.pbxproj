@@ -540,6 +540,7 @@
 			);
 			inputPaths = (
 				"$(INSTALL_PATH)/$(INFOPLIST_PATH)",
+				"$(DFX_ROOT_SOURCE_PATH)/dfx-library/dfxplugin-metadata.cpp",
 			);
 			outputPaths = (
 			);
@@ -616,7 +617,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = EC9841831030C43500FA3B2B /* dfxplugin-au-debug.xcconfig */;
 			buildSettings = {
-				DFX_PLUGIN_AUDIOUNIT_TYPE_ID = aumf;
 				DFX_PLUGIN_COPYRIGHT_NAME = "Tom Murphy 7 & Sophia Poirier [$(DFX_PLUGIN_CREATOR_NAME)]";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(DFX_PLUGIN_BUNDLE_IDENTIFIER)";
 			};
@@ -626,7 +626,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = EC9841841030C43500FA3B2B /* dfxplugin-au-release.xcconfig */;
 			buildSettings = {
-				DFX_PLUGIN_AUDIOUNIT_TYPE_ID = aumf;
 				DFX_PLUGIN_COPYRIGHT_NAME = "Tom Murphy 7 & Sophia Poirier [$(DFX_PLUGIN_CREATOR_NAME)]";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(DFX_PLUGIN_BUNDLE_IDENTIFIER)";
 			};
@@ -637,9 +636,7 @@
 			buildSettings = {
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2001-";
 				DFX_PLUGIN_FULL_NAME = Transverb;
-				DFX_PLUGIN_ID = DFtv;
 				DFX_PLUGIN_SHORT_NAME = transverb;
-				DFX_PLUGIN_VERSION_STRING = 1.5.2;
 			};
 			name = Development;
 		};
@@ -648,9 +645,7 @@
 			buildSettings = {
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2001-";
 				DFX_PLUGIN_FULL_NAME = Transverb;
-				DFX_PLUGIN_ID = DFtv;
 				DFX_PLUGIN_SHORT_NAME = transverb;
-				DFX_PLUGIN_VERSION_STRING = 1.5.2;
 			};
 			name = Deployment;
 		};

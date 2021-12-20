@@ -459,6 +459,7 @@
 			);
 			inputPaths = (
 				"$(INSTALL_PATH)/$(INFOPLIST_PATH)",
+				"$(DFX_ROOT_SOURCE_PATH)/dfx-library/dfxplugin-metadata.cpp",
 			);
 			outputPaths = (
 			);
@@ -528,7 +529,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = EC9841971030C50000FA3B2B /* dfxplugin-au-debug.xcconfig */;
 			buildSettings = {
-				DFX_PLUGIN_AUDIOUNIT_TYPE_ID = aufx;
 				DFX_PLUGIN_COPYRIGHT_NAME = "Sophia Poirier [$(DFX_PLUGIN_CREATOR_NAME)]";
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2001-";
 				DFX_PLUGIN_FULL_NAME_WITHOUT_BREAKS = EQSync;
@@ -540,7 +540,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = EC9841981030C50000FA3B2B /* dfxplugin-au-release.xcconfig */;
 			buildSettings = {
-				DFX_PLUGIN_AUDIOUNIT_TYPE_ID = aufx;
 				DFX_PLUGIN_COPYRIGHT_NAME = "Sophia Poirier [$(DFX_PLUGIN_CREATOR_NAME)]";
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2001-";
 				DFX_PLUGIN_FULL_NAME_WITHOUT_BREAKS = EQSync;
@@ -552,9 +551,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				DFX_PLUGIN_FULL_NAME = "EQ Sync";
-				DFX_PLUGIN_ID = EQsy;
 				DFX_PLUGIN_SHORT_NAME = eqsync;
-				DFX_PLUGIN_VERSION_STRING = 1.1.1;
 			};
 			name = Development;
 		};
@@ -562,9 +559,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				DFX_PLUGIN_FULL_NAME = "EQ Sync";
-				DFX_PLUGIN_ID = EQsy;
 				DFX_PLUGIN_SHORT_NAME = eqsync;
-				DFX_PLUGIN_VERSION_STRING = 1.1.1;
 			};
 			name = Deployment;
 		};
