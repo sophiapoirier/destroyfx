@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -329,7 +329,6 @@ public:
 #endif
 	void addparametergroup(std::string const& inName, std::vector<long> const& inParameterIndices);  // TODO: C++23 use std::span?
 
-	void setparameter(long inParameterIndex, DfxParam::Value inValue);
 	void setparameter_f(long inParameterIndex, double inValue);
 	void setparameter_i(long inParameterIndex, int64_t inValue);
 	void setparameter_b(long inParameterIndex, bool inValue);
@@ -347,7 +346,6 @@ public:
 	// broadcast changes to listeners (like GUI)
 	void postupdate_parameter(long inParameterIndex);
 
-	DfxParam::Value getparameter(long inParameterIndex) const;
 	double getparameter_f(long inParameterIndex) const
 	{
 		return parameterisvalid(inParameterIndex) ? mParameters[inParameterIndex].get_f() : 0.0;
@@ -491,13 +489,11 @@ public:
 	{
 		return mCurrentPresetNum;
 	}
-	void setpresetparameter(long inPresetIndex, long inParameterIndex, DfxParam::Value inValue);
 	void setpresetparameter_f(long inPresetIndex, long inParameterIndex, double inValue);
 	void setpresetparameter_i(long inPresetIndex, long inParameterIndex, int64_t inValue);
 	void setpresetparameter_b(long inPresetIndex, long inParameterIndex, bool inValue);
 	void setpresetparameter_gen(long inPresetIndex, long inParameterIndex, double inValue);
 	void postupdate_preset();
-	DfxParam::Value getpresetparameter(long inPresetIndex, long inParameterIndex) const;
 	double getpresetparameter_f(long inPresetIndex, long inParameterIndex) const;
 
 	bool settingsMinimalValidate(void const* inData, size_t inBufferSize) const noexcept;
@@ -762,8 +758,13 @@ protected:
 
 
 private:
+	void setparameter(long inParameterIndex, DfxParam::Value inValue);
+	DfxParam::Value getparameter(long inParameterIndex) const;
 	// synchronize the underlying API/preset/etc. parameter value representation to the current value in DfxPlugin
 	void update_parameter(long inParameterIndex);
+
+	void setpresetparameter(long inPresetIndex, long inParameterIndex, DfxParam::Value inValue);
+	DfxParam::Value getpresetparameter(long inPresetIndex, long inParameterIndex) const;
 
 	std::optional<size_t> getparametergroup(long inParameterIndex) const;
 
@@ -1147,7 +1148,6 @@ public:
 	{
 		return static_cast<float>(mSampleRate);
 	}
-//	DfxParam::Value getparameter(long inParameterIndex) const { return mDfxPlugin->getparameter(inParameterIndex); }
 	double getparameter_f(long inParameterIndex) const
 	{
 		return mDfxPlugin->getparameter_f(inParameterIndex);

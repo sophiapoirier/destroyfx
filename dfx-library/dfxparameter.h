@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -84,12 +84,10 @@ Every parameter stores multiple values.  There is the current value,
 the previous value, the default value, the minimum value, and the 
 maximum value.  The minimum and maximum are stored in the member 
 variables min and max.  The default is stored in mDefaultValue.  The 
-current value is stored in value and the previous value is stored in 
-mOldValue.  The current value is what the parameter value is right now 
-and the previous value is what the value was during the previous 
-audio processing buffer.  The min and max specify the recommended 
-range of values for the parameter.  The default is what the parameter 
-value should revert to when default settings are requested.
+current value is stored in mValue.  The min and max specify the 
+recommended range of values for the parameter.  The default is what 
+the parameter value should revert to when default settings are 
+requested.
 
 The default value is not necessarily the same as the initial value 
 for the parameter.  A plugin may want to start off with a certain 
@@ -207,6 +205,37 @@ public:
 		double f;
 		int64_t i;
 		int64_t b;  // would be bool, but bool can vary in byte size depending on the compiler
+
+		Value()
+		{
+			static_assert(sizeof(Value) == sizeof(Value::i));
+			this->i = 0;
+		}
+		Value(double inValue) noexcept
+		{
+			this->f = inValue;
+		}
+		Value(int64_t inValue) noexcept
+		{
+			this->i = inValue;
+		}
+		Value(bool inValue) noexcept
+		{
+			this->b = inValue ? 1 : 0;
+		}
+
+		bool operator==(Value const& other) const noexcept
+		{
+			// these must be true in order for the simple bitwise comparison logic to suffice
+			static_assert(sizeof(Value) == sizeof(Value::i));
+			static_assert(sizeof(Value::i) == sizeof(Value::f));
+			static_assert(sizeof(Value::i) == sizeof(Value::b));
+			return (this->i == other.i);
+		}
+		bool operator!=(Value const& other) const noexcept
+		{
+			return !operator==(other);
+		}
 	};
 
 	// these are the different variable types that a parameter can 
@@ -316,17 +345,17 @@ public:
 #endif
 
 	// set the parameter's current value
-	void set(Value inNewValue);
-	void set_f(double inNewValue);
-	void set_i(int64_t inNewValue);
-	void set_b(bool inNewValue);
+	void set(Value inValue);
+	void set_f(double inValue);
+	void set_i(int64_t inValue);
+	void set_b(bool inValue);
 	// set the current value with a generic 0...1 float value
 	void set_gen(double inGenValue);
 	// set the current value without flagging change or touch or range check
 	// (intended for when a plugin generates the change itself)
-	void setquietly_f(double inNewValue);
-	void setquietly_i(int64_t inNewValue);
-	void setquietly_b(bool inNewValue);
+	void setquietly_f(double inValue);
+	void setquietly_i(int64_t inValue);
+	void setquietly_b(bool inValue);
 
 	// get the parameter's current value
 	Value get() const noexcept
@@ -402,13 +431,13 @@ public:
 		return derive_b(mDefaultValue);
 	}
 
-	// figure out the value of a Value as a certain variable type
+	// extract the value of a Value as a scalar type
 	// (perform type conversion if the desired variable type is not "native")
 	double derive_f(Value inValue) const noexcept;
 	int64_t derive_i(Value inValue) const;
 	bool derive_b(Value inValue) const noexcept;
 
-	// produce a Value with a value of a specific type
+	// produce a Value with a value of a scalar type
 	// (perform type conversion if the incoming variable type is not "native")
 	Value pack_f(double inValue) const;
 	Value pack_i(int64_t inValue) const noexcept;
@@ -518,16 +547,16 @@ public:
 private:
 	void initNames(std::vector<std::string_view> const& inNames);
 
-	// set a Value with a value of a specific type
+	// set a Value with a value of a scalar type
 	// (perform type conversion if the incoming variable type is not "native")
 	// returns whether the provided Value changed upon accepting the scalar value
-	bool accept_f(double inValue, Value& ioValue) const;
-	bool accept_i(int64_t inValue, Value& ioValue) const noexcept;
-	bool accept_b(bool inValue, Value& ioValue) const noexcept;
+	bool accept_f(double inValue, std::atomic<Value>& ioValue) const;
+	bool accept_i(int64_t inValue, std::atomic<Value>& ioValue) const noexcept;
+	bool accept_b(bool inValue, std::atomic<Value>& ioValue) const noexcept;
 
-	// clip the current parameter value to the min/max range
-	// returns true if the value was altered, false otherwise
-	bool limit();
+	// clip the current parameter value within the min/max range
+	[[nodiscard]] double limit_f(double inValue) const;
+	[[nodiscard]] int64_t limit_i(int64_t inValue) const noexcept;
 
 	// safety check for an index into the value strings array
 	bool ValueStringIndexIsValid(int64_t inIndex) const;
@@ -536,7 +565,9 @@ private:
 	bool mEnforceValueLimits = false;  // default to allowing values outside of the min/max range
 	std::string mName;
 	std::vector<std::string> mShortNames;
-	Value mValue {}, mDefaultValue {}, mMinValue {}, mMaxValue {}, mOldValue {};
+	std::atomic<Value> mValue {};
+	static_assert(decltype(mValue)::is_always_lock_free);
+	Value mDefaultValue {}, mMinValue {}, mMaxValue {};
 	ValueType mValueType = ValueType::Float;  // the variable type of the parameter values
 	Unit mUnit = Unit::Generic;  // the unit type of the parameter
 	Curve mCurve = Curve::Linear;  // the shape of the distribution of parameter values
@@ -571,7 +602,7 @@ class DfxPreset
 public:
 	explicit DfxPreset(long inNumParameters);
 
-	void setvalue(long inParameterIndex, DfxParam::Value inNewValue);
+	void setvalue(long inParameterIndex, DfxParam::Value inValue);
 	DfxParam::Value getvalue(long inParameterIndex) const;
 	void setname(std::string_view inText);
 	std::string getname() const
