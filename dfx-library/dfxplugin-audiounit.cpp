@@ -27,9 +27,9 @@ This is where we connect the Audio Unit API to our DfxPlugin system.
 
 #include "dfxplugin.h"
 
-#include <AudioUnit/AudioUnitCarbonView.h>
 #include <algorithm>
 #include <cassert>
+#include <CoreServices/CoreServices.h>
 #include <cstring>
 
 #include "dfx-au-utilities.h"
