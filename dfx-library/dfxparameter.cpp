@@ -36,6 +36,14 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 
 
 //-----------------------------------------------------------------------------
+// interpret fractional numbers as integral
+static int64_t Float2Int(double const& inValue)
+{
+	constexpr auto padding = DfxParam::kIntegerPadding;
+	return static_cast<int64_t>(inValue + ((inValue < 0.) ? -padding : padding));
+}
+
+//-----------------------------------------------------------------------------
 // interpret fractional numbers as booleans
 static bool Float2Boolean(double const& inValue)
 {
@@ -93,6 +101,14 @@ void DfxParam::init(std::vector<std::string_view> const& inNames, ValueType inTy
 	switch (inType)
 	{
 		case ValueType::Float:
+			assert(!std::isnan(inInitialValue.f));
+			assert(!std::isinf(inInitialValue.f));
+			assert(!std::isnan(inDefaultValue.f));
+			assert(!std::isinf(inDefaultValue.f));
+			assert(!std::isnan(inMinValue.f));
+			assert(!std::isinf(inMinValue.f));
+			assert(!std::isnan(inMaxValue.f));
+			assert(!std::isinf(inMaxValue.f));
 			if (mMinValue.f > mMaxValue.f)
 			{
 				std::swap(mMinValue.f, mMaxValue.f);
@@ -284,6 +300,8 @@ double DfxParam::derive_f(Value inValue) const noexcept
 	switch (mValueType)
 	{
 		case ValueType::Float:
+			assert(!std::isnan(inValue.f));
+			assert(!std::isinf(inValue.f));
 			return inValue.f;
 		case ValueType::Int:
 			return static_cast<double>(inValue.i);
@@ -302,7 +320,9 @@ int64_t DfxParam::derive_i(Value inValue) const
 	switch (mValueType)
 	{
 		case ValueType::Float:
-			return static_cast<int64_t>(inValue.f + ((inValue.f < 0.) ? -kIntegerPadding : kIntegerPadding));
+			assert(!std::isnan(inValue.f));
+			assert(!std::isinf(inValue.f));
+			return Float2Int(inValue.f);
 		case ValueType::Int:
 			return inValue.i;
 		case ValueType::Boolean:
@@ -320,6 +340,8 @@ bool DfxParam::derive_b(Value inValue) const noexcept
 	switch (mValueType)
 	{
 		case ValueType::Float:
+			assert(!std::isnan(inValue.f));
+			assert(!std::isinf(inValue.f));
 			return Float2Boolean(inValue.f);
 		case ValueType::Int:
 			return Int2Boolean(inValue.i);
@@ -419,7 +441,7 @@ DfxParam::Value DfxParam::pack_f(double inValue) const
 		case ValueType::Float:
 			return inValue;
 		case ValueType::Int:
-			return static_cast<int64_t>(inValue + ((inValue < 0.) ? -kIntegerPadding : kIntegerPadding));
+			return Float2Int(inValue);
 		case ValueType::Boolean:
 			return Float2Boolean(inValue);
 	}
@@ -480,12 +502,8 @@ double DfxParam::expand(double inGenValue, double inMinValue, double inMaxValue,
 		case Curve::Linear:
 			return (inGenValue * valueRange) + inMinValue;
 		case Curve::Stepped:
-		{
-			double tempval = (inGenValue * valueRange) + inMinValue;
-			tempval += (tempval < 0.0) ? -DfxParam::kIntegerPadding : DfxParam::kIntegerPadding;
 			// XXX is this a good way to do this?
-			return static_cast<double>(static_cast<int64_t>(tempval));
-		}
+			return static_cast<double>(Float2Int((inGenValue * valueRange) + inMinValue));
 		case Curve::SquareRoot:
 			return (std::sqrt(std::max(inGenValue, 0.0)) * valueRange) + inMinValue;
 		case Curve::Squared:
@@ -510,6 +528,8 @@ void DfxParam::set(Value inValue)
 	switch (mValueType)
 	{
 		case ValueType::Float:
+			assert(!std::isnan(inValue.f));
+			assert(!std::isinf(inValue.f));
 			inValue.f = limit_f(inValue.f);
 			break;
 		case ValueType::Int:
