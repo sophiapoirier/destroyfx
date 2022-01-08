@@ -31,6 +31,7 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 #include <cassert>
 #include <cmath>
 #include <limits>
+#include <type_traits>
 #include <unordered_set>
 
 
@@ -55,6 +56,30 @@ static bool Float2Boolean(double const& inValue)
 static bool Int2Boolean(int64_t const& inValue)
 {
 	return (inValue != 0);
+}
+
+//-----------------------------------------------------------------------------
+template <typename T>
+auto sqrt_safe(T inValue)
+{
+	static_assert(std::is_floating_point_v<T>);
+	return std::sqrt(std::max(inValue, T(0)));
+}
+
+//-----------------------------------------------------------------------------
+template <typename T>
+auto pow_safe(T inBase, T inExponent)
+{
+	static_assert(std::is_floating_point_v<T>);
+	return std::pow(std::max(inBase, T(0)), inExponent);
+}
+
+//-----------------------------------------------------------------------------
+template <typename T>
+auto log_safe(T inValue)
+{
+	static_assert(std::is_floating_point_v<T>);
+	return std::log(std::max(inValue, std::numeric_limits<T>::min()));
 }
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -377,17 +402,17 @@ double DfxParam::contract(double inLiteralValue, double inMinValue, double inMax
 			// XXX is this a good way to do this?
 			return (inLiteralValue - inMinValue) / valueRange;
 		case Curve::SquareRoot:
-			return (std::sqrt(std::max(inLiteralValue, 0.0)) * valueRange) + inMinValue;
+			return (sqrt_safe(inLiteralValue) * valueRange) + inMinValue;
 		case Curve::Squared:
-			return std::sqrt(std::max((inLiteralValue - inMinValue) / valueRange, 0.0));
+			return sqrt_safe((inLiteralValue - inMinValue) / valueRange);
 		case Curve::Cubed:
-			return std::pow(std::max((inLiteralValue - inMinValue) / valueRange, 0.0), oneDivThree);
+			return pow_safe((inLiteralValue - inMinValue) / valueRange, oneDivThree);
 		case Curve::Pow:
-			return std::pow(std::max((inLiteralValue - inMinValue) / valueRange, 0.0), 1.0 / inCurveSpec);
+			return pow_safe((inLiteralValue - inMinValue) / valueRange, 1.0 / inCurveSpec);
 		case Curve::Exp:
-			return std::log(1.0 - inMinValue + inLiteralValue) / std::log(1.0 - inMinValue + inMaxValue);
+			return log_safe(1.0 - inMinValue + inLiteralValue) / log_safe(1.0 - inMinValue + inMaxValue);
 		case Curve::Log:
-			return (std::log(inLiteralValue / inMinValue) / logTwo) / (std::log(inMaxValue / inMinValue) / logTwo);
+			return (log_safe(inLiteralValue / inMinValue) / logTwo) / (log_safe(inMaxValue / inMinValue) / logTwo);
 	}
 	assert(false);
 	return inLiteralValue;
@@ -505,17 +530,17 @@ double DfxParam::expand(double inGenValue, double inMinValue, double inMaxValue,
 			// XXX is this a good way to do this?
 			return static_cast<double>(Float2Int((inGenValue * valueRange) + inMinValue));
 		case Curve::SquareRoot:
-			return (std::sqrt(std::max(inGenValue, 0.0)) * valueRange) + inMinValue;
+			return (sqrt_safe(inGenValue) * valueRange) + inMinValue;
 		case Curve::Squared:
 			return (inGenValue*inGenValue * valueRange) + inMinValue;
 		case Curve::Cubed:
 			return (inGenValue*inGenValue*inGenValue * valueRange) + inMinValue;
 		case Curve::Pow:
-			return (std::pow(std::max(inGenValue, 0.0), inCurveSpec) * valueRange) + inMinValue;
+			return (pow_safe(inGenValue, inCurveSpec) * valueRange) + inMinValue;
 		case Curve::Exp:
-			return std::exp(std::log(valueRange + 1.0) * inGenValue) + inMinValue - 1.0;
+			return std::exp(log_safe(valueRange + 1.0) * inGenValue) + inMinValue - 1.0;
 		case Curve::Log:
-			return inMinValue * std::pow(2.0, inGenValue * std::log(inMaxValue / inMinValue) * logTwoInv);
+			return inMinValue * std::pow(2.0, inGenValue * log_safe(inMaxValue / inMinValue) * logTwoInv);
 	}
 	assert(false);
 	return inGenValue;
