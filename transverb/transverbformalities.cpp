@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstring>
 
 #include "dfxmisc.h"
 #include "firfilter.h"
@@ -53,6 +54,10 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_list(kQuality, {"quality", "Qualty", "Qlty"}, kQualityMode_UltraHiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes);
   initparameter_b(kTomsound, {"TOMSOUND", "TomSnd", "Tom7"}, false, false);
   initparameter_b(kFreeze, dfx::MakeParameterNames(dfx::kParameterNames_Freeze), false, false);
+
+  setparameterenforcevaluelimits(kBsize, true);
+  setparameterenforcevaluelimits(kDist1, true);
+  setparameterenforcevaluelimits(kDist2, true);
 
   setparametervaluestring(kQuality, kQualityMode_DirtFi, "dirt-fi");
   setparametervaluestring(kQuality, kQualityMode_HiFi, "hi-fi");
@@ -179,15 +184,22 @@ void TransverbDSP::processparameters() {
       //std::copy_n(std::next(buf1.cbegin(), entryWriter - copyCount), copyCount, std::next(buf1.begin(), writer - copyCount));
       //std::copy_n(std::next(buf2.cbegin(), entryWriter - copyCount), copyCount, std::next(buf2.begin(), writer - copyCount));
     }
-    read1 = std::fmod(std::fabs(read1), (double)bsize);
-    read2 = std::fmod(std::fabs(read2), (double)bsize);
+    auto const bsize_f = static_cast<double>(bsize);
+    read1 = std::fmod(std::fabs(read1), bsize_f);
+    read2 = std::fmod(std::fabs(read2), bsize_f);
   }
 
   if (getparameterchanged(kDist1))
-    read1 = std::fmod(std::fabs((double)writer + (double)dist1 * (double)bsize), (double)bsize);
+  {
+    auto const bsize_f = static_cast<double>(bsize);
+    read1 = std::fmod(std::fabs(static_cast<double>(writer) + static_cast<double>(dist1) * bsize_f), bsize_f);
+  }
 
   if (getparameterchanged(kDist2))
-    read2 = std::fmod(std::fabs((double)writer + (double)dist2 * (double)bsize), (double)bsize);
+  {
+    auto const bsize_f = static_cast<double>(bsize);
+    read2 = std::fmod(std::fabs(static_cast<double>(writer) + static_cast<double>(dist2) * bsize_f), bsize_f);
+  }
 
   if (getparameterchanged(kQuality) || getparameterchanged(kTomsound))
     speed1hasChanged = speed2hasChanged = true;

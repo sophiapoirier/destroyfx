@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -59,6 +59,8 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kDryWetMix, dfx::MakeParameterNames(dfx::kParameterNames_DryWetMix), 100.0, 50.0, 0.0, 100.0, DfxParam::Unit::DryWetMix);
 	initparameter_list(kDryWetMixMode, {"dry/wet mix mode", "DW Mode", "DWMode", "DWMd"}, kDryWetMixMode_EqualPower, kDryWetMixMode_Linear, kNumDryWetMixModes);
 	initparameter_b(kWiseAmp, {"careful", "Carefl", "Crfl"}, true, true);
+
+	setparameterenforcevaluelimits(kNumBands, true);
 
 	setparametervaluestring(kBandwidthMode, kBandwidthMode_Hz, "Hz");
 	setparametervaluestring(kBandwidthMode, kBandwidthMode_Q, "Q");

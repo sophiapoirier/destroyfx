@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -77,6 +77,8 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kPredelay, {"predelay", "PreDela", "PreDel", "PDel"}, 0.0, 50.0, 0.0, 100.0, DfxParam::Unit::Percent);  // percent of range
 	initparameter_f(kDryLevel, {"dry level", "DryLevl", "DryLvl", "Dry"}, 0., 0.5, 0., 1., DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
 	initparameter_f(kWetLevel, {"wet level", "WetLevl", "WetLvl", "Wet"}, 1., 0.5, 0., 1., DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
+
+	setparameterenforcevaluelimits(kPredelay, true);
 
 //for (size_t i = 3; i < 12; i++) printf("%zu %s\n", i, getparametername(kSeekRange, i).c_str());
 	// set the value strings for the sync rate parameters

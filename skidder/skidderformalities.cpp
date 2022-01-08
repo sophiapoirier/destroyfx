@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2021  Sophia Poirier
+Copyright (C) 2000-2022  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -55,6 +55,8 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_b(kVelocity, {"velocity", "Velocty", "Veloct", "Velo"}, false, false);
 	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 39.0, 480.0, DfxParam::Unit::BPM);
 	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true, true);
+
+	setparameterenforcevaluelimits(kCrossoverFrequency, true);
 
 	// set the value strings for the sync rate parameters
 	for (long i = 0; i < mTempoRateTable.getNumRates(); i++)

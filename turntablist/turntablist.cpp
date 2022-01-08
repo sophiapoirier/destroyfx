@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2021 Sophia Poirier
+Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2022 Sophia Poirier
 All rights reserved.
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. 
@@ -106,6 +106,7 @@ Turntablist::Turntablist(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kParam_Volume, {"volume"}, 1.0, 0.5, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
 #endif
 
+	setparameterenforcevaluelimits(kParam_RootKey, true);
 
 #ifdef USE_LIBSNDFILE
 	addchannelconfig(0, 2);	// stereo-out

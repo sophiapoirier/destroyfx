@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier and Keith Fullerton Whitman
+Copyright (C) 2001-2022  Sophia Poirier and Keith Fullerton Whitman
 
 This file is part of Thrush.
 
@@ -63,6 +63,9 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kLFO2depth2, {"LFO2 depth R", "seven", "six", "four"}, 0., 0., kLFO2DepthMin, kLFO2DepthMax, DfxParam::Unit::Scalar);
 	initparameter_list(kLFO2shape2, {"LFO2 shape R", "seven", "six", "four"}, dfx::LFO::kShape_Saw, dfx::LFO::kShape_Saw, dfx::LFO::kNumShapes);
 	initparameter_f(kDryWetMix, dfx::MakeParameterNames(dfx::kParameterNames_DryWetMix), 100., 50., 0.0, 100.0, DfxParam::Unit::DryWetMix);
+
+	setparameterenforcevaluelimits(kDelay, true);
+	setparameterenforcevaluelimits(kDelay2, true);
 
 	// set the value strings for the LFO shape parameters
 	for (dfx::LFO::Shape i = 0; i < dfx::LFO::kNumShapes; i++)
