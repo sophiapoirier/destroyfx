@@ -758,6 +758,8 @@ protected:
 
 
 private:
+	DfxParam& getparameterobject(long inParameterIndex);
+
 	void setparameter(long inParameterIndex, DfxParam::Value inValue);
 	DfxParam::Value getparameter(long inParameterIndex) const;
 	// synchronize the underlying API/preset/etc. parameter value representation to the current value in DfxPlugin
@@ -1324,9 +1326,8 @@ public:
 								 inCurve, inCurveSpec, begin, end)
 	{}
 
-private:
-	CPluginControl_DfxCurvedFrequency(CPluginControl_DfxCurvedFrequency const&);
-	CPluginControl_DfxCurvedFrequency& operator=(CPluginControl_DfxCurvedFrequency const&);
+	CPluginControl_DfxCurvedFrequency(CPluginControl_DfxCurvedFrequency const&) = delete;
+	CPluginControl_DfxCurvedFrequency& operator=(CPluginControl_DfxCurvedFrequency const&) = delete;
 };
 
 #endif	// TARGET_API_RTAS

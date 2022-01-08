@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -32,6 +32,7 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 #include <cmath>
 #include <functional>
 #include <mutex>
+#include <stdexcept>
 #include <thread>
 #include <unordered_set>
 
@@ -87,7 +88,7 @@ static void DFX_RegisterIdleClient(DfxPlugin* const inIdleClient)
 		if (!sIdleThread)
 		{
 			sIdleThreadShouldRun = true;
-			sIdleThread = std::make_unique<std::thread>([]()
+			sIdleThread = std::make_unique<std::thread>([]
 			{
 #if TARGET_OS_MAC
 				pthread_setname_np(PLUGIN_NAME_STRING " idle timer");
@@ -109,7 +110,7 @@ static void DFX_RegisterIdleClient(DfxPlugin* const inIdleClient)
 //-----------------------------------------------------------------------------
 static void DFX_UnregisterIdleClient(DfxPlugin* const inIdleClient)
 {
-	auto const allClientsCompleted = [&inIdleClient]()
+	auto const allClientsCompleted = [&inIdleClient]
 	{
 		std::lock_guard const guard(sIdleClientsLock);
 		[[maybe_unused]] auto const eraseCount = sIdleClients.erase(inIdleClient);
@@ -308,10 +309,7 @@ long DfxPlugin::do_initialize()
 
 #if TARGET_PLUGIN_USES_DSPCORE
 	// flag parameter changes to be picked up for DSP cores, which are all instantiated anew during plugin initialize
-	for (long i = 0; i < getnumparameters(); i++)
-	{
-		mParameters[i].setchanged(true);
-	}
+	std::for_each(mParameters.begin(), mParameters.end(), [](auto& parameter){ parameter.setchanged(true); });
 
 	if (asymmetricalchannels())
 	{
@@ -429,19 +427,12 @@ void DfxPlugin::initparameter_f(long inParameterIndex, std::vector<std::string_v
 								DfxParam::Unit initUnit, DfxParam::Curve initCurve, 
 								std::string_view initCustomUnitString)
 {
-	if (parameterisvalid(inParameterIndex))
+	auto& parameter = getparameterobject(inParameterIndex);
+	parameter.init_f(initNames, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
+	initpresetsparameter(inParameterIndex);  // default empty presets with this value
+	if (!initCustomUnitString.empty())
 	{
-		mParameters[inParameterIndex].init_f(initNames, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
-// XXX hmmm... maybe not here?
-//		if (hasparameterattribute(inParameterIndex, DfxParam::kAttribute_Unused))  // XXX should we do it like this?
-		{
-//			update_parameter(inParameterIndex);  // XXX make the host aware of the parameter change
-		}
-		initpresetsparameter(inParameterIndex);  // default empty presets with this value
-		if (!initCustomUnitString.empty())
-		{
-			setparametercustomunitstring(inParameterIndex, initCustomUnitString);
-		}
+		parameter.setcustomunitstring(initCustomUnitString);
 	}
 }
 
@@ -452,15 +443,12 @@ void DfxPlugin::initparameter_i(long inParameterIndex, std::vector<std::string_v
 								DfxParam::Unit initUnit, DfxParam::Curve initCurve, 
 								std::string_view initCustomUnitString)
 {
-	if (parameterisvalid(inParameterIndex))
+	auto& parameter = getparameterobject(inParameterIndex);
+	parameter.init_i(initNames, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
+	initpresetsparameter(inParameterIndex);  // default empty presets with this value
+	if (!initCustomUnitString.empty())
 	{
-		mParameters[inParameterIndex].init_i(initNames, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
-//		update_parameter(inParameterIndex);  // XXX make the host aware of the parameter change
-		initpresetsparameter(inParameterIndex);  // default empty presets with this value
-		if (!initCustomUnitString.empty())
-		{
-			setparametercustomunitstring(inParameterIndex, initCustomUnitString);
-		}
+		parameter.setcustomunitstring(initCustomUnitString);
 	}
 }
 
@@ -469,12 +457,8 @@ void DfxPlugin::initparameter_b(long inParameterIndex, std::vector<std::string_v
 								bool initValue, bool initDefaultValue, 
 								DfxParam::Unit initUnit)
 {
-	if (parameterisvalid(inParameterIndex))
-	{
-		mParameters[inParameterIndex].init_b(initNames, initValue, initDefaultValue, initUnit);
-//		update_parameter(inParameterIndex);  // XXX make the host aware of the parameter change
-		initpresetsparameter(inParameterIndex);  // default empty presets with this value
-	}
+	getparameterobject(inParameterIndex).init_b(initNames, initValue, initDefaultValue, initUnit);
+	initpresetsparameter(inParameterIndex);  // default empty presets with this value
 }
 
 //-----------------------------------------------------------------------------
@@ -485,16 +469,13 @@ void DfxPlugin::initparameter_list(long inParameterIndex, std::vector<std::strin
 								   int64_t initNumItems, DfxParam::Unit initUnit, 
 								   std::string_view initCustomUnitString)
 {
-	if (parameterisvalid(inParameterIndex))
+	auto& parameter = getparameterobject(inParameterIndex);
+	parameter.init_i(initNames, initValue, initDefaultValue, 0, initNumItems - 1, initUnit, DfxParam::Curve::Stepped);
+	parameter.setusevaluestrings(true);  // indicate that we will use custom value display strings
+	initpresetsparameter(inParameterIndex);  // default empty presets with this value
+	if (!initCustomUnitString.empty())
 	{
-		mParameters[inParameterIndex].init_i(initNames, initValue, initDefaultValue, 0, initNumItems - 1, initUnit, DfxParam::Curve::Stepped);
-		setparameterusevaluestrings(inParameterIndex, true);  // indicate that we will use custom value display strings
-//		update_parameter(inParameterIndex);  // XXX make the host aware of the parameter change
-		initpresetsparameter(inParameterIndex);  // default empty presets with this value
-		if (!initCustomUnitString.empty())
-		{
-			setparametercustomunitstring(inParameterIndex, initCustomUnitString);
-		}
+		parameter.setcustomunitstring(initCustomUnitString);
 	}
 }
 
@@ -900,6 +881,17 @@ double DfxPlugin::contractparametervalue(long inParameterIndex, double realValue
 		return mParameters[inParameterIndex].contract(realValue);
 	}
 	return 0.0;
+}
+
+//-----------------------------------------------------------------------------
+DfxParam& DfxPlugin::getparameterobject(long inParameterIndex)
+{
+	if (!parameterisvalid(inParameterIndex))
+	{
+		assert(false);
+		throw std::range_error("parameter index out of range: " + std::to_string(inParameterIndex));
+	}
+	return mParameters[inParameterIndex];
 }
 
 
