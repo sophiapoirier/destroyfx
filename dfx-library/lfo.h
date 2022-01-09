@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -59,50 +59,50 @@ public:
 
 	static std::string getShapeName(Shape inShape);
 
-	float getDepth() const noexcept;
-	void setDepth(float inDepth) noexcept;
+	double getDepth() const noexcept;
+	void setDepth(double inDepth) noexcept;
 	Shape getShape() const noexcept;
 	void setShape(Shape inShape) noexcept;
 
-	void setStepSize(float inStepSize) noexcept;
+	void setStepSize(double inStepSize) noexcept;
 	void syncToTheBeat(long inSamplesToBar);
 
 	void updatePosition(long inNumSteps = 1);
-	float process() const;
+	double process() const;
 
 	//--------------------------------------------------------------------------------------
 	// scales the output of process from 0.0 - 1.0 output to 0.0 - 2.0 (oscillating around 1.0)
-	float processZeroToTwo() const
+	double processZeroToTwo() const
 	{
-		return (process() * 2.0f) - mDepth + 1.0f;
+		return (process() * 2.) - mDepth + 1.;
 	}
 
 protected:
 	static constexpr long kSmoothDur = 48;
-	[[maybe_unused]] static constexpr float kSmoothStep = 1.f / static_cast<float>(kSmoothDur);
+	[[maybe_unused]] static constexpr double kSmoothStep = 1. / static_cast<double>(kSmoothDur);
 
 	long mSmoothSamples = 0;  // TODO: a counter for the position during a smoothing fade
 
 private:
-	using Generator = float(*)(float);
+	using Generator = double(*)(double);
 
 	static Generator getGeneratorForShape(Shape inShape) noexcept;
-	static float sineGenerator(float inPosition);
-	static float triangleGenerator(float inPosition);
-	static float squareGenerator(float inPosition);
-	static float sawGenerator(float inPosition);
-	static float reverseSawGenerator(float inPosition);
-	static float thornGenerator(float inPosition);
+	static double sineGenerator(double inPosition);
+	static double triangleGenerator(double inPosition);
+	static double squareGenerator(double inPosition);
+	static double sawGenerator(double inPosition);
+	static double reverseSawGenerator(double inPosition);
+	static double thornGenerator(double inPosition);
 
 
-	float mDepth = 0.0f;
+	double mDepth = 0.;
 	Shape mShape {};
 
 	Generator mGenerator = nullptr;  // LFO waveform generator function pointer
-	float mPosition = 0.0f;  // the position in the LFO cycle
-	float mStepSize = 0.0f;  // size of the steps through the LFO cycle
-	float mRandomNumber = 0.0f;  // random values for the random LFO waveforms
-	float mPrevRandomNumber = 0.0f;  // previous random values for the random interpolating LFO waveform
+	double mPosition = 0.;  // the position in the LFO cycle
+	double mStepSize = 0.;  // size of the steps through the LFO cycle
+	double mRandomNumber = 0.;  // random values for the random LFO waveforms
+	double mPrevRandomNumber = 0.;  // previous random values for the random interpolating LFO waveform
 	dfx::math::RandomGenerator<decltype(mRandomNumber)> mRandomGenerator {dfx::math::RandomSeed::Entropic};
 };
 

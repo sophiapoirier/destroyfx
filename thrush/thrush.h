@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier and Keith Fullerton Whitman
+Copyright (C) 2001-2022  Sophia Poirier and Keith Fullerton Whitman
 
 This file is part of Thrush.
 
@@ -91,39 +91,35 @@ private:
 	static constexpr long kDelaySamplesMin = 1;
 	static constexpr long kDelaySamplesMax = 128;
 	static constexpr long kDelayBufferSize = kDelaySamplesMax * 2;
-	static constexpr float kLFORateMin = 0.09f;
-	static constexpr float kLFORateMax = 21.f;
-	static constexpr float kLFO2DepthMin = 1.f;
-	static constexpr float kLFO2DepthMax = 9.f;
+	static constexpr double kLFORateMin = 0.09;
+	static constexpr double kLFORateMax = 21.;
+	static constexpr double kLFO2DepthMin = 1.;
+	static constexpr double kLFO2DepthMax = 9.;
 
 	class ThrushLFO final : public dfx::LFO
 	{
 	public:
 		bool isActive() const noexcept
 		{
-			return getDepth() != 0.f;
+			return getDepth() != 0.;
 		}
 	private:
 		friend class Thrush;
-		float mRateHz {};
-		float mTempoRateScalar {};
+		double mRateHz {};
+		double mTempoRateScalar {};
 		bool mTempoSync {};
-		float mEffectiveRateHz {};
+		double mEffectiveRateHz {};
 	};
 
 	void initPresets();
 
 	void calculateEffectiveTempo();
 	void calculateEffectiveRate(ThrushLFO& lfo) const;
-	float processLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const;
-
-	static constexpr float lfo2DepthScaled(float value)
-	{
-		return (value * (kLFO2DepthMax - kLFO2DepthMin)) + kLFO2DepthMin;
-	}
+	double processLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const;
 
 	// parameter values
-	float mDelay_gen {}, mDelay2_gen {}, mUserTempoBPM {};
+	double mDelay_gen {}, mDelay2_gen {};
+	double mUserTempoBPM {};
 	dfx::SmoothedValue<float> mInputGain, mInverseGain;  // the effective states of the dry/wet mix
 	bool mUseHostTempo = false, mStereoLink = false;
 
@@ -139,13 +135,13 @@ private:
 #endif
 	std::vector<float> mDelayBuffer, mDelayBuffer2; // left and right channel delay buffers
 
-	float mOneDivSR {};  // the inverse of the sampling rate
+	double mOneDivSR {};  // the inverse of the sampling rate
 
 #if THRUSH_LFO_DISCONTINUITY_SMOOTHING
 	float mLastSample {}, mLastSample2 {};  // TODO: these are not actually used in a stateful fashion
 #endif
 
 	dfx::TempoRateTable const mTempoRateTable;	// a table of tempo rate values
-	float mCurrentTempoBPS {};	// tempo in beats per second
+	double mCurrentTempoBPS {};	// tempo in beats per second
 	bool mNeedResync {};	// true when playback has just started up again
 };

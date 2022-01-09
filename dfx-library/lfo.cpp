@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -43,8 +43,8 @@ dfx::LFO::LFO()
 //------------------------------------------------------------------------
 void dfx::LFO::reset()
 {
-	mPosition = 0.0f;
-	mStepSize = 1.0f;  // just to avoid anything really screwy
+	mPosition = 0.;
+	mStepSize = 1.;  // just to avoid stasis
 	mPrevRandomNumber = mRandomGenerator.next();
 	mRandomNumber = mRandomGenerator.next();
 	mSmoothSamples = 0;
@@ -93,13 +93,13 @@ dfx::LFO::Generator dfx::LFO::getGeneratorForShape(Shape inShape) noexcept
 }
 
 //--------------------------------------------------------------------------------------
-float dfx::LFO::getDepth() const noexcept
+double dfx::LFO::getDepth() const noexcept
 {
 	return mDepth;
 }
 
 //--------------------------------------------------------------------------------------
-void dfx::LFO::setDepth(float inDepth) noexcept
+void dfx::LFO::setDepth(double inDepth) noexcept
 {
 	mDepth = inDepth;
 }
@@ -118,7 +118,7 @@ void dfx::LFO::setShape(Shape inShape) noexcept
 }
 
 //--------------------------------------------------------------------------------------
-void dfx::LFO::setStepSize(float inStepSize) noexcept
+void dfx::LFO::setStepSize(double inStepSize) noexcept
 {
 	mStepSize = inStepSize;
 }
@@ -128,14 +128,14 @@ void dfx::LFO::setStepSize(float inStepSize) noexcept
 void dfx::LFO::syncToTheBeat(long inSamplesToBar)
 {
 	// calculate how many samples long the LFO cycle is
-	float const cycleSize = 1.0f / mStepSize;
+	double const cycleSize = 1. / mStepSize;
 	// calculate many more samples it will take for this cycle to coincide with the beat
-	float const countdown = std::fmod(static_cast<float>(inSamplesToBar), cycleSize);
+	double const countdown = std::fmod(static_cast<double>(inSamplesToBar), cycleSize);
 	// and convert that into the correct LFO position according to its step size
 	mPosition = (cycleSize - countdown) * mStepSize;
 	// wrap around the new position if it is beyond the end of the cycle
-	mPosition = std::max(mPosition, 0.0f);
-	mPosition = std::fmod(mPosition, 1.0f);
+	mPosition = std::max(mPosition, 0.);
+	mPosition = std::fmod(mPosition, 1.);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -144,12 +144,12 @@ void dfx::LFO::syncToTheBeat(long inSamplesToBar)
 void dfx::LFO::updatePosition(long inNumSteps)
 {
 	// increment the LFO position tracker
-	mPosition += mStepSize * static_cast<float>(inNumSteps);
+	mPosition += mStepSize * static_cast<double>(inNumSteps);
 
-	if (mPosition >= 1.0f)
+	if (mPosition >= 1.)
 	{
 		// wrap around the position tracker if it has made it past the end of the LFO cycle
-		mPosition = std::fmod(mPosition, 1.0f);
+		mPosition = std::fmod(mPosition, 1.);
 		// get new random LFO values, too
 		mPrevRandomNumber = std::exchange(mRandomNumber, mRandomGenerator.next());
 		// set up the sample smoothing if a discontiguous waveform's cycle just ended
@@ -165,15 +165,15 @@ void dfx::LFO::updatePosition(long inNumSteps)
 				break;
 		}
 	}
-	else if (mPosition < 0.0f)
+	else if (mPosition < 0.)
 	{
-		mPosition = 0.0f;
+		mPosition = 0.;
 	}
 	// special check for the square waveform - it also needs smoothing at the half point
 	else if (mShape == kShape_Square)
 	{
 		// check to see if it has just passed the halfway point, where the square waveform drops to zero
-		constexpr float squareHalfPoint = 0.5f; 
+		constexpr double squareHalfPoint = 0.5; 
 		if ((mPosition >= squareHalfPoint) && 
 			((mPosition - mStepSize) < squareHalfPoint))
 		{
@@ -184,14 +184,14 @@ void dfx::LFO::updatePosition(long inNumSteps)
 
 //-----------------------------------------------------------------------------------------
 // gets the current 0.0 - 1.0 output value of the LFO and increments its position
-float dfx::LFO::process() const
+double dfx::LFO::process() const
 {
-	float outValue {};
+	double outValue {};
 
 	if (mShape == kShape_RandomInterpolating)
 	{
 		// interpolate between the previous random number and the new one
-		outValue = (mRandomNumber * mPosition) + (mPrevRandomNumber * (1.0f - mPosition));
+		outValue = (mRandomNumber * mPosition) + (mPrevRandomNumber * (1. - mPosition));
 	}
 	else if (mShape == kShape_Random)
 	{
@@ -207,49 +207,49 @@ float dfx::LFO::process() const
 
 //-----------------------------------------------------------------------------------------
 // oscillates from 0 to 1 and back to 0
-float dfx::LFO::sineGenerator(float inPosition)
+double dfx::LFO::sineGenerator(double inPosition)
 {
-	return (std::sin((inPosition - 0.25f) * 2.0f * dfx::math::kPi<float>) + 1.0f) * 0.5f;
+	return (std::sin((inPosition - 0.25) * 2. * dfx::math::kPi<double>) + 1.) * 0.5;
 }
 
 //-----------------------------------------------------------------------------------------
 // ramp from 0 to 1 for the first half and ramp from 1 to 0 for the second half
-float dfx::LFO::triangleGenerator(float inPosition)
+double dfx::LFO::triangleGenerator(double inPosition)
 {
-	if (inPosition < 0.5f)
+	if (inPosition < 0.5)
 	{
-		return inPosition * 2.0f;
+		return inPosition * 2.;
 	}
 	else
 	{
-		return 1.0f - ((inPosition - 0.5f) * 2.0f);
+		return 1. - ((inPosition - 0.5) * 2.);
 	}
 }
 
 //-----------------------------------------------------------------------------------------
 // stay at 1 for the first half and 0 for the second half
-float dfx::LFO::squareGenerator(float inPosition)
+double dfx::LFO::squareGenerator(double inPosition)
 {
-	return (inPosition < 0.5f) ? 1.0f : 0.0f;
+	return (inPosition < 0.5) ? 1. : 0.;
 }
 
 //-----------------------------------------------------------------------------------------
 // ramps from 0 to 1
-float dfx::LFO::sawGenerator(float inPosition)
+double dfx::LFO::sawGenerator(double inPosition)
 {
 	return inPosition;
 }
 
 //-----------------------------------------------------------------------------------------
 // ramps from 1 to 0
-float dfx::LFO::reverseSawGenerator(float inPosition)
+double dfx::LFO::reverseSawGenerator(double inPosition)
 {
-	return 1.0f - inPosition;
+	return 1. - inPosition;
 }
 
 //-----------------------------------------------------------------------------------------
 // exponentially slope up from 0 to 1 for the first half and down from 1 to 0 for the second half
-float dfx::LFO::thornGenerator(float inPosition)
+double dfx::LFO::thornGenerator(double inPosition)
 {
-	return std::pow(triangleGenerator(inPosition), 2.0f);
+	return std::pow(triangleGenerator(inPosition), 2.);
 }

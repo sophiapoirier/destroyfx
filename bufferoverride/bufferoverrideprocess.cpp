@@ -66,11 +66,11 @@ void BufferOverride::updateBuffer(unsigned long samplePos, bool& ioViewDataChang
 	mDivisorLFO.updatePosition(mPrevMinibufferSize);
 	mBufferLFO.updatePosition(mPrevMinibufferSize);
 	// Then get the current output values of the LFOs, which also updates their positions once more.
-	// Scale the 0.0 - 1.0 LFO output values to 0.0 - 2.0 (oscillating around 1.0).
-	auto const divisorLFOValue = mDivisorLFO.processZeroToTwo();
-	float const bufferLFOValue = 2.0f - mBufferLFO.processZeroToTwo();  // inverting it makes more pitch sense
+	// Scale the 0 - 1 LFO output values to 0 - 2 (oscillating around 1).
+	auto const divisorLFOValue = static_cast<float>(mDivisorLFO.processZeroToTwo());
+	double const bufferLFOValue = 2. - mBufferLFO.processZeroToTwo();  // inverting it makes more pitch sense
 	updateViewCacheValue(mDivisorLFOValue_viewCache, divisorLFOValue, ioViewDataChanged);
-	updateViewCacheValue(mBufferLFOValue_viewCache, bufferLFOValue, ioViewDataChanged);
+	updateViewCacheValue(mBufferLFOValue_viewCache, static_cast<float>(bufferLFOValue), ioViewDataChanged);
 	// and then update the step size for each LFO, in case the LFO parameters have changed
 	if (mDivisorLFOTempoSync)
 	{
@@ -114,7 +114,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos, bool& ioViewDataChang
 			mCurrentForcedBufferSize = ms2samples(mBufferSizeMS);
 		}
 		// apply the buffer LFO to the forced buffer size
-		mCurrentForcedBufferSize = std::lround(static_cast<float>(mCurrentForcedBufferSize) * bufferLFOValue);
+		mCurrentForcedBufferSize = std::lround(static_cast<double>(mCurrentForcedBufferSize) * bufferLFOValue);
 		// really low tempos and tempo rate values can cause huge forced buffer sizes,
 		// so prevent going outside of the allocated buffer space
 		mCurrentForcedBufferSize = std::clamp(mCurrentForcedBufferSize, 2L, static_cast<long>(mBuffers.front().size()));

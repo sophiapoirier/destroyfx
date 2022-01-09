@@ -104,7 +104,7 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	settailsize_samples(kDelayBufferSize);
 
-	mCurrentTempoBPS = getparameter_f(kTempo) / 60.f;
+	mCurrentTempoBPS = getparameter_f(kTempo) / 60.;
 
 	setpresetname(0, "thrush");  // default preset name
 	initPresets();
@@ -122,7 +122,7 @@ long Thrush::initialize()
 	mDelayBuffer2.assign(kDelayBufferSize, 0.f);
 
 	// this is a handy value to have during LFO calculations and wasteful to recalculate at every sample
-	mOneDivSR = 1.f / getsamplerate_f();
+	mOneDivSR = 1. / getsamplerate();
 
 	return dfx::kStatus_NoError;
 }
@@ -211,7 +211,7 @@ void Thrush::calculateEffectiveRate(ThrushLFO& lfo) const
 
 //-------------------------------------------------------------------------
 // modulate the first layer LFO's rate with the second layer LFO and then output the first layer LFO output
-float Thrush::processLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const
+double Thrush::processLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const
 {
 	// do beat sync if it ought to be done
 	if (mNeedResync && lfoLayer2.mTempoSync && gettimeinfo().mSamplesToNextBarIsValid)
@@ -220,10 +220,10 @@ float Thrush::processLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const
 	}
 
 	lfoLayer2.updatePosition();  // move forward another sample position
-	float lfoOffset = lfoLayer2.process();  // this is the offset from the first layer LFO's rate, caused by the second layer LFO
+	auto lfoOffset = lfoLayer2.process();  // this is the offset from the first layer LFO's rate, caused by the second layer LFO
 
 	// scale the 0 - 1 LFO output value to the depth range of the second layer LFO
-	lfoOffset = lfo2DepthScaled(lfoOffset);
+	lfoOffset = (lfoOffset * (kLFO2DepthMax - kLFO2DepthMin)) + kLFO2DepthMin;
 
 	// update the first layer LFO's cycle phase step size as modulated by the second layer LFO
 	lfoLayer1.setStepSize(lfoLayer1.mEffectiveRateHz * lfoOffset * mOneDivSR);
@@ -330,7 +330,7 @@ void Thrush::processaudio(float const* const* inAudio, float* const* outAudio, u
 	for (unsigned long samplecount = 0; samplecount < inNumFrames; samplecount++)
 	{
 		// evaluate the sample-by-sample output of the LFOs
-		auto const normalizedOffset = [this](long parameterID, float normalizedValue, ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2)
+		auto const normalizedOffset = [this](long parameterID, double normalizedValue, ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2)
 		{
 			auto const delayOffset = processLFOs(lfoLayer1, lfoLayer2);
 			return expandparametervalue(parameterID, normalizedValue * delayOffset);
@@ -377,7 +377,7 @@ void Thrush::processaudio(float const* const* inAudio, float* const* outAudio, u
 			else if (mLFO1.mSmoothSamples > 0)
 			{
 				mOldDelayPosition = (mOldDelayPosition + 1) % kDelayBufferSize;
-				auto const oldGain = static_cast<float>(mLFO1.mSmoothSamples) * ThrushLFO::kSmoothStep;
+				auto const oldGain = static_cast<float>(mLFO1.mSmoothSamples) * static_cast<float>(ThrushLFO::kSmoothStep);
 				auto const newGain = 1.f - oldGain;
 				outAudio[0][samplecount] = (inAudio[0][samplecount] * mInputGain.getValue()) - 
 											((mDelayBuffer[delayPosition] * mInverseGain.getValue()) * newGain) - 
@@ -401,7 +401,7 @@ void Thrush::processaudio(float const* const* inAudio, float* const* outAudio, u
 			else if (mLFO1_2.mSmoothSamples > 0)
 			{
 				mOldDelayPosition2 = (mOldDelayPosition2 + 1) % kDelayBufferSize;
-				auto const oldGain = static_cast<float>(mLFO1_2.mSmoothSamples) * ThrushLFO::kSmoothStep;
+				auto const oldGain = static_cast<float>(mLFO1_2.mSmoothSamples) * static_cast<float>(ThrushLFO::kSmoothStep);
 				auto const newGain = 1.f - oldGain;
 				outAudio[1][samplecount] = (inAudio[1][samplecount] * mInputGain.getValue()) - 
 											((mDelayBuffer2[delayPosition2] * mInverseGain.getValue()) * newGain) - 
