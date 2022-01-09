@@ -32,7 +32,6 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 #include <cmath>
 #include <functional>
 #include <mutex>
-#include <stdexcept>
 #include <thread>
 #include <unordered_set>
 
@@ -683,16 +682,17 @@ double DfxPlugin::getparameter_scalar(long inParameterIndex) const
 {
 	if (parameterisvalid(inParameterIndex))
 	{
+		auto const& parameter = mParameters[inParameterIndex];
 		switch (getparameterunit(inParameterIndex))
 		{
 			case DfxParam::Unit::Percent:
 			case DfxParam::Unit::DryWetMix:
-				return mParameters[inParameterIndex].get_f() * 0.01;
+				return parameter.get_f() * 0.01;
 			case DfxParam::Unit::Scalar:
-				return mParameters[inParameterIndex].get_f();
+				return parameter.get_f();
 			// XXX should we not just use contractparametervalue() here?
 			default:
-				return mParameters[inParameterIndex].get_f() / mParameters[inParameterIndex].getmax_f();
+				return parameter.get_f() / parameter.getmax_f();
 		}
 	}
 	return 0.0;
@@ -791,11 +791,7 @@ DfxParam::Unit DfxPlugin::getparameterunit(long inParameterIndex) const
 //-----------------------------------------------------------------------------
 bool DfxPlugin::setparametervaluestring(long inParameterIndex, int64_t inStringIndex, std::string_view inText)
 {
-	if (parameterisvalid(inParameterIndex))
-	{
-		return mParameters[inParameterIndex].setvaluestring(inStringIndex, inText);
-	}
-	return false;
+	return getparameterobject(inParameterIndex).setvaluestring(inStringIndex, inText);
 }
 
 //-----------------------------------------------------------------------------
@@ -863,6 +859,13 @@ bool DfxPlugin::hasparameterattribute(long inParameterIndex, DfxParam::Attribute
 }
 
 //-----------------------------------------------------------------------------
+void DfxPlugin::addparameterattributes(long inParameterIndex, DfxParam::Attribute inFlags)
+{
+	auto& parameter = getparameterobject(inParameterIndex);
+	parameter.setattributes(parameter.getattributes() | inFlags);
+}
+
+//-----------------------------------------------------------------------------
 // convenience methods for expanding and contracting parameter values 
 // using the min/max/curvetype/curvespec/etc. settings of a given parameter
 double DfxPlugin::expandparametervalue(long inParameterIndex, double genValue) const
@@ -886,12 +889,8 @@ double DfxPlugin::contractparametervalue(long inParameterIndex, double realValue
 //-----------------------------------------------------------------------------
 DfxParam& DfxPlugin::getparameterobject(long inParameterIndex)
 {
-	if (!parameterisvalid(inParameterIndex))
-	{
-		assert(false);
-		throw std::range_error("parameter index out of range: " + std::to_string(inParameterIndex));
-	}
-	return mParameters[inParameterIndex];
+	assert(parameterisvalid(inParameterIndex));
+	return mParameters.at(inParameterIndex);
 }
 
 

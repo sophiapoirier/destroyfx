@@ -299,10 +299,7 @@ public:
 
 	void setparameterusevaluestrings(long inParameterIndex, bool inMode = true)
 	{
-		if (parameterisvalid(inParameterIndex))
-		{
-			mParameters[inParameterIndex].setusevaluestrings(inMode);
-		}
+		getparameterobject(inParameterIndex).setusevaluestrings(inMode);
 	}
 	bool getparameterusevaluestrings(long inParameterIndex) const
 	{
@@ -316,10 +313,7 @@ public:
 	}
 	void setparametercustomunitstring(long inParameterIndex, std::string_view inText)
 	{
-		if (parameterisvalid(inParameterIndex))
-		{
-			mParameters[inParameterIndex].setcustomunitstring(inText);
-		}
+		getparameterobject(inParameterIndex).setcustomunitstring(inText);
 	}
 #ifdef TARGET_API_AUDIOUNIT
 	CFStringRef getparametervaluecfstring(long inParameterIndex, int64_t inStringIndex) const
@@ -417,10 +411,7 @@ public:
 	}
 	void setparametercurve(long inParameterIndex, DfxParam::Curve inCurve)
 	{
-		if (parameterisvalid(inParameterIndex))
-		{
-			mParameters[inParameterIndex].setcurve(inCurve);
-		}
+		getparameterobject(inParameterIndex).setcurve(inCurve);
 	}
 	double getparametercurvespec(long inParameterIndex) const
 	{
@@ -428,10 +419,7 @@ public:
 	}
 	void setparametercurvespec(long inParameterIndex, double inCurveSpec)
 	{
-		if (parameterisvalid(inParameterIndex))
-		{
-			mParameters[inParameterIndex].setcurvespec(inCurveSpec);
-		}
+		getparameterobject(inParameterIndex).setcurvespec(inCurveSpec);
 	}
 	bool getparameterenforcevaluelimits(long inParameterIndex) const
 	{
@@ -439,10 +427,7 @@ public:
 	}
 	void setparameterenforcevaluelimits(long inParameterIndex, bool inMode)
 	{
-		if (parameterisvalid(inParameterIndex))
-		{
-			mParameters[inParameterIndex].SetEnforceValueLimits(inMode);
-		}
+		getparameterobject(inParameterIndex).SetEnforceValueLimits(inMode);
 	}
 	DfxParam::Attribute getparameterattributes(long inParameterIndex) const
 	{
@@ -451,18 +436,9 @@ public:
 	bool hasparameterattribute(long inParameterIndex, DfxParam::Attribute inFlag) const;
 	void setparameterattributes(long inParameterIndex, DfxParam::Attribute inFlags)
 	{
-		if (parameterisvalid(inParameterIndex))
-		{
-			mParameters[inParameterIndex].setattributes(inFlags);
-		}
+		getparameterobject(inParameterIndex).setattributes(inFlags);
 	}
-	void addparameterattributes(long inParameterIndex, DfxParam::Attribute inFlags)
-	{
-		if (parameterisvalid(inParameterIndex))
-		{
-			mParameters[inParameterIndex].setattributes(inFlags | mParameters[inParameterIndex].getattributes());
-		}
-	}
+	void addparameterattributes(long inParameterIndex, DfxParam::Attribute inFlags);
 
 	// convenience methods for expanding and contracting parameter values 
 	// using the min/max/curvetype/curvespec/etc. settings of a given parameter
