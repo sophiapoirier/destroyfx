@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -50,7 +50,7 @@ public:
 
 	explicit TempoRateTable(Rates inRates = Rates::Normal);
 
-	float getScalar(long inIndex) const
+	double getScalar(long inIndex) const
 	{
 		return mScalars[safeIndex(inIndex)];
 	}
@@ -60,17 +60,17 @@ public:
 	}
 	long getNumRates() const noexcept
 	{
-		return mScalars.size();
+		return static_cast<long>(mScalars.size());
 	}
-	long getNearestTempoRateIndex(float inTempoRateValue) const;
+	long getNearestTempoRateIndex(double inTempoRateValue) const;
 
 private:
 	size_t safeIndex(long inIndex) const noexcept
 	{
-		return std::clamp(inIndex, 0L, getNumRates() - 1);
+		return static_cast<size_t>(std::clamp(inIndex, 0L, getNumRates() - 1));
 	}
 
-	std::vector<float> mScalars;
+	std::vector<double> mScalars;
 	std::vector<std::string> mDisplays;
 };
 

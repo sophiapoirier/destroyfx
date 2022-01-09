@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -30,17 +30,23 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-static inline long bufferSize_ms2samples(double inSizeMS, double inSampleRate)
-{
-	return std::lround(inSizeMS * inSampleRate * 0.001);
-}
-
-//-----------------------------------------------------------------------------
 template <typename T>
 static void updateViewCacheValue(std::atomic<T>& ioAtomicValue, const T inReplacementValue, bool& ioChanged)
 {
 	ioChanged |= ioAtomicValue.exchange(inReplacementValue, std::memory_order_relaxed) != inReplacementValue;
 };
+
+//-----------------------------------------------------------------------------
+long BufferOverride::ms2samples(double inSizeMS) const
+{
+	return std::lround(inSizeMS * getsamplerate() * 0.001);
+}
+
+//-----------------------------------------------------------------------------
+long BufferOverride::beat2samples(double inBeatScalar, double inTempoBPS) const
+{
+	return std::lround(getsamplerate() / (inTempoBPS * inBeatScalar));
+}
 
 //-----------------------------------------------------------------------------
 void BufferOverride::updateBuffer(unsigned long samplePos, bool& ioViewDataChanged)
@@ -96,7 +102,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos, bool& ioViewDataChang
 		if (mBufferTempoSync &&  // the user wants to do tempo sync / beat division rate
 			(mCurrentTempoBPS > 0.0))  // avoid division by zero
 		{
-			mCurrentForcedBufferSize = std::lround(getsamplerate() / (mCurrentTempoBPS * mBufferSizeSync));
+			mCurrentForcedBufferSize = beat2samples(mBufferSizeSync, mCurrentTempoBPS);
 			// set this true so that we make sure to do the measure syncronisation later on
 			if (mNeedResync)
 			{
@@ -105,7 +111,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos, bool& ioViewDataChang
 		}
 		else
 		{
-			mCurrentForcedBufferSize = bufferSize_ms2samples(mBufferSizeMS, getsamplerate());
+			mCurrentForcedBufferSize = ms2samples(mBufferSizeMS);
 		}
 		// apply the buffer LFO to the forced buffer size
 		mCurrentForcedBufferSize = std::lround(static_cast<float>(mCurrentForcedBufferSize) * bufferLFOValue);

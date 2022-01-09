@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -35,11 +35,11 @@ dfx::TempoRateTable::TempoRateTable(Rates inRates)
 {
 	auto const addTempoRate = [this](int numerator, int denominator = 1)
 	{
-		mScalars.push_back(static_cast<float>(numerator));
+		mScalars.push_back(static_cast<double>(numerator));
 		mDisplays.push_back(std::to_string(numerator));
 		if (denominator > 1)
 		{
-			mScalars.back() /= static_cast<float>(denominator);
+			mScalars.back() /= static_cast<double>(denominator);
 			mDisplays.back().append("/").append(std::to_string(denominator));
 		}
 	};
@@ -81,7 +81,7 @@ dfx::TempoRateTable::TempoRateTable(Rates inRates)
 	}
 	if ((inRates != Rates::Slow) && (inRates != Rates::NoExtreme))
 	{
-		mScalars.push_back(3000.0f);
+		mScalars.push_back(3000.);
 		mDisplays.push_back("infinity");
 	}
 
@@ -91,7 +91,7 @@ dfx::TempoRateTable::TempoRateTable(Rates inRates)
 //-----------------------------------------------------------------------------
 // given a tempo rate value, return the index of the tempo rate 
 // that is closest to that requested value
-long dfx::TempoRateTable::getNearestTempoRateIndex(float inTempoRateValue) const
+long dfx::TempoRateTable::getNearestTempoRateIndex(double inTempoRateValue) const
 {
 	auto bestDiff = mScalars.back();
 	long bestIndex = 0;

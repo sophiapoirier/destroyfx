@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2021  Sophia Poirier
+Copyright (C) 2000-2022  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -133,7 +133,8 @@ private:
 	double getCrossoverFrequency() const;
 
 	// the parameters
-	float mRate_Hz = 1.0f, mRate_Sync = 1.0f, mPulsewidth = 0.0f, mPulsewidthRandMin = 0.0f;
+	double mRate_Hz = 1., mRate_Sync = 1.;
+	float mPulsewidth = 0.f, mPulsewidthRandMin = 0.f;
 	long mRateIndex = 0, mRateRandMinIndex = 0;
 	float mPanWidth = 0.0f, mFloor = 0.0f;
 	dfx::SmoothedValue<float> mNoise;
@@ -145,7 +146,8 @@ private:
 	float mGainRange = 0.0f;  // a scaled version of mFloor and the difference between that and 1.0
 	float mRandomFloor = 0.0f, mRandomGainRange = 0.0f;
 	// generic versions of these parameters for curved randomization
-	float mRateHz_gen = 0.0f, mRateRandMinHz_gen = 0.0f, mFloor_gen = 0.0f, mFloorRandMin_gen = 0.0f;
+	double mRateHz_gen = 0., mRateRandMinHz_gen = 0.;
+	float mFloor_gen = 0.f, mFloorRandMin_gen = 0.f;
 	bool mUseRandomRate = false, mUseRandomPulsewidth = false, mUseRandomFloor = false;
 	float mSampleAmp = 0.0f;  // output sample scalar
 	long mCycleSamples = 1, mPulseSamples = 1, mSlopeSamples = 1, mSlopeDur = 1, mPlateauSamples = 1, mValleySamples = 0;  // sample counters

@@ -35,7 +35,7 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	mTempoRateTable(dfx::TempoRateTable::Rates::Slow)
 {
 	auto const numTempoRates = mTempoRateTable.getNumRates();
-	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.f);
+	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.);
 
 	initparameter_i(kDelay, {"inverse delay", "seven", "six", "four"}, 9, 9, kDelaySamplesMin, kDelaySamplesMax, DfxParam::Unit::Samples);
 	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120., 120., 39.f, 480.f, DfxParam::Unit::BPM);

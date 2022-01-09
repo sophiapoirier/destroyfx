@@ -40,7 +40,7 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 {
 	// initialize the parameters
 	auto const numTempoRates = mTempoRateTable.getNumRates();
-	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.0f);
+	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.);
 	initparameter_f(kSeekRange, {"seek range", "SeekRng", "SekRng", "SkRg"}, 333.0, 333.0, 0.3, 6000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
 	initparameter_b(kFreeze, dfx::MakeParameterNames(dfx::kParameterNames_Freeze), false, false);
 	initparameter_f(kSeekRate_Hz, {"seek rate (free)", "SekRtFr", "SkRtFr", "SkRF"}, 9.0, 3.0, 0.3, 810.0, DfxParam::Unit::Hz, DfxParam::Curve::Log);//DfxParam::Curve::Cubed
@@ -308,8 +308,8 @@ void Scrubby::initPresets()
 	setpresetname(i, "DJ staccato");
 	setpresetparameter_f(i, kSeekRange, 1800.0);
 	setpresetparameter_b(i, kFreeze, false);
-	setpresetparameter_i(i, kSeekRate_Sync, mTempoRateTable.getNearestTempoRateIndex(2.0f));
-	setpresetparameter_i(i, kSeekRateRandMin_Sync, mTempoRateTable.getNearestTempoRateIndex(2.0f));
+	setpresetparameter_i(i, kSeekRate_Sync, mTempoRateTable.getNearestTempoRateIndex(2.));
+	setpresetparameter_i(i, kSeekRateRandMin_Sync, mTempoRateTable.getNearestTempoRateIndex(2.));
 	setpresetparameter_b(i, kTempoSync, true);
 	setpresetparameter_f(i, kSeekDur, 22.2);
 	setpresetparameter_f(i, kSeekDurRandMin, 22.2);
@@ -326,9 +326,9 @@ void Scrubby::initPresets()
 	setpresetparameter_f(i, kSeekRange, );
 	setpresetparameter_b(i, kFreeze, );
 	setpresetparameter_f(i, kSeekRate_Hz, );
-	setpresetparameter_i(i, kSeekRate_Sync, mTempoRateTable.getNearestTempoRateIndex(f));
+	setpresetparameter_i(i, kSeekRate_Sync, mTempoRateTable.getNearestTempoRateIndex());
 	setpresetparameter_f(i, kSeekRateRandMin_Hz, );
-	setpresetparameter_i(i, kSeekRateRandMin_Sync, mTempoRateTable.getNearestTempoRateIndex(f));
+	setpresetparameter_i(i, kSeekRateRandMin_Sync, mTempoRateTable.getNearestTempoRateIndex());
 	setpresetparameter_b(i, kTempoSync, );
 	setpresetparameter_f(i, kSeekDur, );
 	setpresetparameter_f(i, kSeekDurRandMin, );

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -41,7 +41,7 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	mTempoRateTable(dfx::TempoRateTable::Rates::NoExtreme)
 {
 	auto const numTempoRates = mTempoRateTable.getNumRates();
-	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.0f);
+	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.);
 	initparameter_f(kDivisor, {"buffer divisor", "BufDiv", "BfDv"}, 1.92, 1.92, 1.92, 222.0, DfxParam::Unit::Divisor, DfxParam::Curve::Squared);
 	initparameter_f(kBufferSize_MS, {"forced buffer size (free)", "BufSizF", "BufSzF", "BfSF"}, 90.0, 33.3, 1.0, 999.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
 	initparameter_list(kBufferSize_Sync, {"forced buffer size (sync)", "BufSizS", "BufSzS", "BfSS"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
@@ -106,8 +106,10 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 long BufferOverride::initialize()
 {
 	auto const numChannels = getnumoutputs();
-	auto const maxAudioBufferSize = static_cast<size_t>(getsamplerate() / (kMinAllowableBPS * mTempoRateTable.getScalar(0)));
 
+	auto const maxAudioBufferSizeMS = ms2samples(getparametermax_f(kBufferSize_MS));
+	auto const maxAudioBufferSizeSync = beat2samples(mTempoRateTable.getScalar(0), kMinAllowableBPS);
+	auto const maxAudioBufferSize = static_cast<size_t>(std::max(maxAudioBufferSizeMS, maxAudioBufferSizeSync));
 	mBuffers.resize(numChannels);
 	for (auto& buffer : mBuffers)
 	{
@@ -116,7 +118,7 @@ long BufferOverride::initialize()
 	mAudioOutputValues.assign(numChannels, 0.0f);
 
 	// this is a handy value to have during LFO calculations and wasteful to recalculate at every sample
-	mOneDivSR = 1.f / getsamplerate_f();
+	mOneDivSR = 1. / getsamplerate();
 
 	return dfx::kStatus_NoError;
 }
@@ -166,7 +168,7 @@ void BufferOverride::initPresets()
 
 	setpresetname(i, "drum roll");
 	setpresetparameter_f(i, kDivisor, 4.0);
-	setpresetparameter_i(i, kBufferSize_Sync, mTempoRateTable.getNearestTempoRateIndex(4.0f));
+	setpresetparameter_i(i, kBufferSize_Sync, mTempoRateTable.getNearestTempoRateIndex(4.));
 	setpresetparameter_b(i, kBufferTempoSync, true);
 	setpresetparameter_f(i, kSmooth, 9.0);
 	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
@@ -244,10 +246,10 @@ void BufferOverride::initPresets()
 
 	setpresetname(i, "jiggy");
 	setpresetparameter_f(i, kDivisor, 4.0);
-	setpresetparameter_i(i, kBufferSize_Sync, mTempoRateTable.getNearestTempoRateIndex(4.0f));
+	setpresetparameter_i(i, kBufferSize_Sync, mTempoRateTable.getNearestTempoRateIndex(4.));
 	setpresetparameter_b(i, kBufferTempoSync, true);
 	setpresetparameter_b(i, kBufferInterrupt, true);
-	setpresetparameter_i(i, kDivisorLFORate_Sync, mTempoRateTable.getNearestTempoRateIndex(0.5f));
+	setpresetparameter_i(i, kDivisorLFORate_Sync, mTempoRateTable.getNearestTempoRateIndex(0.5));
 	setpresetparameter_f(i, kDivisorLFODepth, 84.0);
 	setpresetparameter_i(i, kDivisorLFOShape, dfx::LFO::kShape_Square);
 	setpresetparameter_b(i, kDivisorLFOTempoSync, true);
@@ -289,7 +291,7 @@ void BufferOverride::initPresets()
 	setpresetparameter_f(i, kBufferSize_MS, 81.0);
 	setpresetparameter_b(i, kBufferTempoSync, false);
 	setpresetparameter_b(i, kBufferInterrupt, true);
-	setpresetparameter_i(i, kDivisorLFORate_Sync, mTempoRateTable.getNearestTempoRateIndex(2.0f));
+	setpresetparameter_i(i, kDivisorLFORate_Sync, mTempoRateTable.getNearestTempoRateIndex(2.));
 	setpresetparameter_f(i, kDivisorLFODepth, 33.3);
 	setpresetparameter_i(i, kDivisorLFOShape, dfx::LFO::kShape_Sine);
 	setpresetparameter_b(i, kDivisorLFOTempoSync, true);
@@ -307,16 +309,16 @@ void BufferOverride::initPresets()
 	setpresetname(i, "");
 	setpresetparameter_f(i, kDivisor, );
 	setpresetparameter_f(i, kBufferSize_MS, );
-	setpresetparameter_i(i, kBufferSize_Sync, mTempoRateTable.getNearestTempoRateIndex(f));
+	setpresetparameter_i(i, kBufferSize_Sync, mTempoRateTable.getNearestTempoRateIndex());
 	setpresetparameter_b(i, kBufferTempoSync, );
 	setpresetparameter_b(i, kBufferInterrupt, );
 	setpresetparameter_f(i, kDivisorLFORate_Hz, );
-	setpresetparameter_i(i, kDivisorLFORate_Sync, mTempoRateTable.getNearestTempoRateIndex(f));
+	setpresetparameter_i(i, kDivisorLFORate_Sync, mTempoRateTable.getNearestTempoRateIndex());
 	setpresetparameter_f(i, kDivisorLFODepth, );
 	setpresetparameter_i(i, kDivisorLFOShape, dfx::LFO::kShape_);
 	setpresetparameter_b(i, kDivisorLFOTempoSync, );
 	setpresetparameter_f(i, kBufferLFORate_Hz, );
-	setpresetparameter_i(i, kBufferLFORate_Sync, mTempoRateTable.getNearestTempoRateIndex(f));
+	setpresetparameter_i(i, kBufferLFORate_Sync, mTempoRateTable.getNearestTempoRateIndex());
 	setpresetparameter_f(i, kBufferLFODepth, );
 	setpresetparameter_i(i, kBufferLFOShape, dfx::LFO::kShape_);
 	setpresetparameter_b(i, kBufferLFOTempoSync, );

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2021  Sophia Poirier
+Copyright (C) 2000-2022  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -172,7 +172,7 @@ void Skidder::processValley()
 
 	if (mValleySamples <= 0)
 	{
-		float cycleRate = 0.0f;  // the base current skid rate value
+		double cycleRate = 0.;  // the base current skid rate value
 		bool barSync = false;  // true if we need to sync up with the next bar start
 		mRMS = 0.0;  // reset mRMS now because valley is over
 		//
@@ -203,10 +203,10 @@ void Skidder::processValley()
 		}
 		else
 		{
-			cycleRate = mUseRandomRate ? static_cast<float>(expandparametervalue(kRate_Hz, mRandomEngine.next(mRateRandMinHz_gen, mRateHz_gen))) : mRate_Hz;
+			cycleRate = mUseRandomRate ? expandparametervalue(kRate_Hz, mRandomEngine.next(mRateRandMinHz_gen, mRateHz_gen)) : mRate_Hz;
 		}
 		mNeedResync = false;  // reset this so that we don't have any trouble
-		mCycleSamples = std::lround(getsamplerate_f() / cycleRate);
+		mCycleSamples = std::lround(getsamplerate() / cycleRate);
 		//
 		auto const pulsewidth = mUseRandomPulsewidth ? mRandomEngine.next(mPulsewidthRandMin, mPulsewidth) : mPulsewidth;
 		mPulseSamples = std::lround(static_cast<float>(mCycleSamples) * pulsewidth);

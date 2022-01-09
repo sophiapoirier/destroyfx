@@ -35,7 +35,7 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 :	DfxPlugin(inInstance, kNumParameters, kNumPresets)
 {
 	// initialize the parameters
-	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.0f);
+	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.);
 	auto const numTempoRates = mTempoRateTable.getNumRates();
 	initparameter_f(kRate_Hz, {"rate (free)", "RateFre", "RateFr", "RtFr"}, 3.0, 3.0, 0.3, 21.0, DfxParam::Unit::Hz, DfxParam::Curve::Log);
 	initparameter_list(kRate_Sync, {"rate (sync)", "RateSnc", "RatSnc", "RtSc"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);

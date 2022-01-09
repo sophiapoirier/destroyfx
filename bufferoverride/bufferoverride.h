@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -57,6 +57,8 @@ private:
 	static constexpr double kMinAllowableBPS = 0.7;
 	static constexpr float kLFOValueDefault = 1.f;
 
+	long ms2samples(double inSizeMS) const;
+	long beat2samples(double inBeatScalar, double inTempoBPS) const;
 	void updateBuffer(unsigned long samplePos, bool& ioViewDataChanged);
 
 	void heedMidiEvents(unsigned long samplePos);
@@ -68,14 +70,15 @@ private:
 	void updateViewDataCache();
 
 	// the parameters
-	float mDivisor = 1.0f, mBufferSizeMS = 0.0f, mBufferSizeSync = 0.0f;
+	float mDivisor = 1.f;
+	double mBufferSizeMS = 0., mBufferSizeSync = 0.;
 	bool mBufferTempoSync = false, mBufferInterrupt = false, mUseHostTempo = false;
 	float mSmoothPortion = 0.0f;
 	double mPitchBendRange = 0.0, mUserTempoBPM = 0.0;
 	long mMidiMode = 0;
 	bool mDivisorLFOTempoSync = false, mBufferLFOTempoSync = false;
-	float mDivisorLFORateHz = 0.0f, mBufferLFORateHz = 0.0f;  // LFO rate (in Hz)
-	float mDivisorLFOTempoRate = 0.0f, mBufferLFOTempoRate = 0.0f;  // LFO rate (in cycles per beat)
+	double mDivisorLFORateHz = 0., mBufferLFORateHz = 0.;  // LFO rate (in Hz)
+	double mDivisorLFOTempoRate = 0., mBufferLFOTempoRate = 0.;  // LFO rate (in cycles per beat)
 
 	dfx::SmoothedValue<float> mInputGain, mOutputGain;  // the effective states of the dry/wet mix
 
@@ -88,7 +91,7 @@ private:
 	long mPrevMinibufferSize = 0;  // the previous size
 	long mReadPos = 0;  // the current sample position within the minibuffer
 
-	float mOneDivSR = 0.0f;  // the inverse of the sampling rate
+	double mOneDivSR = 0.;  // the inverse of the sampling rate
 
 	double mCurrentTempoBPS = 0.0;  // tempo in beats per second
 	bool mNeedResync = false;

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -36,7 +36,7 @@ EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 :	DfxPlugin(inInstance, kNumParameters, 1)
 {
 	auto const numTempoRates = mTempoRateTable.getNumRates();
-	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.0f);
+	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.);
 	initparameter_list(kRate_Sync, {"rate"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
 	initparameter_f(kSmooth, {"smooth", "Smth"}, 3.0, 33.333, 0.0, 100.0, DfxParam::Unit::Percent);  // % of cycle
 	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 39.0, 480.0, DfxParam::Unit::BPM);
