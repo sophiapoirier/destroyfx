@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -47,8 +47,13 @@ private:
 
   enum class FilterMode { Nothing, Highpass, LowpassIIR, LowpassFIR };
 
-  inline float InterpolateHermite(float* data, double address, int arraysize, int danger);
-  inline float InterpolateLinear(float* data, double address, int arraysize, int danger);
+  static constexpr float interpolateHermite(float* data, double address, int arraysize, int danger);
+  // uses only the fractional portion of the address
+  static constexpr float interpolateLinear(float value1, float value2, double address)
+  {
+    auto const posFract = static_cast<float>(std::fmod(address, 1.));
+    return (value1 * (1.0f - posFract)) + (value2 * posFract);
+  }
 
   // these get set to the parameter values
   int bsize = 0;
@@ -76,7 +81,7 @@ private:
   float smoothstep1 = 0.0f, smoothstep2 = 0.0f;
   float lastr1val = 0.0f, lastr2val = 0.0f;
 
-  std::vector<float> firCoefficients1, firCoefficients2;
+  std::array<float, kNumFIRTaps> firCoefficients1 {}, firCoefficients2 {};
   std::vector<float> const firCoefficientsWindow;
 };
 
@@ -118,12 +123,12 @@ private:
 };
 
 
-inline float TransverbDSP::InterpolateHermite(float* data, double address,
-                                              int arraysize, int danger) {
+constexpr float TransverbDSP::interpolateHermite(float* data, double address,
+                                                 int arraysize, int danger) {
   int posMinus1 = 0, posPlus1 = 0, posPlus2 = 0;
 
-  auto const pos = (int)address;
-  auto const posFract = (float)(address - (double)pos);
+  auto const pos = static_cast<int>(address);
+  auto const posFract = static_cast<float>(address - static_cast<double>(pos));
 
   // because the readers and writer are not necessarily aligned,
   // upcoming or previous samples could be discontiguous, in which case
@@ -159,9 +164,9 @@ inline float TransverbDSP::InterpolateHermite(float* data, double address,
 }
 
 /*
-inline float TransverbDSP::InterpolateHermitePostLowpass(float* data, float address) {
-  auto const pos = (int)address;
-  float const posFract = address - (float)pos;
+constexpr float TransverbDSP::interpolateHermitePostLowpass(float* data, float address) {
+  auto const pos = static_cast<int>(address);
+  float const posFract = address - static_cast<float>(pos);
 
   float const a = ((3.0f * (data[1] - data[2])) -
                    data[0] + data[3]) * 0.5f;
@@ -171,13 +176,12 @@ inline float TransverbDSP::InterpolateHermitePostLowpass(float* data, float addr
 
   return (((a * posFract) + b) * posFract + c) * posFract + data[1];
 }
-*/
 
-inline float TransverbDSP::InterpolateLinear(float* data, double address,
-                                             int arraysize, int danger) {
+constexpr float TransverbDSP::interpolateLinear(float* data, double address,
+                                                int arraysize, int danger) {
 	int posPlus1 = 0;
-	auto const pos = (int)address;
-	auto const posFract = (float)(address - (double)pos);
+	auto const pos = static_cast<int>(address);
+	auto const posFract = static_cast<float>(address - static_cast<double>(pos));
 
 	if (danger == 1) {
 		// the upcoming sample is not contiguous because
@@ -190,3 +194,4 @@ inline float TransverbDSP::InterpolateLinear(float* data, double address,
 	return (data[pos] * (1.0f - posFract)) +
 			(data[posPlus1] * posFract);
 }
+*/

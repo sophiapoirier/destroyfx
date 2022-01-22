@@ -213,21 +213,6 @@ constexpr float InterpolateHermite_NoWrap(float* inData, double inAddress, long 
 }
 
 //-----------------------------------------------------------------------------
-constexpr float InterpolateLinear(float* inData, double inAddress, long inBufferSize)
-{
-	auto const pos = static_cast<long>(inAddress);
-	auto const posFract = static_cast<float>(inAddress - static_cast<double>(pos));
-	return (inData[pos] * (1.0f - posFract)) + (inData[(pos + 1) % inBufferSize] * posFract);
-}
-
-//-----------------------------------------------------------------------------
-constexpr float InterpolateLinear(float inValue1, float inValue2, double inAddress)
-{
-	auto const posFract = static_cast<float>(inAddress - static_cast<double>(static_cast<long>(inAddress)));
-	return (inValue1 * (1.0f - posFract)) + (inValue2 * posFract);
-}
-
-//-----------------------------------------------------------------------------
 // computes the principle branch of the Lambert W function
 // { LambertW(x) = W(x), where W(x) * exp(W(x)) = x }
 static inline double LambertW(double inValue)

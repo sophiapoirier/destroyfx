@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -154,9 +154,9 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
           break;
         // spline interpolation, but no filtering
         case kQualityMode_HiFi:
-//          r1val = InterpolateLinear(buf1.data(), read1, bsize, writer - read1int);
-          r1val = InterpolateHermite(buf1.data(), read1, bsize, writer - read1int);
-          r2val = InterpolateHermite(buf2.data(), read2, bsize, writer - read2int);
+//          r1val = interpolateLinear(buf1.data(), read1, bsize, writer - read1int);
+          r1val = interpolateHermite(buf1.data(), read1, bsize, writer - read1int);
+          r2val = interpolateHermite(buf2.data(), read2, bsize, writer - read2int);
           break;
         // spline interpolation plus anti-aliasing lowpass filtering for high speeds
         // or sub-bass-removing highpass filtering for low speeds
@@ -170,17 +170,17 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
               break;
             case FilterMode::LowpassFIR:
             {
-              // get 2 consecutive FIR output values for linear interpolation
+              // get two consecutive FIR output values for linear interpolation
               auto const lp1 = dfx::FIRFilter::process(buf1.data(), kNumFIRTaps, firCoefficients1.data(),
                                                        (read1int - static_cast<int>(kNumFIRTaps) + bsize) % bsize, bsize);
               auto const lp2 = dfx::FIRFilter::process(buf1.data(), kNumFIRTaps, firCoefficients1.data(),
                                                        (read1int - static_cast<int>(kNumFIRTaps) + 1 + bsize) % bsize, bsize);
               // interpolate output linearly (avoid shit sound) and compensate gain
-              r1val = dfx::math::InterpolateLinear(lp1, lp2, read1) * mug1;
+              r1val = interpolateLinear(lp1, lp2, read1) * mug1;
               break;
             }
             default:
-              r1val = InterpolateHermite(buf1.data(), read1, bsize, writer - read1int);
+              r1val = interpolateHermite(buf1.data(), read1, bsize, writer - read1int);
               break;
           }
           switch (filterMode2)
@@ -192,17 +192,17 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
               break;
             case FilterMode::LowpassFIR:
             {
-              // get 2 consecutive FIR output values for linear interpolation
+              // get two consecutive FIR output values for linear interpolation
               auto const lp1 = dfx::FIRFilter::process(buf2.data(), kNumFIRTaps, firCoefficients2.data(),
                                                        (read2int - static_cast<int>(kNumFIRTaps) + bsize) % bsize, bsize);
               auto const lp2 = dfx::FIRFilter::process(buf2.data(), kNumFIRTaps, firCoefficients2.data(),
                                                        (read2int - static_cast<int>(kNumFIRTaps) + 1 + bsize) % bsize, bsize);
               // interpolate output linearly (avoid shit sound) and compensate gain
-              r2val = dfx::math::InterpolateLinear(lp1, lp2, read2) * mug2;
+              r2val = interpolateLinear(lp1, lp2, read2) * mug2;
               break;
             }
             default:
-              r2val = InterpolateHermite(buf2.data(), read2, bsize, writer - read2int);
+              r2val = interpolateHermite(buf2.data(), read2, bsize, writer - read2int);
               break;
           }
           break;
@@ -423,8 +423,8 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
         break;
       case kQualityMode_HiFi:
       case kQualityMode_UltraHiFi:
-        r1val = mix1.getValue() * InterpolateHermite(buf1.data(), read1, bsize, 333);
-        r2val = mix2.getValue() * InterpolateHermite(buf1.data(), read2, bsize, 333);
+        r1val = mix1.getValue() * interpolateHermite(buf1.data(), read1, bsize, 333);
+        r2val = mix2.getValue() * interpolateHermite(buf1.data(), read2, bsize, 333);
         break;
       }
 

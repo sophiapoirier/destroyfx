@@ -105,9 +105,6 @@ TransverbDSP::TransverbDSP(DfxPlugin* inDfxPlugin)
   buf1.assign(MAXBUF, 0.0f);
   buf2.assign(MAXBUF, 0.0f);
 
-  firCoefficients1.assign(kNumFIRTaps, 0.0f);
-  firCoefficients2.assign(kNumFIRTaps, 0.0f);
-
   registerSmoothedAudioValue(&speed1);
   registerSmoothedAudioValue(&speed2);
   registerSmoothedAudioValue(&drymix);

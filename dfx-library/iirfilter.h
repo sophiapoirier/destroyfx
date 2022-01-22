@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -201,7 +201,7 @@ public:
 	}
 
 	// 4-point Hermite spline interpolation for use with IIR filter output histories
-	float interpolateHermitePostFilter(double inPos)
+	float interpolateHermitePostFilter(double inPos) const
 	{
 		auto const posFract = static_cast<float>(std::fmod(inPos, 1.0));
 
