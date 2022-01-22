@@ -42,7 +42,7 @@ static constexpr bool   kFreezeModeDefault  = false;
 // The values were obtained by listening tests.
 namespace detail
 {
-    constexpr double referenceSamplesToSeconds(size_t timeInSamples)
+    static consteval double referenceSamplesToSeconds(size_t timeInSamples)
     {
         constexpr double referenceSampleRate = 44100.0;
         return static_cast<double>(timeInSamples) / referenceSampleRate;
