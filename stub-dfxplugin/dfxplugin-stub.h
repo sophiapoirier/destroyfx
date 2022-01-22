@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -62,8 +62,8 @@ public:
 #endif
 
 private:
-	constexpr long kNumPresets = 16;
-	constexpr double kBufferSize_Seconds = 3.0;  // audio buffer size in seconds
+	static constexpr long kNumPresets = 16;
+	static constexpr double kBufferSize_Seconds = 3.0;  // audio buffer size in seconds
 
 	// the different states of the indexed parameter
 	enum : long
@@ -84,7 +84,7 @@ private:
 
 	// stuff needed for audio processing
 	std::vector<std::vector<float>> buffers;  // a two-dimensional array of audio buffers
-	long bufferpos = 0;  // position in the buffer
+	size_t bufferpos = 0;  // position in the buffer
 #endif
 };
 
@@ -110,6 +110,6 @@ private:
 
 	// stuff needed for audio processing
 	std::vector<float> buffer;  // an audio buffer
-	long bufferpos = 0;  // position in the buffer
+	size_t bufferpos = 0;  // position in the buffer
 };
 #endif  // TARGET_PLUGIN_USES_DSPCORE

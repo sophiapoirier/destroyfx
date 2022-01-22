@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -104,12 +104,12 @@ somewhere in the include tree for every file for a DfxPlugin.
 namespace dfx
 {
 	// to indicate "not a real parameter" or something like that
-	constexpr long kParameterID_Invalid = -1;
+	static constexpr long kParameterID_Invalid = -1;
 
-	constexpr size_t kParameterNameMaxLength = 64;
-	constexpr size_t kPresetNameMaxLength = 64;
-	constexpr size_t kParameterValueStringMaxLength = 256;
-	constexpr size_t kParameterUnitStringMaxLength = 256;
+	static constexpr size_t kParameterNameMaxLength = 64;
+	static constexpr size_t kPresetNameMaxLength = 64;
+	static constexpr size_t kParameterValueStringMaxLength = 256;
+	static constexpr size_t kParameterUnitStringMaxLength = 256;
 }
 
 #endif
