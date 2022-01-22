@@ -23,7 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #import "dfxgui-auviewfactory.h"
 
-#import <AudioUnit/AUCocoaUIView.h>
+#import <AudioToolbox/AUCocoaUIView.h>
 #import <Cocoa/Cocoa.h>
 #import <memory>
 
