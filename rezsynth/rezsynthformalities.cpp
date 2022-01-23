@@ -138,13 +138,8 @@ long RezSynth::initialize()
 	mPrevInValue.assign(numChannels, {});
 	mPrevPrevInValue.assign(numChannels, {});
 
-	std::for_each(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), [this, numChannels](auto& channelFilters)
-	{
-		for (unsigned long ch = 0; ch < numChannels; ch++)
-		{
-			channelFilters.emplace_back(getsamplerate());
-		}
-	});
+	std::fill(mLowpassGateFilters.begin(), mLowpassGateFilters.end(),
+			  decltype(mLowpassGateFilters)::value_type(numChannels, dfx::IIRFilter(getsamplerate())));
 
 	return dfx::kStatus_NoError;
 }
@@ -157,10 +152,7 @@ void RezSynth::cleanup()
 	mPrevInValue = {};
 	mPrevPrevInValue = {};
 
-	std::for_each(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), [](auto& channelFilters)
-	{
-		channelFilters = {};
-	});
+	std::fill(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), decltype(mLowpassGateFilters)::value_type{});
 }
 
 //-----------------------------------------------------------------------------------------

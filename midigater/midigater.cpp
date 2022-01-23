@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -60,13 +60,8 @@ MIDIGater::MIDIGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //-----------------------------------------------------------------------------------------
 long MIDIGater::initialize()
 {
-	std::for_each(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), [this](auto& channelFilters)
-	{
-		for (unsigned long ch = 0; ch < getnumoutputs(); ch++)
-		{
-			channelFilters.emplace_back(getsamplerate());
-		}
-	});
+	std::fill(mLowpassGateFilters.begin(), mLowpassGateFilters.end(),
+			  decltype(mLowpassGateFilters)::value_type(getnumoutputs(), dfx::IIRFilter(getsamplerate())));
 
 	return dfx::kStatus_NoError;
 }
@@ -74,10 +69,7 @@ long MIDIGater::initialize()
 //-----------------------------------------------------------------------------------------
 void MIDIGater::cleanup()
 {
-	std::for_each(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), [](auto& channelFilters)
-	{
-		channelFilters = {};
-	});
+	std::fill(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), decltype(mLowpassGateFilters)::value_type{});
 }
 
 //-----------------------------------------------------------------------------------------

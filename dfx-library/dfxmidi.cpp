@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -85,7 +85,7 @@ void DfxMidi::setSampleRate(double inSampleRate)
 	mStolenNoteFadeStep = 1.0f / static_cast<float>(mStolenNoteFadeDur);
 	for (auto& noteAudio : mNoteAudioTable)
 	{
-		std::for_each(noteAudio.mTails.begin(), noteAudio.mTails.end(), [this](auto& tail){ tail.assign(mStolenNoteFadeDur, 0.0f); });
+		std::fill(noteAudio.mTails.begin(), noteAudio.mTails.end(), decltype(noteAudio.mTails)::value_type(mStolenNoteFadeDur, 0.f));
 	}
 }
 
