@@ -292,6 +292,8 @@ public:
 	void initparameter_b(long inParameterIndex, std::vector<std::string_view> const& initNames, 
 						 bool initValue, bool initDefaultValue, 
 						 DfxParam::Unit initUnit = DfxParam::Unit::Generic);
+	void initparameter_b(long inParameterIndex, std::vector<std::string_view> const& initNames, 
+						 bool initDefaultValue, DfxParam::Unit initUnit = DfxParam::Unit::Generic);
 	void initparameter_list(long inParameterIndex, std::vector<std::string_view> const& initNames, 
 							int64_t initValue, int64_t initDefaultValue, 
 							int64_t initNumItems, DfxParam::Unit initUnit = DfxParam::Unit::List, 

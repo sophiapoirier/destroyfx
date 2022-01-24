@@ -43,13 +43,13 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kSepAmount_Octaval, {"band separation (octaval)", "BandSpO", "BndSpO", "BdSO"}, 12.0, 12.0, 0.0, 36.0, DfxParam::Unit::Semitones);
 	initparameter_f(kSepAmount_Linear, {"band separation (linear)", "BandSpL", "BndSpL", "BdSL"}, 1.0, 1.0, 0.0, 3.0, DfxParam::Unit::Scalar);  // % of center frequency
 	initparameter_list(kSepMode, {"separation mode", "SepMode", "SepMod", "SpMd"}, kSeparationMode_Octaval, kSeparationMode_Octaval, kNumSeparationModes);
-	initparameter_b(kFoldover, {"filter frequency aliasing", "Alias"}, false, false);
+	initparameter_b(kFoldover, {"filter frequency aliasing", "Alias"}, false);
 	initparameter_f(kEnvAttack, dfx::MakeParameterNames(dfx::kParameterNames_Attack), 3.0, 3.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
 	initparameter_f(kEnvDecay, {"decay", "Deca"}, 30.0, 30.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
 	initparameter_f(kEnvSustain, {"sustain", "Sustan"}, 100.0, 50.0, 0.0, 100.0, DfxParam::Unit::Percent, DfxParam::Curve::Squared);
 	initparameter_f(kEnvRelease, dfx::MakeParameterNames(dfx::kParameterNames_Release), 300.0, 300.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
 	initparameter_list(kFadeType, {"envelope fades", "EnvFade", "EnvFad", "EnvF"}, DfxEnvelope::kCurveType_Cubed, DfxEnvelope::kCurveType_Cubed, kCurveType_NumTypes);
-	initparameter_b(kLegato, {"legato", "Lgto"}, false, false);
+	initparameter_b(kLegato, {"legato", "Lgto"}, false);
 	initparameter_f(kVelocityInfluence, dfx::MakeParameterNames(dfx::kParameterNames_VelocityInfluence), 60.0, 100.0, 0.0, 100.0, DfxParam::Unit::Percent);
 	initparameter_f(kVelocityCurve, {"velocity curve", "VelCurv", "VelCrv", "VelC"}, 2.0, 1.0, 0.3, 3.0, DfxParam::Unit::Exponent);
 	initparameter_f(kPitchBendRange, dfx::MakeParameterNames(dfx::kParameterNames_PitchBendRange), 3.0, 3.0, 0.0, DfxMidi::kPitchBendSemitonesMax, DfxParam::Unit::Semitones);
@@ -58,7 +58,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kBetweenGain, {"between gain", "BtwenGn", "BtwnGn", "Btwn"}, 0.0, 1.0, 0.0, dfx::math::Db2Linear(12.0), DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
 	initparameter_f(kDryWetMix, dfx::MakeParameterNames(dfx::kParameterNames_DryWetMix), 100.0, 50.0, 0.0, 100.0, DfxParam::Unit::DryWetMix);
 	initparameter_list(kDryWetMixMode, {"dry/wet mix mode", "DW Mode", "DWMode", "DWMd"}, kDryWetMixMode_EqualPower, kDryWetMixMode_Linear, kNumDryWetMixModes);
-	initparameter_b(kWiseAmp, {"careful", "Carefl", "Crfl"}, true, true);
+	initparameter_b(kWiseAmp, {"careful", "Carefl", "Crfl"}, true);
 
 	setparameterenforcevaluelimits(kNumBands, true);
 

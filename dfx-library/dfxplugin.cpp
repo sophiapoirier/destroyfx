@@ -461,6 +461,13 @@ void DfxPlugin::initparameter_b(long inParameterIndex, std::vector<std::string_v
 }
 
 //-----------------------------------------------------------------------------
+void DfxPlugin::initparameter_b(long inParameterIndex, std::vector<std::string_view> const& initNames, 
+								bool initDefaultValue, DfxParam::Unit initUnit)
+{
+	initparameter_b(inParameterIndex, initNames, initDefaultValue, initDefaultValue, initUnit);
+}
+
+//-----------------------------------------------------------------------------
 // this is a shorcut for initializing a parameter that uses integer indexes 
 // into an array, with an array of strings representing its values
 void DfxPlugin::initparameter_list(long inParameterIndex, std::vector<std::string_view> const& initNames, 

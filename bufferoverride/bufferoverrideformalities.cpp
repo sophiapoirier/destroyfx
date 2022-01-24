@@ -45,24 +45,24 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kDivisor, {"buffer divisor", "BufDiv", "BfDv"}, 1.92, 1.92, 1.92, 222.0, DfxParam::Unit::Divisor, DfxParam::Curve::Squared);
 	initparameter_f(kBufferSize_MS, {"forced buffer size (free)", "BufSizF", "BufSzF", "BfSF"}, 90.0, 33.3, 1.0, 999.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
 	initparameter_list(kBufferSize_Sync, {"forced buffer size (sync)", "BufSizS", "BufSzS", "BfSS"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
-	initparameter_b(kBufferTempoSync, {"forced buffer tempo sync", "BufSync", "BufSnc", "BfSc"}, false, false);
-	initparameter_b(kBufferInterrupt, {"buffer interrupt", "BufRupt", "BufInt", "BfIn"}, true, true);
+	initparameter_b(kBufferTempoSync, {"forced buffer tempo sync", "BufSync", "BufSnc", "BfSc"}, false);
+	initparameter_b(kBufferInterrupt, {"buffer interrupt", "BufRupt", "BufInt", "BfIn"}, true);
 	initparameter_f(kDivisorLFORate_Hz, {"divisor LFO rate (free)", "DvLFORF", "DLFORF", "DLRF"}, 0.3, 3.0, 0.03, 21.0, DfxParam::Unit::Hz, DfxParam::Curve::Squared);
 	initparameter_list(kDivisorLFORate_Sync, {"divisor LFO rate (sync)", "DvLFORS", "DLFORS", "DLRS"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
 	initparameter_f(kDivisorLFODepth, {"divisor LFO depth", "DvLFODp", "DvLFOD", "DvLD"}, 0.0, 0.0, 0.0, 100.0, DfxParam::Unit::Percent);
 	initparameter_list(kDivisorLFOShape, {"divisor LFO shape", "DvLFOSh", "DLFOSh", "DLSh"}, 0, 0, dfx::LFO::kNumShapes);
-	initparameter_b(kDivisorLFOTempoSync, {"divisor LFO tempo sync", "DvLFOSc", "DLFOSc", "DLSc"}, false, false);
+	initparameter_b(kDivisorLFOTempoSync, {"divisor LFO tempo sync", "DvLFOSc", "DLFOSc", "DLSc"}, false);
 	initparameter_f(kBufferLFORate_Hz, {"buffer LFO rate (free)", "BfLFORF", "BLFORF", "BLRF"}, 3.0, 3.0, 0.03, 21.0, DfxParam::Unit::Hz, DfxParam::Curve::Exp);//DfxParam::Curve::Squared);
 	initparameter_list(kBufferLFORate_Sync, {"buffer LFO rate (sync)", "BfLFORS", "BLFORS", "BLRS"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
 	initparameter_f(kBufferLFODepth, {"buffer LFO depth", "BfLFODp", "BfLFOD", "BfLD"}, 0.0, 0.0, 0.0, 100.0, DfxParam::Unit::Percent);
 	initparameter_list(kBufferLFOShape, {"buffer LFO shape", "BfLFOSh", "BLFOSh", "BLSh"}, 0, 0, dfx::LFO::kNumShapes);
-	initparameter_b(kBufferLFOTempoSync, {"buffer LFO tempo sync", "BfLFOSc", "BLFOSc", "BLSc"}, false, false);
+	initparameter_b(kBufferLFOTempoSync, {"buffer LFO tempo sync", "BfLFOSc", "BLFOSc", "BLSc"}, false);
 	initparameter_f(kSmooth, {"smooth", "Smth"}, 9.0, 3.0, 0.0, 100.0, DfxParam::Unit::Percent);
 	initparameter_f(kDryWetMix, dfx::MakeParameterNames(dfx::kParameterNames_DryWetMix), 100.0, 50.0, 0.0, 100.0, DfxParam::Unit::DryWetMix);
 	initparameter_f(kPitchBendRange, dfx::MakeParameterNames(dfx::kParameterNames_PitchBendRange), 6.0, 3.0, 0.0, DfxMidi::kPitchBendSemitonesMax, DfxParam::Unit::Semitones);
 	initparameter_list(kMidiMode, dfx::MakeParameterNames(dfx::kParameterNames_MidiMode), kMidiMode_Nudge, kMidiMode_Nudge, kNumMidiModes);
 	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 57.0, 480.0, DfxParam::Unit::BPM);
-	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true, true);
+	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true);
 
 	// set the value strings for the LFO shape parameters
 	for (dfx::LFO::Shape i = 0; i < dfx::LFO::kNumShapes; i++)

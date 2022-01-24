@@ -75,14 +75,14 @@ Turntablist::Turntablist(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kParam_ScratchSpeed_scrub, {"scratch speed (scrub mode)"}, 2.0, 2.0, 0.5, 5.0, DfxParam::Unit::Seconds);
 	initparameter_f(kParam_ScratchSpeed_spin, {"scratch speed (spin mode)"}, 3.0, 3.0, 1.0, 8.0, DfxParam::Unit::Scalar);
 
-	initparameter_b(kParam_Power, {"power"}, true, true);
+	initparameter_b(kParam_Power, {"power"}, true);
 	initparameter_f(kParam_SpinUpSpeed, {"spin up speed"}, 0.063, 0.05, 0.0001, 1.0, DfxParam::Unit::Scalar, DfxParam::Curve::Log);
 	initparameter_f(kParam_SpinDownSpeed, {"spin down speed"}, 0.09, 0.05, 0.0001, 1.0, DfxParam::Unit::Scalar, DfxParam::Curve::Log);
-	initparameter_b(kParam_NotePowerTrack, {"note-power track"}, false, false);
+	initparameter_b(kParam_NotePowerTrack, {"note-power track"}, false);
 
 	initparameter_f(kParam_PitchShift, {"pitch shift"}, 0.0, 0.0, -100.0, 100.0, DfxParam::Unit::Percent);
 	initparameter_f(kParam_PitchRange, {"pitch range"}, 12.0, 12.0, 1.0, 36.0, DfxParam::Unit::Semitones);
-	initparameter_b(kParam_KeyTracking, {"key track"}, false, false);
+	initparameter_b(kParam_KeyTracking, {"key track"}, false);
 	initparameter_i(kParam_RootKey, {"root key"}, k_nRootKey_default, k_nRootKey_default, 0, 0x7F, DfxParam::Unit::Notes);
 
 	initparameter_b(kParam_Loop, {"loop"}, true, false);
@@ -99,10 +99,10 @@ Turntablist::Turntablist(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparametervaluestring(kParam_NoteMode, kNoteMode_Reset, "reset");
 	setparametervaluestring(kParam_NoteMode, kNoteMode_Resume, "resume");
 
-	initparameter_b(kParam_PlayTrigger, {"playback trigger"}, false, false);
+	initparameter_b(kParam_PlayTrigger, {"playback trigger"}, false);
 
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
-	initparameter_b(kParam_Mute, {"mute"}, false, false);
+	initparameter_b(kParam_Mute, {"mute"}, false);
 	initparameter_f(kParam_Volume, {"volume"}, 1.0, 0.5, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
 #endif
 

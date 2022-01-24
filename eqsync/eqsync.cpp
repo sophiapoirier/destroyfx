@@ -40,7 +40,7 @@ EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_list(kRate_Sync, {"rate"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
 	initparameter_f(kSmooth, {"smooth", "Smth"}, 3.0, 33.333, 0.0, 100.0, DfxParam::Unit::Percent);  // % of cycle
 	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 39.0, 480.0, DfxParam::Unit::BPM);
-	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true, true);
+	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true);
 //	for (long i = kA0; i <= kB2; i++)
 	{
 //		initparameter_f(i, {""}, 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);

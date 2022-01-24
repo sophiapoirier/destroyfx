@@ -52,8 +52,8 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_f(kSpeed2, {"2:speed", "2speed", "2spd"}, 1.0, 0.0, -3.0, 6.0, DfxParam::Unit::Octaves);
   initparameter_f(kFeed2, {"2:feedback", "2feedbk", "2fedbk", "2fdb"}, 0.0, 33.3, 0.0, 100.0, DfxParam::Unit::Percent);
   initparameter_list(kQuality, {"quality", "Qualty", "Qlty"}, kQualityMode_UltraHiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes);
-  initparameter_b(kTomsound, {"TOMSOUND", "TomSnd", "Tom7"}, false, false);
-  initparameter_b(kFreeze, dfx::MakeParameterNames(dfx::kParameterNames_Freeze), false, false);
+  initparameter_b(kTomsound, {"TOMSOUND", "TomSnd", "Tom7"}, false);
+  initparameter_b(kFreeze, dfx::MakeParameterNames(dfx::kParameterNames_Freeze), false);
 
   setparameterenforcevaluelimits(kBsize, true);
   setparameterenforcevaluelimits(kDist1, true);

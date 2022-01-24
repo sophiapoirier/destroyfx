@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of Polarizer.
 
@@ -33,7 +33,7 @@ Polarizer::Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 {
 	initparameter_i(kSkip, {"leap"}, 1, 3, 1, 81, DfxParam::Unit::Samples, DfxParam::Curve::Pow);
 	initparameter_f(kAmount, {"polarization strength", "Amount", "Amnt"}, 50.0, 50.0, 0.0, 100.0, DfxParam::Unit::Percent);
-	initparameter_b(kImplode, {"implode", "Implod", "mpld"}, false, false);
+	initparameter_b(kImplode, {"implode", "Implod", "mpld"}, false);
 	setparametercurvespec(kSkip, 1.5);
 
 	setpresetname(0, "twicky");  // default preset name

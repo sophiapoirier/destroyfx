@@ -41,7 +41,7 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_list(kRate_Sync, {"rate (sync)", "RateSnc", "RatSnc", "RtSc"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
 	initparameter_f(kRateRandMin_Hz, {"rate random min (free)", "RatMinF", "RatMnF", "RtMF"}, 3.0, 3.0, 0.3, 21.0, DfxParam::Unit::Hz, DfxParam::Curve::Log);
 	initparameter_list(kRateRandMin_Sync, {"rate random min (sync)", "RatMinS", "RatMnS", "RtMS"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
-	initparameter_b(kTempoSync, dfx::MakeParameterNames(dfx::kParameterNames_TempoSync), false, false);
+	initparameter_b(kTempoSync, dfx::MakeParameterNames(dfx::kParameterNames_TempoSync), false);
 	initparameter_f(kPulsewidth, {"pulsewidth", "PulsWid", "PulsWd", "PlsW"}, 0.5, 0.5, 0.001, 0.999, DfxParam::Unit::Scalar);
 	initparameter_f(kPulsewidthRandMin, {"pulsewidth random min", "PlsWdMn", "PlsWdM", "PlWM"}, 0.5, 0.5, 0.001, 0.999, DfxParam::Unit::Scalar);
 	initparameter_f(kSlope, {"slope", "Slop"}, 3.0, 3.0, 0.0, 300.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
@@ -52,9 +52,9 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kCrossoverFrequency, {"crossover frequency", "RateFre", "RateFr", "RtFr"}, 3'000., 3'000., 20., 20'000., DfxParam::Unit::Hz, DfxParam::Curve::Log);
 	initparameter_list(kCrossoverMode, {"crossover mode", "XovrMod", "XovrMd", "XvrM"}, kCrossoverMode_All, kCrossoverMode_All, kNumCrossoverModes);
 	initparameter_list(kMidiMode, dfx::MakeParameterNames(dfx::kParameterNames_MidiMode), kMidiMode_None, kMidiMode_None, kNumMidiModes);
-	initparameter_b(kVelocity, {"velocity", "Velocty", "Veloct", "Velo"}, false, false);
+	initparameter_b(kVelocity, {"velocity", "Velocty", "Veloct", "Velo"}, false);
 	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 39.0, 480.0, DfxParam::Unit::BPM);
-	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true, true);
+	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true);
 
 	setparameterenforcevaluelimits(kCrossoverFrequency, true);
 

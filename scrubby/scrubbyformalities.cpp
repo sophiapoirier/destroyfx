@@ -42,38 +42,38 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	auto const numTempoRates = mTempoRateTable.getNumRates();
 	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.);
 	initparameter_f(kSeekRange, {"seek range", "SeekRng", "SekRng", "SkRg"}, 333.0, 333.0, 0.3, 6000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
-	initparameter_b(kFreeze, dfx::MakeParameterNames(dfx::kParameterNames_Freeze), false, false);
+	initparameter_b(kFreeze, dfx::MakeParameterNames(dfx::kParameterNames_Freeze), false);
 	initparameter_f(kSeekRate_Hz, {"seek rate (free)", "SekRtFr", "SkRtFr", "SkRF"}, 9.0, 3.0, 0.3, 810.0, DfxParam::Unit::Hz, DfxParam::Curve::Log);//DfxParam::Curve::Cubed
 	initparameter_list(kSeekRate_Sync, {"seek rate (sync)", "SekRtSc", "SkRtSc", "SkRS"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
 	initparameter_f(kSeekRateRandMin_Hz, {"seek rate rand min (free)", "SkRtMnF", "SkRtMF", "SRMF"}, 9.0, 3.0, 0.3, 810.0, DfxParam::Unit::Hz, DfxParam::Curve::Log);//DfxParam::Curve::Cubed
 	initparameter_list(kSeekRateRandMin_Sync, {"seek rate rand min (sync)", "SkRtMnS", "SkRtMS", "SRMS"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
-	initparameter_b(kTempoSync, dfx::MakeParameterNames(dfx::kParameterNames_TempoSync), false, false);
+	initparameter_b(kTempoSync, dfx::MakeParameterNames(dfx::kParameterNames_TempoSync), false);
 	initparameter_f(kSeekDur, {"seek duration", "SeekDur", "SekDur", "SkDr"}, 100.0, 100.0, 3.0, 100.0, DfxParam::Unit::Percent);  // percent of range
 	initparameter_f(kSeekDurRandMin, {"seek dur rand min", "SekDrMn", "SekDrM", "SkDM"}, 100.0, 100.0, 3.0, 100.0, DfxParam::Unit::Percent);  // percent of range
 	initparameter_list(kSpeedMode, {"speeds", "Spee"}, kSpeedMode_Robot, kSpeedMode_Robot, kNumSpeedModes);
-	initparameter_b(kSplitChannels, {"channels split", "Channel", "Chanel", "Chan"}, false, false);
-	initparameter_b(kPitchConstraint, {"pitch constraint", "PtchCon", "PtchCn", "Ptch"}, false, false);
+	initparameter_b(kSplitChannels, {"channels split", "Channel", "Chanel", "Chan"}, false);
+	initparameter_b(kPitchConstraint, {"pitch constraint", "PtchCon", "PtchCn", "Ptch"}, false);
 	// default all notes to off (looks better on the GUI)
 	// no, I changed my mind, at least leave one note on so that the user isn't
 	// confused the first time turning on pitch constraint and getting silence
 	initparameter_b(kPitchStep0, {"semi0 (unity/octave)"}, true, false);
-	initparameter_b(kPitchStep1, {"semi1 (minor 2nd)"}, false, false);
-	initparameter_b(kPitchStep2, {"semi2 (major 2nd)"}, false, false);
-	initparameter_b(kPitchStep3, {"semi3 (minor 3rd)"}, false, false);
-	initparameter_b(kPitchStep4, {"semi4 (major 3rd)"}, false, false);
-	initparameter_b(kPitchStep5, {"semi5 (perfect 4th)"}, false, false);
-	initparameter_b(kPitchStep6, {"semi6 (augmented 4th)"}, false, false);
-	initparameter_b(kPitchStep7, {"semi7 (perfect 5th)"}, false, false);
-	initparameter_b(kPitchStep8, {"semi8 (minor 6th)"}, false, false);
-	initparameter_b(kPitchStep9, {"semi9 (major 6th)"}, false, false);
-	initparameter_b(kPitchStep10, {"semi10 (minor 7th)"}, false, false);
-	initparameter_b(kPitchStep11, {"semi11 (major 7th)"}, false, false);
+	initparameter_b(kPitchStep1, {"semi1 (minor 2nd)"}, false);
+	initparameter_b(kPitchStep2, {"semi2 (major 2nd)"}, false);
+	initparameter_b(kPitchStep3, {"semi3 (minor 3rd)"}, false);
+	initparameter_b(kPitchStep4, {"semi4 (major 3rd)"}, false);
+	initparameter_b(kPitchStep5, {"semi5 (perfect 4th)"}, false);
+	initparameter_b(kPitchStep6, {"semi6 (augmented 4th)"}, false);
+	initparameter_b(kPitchStep7, {"semi7 (perfect 5th)"}, false);
+	initparameter_b(kPitchStep8, {"semi8 (minor 6th)"}, false);
+	initparameter_b(kPitchStep9, {"semi9 (major 6th)"}, false);
+	initparameter_b(kPitchStep10, {"semi10 (minor 7th)"}, false);
+	initparameter_b(kPitchStep11, {"semi11 (major 7th)"}, false);
 	initparameter_i(kOctaveMin, {"octave minimum", "OctvMin", "OctvMn", "8va["}, kOctave_MinValue, kOctave_MinValue, kOctave_MinValue, 0, DfxParam::Unit::Octaves);
 	setparameterusevaluestrings(kOctaveMin, true);
 	initparameter_i(kOctaveMax, {"octave maximum", "OctvMax", "OctvMx", "8va]"}, kOctave_MaxValue, kOctave_MaxValue, 0, kOctave_MaxValue, DfxParam::Unit::Octaves);
 	setparameterusevaluestrings(kOctaveMax, true);
 	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 39.0, 480.0, DfxParam::Unit::BPM);
-	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true, true);
+	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true);
 	initparameter_f(kPredelay, {"predelay", "PreDela", "PreDel", "PDel"}, 0.0, 50.0, 0.0, 100.0, DfxParam::Unit::Percent);  // percent of range
 	initparameter_f(kDryLevel, {"dry level", "DryLevl", "DryLvl", "Dry"}, 0., 0.5, 0., 1., DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
 	initparameter_f(kWetLevel, {"wet level", "WetLevl", "WetLvl", "Wet"}, 1., 0.5, 0., 1., DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);

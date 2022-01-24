@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -62,7 +62,7 @@ DfxStub::DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// parameter ID, parameter name, init value, default value, number of values
 	initparameter_list(kIndexParam, {"list of items parameter"}, kIndexParamState3, kIndexParamState1, kNumIndexParamStates);
 	// parameter ID, parameter name, init value, default value
-	initparameter_b(kBooleanParam, {"forced buffer tempo sync"}, false, false);
+	initparameter_b(kBooleanParam, {"forced buffer tempo sync"}, false);
 
 // next you can set up any custom value displays for indexed parameters
 	// set the value display strings for each state of the indexed parameter

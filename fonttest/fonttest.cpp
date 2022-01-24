@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2021-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of FontTest.
 
@@ -29,5 +29,5 @@ DFX_EFFECT_ENTRY(FontTest)
 FontTest::FontTest(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   : DfxPlugin(inInstance, kNumParameters) {
 
-  initparameter_b(kPlaceholder, {"placeholder", "Phdr"}, false, false);
+  initparameter_b(kPlaceholder, {"placeholder", "Phdr"}, false);
 }
