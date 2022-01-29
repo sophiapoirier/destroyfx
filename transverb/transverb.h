@@ -61,14 +61,12 @@ private:
   static constexpr int mod_bipolar(int value, int modulo);
   static inline double fmod_bipolar(double value, double modulo);
 
-  // these get set to the parameter values
+  // these store the parameter values
   int bsize = 0;
   dfx::SmoothedValue<double> speed1, speed2;
   dfx::SmoothedValue<float> drymix;
   dfx::SmoothedValue<float> mix1, feed1;
-  float dist1 = 0.0f;
   dfx::SmoothedValue<float> mix2, feed2;
-  float dist2 = 0.0f;
   long quality = 0;
   bool tomsound = false;
 
