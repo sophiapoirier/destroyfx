@@ -182,20 +182,20 @@ void TransverbDSP::processparameters() {
       //std::copy_n(std::next(buf2.cbegin(), entryWriter - copyCount), copyCount, std::next(buf2.begin(), writer - copyCount));
     }
     auto const bsize_f = static_cast<double>(bsize);
-    read1 = std::fmod(std::fabs(read1), bsize_f);
-    read2 = std::fmod(std::fabs(read2), bsize_f);
+    read1 = fmod_bipolar(read1, bsize_f);
+    read2 = fmod_bipolar(read2, bsize_f);
   }
 
   if (getparameterchanged(kDist1))
   {
     auto const bsize_f = static_cast<double>(bsize);
-    read1 = std::fmod(std::fabs(static_cast<double>(writer) + static_cast<double>(dist1) * bsize_f), bsize_f);
+    read1 = fmod_bipolar(static_cast<double>(writer) + static_cast<double>(dist1) * bsize_f, bsize_f);
   }
 
   if (getparameterchanged(kDist2))
   {
     auto const bsize_f = static_cast<double>(bsize);
-    read2 = std::fmod(std::fabs(static_cast<double>(writer) + static_cast<double>(dist2) * bsize_f), bsize_f);
+    read2 = fmod_bipolar(static_cast<double>(writer) + static_cast<double>(dist2) * bsize_f, bsize_f);
   }
 
   if (getparameterchanged(kQuality) || getparameterchanged(kTomsound))

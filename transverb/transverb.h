@@ -59,6 +59,7 @@ private:
 
   // negative input values are bumped into non-negative range by incremements of modulo
   static constexpr int mod_bipolar(int value, int modulo);
+  static inline double fmod_bipolar(double value, double modulo);
 
   // these get set to the parameter values
   int bsize = 0;
@@ -134,6 +135,14 @@ constexpr int TransverbDSP::mod_bipolar(int value, int modulo) {
     value += modulo;
   }
   return value % modulo;
+}
+
+inline double TransverbDSP::fmod_bipolar(double value, double modulo) {
+  assert(modulo > 0.);
+  while (value < 0.) {
+    value += modulo;
+  }
+  return std::fmod(value, modulo);
 }
 
 constexpr float TransverbDSP::interpolateHermite(float const* data, double readaddress,

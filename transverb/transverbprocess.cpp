@@ -279,9 +279,9 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       // wrap around the rw heads if they've gone past the end of the buffer
       writer %= bsize;
       if (read1 >= bsize_float)
-        read1 = std::fmod(std::fabs(read1), bsize_float);
+        read1 = fmod_bipolar(read1, bsize_float);
       if (read2 >= bsize_float)
-        read2 = std::fmod(std::fabs(read2), bsize_float);
+        read2 = fmod_bipolar(read2, bsize_float);
 
       // if we're doing IIR lowpass filtering,
       // then we probably need to process a few consecutive samples in order
@@ -445,9 +445,9 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
     read2 += speed2.getValue() * tomsoundMultiple_float;
 
     if (read1 >= bsize_float)
-      read1 = std::fmod(std::fabs(read1), bsize_float);
+      read1 = fmod_bipolar(read1, bsize_float);
     if (read2 >= bsize_float)
-      read2 = std::fmod(std::fabs(read2), bsize_float);
+      read2 = fmod_bipolar(read2, bsize_float);
 
     /* make output */
     outAudio[j] = (inAudio[j] * drymix.getValue()) + r1val + r2val;
