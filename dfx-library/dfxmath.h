@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -64,7 +64,7 @@ true;
 
 //-----------------------------------------------------------------------------
 template <typename OutputT = size_t, typename InputT>
-constexpr OutputT ToIndex(InputT inValue)
+constexpr OutputT ToIndex(InputT inValue) noexcept
 {
 	static_assert(std::is_integral_v<InputT> && std::is_signed_v<InputT>);
 	static_assert(std::is_integral_v<OutputT> && std::is_unsigned_v<OutputT>);
@@ -81,7 +81,7 @@ constexpr OutputT RoundToIndex(InputT inValue)
 
 //-----------------------------------------------------------------------------
 template <typename T>
-constexpr auto ToSigned(T inValue)
+constexpr auto ToSigned(T inValue) noexcept
 {
 	static_assert(std::is_integral_v<T>);
 	static_assert(std::is_unsigned_v<T>);
@@ -93,7 +93,7 @@ constexpr auto ToSigned(T inValue)
 
 //-----------------------------------------------------------------------------
 template <typename T>
-constexpr auto ToUnsigned(T inValue)
+constexpr auto ToUnsigned(T inValue) noexcept
 {
 	static_assert(std::is_integral_v<T>);
 	static_assert(std::is_signed_v<T>);
@@ -196,7 +196,7 @@ constexpr float InterpolateHermite(float const* inData, double inAddress, long i
 }
 
 //-----------------------------------------------------------------------------
-constexpr float InterpolateHermite_NoWrap(float* inData, double inAddress, long inBufferSize)
+constexpr float InterpolateHermite_NoWrap(float const* inData, double inAddress, long inBufferSize)
 {
 	auto const pos = static_cast<long>(inAddress);
 	auto const posFract = static_cast<float>(inAddress - static_cast<double>(pos));

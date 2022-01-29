@@ -22,6 +22,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 #include <array>
+#include <cassert>
+#include <cmath>
 #include <cstdint>
 #include <vector>
 
@@ -47,13 +49,16 @@ private:
 
   enum class FilterMode { Nothing, Highpass, LowpassIIR, LowpassFIR };
 
-  static constexpr float interpolateHermite(float* data, double address, int arraysize, int danger);
+  static constexpr float interpolateHermite(float const* data, double readaddress, int arraysize, int writeaddress);
   // uses only the fractional portion of the address
   static constexpr float interpolateLinear(float value1, float value2, double address)
   {
     auto const posFract = static_cast<float>(std::fmod(address, 1.));
     return (value1 * (1.0f - posFract)) + (value2 * posFract);
   }
+
+  // negative input values are bumped into non-negative range by incremements of modulo
+  static constexpr int mod_bipolar(int value, int modulo);
 
   // these get set to the parameter values
   int bsize = 0;
@@ -123,17 +128,25 @@ private:
 };
 
 
-constexpr float TransverbDSP::interpolateHermite(float* data, double address,
-                                                 int arraysize, int danger) {
+constexpr int TransverbDSP::mod_bipolar(int value, int modulo) {
+  assert(modulo > 0);
+  while (value < 0) {
+    value += modulo;
+  }
+  return value % modulo;
+}
+
+constexpr float TransverbDSP::interpolateHermite(float const* data, double readaddress,
+                                                 int arraysize, int writeaddress) {
   int posMinus1 = 0, posPlus1 = 0, posPlus2 = 0;
 
-  auto const pos = static_cast<int>(address);
-  auto const posFract = static_cast<float>(address - static_cast<double>(pos));
+  auto const pos = static_cast<int>(readaddress);
+  auto const posFract = static_cast<float>(readaddress - static_cast<double>(pos));
 
   // because the readers and writer are not necessarily aligned,
   // upcoming or previous samples could be discontiguous, in which case
   // just "interpolate" with repeated samples
-  switch (danger) {
+  switch (mod_bipolar(writeaddress - pos, arraysize)) {
     case 0:  // the previous sample is bogus
       posMinus1 = pos;
       posPlus1 = (pos + 1) % arraysize;
@@ -164,7 +177,7 @@ constexpr float TransverbDSP::interpolateHermite(float* data, double address,
 }
 
 /*
-constexpr float TransverbDSP::interpolateHermitePostLowpass(float* data, float address) {
+constexpr float TransverbDSP::interpolateHermitePostLowpass(float const* data, float address) {
   auto const pos = static_cast<int>(address);
   float const posFract = address - static_cast<float>(pos);
 
@@ -177,13 +190,13 @@ constexpr float TransverbDSP::interpolateHermitePostLowpass(float* data, float a
   return (((a * posFract) + b) * posFract + c) * posFract + data[1];
 }
 
-constexpr float TransverbDSP::interpolateLinear(float* data, double address,
-                                                int arraysize, int danger) {
+constexpr float TransverbDSP::interpolateLinear(float const* data, double readaddress,
+                                                int arraysize, int writeaddress) {
 	int posPlus1 = 0;
-	auto const pos = static_cast<int>(address);
-	auto const posFract = static_cast<float>(address - static_cast<double>(pos));
+	auto const pos = static_cast<int>(readaddress);
+	auto const posFract = static_cast<float>(readaddress - static_cast<double>(pos));
 
-	if (danger == 1) {
+	if (mod_bipolar(writeaddress - pos, arraysize) == 1) {
 		// the upcoming sample is not contiguous because
 		// the write head is about to write to it
 		posPlus1 = pos;
