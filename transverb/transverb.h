@@ -43,11 +43,31 @@ public:
   void processparameters() override;
 
 private:
-  static constexpr long kAudioSmoothingDur_samples = 42;
+  static constexpr int kAudioSmoothingDur_samples = 42;
   static constexpr double kHighpassFilterCutoff = 39.;
   static constexpr size_t kNumFIRTaps = 23;
+  static constexpr double kFIRSpeedThreshold = 5.;
+  static constexpr double kUnitySpeed = 1.;
 
-  enum class FilterMode { Nothing, Highpass, LowpassIIR, LowpassFIR };
+  enum class FilterMode { None, Highpass, LowpassIIR, LowpassFIR };
+
+  struct Head {
+    dfx::SmoothedValue<double> speed;
+    dfx::SmoothedValue<float> mix, feed;
+
+    double read = 0.;
+    std::vector<float> buf;
+
+    dfx::IIRFilter filter;
+    std::array<float, kNumFIRTaps> firCoefficients {};
+    bool speedHasChanged = false;
+
+    int smoothcount = 0;
+    float smoothstep = 0.f;
+    float lastdelayval = 0.f;
+
+    void reset();
+  };
 
   static constexpr float interpolateHermite(float const* data, double readaddress, int arraysize, int writeaddress);
   // uses only the fractional portion of the address
@@ -63,29 +83,15 @@ private:
 
   // these store the parameter values
   int bsize = 0;
-  dfx::SmoothedValue<double> speed1, speed2;
   dfx::SmoothedValue<float> drymix;
-  dfx::SmoothedValue<float> mix1, feed1;
-  dfx::SmoothedValue<float> mix2, feed2;
   long quality = 0;
   bool tomsound = false;
 
   int writer = 0;
-  double read1 = 0.0, read2 = 0.0;
+  std::array<Head, dfx::TV::kNumDelays> heads;
 
-  std::vector<float> buf1;
-  std::vector<float> buf2;
   int const MAXBUF;  // the size of the audio buffer (dependent on sampling rate)
 
-  dfx::IIRFilter filter1, filter2;
-  bool speed1hasChanged = false, speed2hasChanged = false;
-
-  int smoothcount1 = 0, smoothcount2 = 0;
-  int smoothdur1 = 0, smoothdur2 = 0;
-  float smoothstep1 = 0.0f, smoothstep2 = 0.0f;
-  float lastr1val = 0.0f, lastr2val = 0.0f;
-
-  std::array<float, kNumFIRTaps> firCoefficients1 {}, firCoefficients2 {};
   std::vector<float> const firCoefficientsWindow;
 };
 

@@ -102,32 +102,31 @@ TransverbDSP::TransverbDSP(DfxPlugin* inDfxPlugin)
     MAXBUF(static_cast<int>(getparametermax_f(kBsize) * 0.001 * getsamplerate())),
     firCoefficientsWindow(dfx::FIRFilter::generateKaiserWindow(kNumFIRTaps, 60.0f)) {
 
-  buf1.assign(MAXBUF, 0.0f);
-  buf2.assign(MAXBUF, 0.0f);
-
-  registerSmoothedAudioValue(&speed1);
-  registerSmoothedAudioValue(&speed2);
   registerSmoothedAudioValue(&drymix);
-  registerSmoothedAudioValue(&mix1);
-  registerSmoothedAudioValue(&feed1);
-  registerSmoothedAudioValue(&mix2);
-  registerSmoothedAudioValue(&feed2);
+
+  for (auto& head : heads) {
+    head.buf.assign(MAXBUF, 0.f);
+    head.filter.setSampleRate(getsamplerate());
+    registerSmoothedAudioValue(&head.speed);
+    registerSmoothedAudioValue(&head.mix);
+    registerSmoothedAudioValue(&head.feed);
+  }
 }
 
 
 void TransverbDSP::reset() {
 
-  smoothcount1 = smoothcount2 = 0;
-  lastr1val = lastr2val = 0.0f;
-  filter1.reset();
-  filter2.reset();
-  speed1hasChanged = speed2hasChanged = true;
+  std::for_each(heads.begin(), heads.end(), [](Head& head){ head.reset(); });
+}
 
-  filter1.setSampleRate(getsamplerate());
-  filter2.setSampleRate(getsamplerate());
+void TransverbDSP::Head::reset() {
 
-  std::fill(buf1.begin(), buf1.end(), 0.0f);
-  std::fill(buf2.begin(), buf2.end(), 0.0f);
+  smoothcount = 0;
+  lastdelayval = 0.f;
+  filter.reset();
+  speedHasChanged = true;
+
+  std::fill(buf.begin(), buf.end(), 0.f);
 }
 
 
@@ -141,47 +140,54 @@ void TransverbDSP::processparameters() {
     drymix = *value * dryGainScalar;
   }
   if (auto const value = getparameterifchanged_f(kMix1))
-    mix1 = *value;
+  {
+    heads[0].mix = *value;
+  }
   if (auto const value = getparameterifchanged_f(kSpeed1))
   {
-    speed1 = std::pow(2.0, *value);
-    speed1hasChanged = true;
+    heads[0].speed = std::pow(2., *value);
+    heads[0].speedHasChanged = true;
   }
   if (auto const value = getparameterifchanged_scalar(kFeed1))
-    feed1 = *value;
+  {
+    heads[0].feed = *value;
+  }
   if (auto const value = getparameterifchanged_f(kMix2))
-    mix2 = *value;
+  {
+    heads[1].mix = *value;
+  }
   if (auto const value = getparameterifchanged_f(kSpeed2))
   {
-    speed2 = std::pow(2.0, *value);
-    speed2hasChanged = true;
+    heads[1].speed = std::pow(2., *value);
+    heads[1].speedHasChanged = true;
   }
   if (auto const value = getparameterifchanged_scalar(kFeed2))
-    feed2 = *value;
+  {
+    heads[1].feed = *value;
+  }
   quality = getparameter_i(kQuality);
   tomsound = getparameter_b(kTomsound);
 
   if (auto const value = getparameterifchanged_f(kBsize))
   {
-    auto const entryBsize = std::exchange(bsize, std::clamp((int) (*value * getsamplerate() * 0.001), 1, MAXBUF));
+    auto const entryBsize = std::exchange(bsize, std::clamp(static_cast<int>(*value * getsamplerate() * 0.001), 1, MAXBUF));
     // the commented-out logic below is the beginning of an attempt to clean up the buffer states
     // when the buffer resizes, however the tidiness maybe feels counter to the spirit of Transverb?
     if (bsize > entryBsize)
     {
-      //std::fill(std::next(buf1.begin(), entryBsize), std::next(buf1.begin(), bsize), 0.0f);
-      //std::fill(std::next(buf2.begin(), entryBsize), std::next(buf2.begin(), bsize), 0.0f);
+      //std::fill(std::next(heads[0].buf.begin(), entryBsize), std::next(heads[0].buf.begin(), bsize), 0.f);
+      //std::fill(std::next(heads[1].buf.begin(), entryBsize), std::next(heads[1].buf.begin(), bsize), 0.f);
     }
     else if (writer > bsize)
     {
       //auto const entryWriter = writer;
       writer %= bsize;
       //auto const copyCount = std::min(entryBsize - bsize, writer);
-      //std::copy_n(std::next(buf1.cbegin(), entryWriter - copyCount), copyCount, std::next(buf1.begin(), writer - copyCount));
-      //std::copy_n(std::next(buf2.cbegin(), entryWriter - copyCount), copyCount, std::next(buf2.begin(), writer - copyCount));
+      //std::copy_n(std::next(heads[0].buf.cbegin(), entryWriter - copyCount), copyCount, std::next(heads[0].buf.begin(), writer - copyCount));
+      //std::copy_n(std::next(heads[1].buf.cbegin(), entryWriter - copyCount), copyCount, std::next(heads[1].buf.begin(), writer - copyCount));
     }
     auto const bsize_f = static_cast<double>(bsize);
-    read1 = fmod_bipolar(read1, bsize_f);
-    read2 = fmod_bipolar(read2, bsize_f);
+    std::for_each(heads.begin(), heads.end(), [bsize_f](Head& head){ head.read = fmod_bipolar(head.read, bsize_f); });
   }
 
   auto const calculatedist = [this](double dist)
@@ -191,23 +197,29 @@ void TransverbDSP::processparameters() {
   };
   if (auto const dist = getparameterifchanged_f(kDist1))
   {
-    read1 = calculatedist(*dist);
+    heads[0].read = calculatedist(*dist);
   }
   if (auto const dist = getparameterifchanged_f(kDist2))
   {
-    read2 = calculatedist(*dist);
+    heads[1].read = calculatedist(*dist);
   }
 
   if (getparameterchanged(kQuality) || getparameterchanged(kTomsound))
-    speed1hasChanged = speed2hasChanged = true;
+  {
+    std::for_each(heads.begin(), heads.end(), [](Head& head){ head.speedHasChanged = true; });
+  }
 
   // stereo-split-heads mode (head 1 goes to left output and 2 to right)
   if (getplugin()->asymmetricalchannels())
   {
     if (GetChannelNum() == 0)
-      mix2.setValueNow(getparametermin_f(kMix2));
+    {
+      heads[1].mix.setValueNow(getparametermin_f(kMix2));
+    }
     else if (GetChannelNum() == 1)
-      mix1.setValueNow(getparametermin_f(kMix1));
+    {
+      heads[0].mix.setValueNow(getparametermin_f(kMix1));
+    }
   }
 }
 

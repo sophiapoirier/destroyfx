@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "transverb.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 #include "dfxmath.h"
@@ -34,8 +35,8 @@ using namespace dfx::TV;
 
 void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long numSampleFrames) {
 
-  float r1val {}, r2val {};  // delay buffer output values
-  auto const bsize_float = (double)bsize;  // cut down on casting
+  std::array<float, dfx::TV::kNumDelays> delayvals {};  // delay buffer output values
+  auto const bsize_float = static_cast<double>(bsize);  // cut down on casting
   auto const freeze = getparameter_b(kFreeze);
   int const writerIncrement = freeze ? 0 : 1;
 
@@ -44,346 +45,225 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
   // do it proper
   if (!tomsound) {
 
-    /// audio processing loop ///
-
     auto const samplerate = getsamplerate();
-    // int versions of these float values, for reducing casting operations
-    int speed1int {}, speed2int {};
-    // position trackers for the lowpass filters
-    int lowpass1pos {}, lowpass2pos {};
-    // the type of filtering to use in ultra hi-fi mode
-    FilterMode filterMode1 = FilterMode::Nothing, filterMode2 = FilterMode::Nothing;
-    // make-up gain for lowpass filtering
-    float mug1 = 1.0f, mug2 = 1.0f;
     auto const speedSmoothingStride = dfx::math::GetFrequencyBasedSmoothingStride(samplerate);
+    // int versions of these float values, for reducing casting operations
+    std::array<int, dfx::TV::kNumDelays> speed_ints {};
+    // position trackers for the lowpass filters
+    std::array<int, dfx::TV::kNumDelays> lowpasspos {};
+    // the type of filtering to use in ultra hi-fi mode
+    std::array<FilterMode, dfx::TV::kNumDelays> filtermodes {};
+    filtermodes.fill(FilterMode::None);
+    // make-up gain for lowpass filtering
+    std::array<float, dfx::TV::kNumDelays> mugs {};
+    mugs.fill(1.f);
 
-    for(unsigned long i = 0; i < numSampleFrames; i++) {  // samples loop
+    for (unsigned long i = 0; i < numSampleFrames; i++)  // samples loop
+    {
+      bool const firstSample = (i == 0);
+      bool const speedSmoothingStrideHit = ((i % speedSmoothingStride) == 0);
+      float delaysum = 0.f;
 
-      /// filter setup stuff ///
-      if (quality == kQualityMode_UltraHiFi)
+      for (size_t h = 0; h < dfx::TV::kNumDelays; h++)  // delay heads loop
       {
-        bool const firstSample = (i == 0);
-        bool const speedSmoothingStrideHit = ((i % speedSmoothingStride) == 0);
+        auto const read_int = static_cast<int>(heads[h].read);
 
-        if (firstSample || (speed1.isSmoothing() && speedSmoothingStrideHit))
+        // filter setup
+        if (quality == kQualityMode_UltraHiFi)
         {
-          lowpass1pos = (int)read1;
-          // check to see if we need to lowpass the first delay head and init coefficients if so
-          if (speed1.getValue() > 1.0)
+          if (firstSample || (heads[h].speed.isSmoothing() && speedSmoothingStrideHit))
           {
-            filterMode1 = FilterMode::LowpassIIR;
-            speed1int = (int)speed1.getValue();
-            // it becomes too costly to try to IIR at > 5x speeds, so switch to FIR filtering
-            if (speed1int >= 5)
+            lowpasspos[h] = read_int;
+            // check to see if we need to lowpass the first delay head and init coefficients if so
+            if (heads[h].speed.getValue() > kUnitySpeed)
             {
-              filterMode1 = FilterMode::LowpassFIR;
-              mug1 = (float) std::pow(speed1.getValue() * 0.2, 0.78);  // compensate for gain lost from filtering
-              // update the coefficients only if necessary
-              if (std::exchange(speed1hasChanged, false))
+              filtermodes[h] = FilterMode::LowpassIIR;
+              speed_ints[h] = static_cast<int>(heads[h].speed.getValue());
+              // it becomes too costly to try to IIR at higher speeds, so switch to FIR filtering
+              if (heads[h].speed.getValue() >= kFIRSpeedThreshold)
               {
-                dfx::FIRFilter::calculateIdealLowpassCoefficients((samplerate / speed1.getValue()) * dfx::FIRFilter::kShelfStartLowpass,
-                                                                  samplerate, kNumFIRTaps, firCoefficients1.data(),
-                                                                  firCoefficientsWindow.data());
-                filter1.reset();
+                filtermodes[h] = FilterMode::LowpassFIR;
+                // compensate for gain lost from filtering
+                mugs[h] = static_cast<float>(std::pow(heads[h].speed.getValue() / kFIRSpeedThreshold, 0.78));
+                // update the coefficients only if necessary
+                if (std::exchange(heads[h].speedHasChanged, false))
+                {
+                  dfx::FIRFilter::calculateIdealLowpassCoefficients((samplerate / heads[h].speed.getValue()) * dfx::FIRFilter::kShelfStartLowpass,
+                                                                    samplerate, kNumFIRTaps, heads[h].firCoefficients.data(),
+                                                                    firCoefficientsWindow.data());
+                  heads[h].filter.reset();
+                }
+              }
+              else if (std::exchange(heads[h].speedHasChanged, false))
+              {
+                heads[h].filter.setLowpassCoefficients((samplerate / heads[h].speed.getValue()) * dfx::IIRFilter::kShelfStartLowpass);
               }
             }
-            else if (std::exchange(speed1hasChanged, false))
+            // we need to highpass the delay head to remove mega sub bass
+            else
             {
-              filter1.setLowpassCoefficients((samplerate / speed1.getValue()) * dfx::IIRFilter::kShelfStartLowpass);
-            }
-          }
-          // we need to highpass the delay head to remove mega sub bass
-          else
-          {
-            filterMode1 = FilterMode::Highpass;
-            if (std::exchange(speed1hasChanged, false))
-            {
-              filter1.setHighpassCoefficients(kHighpassFilterCutoff / speed1.getValue());
-            }
-          }
-        }
-
-        if (firstSample || (speed2.isSmoothing() && speedSmoothingStrideHit))
-        {
-          lowpass2pos = (int)read2;
-          // check to see if we need to lowpass the second delay head and init coefficients if so
-          if (speed2.getValue() > 1.0)
-          {
-            filterMode2 = FilterMode::LowpassIIR;
-            speed2int = (int)speed2.getValue();
-            if (speed2int >= 5)
-            {
-              filterMode2 = FilterMode::LowpassFIR;
-              mug2 = (float) std::pow(speed2.getValue() * 0.2, 0.78);  // compensate for gain lost from filtering
-              if (std::exchange(speed2hasChanged, false))
+              filtermodes[h] = FilterMode::Highpass;
+              if (std::exchange(heads[h].speedHasChanged, false))
               {
-                dfx::FIRFilter::calculateIdealLowpassCoefficients((samplerate / speed2.getValue()) * dfx::FIRFilter::kShelfStartLowpass,
-                                                                  samplerate, kNumFIRTaps, firCoefficients2.data(),
-                                                                  firCoefficientsWindow.data());
-                filter2.reset();
+                heads[h].filter.setHighpassCoefficients(kHighpassFilterCutoff / heads[h].speed.getValue());
               }
             }
-            else if (std::exchange(speed2hasChanged, false))
-            {
-              filter2.setLowpassCoefficients((samplerate / speed2.getValue()) * dfx::IIRFilter::kShelfStartLowpass);
-            }
-          }
-          // we need to highpass the delay head to remove mega sub bass
-          else
-          {
-            filterMode2 = FilterMode::Highpass;
-            if (std::exchange(speed2hasChanged, false))
-            {
-              filter2.setHighpassCoefficients(kHighpassFilterCutoff / speed2.getValue());
-            }
           }
         }
-      }
 
-      auto read1int = (int)read1;
-      auto read2int = (int)read2;
-
-      /* read from read heads */
-      switch(quality)
-      {
-        // no interpolation or filtering
-        case kQualityMode_DirtFi:
-        default:
-          r1val = buf1[read1int];
-          r2val = buf2[read2int];
-          break;
-        // spline interpolation, but no filtering
-        case kQualityMode_HiFi:
-          //r1val = interpolateLinear(buf1.data(), read1, bsize, writer);
-          r1val = interpolateHermite(buf1.data(), read1, bsize, writer);
-          r2val = interpolateHermite(buf2.data(), read2, bsize, writer);
-          break;
-        // spline interpolation plus anti-aliasing lowpass filtering for high speeds
-        // or sub-bass-removing highpass filtering for low speeds
-        case kQualityMode_UltraHiFi:
-          switch (filterMode1)
-          {
-            case FilterMode::Highpass:
-            case FilterMode::LowpassIIR:
-              // interpolate the values in the IIR output history
-              r1val = filter1.interpolateHermitePostFilter(read1);
-              break;
-            case FilterMode::LowpassFIR:
+        // read from read heads
+        switch (quality)
+        {
+          // no interpolation or filtering
+          case kQualityMode_DirtFi:
+          default:
+            delayvals[h] = heads[h].buf[read_int];
+            break;
+          // spline interpolation, but no filtering
+          case kQualityMode_HiFi:
+            //delayvals[h] = interpolateLinear(heads[h].buf.data(), heads[h].read, bsize, writer);
+            delayvals[h] = interpolateHermite(heads[h].buf.data(), heads[h].read, bsize, writer);
+            break;
+          // spline interpolation plus anti-aliasing lowpass filtering for high speeds
+          // or sub-bass-removing highpass filtering for low speeds
+          case kQualityMode_UltraHiFi:
+            switch (filtermodes[h])
             {
-              // get two consecutive FIR output values for linear interpolation
-              auto const lp1 = dfx::FIRFilter::process(buf1.data(), kNumFIRTaps, firCoefficients1.data(),
-                                                       mod_bipolar(read1int - static_cast<int>(kNumFIRTaps), bsize), bsize);
-              auto const lp2 = dfx::FIRFilter::process(buf1.data(), kNumFIRTaps, firCoefficients1.data(),
-                                                       mod_bipolar(read1int - static_cast<int>(kNumFIRTaps) + 1, bsize), bsize);
-              // interpolate output linearly (avoid shit sound) and compensate gain
-              r1val = interpolateLinear(lp1, lp2, read1) * mug1;
-              break;
+              case FilterMode::Highpass:
+              case FilterMode::LowpassIIR:
+                // interpolate the values in the IIR output history
+                delayvals[h] = heads[h].filter.interpolateHermitePostFilter(heads[h].read);
+                break;
+              case FilterMode::LowpassFIR:
+              {
+                // get two consecutive FIR output values for linear interpolation
+                auto const lp1 = dfx::FIRFilter::process(heads[h].buf.data(), kNumFIRTaps, heads[h].firCoefficients.data(),
+                                                         mod_bipolar(read_int - static_cast<int>(kNumFIRTaps), bsize), bsize);
+                auto const lp2 = dfx::FIRFilter::process(heads[h].buf.data(), kNumFIRTaps, heads[h].firCoefficients.data(),
+                                                         mod_bipolar(read_int - static_cast<int>(kNumFIRTaps) + 1, bsize), bsize);
+                // interpolate output linearly (avoid shit sound) and compensate gain
+                delayvals[h] = interpolateLinear(lp1, lp2, heads[h].read) * mugs[h];
+                break;
+              }
+              default:
+                delayvals[h] = interpolateHermite(heads[h].buf.data(), heads[h].read, bsize, writer);
+                break;
             }
-            default:
-              r1val = interpolateHermite(buf1.data(), read1, bsize, writer);
-              break;
+            break;
+        }  // end of quality switch
+
+        // crossfade the last stored smoothing sample with
+        // the current sample if smoothing is in progress
+        if (heads[h].smoothcount > 0) {
+          auto const smoothpos = heads[h].smoothstep * static_cast<float>(heads[h].smoothcount);
+          delayvals[h] = (delayvals[h] * (1.f - smoothpos)) + (heads[h].lastdelayval * smoothpos);
+          heads[h].smoothcount--;
+        }
+
+        // then write into buffer (w/ feedback)
+        if (!freeze) {
+          heads[h].buf[writer] = inAudio[i] + (delayvals[h] * heads[h].feed.getValue() * heads[h].mix.getValue());
+        }
+
+        // make output
+        delaysum += delayvals[h] * heads[h].mix.getValue();
+
+        // start smoothing if the writer has passed a reader or vice versa,
+        // though not if reader and writer move at the same speed
+        // (check the positions before wrapping around the heads)
+        auto const nextRead = static_cast<int>(heads[h].read + heads[h].speed.getValue());
+        auto const nextWrite = writer + 1;
+        bool const readCrossingAhead = (read_int < writer) && (nextRead >= nextWrite);
+        bool const readCrossingBehind = (read_int >= writer) && (nextRead <= nextWrite);
+        bool const speedIsUnity = heads[h].speed.getValue() == kUnitySpeed;
+        if ((readCrossingAhead || readCrossingBehind) && !speedIsUnity) {
+          // check because, at slow speeds, it's possible to go into this twice or more in a row
+          if (heads[h].smoothcount <= 0) {
+            // store the most recent output as the head's smoothing sample
+            heads[h].lastdelayval = delayvals[h];
+            // truncate the smoothing duration if we're using too small of a buffer size
+            auto const bufferReadSteps = static_cast<int>(bsize_float / heads[h].speed.getValue());
+            auto const smoothdur = std::min(bufferReadSteps, kAudioSmoothingDur_samples);
+            heads[h].smoothstep = 1.f / static_cast<float>(smoothdur);  // the scalar step value
+            heads[h].smoothcount = smoothdur;  // set the counter to the total duration
           }
-          switch (filterMode2)
+        }
+
+        // update read heads, wrapping around if they have gone past the end of the buffer
+        heads[h].read += heads[h].speed.getValue();
+        if (heads[h].read >= bsize_float) {
+          heads[h].read = fmod_bipolar(heads[h].read, bsize_float);
+        }
+
+        // if we're doing IIR lowpass filtering,
+        // then we probably need to process a few consecutive samples in order
+        // to get the continuous impulse (or whatever you call that),
+        // probably whatever the speed multiplier is, that's how many samples
+        if (filtermodes[h] == FilterMode::LowpassIIR)
+        {
+          int lowpasscount = 0;
+          while (lowpasscount < speed_ints[h])
           {
-            case FilterMode::Highpass:
-            case FilterMode::LowpassIIR:
-              // interpolate the values in the IIR output history
-              r2val = filter2.interpolateHermitePostFilter(read2);
-              break;
-            case FilterMode::LowpassFIR:
+            switch (speed_ints[h] - lowpasscount)
             {
-              // get two consecutive FIR output values for linear interpolation
-              auto const lp1 = dfx::FIRFilter::process(buf2.data(), kNumFIRTaps, firCoefficients2.data(),
-                                                       mod_bipolar(read2int - static_cast<int>(kNumFIRTaps), bsize), bsize);
-              auto const lp2 = dfx::FIRFilter::process(buf2.data(), kNumFIRTaps, firCoefficients2.data(),
-                                                       mod_bipolar(read2int - static_cast<int>(kNumFIRTaps) + 1, bsize), bsize);
-              // interpolate output linearly (avoid shit sound) and compensate gain
-              r2val = interpolateLinear(lp1, lp2, read2) * mug2;
-              break;
+              case 1:
+                heads[h].filter.processToCacheH1(heads[h].buf[lowpasspos[h]]);
+                lowpasspos[h] = (lowpasspos[h] + 1) % bsize;
+                lowpasscount++;
+                break;
+              case 2:
+                heads[h].filter.processToCacheH2(heads[h].buf.data(), lowpasspos[h], bsize);
+                lowpasspos[h] = (lowpasspos[h] + 2) % bsize;
+                lowpasscount += 2;
+                break;
+              case 3:
+                heads[h].filter.processToCacheH3(heads[h].buf.data(), lowpasspos[h], bsize);
+                lowpasspos[h] = (lowpasspos[h] + 3) % bsize;
+                lowpasscount += 3;
+                break;
+              default:
+                heads[h].filter.processToCacheH4(heads[h].buf.data(), lowpasspos[h], bsize);
+                lowpasspos[h] = (lowpasspos[h] + 4) % bsize;
+                lowpasscount += 4;
+                break;
             }
-            default:
-              r2val = interpolateHermite(buf2.data(), read2, bsize, writer);
-              break;
           }
-          break;
-      }  // end of quality switch
-
-      // crossfade the last stored smoothing sample with
-      // the current sample if smoothing is in progress
-      if (smoothcount1) {
-        r1val = (r1val * (1.0f - (smoothstep1 * (float)smoothcount1)))
-                + (lastr1val * smoothstep1 * (float)smoothcount1);
-        smoothcount1--;
-      }
-      if (smoothcount2) {
-        r2val = (r2val * (1.0f - (smoothstep2 * (float)smoothcount2)))
-                + (lastr2val * smoothstep2 * (float)smoothcount2);
-        smoothcount2--;
-      }
-
-      /* then write into buffer (w/ feedback) */
-      if (!freeze) {
-        buf1[writer] = inAudio[i] + (r1val * feed1.getValue() * mix1.getValue());
-        buf2[writer] = inAudio[i] + (r2val * feed2.getValue() * mix2.getValue());
-      }
-
-      /* make output */
-      outAudio[i] = (inAudio[i] * drymix.getValue()) + (r1val * mix1.getValue()) + (r2val * mix2.getValue());
-
-      /* start smoothing stuff if the writer has
-         passed a reader or vice versa, though not
-         if reader and writer move at the same speed
-           (check the positions before wrapping around the heads)
-      */
-
-      bool const read1CrossingAhead = (read1int < writer) && (((int)(read1 + speed1.getValue())) >= (writer + 1));
-      bool const read1CrossingBehind = (read1int >= writer) && (((int)(read1 + speed1.getValue())) <= (writer + 1));
-      bool const speed1IsUnity = speed1.getValue() == 1.0f;
-      if ((read1CrossingAhead || read1CrossingBehind) && !speed1IsUnity) {
-      /* check because, at slow speeds,
-      it's possible to go into this twice or more in a row */
-        if (smoothcount1 <= 0) {
-          // store the most recent output as the channel 1 smoothing sample
-          lastr1val = r1val;
-          // truncate the smoothing duration if we're using too small of a buffer size
-          smoothdur1 =
-            (kAudioSmoothingDur_samples > (int)(bsize_float / speed1.getValue())) ?
-            (int)(bsize_float / speed1.getValue()) : kAudioSmoothingDur_samples;
-          smoothstep1 = 1.0f / (float)smoothdur1;  // the scalar step value
-          smoothcount1 = smoothdur1;  // set the counter to the total duration
+          auto const nextread_int = static_cast<int>(heads[h].read);
+          // check whether we need to consume one more sample
+          bool const extrasample = ((lowpasspos[h] < nextread_int) && ((lowpasspos[h] + 1) == nextread_int)) ||
+                                   ((lowpasspos[h] == (bsize - 1)) && (nextread_int == 0));
+          if (extrasample)
+          {
+            heads[h].filter.processToCacheH1(heads[h].buf[lowpasspos[h]]);
+            lowpasspos[h] = (lowpasspos[h] + 1) % bsize;
+          }
         }
-      }
-
-      // head 2 smoothing stuff
-      bool const read2CrossingAhead = (read2int < writer) && (((int)(read2 + speed2.getValue())) >= (writer + 1));
-      bool const read2CrossingBehind = (read2int >= writer) && (((int)(read2 + speed2.getValue())) <= (writer + 1));
-      bool const speed2IsUnity = speed2.getValue() == 1.0f;
-      if ((read2CrossingAhead || read2CrossingBehind) && !speed2IsUnity) {
-        if (smoothcount2 <= 0) {
-          // store the most recent output as the channel 2 smoothing sample
-          lastr2val = r2val;
-          // truncate the smoothing duration if we're using too small of a buffer size
-          smoothdur2 =
-            (kAudioSmoothingDur_samples > (int)(bsize_float / speed2.getValue())) ?
-            (int)(bsize_float / speed2.getValue()) : kAudioSmoothingDur_samples;
-          smoothstep2 = 1.0f / (float)smoothdur2;  // the scalar step value
-          smoothcount2 = smoothdur2;  // set the counter to the total duration
+        // it's simpler for highpassing;
+        // we may not even need to process anything for this sample
+        else if (filtermodes[h] == FilterMode::Highpass)
+        {
+          // only if we've traversed to a new integer sample position
+          if (static_cast<int>(heads[h].read) != read_int)
+          {
+            heads[h].filter.processToCache(heads[h].buf[read_int]);
+          }
         }
-      }
 
-      /* update rw heads */
+        heads[h].speedHasChanged |= heads[h].speed.isSmoothing();
+      }  // end of delay heads loop
+
+      // mix output
+      outAudio[i] = (inAudio[i] * drymix.getValue()) + delaysum;
+
+      // update write head
       writer += writerIncrement;
-      read1 += speed1.getValue();
-      read2 += speed2.getValue();
-
-      // wrap around the rw heads if they've gone past the end of the buffer
+      // wrap around the write head if it has gone past the end of the buffer
       writer %= bsize;
-      if (read1 >= bsize_float)
-        read1 = fmod_bipolar(read1, bsize_float);
-      if (read2 >= bsize_float)
-        read2 = fmod_bipolar(read2, bsize_float);
 
-      // if we're doing IIR lowpass filtering,
-      // then we probably need to process a few consecutive samples in order
-      // to get the continuous impulse (or whatever you call that),
-      // probably whatever the speed multiplier is, that's how many samples
-      if (filterMode1 == FilterMode::LowpassIIR)
-      {
-        int lowpasscount = 0;
-        while (lowpasscount < speed1int)
-        {
-          switch (speed1int - lowpasscount)
-          {
-            case 1:
-              filter1.processToCacheH1(buf1[lowpass1pos]);
-              lowpass1pos = (lowpass1pos + 1) % bsize;
-              lowpasscount++;
-              break;
-            case 2:
-              filter1.processToCacheH2(buf1.data(), lowpass1pos, bsize);
-              lowpass1pos = (lowpass1pos + 2) % bsize;
-              lowpasscount += 2;
-              break;
-            case 3:
-              filter1.processToCacheH3(buf1.data(), lowpass1pos, bsize);
-              lowpass1pos = (lowpass1pos + 3) % bsize;
-              lowpasscount += 3;
-              break;
-            default:
-              filter1.processToCacheH4(buf1.data(), lowpass1pos, bsize);
-              lowpass1pos = (lowpass1pos + 4) % bsize;
-              lowpasscount += 4;
-              break;
-          }
-        }
-        read1int = (int)read1;
-        // make sure that we don't need to do one more sample
-        if (((lowpass1pos < read1int) && ((lowpass1pos + 1) == read1int)) ||
-            ((lowpass1pos == (bsize - 1)) && (read1int == 0)))
-        {
-          filter1.processToCacheH1(buf1[lowpass1pos]);
-          lowpass1pos = (lowpass1pos + 1) % bsize;
-        }
-      }
-      // it's simpler for highpassing;
-      // we may not even need to process anything for this sample
-      else if (filterMode1 == FilterMode::Highpass)
-      {
-        // only if we've traversed to a new integer sample position
-        if ((int)read1 != read1int)
-          filter1.processToCache(buf1[read1int]);
-      }
-
-      // head 2 filtering stuff
-      if (filterMode2 == FilterMode::LowpassIIR)
-      {
-        int lowpasscount = 0;
-        while (lowpasscount < speed2int)
-        {
-          switch (speed2int - lowpasscount)
-          {
-            case 1:
-              filter2.processToCacheH1(buf2[lowpass2pos]);
-              lowpass2pos = (lowpass2pos + 1) % bsize;
-              lowpasscount++;
-              break;
-            case 2:
-              filter2.processToCacheH2(buf2.data(), lowpass2pos, bsize);
-              lowpass2pos = (lowpass2pos + 2) % bsize;
-              lowpasscount += 2;
-              break;
-            case 3:
-              filter2.processToCacheH3(buf2.data(), lowpass2pos, bsize);
-              lowpass2pos = (lowpass2pos + 3) % bsize;
-              lowpasscount += 3;
-              break;
-            default:
-              filter2.processToCacheH4(buf2.data(), lowpass2pos, bsize);
-              lowpass2pos = (lowpass2pos + 4) % bsize;
-              lowpasscount += 4;
-              break;
-          }
-        }
-        read2int = (int)read2;
-        if (((lowpass2pos < read2int) && ((lowpass2pos + 1) == read2int)) ||
-            ((lowpass2pos == (bsize - 1)) && (read2int == 0)))
-        {
-          filter2.processToCacheH1(buf2[lowpass2pos]);
-          lowpass2pos = (lowpass2pos + 1) % bsize;
-        }
-      }
-      else if (filterMode2 == FilterMode::Highpass)
-      {
-        if ((int)read2 != read2int)
-          filter2.processToCache(buf2[read2int]);
-      }
-
-      speed1hasChanged |= speed1.isSmoothing();
-      speed2hasChanged |= speed2.isSmoothing();
       incrementSmoothedAudioValues();
-    }  /* end of samples loop */
+    }  // end of samples loop
 
-  }  /* end of !TOMSOUND */
+  }  // end of !TOMSOUND
 
 
 
@@ -396,7 +276,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
     // sample frame, i.e. doubly incremented, hence the double r/w
     // incrementing in this single-channel emulation of TOMSOUND
     constexpr int tomsoundMultiple = 2;
-    constexpr auto tomsoundMultiple_float = (double)tomsoundMultiple;
+    constexpr auto tomsoundMultiple_float = static_cast<double>(tomsoundMultiple);
 
     // If a speed value is very near but not quite a whole number,
     // and if the buffer size is an even number of samples,
@@ -410,48 +290,51 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
     // regardless of the actual buffer size.
     auto const bsizeWriteWrap = bsize - ((bsize % tomsoundMultiple) ? 0 : 1);
 
-    for(unsigned long j = 0; j < numSampleFrames; j++) {
-//      for(int i = 0; i < numChannels; i++) {
+    for(unsigned long i = 0; i < numSampleFrames; i++) {
+      //for(unsigned long ch = 0; ch < getnumoutputs(); ch++) {
 
-    /* read from read heads */
+      /* read from read heads */
 
-    switch(quality) {
-      case kQualityMode_DirtFi:
-      default:
-        r1val = mix1.getValue() * buf1[(size_t)read1];
-        r2val = mix2.getValue() * buf1[(size_t)read2];
-        break;
-      case kQualityMode_HiFi:
-      case kQualityMode_UltraHiFi:
-        r1val = mix1.getValue() * dfx::math::InterpolateHermite(buf1.data(), read1, bsize);
-        r2val = mix2.getValue() * dfx::math::InterpolateHermite(buf1.data(), read2, bsize);
-        break;
+      /* another characteristic of TOMSOUND is sharing a single buffer across heads */
+      auto& buf = heads.front().buf;
+
+      switch(quality) {
+        case kQualityMode_DirtFi:
+        default:
+          delayvals[0] = heads[0].mix.getValue() * buf[static_cast<size_t>(heads[0].read)];
+          delayvals[1] = heads[1].mix.getValue() * buf[static_cast<size_t>(heads[1].read)];
+          break;
+        case kQualityMode_HiFi:
+        case kQualityMode_UltraHiFi:
+          delayvals[0] = heads[0].mix.getValue() * dfx::math::InterpolateHermite(buf.data(), heads[0].read, bsize);
+          delayvals[1] = heads[1].mix.getValue() * dfx::math::InterpolateHermite(buf.data(), heads[1].read, bsize);
+          break;
+        }
+
+      /* then write into buffer (w/ feedback) */
+      if (!freeze) {
+        buf[writer] =
+          inAudio[i] +
+          (heads[0].feed.getValue() * delayvals[0]) +
+          (heads[1].feed.getValue() * delayvals[1]);
       }
 
-    /* then write into buffer (w/ feedback) */
-    if (!freeze) {
-      buf1[writer] =
-        inAudio[j] +
-        (feed1.getValue() * r1val) +
-        (feed2.getValue() * r2val);
-    }
+      /* update rw heads */
+      writer += writerIncrement * tomsoundMultiple;
+      if (writer >= bsize)
+        writer %= bsizeWriteWrap;
 
-    /* update rw heads */
-    writer += writerIncrement * tomsoundMultiple;
-    if (writer >= bsize)
-      writer %= bsizeWriteWrap;
+      heads[0].read += heads[0].speed.getValue() * tomsoundMultiple_float;
+      heads[1].read += heads[1].speed.getValue() * tomsoundMultiple_float;
 
-    read1 += speed1.getValue() * tomsoundMultiple_float;
-    read2 += speed2.getValue() * tomsoundMultiple_float;
+      if (heads[0].read >= bsize_float)
+        heads[0].read = fmod_bipolar(heads[0].read, bsize_float);
+      if (heads[1].read >= bsize_float)
+        heads[1].read = fmod_bipolar(heads[1].read, bsize_float);
 
-    if (read1 >= bsize_float)
-      read1 = fmod_bipolar(read1, bsize_float);
-    if (read2 >= bsize_float)
-      read2 = fmod_bipolar(read2, bsize_float);
-
-    /* make output */
-    outAudio[j] = (inAudio[j] * drymix.getValue()) + r1val + r2val;
-//      }
+      /* make output */
+      outAudio[i] = (inAudio[i] * drymix.getValue()) + delayvals[0] + delayvals[1];
+      //}  /* end of channels loop */
 
       incrementSmoothedAudioValues();
     }  /* end of samples loop */
