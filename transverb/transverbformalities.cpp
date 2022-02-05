@@ -149,7 +149,6 @@ void TransverbDSP::processparameters() {
   }
   if (auto const value = getparameterifchanged_scalar(kFeed1))
     feed1 = *value;
-  dist1 = getparameter_f(kDist1);
   if (auto const value = getparameterifchanged_f(kMix2))
     mix2 = *value;
   if (auto const value = getparameterifchanged_f(kSpeed2))
@@ -159,7 +158,6 @@ void TransverbDSP::processparameters() {
   }
   if (auto const value = getparameterifchanged_scalar(kFeed2))
     feed2 = *value;
-  dist2 = getparameter_f(kDist2);
   quality = getparameter_i(kQuality);
   tomsound = getparameter_b(kTomsound);
 
@@ -186,16 +184,18 @@ void TransverbDSP::processparameters() {
     read2 = fmod_bipolar(read2, bsize_f);
   }
 
-  if (getparameterchanged(kDist1))
+  auto const calculatedist = [this](double dist)
   {
     auto const bsize_f = static_cast<double>(bsize);
-    read1 = fmod_bipolar(static_cast<double>(writer) + static_cast<double>(dist1) * bsize_f, bsize_f);
+    return fmod_bipolar(static_cast<double>(writer) - (dist * bsize_f), bsize_f);
+  };
+  if (auto const dist = getparameterifchanged_f(kDist1))
+  {
+    read1 = calculatedist(*dist);
   }
-
-  if (getparameterchanged(kDist2))
+  if (auto const dist = getparameterifchanged_f(kDist2))
   {
-    auto const bsize_f = static_cast<double>(bsize);
-    read2 = fmod_bipolar(static_cast<double>(writer) + static_cast<double>(dist2) * bsize_f, bsize_f);
+    read2 = calculatedist(*dist);
   }
 
   if (getparameterchanged(kQuality) || getparameterchanged(kTomsound))
@@ -223,7 +223,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kBsize, 48.687074827);
 	setpresetparameter_f(i, kDrymix, 0.45);
 	setpresetparameter_f(i, kMix1, 0.5);
-	setpresetparameter_f(i, kDist1, 0.9);
+	setpresetparameter_f(i, kDist1, 0.1);
 	setpresetparameter_f(i, kSpeed1, 0.048406605 / 12.);
 	setpresetparameter_f(i, kFeed1, 67.0);
 	setpresetparameter_f(i, kMix2, 0.0);
@@ -255,11 +255,11 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kBsize, 2605.1);
 	setpresetparameter_f(i, kDrymix, 0.6276);
 	setpresetparameter_f(i, kMix1, 1.0);
-	setpresetparameter_f(i, kDist1, 0.993);
+	setpresetparameter_f(i, kDist1, 0.007);
 	setpresetparameter_f(i, kSpeed1, -4.665660556);
 	setpresetparameter_f(i, kFeed1, 54.0);
 	setpresetparameter_f(i, kMix2, 0.757);
-	setpresetparameter_f(i, kDist2, 0.443);
+	setpresetparameter_f(i, kDist2, 0.557);
 	setpresetparameter_f(i, kSpeed2, 2.444534569);
 	setpresetparameter_f(i, kFeed2, 46.0);
 	setpresetparameter_i(i, kQuality, kQualityMode_UltraHiFi);
@@ -271,11 +271,11 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kBsize, 184.27356);
 	setpresetparameter_f(i, kDrymix, 0.157);
 	setpresetparameter_f(i, kMix1, 1.0);
-	setpresetparameter_f(i, kDist1, 0.0945);
+	setpresetparameter_f(i, kDist1, 0.9055);
 	setpresetparameter_f(i, kSpeed1, -8. / 12.);
 	setpresetparameter_f(i, kFeed1, 97.6);
 	setpresetparameter_f(i, kMix2, 0.0);
-	setpresetparameter_f(i, kDist2, 0.197);
+	setpresetparameter_f(i, kDist2, 0.803);
 	setpresetparameter_f(i, kSpeed2, 0.978195651);
 	setpresetparameter_f(i, kFeed2, 0.0);
 	setpresetparameter_i(i, kQuality, kQualityMode_UltraHiFi);
@@ -286,10 +286,10 @@ void Transverb::initPresets() {
 	setpresetname(i, "space invaders");
 	setpresetparameter_f(i, kSpeed1, -0.23 / 12.);
 	setpresetparameter_f(i, kFeed1, 73.0);
-	setpresetparameter_f(i, kDist1, 0.1857);
+	setpresetparameter_f(i, kDist1, 0.8143);
 	setpresetparameter_f(i, kSpeed2, 4.3 / 12.);
 	setpresetparameter_f(i, kFeed2, 41.0);
-	setpresetparameter_f(i, kDist2, 0.5994);
+	setpresetparameter_f(i, kDist2, 0.4006);
 	setpresetparameter_f(i, kBsize, 16.8);
 	setpresetparameter_f(i, kDrymix, 0.000576);
 	setpresetparameter_f(i, kMix1, 1.0);
@@ -302,10 +302,10 @@ void Transverb::initPresets() {
 	setpresetname(i, "mudslap (by Styrofoam)");
 	setpresetparameter_f(i, kSpeed1, -0.9748);
 	setpresetparameter_f(i, kFeed1, 45.6285);
-	setpresetparameter_f(i, kDist1, 0.02345);
+	setpresetparameter_f(i, kDist1, 0.97655);
 	setpresetparameter_f(i, kSpeed2, -1.0252);
 	setpresetparameter_f(i, kFeed2, 46.4819);
-	setpresetparameter_f(i, kDist2, 0.0192);
+	setpresetparameter_f(i, kDist2, 0.9808);
 	setpresetparameter_f(i, kBsize, 122.4947);
 	setpresetparameter_f(i, kDrymix, 0.);
 	setpresetparameter_f(i, kMix1, 1.);
@@ -318,10 +318,10 @@ void Transverb::initPresets() {
 	setpresetname(i, "subverb (by Styrofoam)");
 	setpresetparameter_f(i, kSpeed1, -2.9232);
 	setpresetparameter_f(i, kFeed1, 49.6802);
-	setpresetparameter_f(i, kDist1, 0.05756);
+	setpresetparameter_f(i, kDist1, 0.94244);
 	setpresetparameter_f(i, kSpeed2, -2.90405);
 	setpresetparameter_f(i, kFeed2, 47.5475);
-	setpresetparameter_f(i, kDist2, 0.032);
+	setpresetparameter_f(i, kDist2, 0.968);
 	setpresetparameter_f(i, kBsize, 2341.3708);
 	setpresetparameter_f(i, kDrymix, 0.);
 	setpresetparameter_f(i, kMix1, 1.);
@@ -334,10 +334,10 @@ void Transverb::initPresets() {
 	setpresetname(i, "vocoder beat (by Styrofoam)");
 	setpresetparameter_f(i, kSpeed1, 2.);
 	setpresetparameter_f(i, kFeed1, 57.3561);
-	setpresetparameter_f(i, kDist1, 0.0085);
+	setpresetparameter_f(i, kDist1, 0.9915);
 	setpresetparameter_f(i, kSpeed2, 1.);
 	setpresetparameter_f(i, kFeed2, 27.5053);
-	setpresetparameter_f(i, kDist2, 0.0021);
+	setpresetparameter_f(i, kDist2, 0.9979);
 	setpresetparameter_f(i, kBsize, 64.9446);
 	setpresetparameter_f(i, kDrymix, 0.);
 	setpresetparameter_f(i, kMix1, 1.);
@@ -350,10 +350,10 @@ void Transverb::initPresets() {
 	setpresetname(i, "yo pitch! (by Styrofoam)");
 	setpresetparameter_f(i, kSpeed1, -2.);
 	setpresetparameter_f(i, kFeed1, 80.3769);
-	setpresetparameter_f(i, kDist1, 0.022362);
+	setpresetparameter_f(i, kDist1, 0.977638);
 	setpresetparameter_f(i, kSpeed2, 2.);
 	setpresetparameter_f(i, kFeed2, 29.21106);
-	setpresetparameter_f(i, kDist2, 0.010665);
+	setpresetparameter_f(i, kDist2, 0.989335);
 	setpresetparameter_f(i, kBsize, 1938.5203);
 	setpresetparameter_f(i, kDrymix, 0.);
 	setpresetparameter_f(i, kMix1, 1.);
@@ -568,6 +568,20 @@ void Transverb::settings_doChunkRestoreSetParameterStuff(long tag, float value, 
 		else
 		{
 			setparameter_b(tag, defaultValue);
+		}
+	}
+
+	// invert old erroneously reversed dist parameter values
+	if ((dataVersion <= 0x00010502) && ((tag == kDist1) || (tag == kDist2)))
+	{
+		auto const valueNormalized = 1. - contractparametervalue(tag, value);
+		if (presetisvalid(presetNum))
+		{
+			setpresetparameter_gen(presetNum, tag, valueNormalized);
+		}
+		else
+		{
+			setparameter_gen(tag, valueNormalized);
 		}
 	}
 }
