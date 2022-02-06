@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -669,11 +669,12 @@ bool DfxGuiEditor::dfxgui_SetParameterValueWithString(long inParameterID, std::s
 {
 	if (dfxgui_IsValidParamID(inParameterID))
 	{
+		constexpr bool automationGesture = true;
 		if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
 		{
 			if (auto const newValue = dfxgui_GetParameterValueFromString_f(inParameterID, inText))
 			{
-				setparameter_f(inParameterID, *newValue, true);
+				setparameter_f(inParameterID, *newValue, automationGesture);
 				return true;
 			}
 		}
@@ -681,7 +682,7 @@ bool DfxGuiEditor::dfxgui_SetParameterValueWithString(long inParameterID, std::s
 		{
 			if (auto const newValue = dfxgui_GetParameterValueFromString_i(inParameterID, inText))
 			{
-				setparameter_i(inParameterID, *newValue, true);
+				setparameter_i(inParameterID, *newValue, automationGesture);
 				return true;
 			}
 		}
@@ -1976,10 +1977,11 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 
 	// populate the global section of the menu
 	resultMenu.addSeparator();
+	constexpr bool automationGesture = true;
 	DFX_AppendCommandItemToMenu(resultMenu, "Reset all parameter values to default", 
-								std::bind(&DfxGuiEditor::setparameters_default, this, true));
+								std::bind(&DfxGuiEditor::setparameters_default, this, automationGesture));
 	DFX_AppendCommandItemToMenu(resultMenu, "Randomize all parameter values", 
-								std::bind(&DfxGuiEditor::randomizeparameters, this, true));  // XXX yes to writing automation data?
+								std::bind(&DfxGuiEditor::randomizeparameters, this, automationGesture));  // XXX yes to writing automation data?
 	DFX_AppendCommandItemToMenu(resultMenu, "Generate parameter automation snapshot", 
 								std::bind(&DfxGuiEditor::GenerateParametersAutomationSnapshot, this));
 	if (getSmoothedAudioValueTime().has_value())
@@ -2047,12 +2049,24 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 	resultMenu->setStyle(kDfxGui_ContextualMenuStyle);
 
 	resultMenu->addSeparator();
+	constexpr bool automationGesture = true;
 	DFX_AppendCommandItemToMenu(*resultMenu, "Set to default value", 
-								std::bind(&DfxGuiEditor::setparameter_default, this, inParameterID, true));
-	DFX_AppendCommandItemToMenu(*resultMenu, "Type in a value...", 
-								std::bind(&DfxGuiEditor::TextEntryForParameterValue, this, inParameterID));
+								std::bind(&DfxGuiEditor::setparameter_default, this, inParameterID, automationGesture));
+	if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Boolean)
+	{
+		auto const parameterIsOn = getparameter_b(inParameterID);
+		constexpr bool enabled = true;
+		DFX_AppendCommandItemToMenu(*resultMenu, "Set value", 
+									std::bind(&DfxGuiEditor::setparameter_b, this, inParameterID, !parameterIsOn, automationGesture), 
+									enabled, parameterIsOn);
+	}
+	else
+	{
+		DFX_AppendCommandItemToMenu(*resultMenu, "Type in a value...", 
+									std::bind(&DfxGuiEditor::TextEntryForParameterValue, this, inParameterID));
+	}
 	DFX_AppendCommandItemToMenu(*resultMenu, "Randomize value", 
-								std::bind(&DfxGuiEditor::randomizeparameter, this, inParameterID, true));  // XXX yes to writing automation data?
+								std::bind(&DfxGuiEditor::randomizeparameter, this, inParameterID, automationGesture));  // XXX yes to writing automation data?
 	DFX_AppendCommandItemToMenu(*resultMenu, "Generate parameter automation snapshot", 
 								std::bind(&DfxGuiEditor::GenerateParameterAutomationSnapshot, this, inParameterID));
 
