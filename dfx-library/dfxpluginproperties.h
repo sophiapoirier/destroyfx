@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2003-2021  Sophia Poirier
+Copyright (C) 2003-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -51,6 +51,7 @@ enum : uint32_t
 	kPluginProperty_ParameterUnitLabel,			// get parameter unit label
 	kPluginProperty_ParameterValueType,			// get parameter value type
 	kPluginProperty_ParameterUnit,				// get parameter unit
+	kPluginProperty_ParameterUseValueStrings,	// get whether parameter uses value strings
 	kPluginProperty_RandomizeParameter,			// randomize a parameter
 	kPluginProperty_SmoothedAudioValueTime,		// get/set smoothing time (in seconds) of smoothed audio values
 	kPluginProperty_MidiLearn,					// get/set the MIDI learn state

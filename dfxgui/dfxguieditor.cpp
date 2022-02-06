@@ -1105,12 +1105,16 @@ void DfxGuiEditor::setparameters_default(bool inWrapWithAutomationGesture)
 //-----------------------------------------------------------------------------
 std::optional<std::string> DfxGuiEditor::getparametervaluestring(long inParameterID)
 {
-	auto const stringIndex = getparameter_i(inParameterID);
+	return getparametervaluestring(inParameterID, getparameter_i(inParameterID));
+}
 
+//-----------------------------------------------------------------------------
+std::optional<std::string> DfxGuiEditor::getparametervaluestring(long inParameterID, int64_t inStringIndex)
+{
 #ifdef TARGET_API_AUDIOUNIT
 	dfx::ParameterValueStringRequest request;
 	size_t dataSize = sizeof(request);
-	request.inStringIndex = stringIndex;
+	request.inStringIndex = inStringIndex;
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValueString, dfx::kScope_Global, 
 										   inParameterID, &request, dataSize);
 	if (status == noErr)
@@ -1118,9 +1122,8 @@ std::optional<std::string> DfxGuiEditor::getparametervaluestring(long inParamete
 		return request.valueString;
 	}
 	return {};
-
 #else
-	return dfxgui_GetEffectInstance()->getparametervaluestring(inParameterID, stringIndex);
+	return dfxgui_GetEffectInstance()->getparametervaluestring(inParameterID, inStringIndex);
 #endif
 }
 
@@ -1137,9 +1140,18 @@ std::string DfxGuiEditor::getparameterunitstring(long inParameterIndex)
 		return unitLabel.data();
 	}
 	return {};
-
 #else
 	return dfxgui_GetEffectInstance()->getparameterunitstring(inParameterIndex);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+bool DfxGuiEditor::GetParameterUseValueStrings(long inParameterIndex)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	return dfxgui_GetProperty<Boolean>(dfx::kPluginProperty_ParameterUseValueStrings, dfx::kScope_Global, inParameterIndex).value_or(false);
+#else
+	return dfxgui_GetEffectInstance()->getparameterusevaluestrings(inParameterIndex);
 #endif
 }
 
@@ -1159,7 +1171,6 @@ std::string DfxGuiEditor::getparametername(long inParameterID)
 		return parameterInfo->name;
 	}
 	return {};
-
 #else
 	return dfxgui_GetEffectInstance()->getparametername(inParameterID);
 #endif
@@ -2052,7 +2063,27 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 	constexpr bool automationGesture = true;
 	DFX_AppendCommandItemToMenu(*resultMenu, "Set to default value", 
 								std::bind(&DfxGuiEditor::setparameter_default, this, inParameterID, automationGesture));
-	if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Boolean)
+	if (GetParameterUseValueStrings(inParameterID))
+	{
+		auto const valueStringsSubMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
+		assert(valueStringsSubMenu.get());
+		valueStringsSubMenu->setStyle(kDfxGui_ContextualMenuStyle);
+		auto const currentValue = getparameter_i(inParameterID);
+		auto const minValue = std::lround(GetParameter_minValue(inParameterID));
+		auto const maxValue = std::lround(GetParameter_maxValue(inParameterID));
+		for (auto i = minValue; i <= maxValue; i++)
+		{
+			if (auto const valueString = getparametervaluestring(inParameterID, i))
+			{
+				constexpr bool enabled = true;
+				DFX_AppendCommandItemToMenu(*valueStringsSubMenu, valueString->c_str(), 
+											std::bind(&DfxGuiEditor::setparameter_i, this, inParameterID, i, automationGesture), 
+											enabled, i == currentValue);
+			}
+		}
+		resultMenu->addEntry(valueStringsSubMenu, "Select value");
+	}
+	else if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Boolean)
 	{
 		auto const parameterIsOn = getparameter_b(inParameterID);
 		constexpr bool enabled = true;
@@ -2210,7 +2241,7 @@ public:
 		// Must start with [dfx-settings] and end with [/dfx-settings];
 		// this also allows us to reject non-pathological buffers in
 		// constant time.
-		if (inString.size() < kPasteTextPrefix.size() + kPasteTextSuffix.size())
+		if (inString.size() < (kPasteTextPrefix.size() + kPasteTextSuffix.size()))
 		{
 			return {};
 		}

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -240,6 +240,11 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 		// get parameter unit
 		case dfx::kPluginProperty_ParameterUnit:
 			outDataSize = sizeof(DfxParam::Unit);
+			outWritable = false;
+			break;
+
+		case dfx::kPluginProperty_ParameterUseValueStrings:
+			outDataSize = sizeof(Boolean);
 			outWritable = false;
 			break;
 
@@ -636,6 +641,17 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			else
 			{
 				*static_cast<DfxParam::Unit*>(outData) = getparameterunit(inElement);
+			}
+			break;
+
+		case dfx::kPluginProperty_ParameterUseValueStrings:
+			if (!parameterisvalid(inElement))
+			{
+				status = kAudioUnitErr_InvalidParameter;
+			}
+			else
+			{
+				*static_cast<Boolean*>(outData) = getparameterusevaluestrings(inElement);
 			}
 			break;
 

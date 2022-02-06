@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -254,6 +254,7 @@ public:
 	float GetParameter_defaultValue(long inParameterIndex);
 	DfxParam::ValueType GetParameterValueType(long inParameterIndex);
 	DfxParam::Unit GetParameterUnit(long inParameterIndex);
+	bool GetParameterUseValueStrings(long inParameterIndex);
 
 	// the below methods all handle communication between the GUI component and the audio component
 	double getparameter_f(long inParameterID);
@@ -266,6 +267,7 @@ public:
 	void setparameter_default(long inParameterID, bool inWrapWithAutomationGesture = false);
 	void setparameters_default(bool inWrapWithAutomationGesture = false);
 	std::optional<std::string> getparametervaluestring(long inParameterID);
+	std::optional<std::string> getparametervaluestring(long inParameterID, int64_t inStringIndex);
 	std::string getparameterunitstring(long inParameterIndex);
 	std::string getparametername(long inParameterID);
 
