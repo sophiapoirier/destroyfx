@@ -22,9 +22,11 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "transverb.h"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstring>
+#include <numeric>
 
 #include "dfxmisc.h"
 #include "firfilter.h"
@@ -139,31 +141,21 @@ void TransverbDSP::processparameters() {
                                          static_cast<double>(getplugin()->getnumoutputs()));
     drymix = *value * dryGainScalar;
   }
-  if (auto const value = getparameterifchanged_f(kMix1))
+  for (size_t head = 0; head < kNumDelays; head++)
   {
-    heads[0].mix = *value;
-  }
-  if (auto const value = getparameterifchanged_f(kSpeed1))
-  {
-    heads[0].speed = std::pow(2., *value);
-    heads[0].speedHasChanged = true;
-  }
-  if (auto const value = getparameterifchanged_scalar(kFeed1))
-  {
-    heads[0].feed = *value;
-  }
-  if (auto const value = getparameterifchanged_f(kMix2))
-  {
-    heads[1].mix = *value;
-  }
-  if (auto const value = getparameterifchanged_f(kSpeed2))
-  {
-    heads[1].speed = std::pow(2., *value);
-    heads[1].speedHasChanged = true;
-  }
-  if (auto const value = getparameterifchanged_scalar(kFeed2))
-  {
-    heads[1].feed = *value;
+    if (auto const value = getparameterifchanged_f(kMixParameters[head]))
+    {
+      heads[head].mix = *value;
+    }
+    if (auto const value = getparameterifchanged_f(kSpeedParameters[head]))
+    {
+      heads[head].speed = std::pow(2., *value);
+      heads[head].speedHasChanged = true;
+    }
+    if (auto const value = getparameterifchanged_scalar(kFeedParameters[head]))
+    {
+      heads[head].feed = *value;
+    }
   }
   quality = getparameter_i(kQuality);
   tomsound = getparameter_b(kTomsound);
@@ -175,33 +167,32 @@ void TransverbDSP::processparameters() {
     // when the buffer resizes, however the tidiness maybe feels counter to the spirit of Transverb?
     if (bsize > entryBsize)
     {
-      //std::fill(std::next(heads[0].buf.begin(), entryBsize), std::next(heads[0].buf.begin(), bsize), 0.f);
-      //std::fill(std::next(heads[1].buf.begin(), entryBsize), std::next(heads[1].buf.begin(), bsize), 0.f);
+      //for (auto& head : heads)
+      {
+        //std::fill(std::next(head.buf.begin(), entryBsize), std::next(head.buf.begin(), bsize), 0.f);
+      }
     }
     else if (writer > bsize)
     {
       //auto const entryWriter = writer;
       writer %= bsize;
       //auto const copyCount = std::min(entryBsize - bsize, writer);
-      //std::copy_n(std::next(heads[0].buf.cbegin(), entryWriter - copyCount), copyCount, std::next(heads[0].buf.begin(), writer - copyCount));
-      //std::copy_n(std::next(heads[1].buf.cbegin(), entryWriter - copyCount), copyCount, std::next(heads[1].buf.begin(), writer - copyCount));
+      //for (auto& head : heads)
+      {
+        //std::copy_n(std::next(head.buf.cbegin(), entryWriter - copyCount), copyCount, std::next(head.buf.begin(), writer - copyCount));
+      }
     }
     auto const bsize_f = static_cast<double>(bsize);
     std::for_each(heads.begin(), heads.end(), [bsize_f](Head& head){ head.read = fmod_bipolar(head.read, bsize_f); });
   }
 
-  auto const calculatedist = [this](double dist)
+  for (size_t head = 0; head < kNumDelays; head++)
   {
-    auto const bsize_f = static_cast<double>(bsize);
-    return fmod_bipolar(static_cast<double>(writer) - (dist * bsize_f), bsize_f);
-  };
-  if (auto const dist = getparameterifchanged_f(kDist1))
-  {
-    heads[0].read = calculatedist(*dist);
-  }
-  if (auto const dist = getparameterifchanged_f(kDist2))
-  {
-    heads[1].read = calculatedist(*dist);
+    if (auto const dist = getparameterifchanged_f(kDistParameters[head]))
+    {
+      auto const bsize_f = static_cast<double>(bsize);
+      heads[h].read = fmod_bipolar(static_cast<double>(writer) - (*dist * bsize_f), bsize_f);
+    }
   }
 
   if (getparameterchanged(kQuality) || getparameterchanged(kTomsound))
@@ -430,16 +421,9 @@ void Transverb::randomizeparameters()
 		// make slow speeds more probable (for fairer distribution)
 		if ((i == kSpeed1) || (i == kSpeed1))
 		{
-			auto temprand = generateParameterRandomValue<double>(-1., 1.);
-			if (temprand < 0.)
-			{
-				temprand = getparametermin_f(i) * (temprand + 1.);
-			}
-			else
-			{
-				temprand = getparametermax_f(i) * temprand;
-			}
-			setparameter_f(i, temprand);
+			auto const rand = generateParameterRandomValue<double>(-1., 1.);
+			auto const range = (rand < 0.) ? getparametermin_f(i) : getparametermax_f(i); 
+			setparameter_f(i, std::fabs(rand) * range);
 		}
 		// make smaller buffer sizes more probable (because they sound better), though prevent smallest
 		else if (i == kBsize)
@@ -462,25 +446,30 @@ void Transverb::randomizeparameters()
 
 	// randomize the mix parameters
 	auto newDrymix = expandparametervalue(kDrymix, generateParameterRandomValue<double>());
-	auto newMix1 = expandparametervalue(kMix1, generateParameterRandomValue<double>());
-	auto newMix2 = expandparametervalue(kMix2, generateParameterRandomValue<double>());
+	std::array<double, kNumDelays> newMix {};
+	for (size_t head = 0; head < kNumDelays; head++)
+	{
+		newMix[head] = expandparametervalue(kMixParameters[head], generateParameterRandomValue<double>());
+	}
 	// calculate a scalar to make up for total gain changes
-	auto const mixDiffScalar = mixSum / (newDrymix + newMix1 + newMix2);
+	auto const mixDiffScalar = mixSum / (newDrymix + std::accumulate(newMix.cbegin(), newMix.cend(), 0.));
 
 	// apply the scalar to the new mix parameter values
 	newDrymix *= mixDiffScalar;
-	newMix1 *= mixDiffScalar;
-	newMix2 *= mixDiffScalar;
+	std::transform(newMix.cbegin(), newMix.cend(), newMix.begin(),
+				   [mixDiffScalar](double value){ return value * mixDiffScalar; });
 
 	// clip the the delay head mix values at unity gain so that we don't get mega-feedback blasts
-	newDrymix = std::min(newDrymix, getparametermax_f(kDrymix));
-	newMix1 = std::min(newMix1, 1.0);
-	newMix2 = std::min(newMix2, 1.0);
+	newDrymix = std::clamp(newDrymix, 0., getparametermax_f(kDrymix));
+	std::transform(newMix.cbegin(), newMix.cend(), newMix.begin(),
+				   [](double value){ return std::clamp(value, 0., 1.); });
 
 	// set the new randomized mix parameter values as the new values
 	setparameter_f(kDrymix, newDrymix);
-	setparameter_f(kMix1, newMix1);
-	setparameter_f(kMix2, newMix2);
+	for (size_t head = 0; head < kNumDelays; head++)
+	{
+		setparameter_f(kMixParameters[head], newMix[head]);
+	}
 
 
 	// randomize the state parameters

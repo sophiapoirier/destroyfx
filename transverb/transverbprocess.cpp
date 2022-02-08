@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <numeric>
 
 #include "dfxmath.h"
 #include "firfilter.h"
@@ -298,25 +299,25 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       /* another characteristic of TOMSOUND is sharing a single buffer across heads */
       auto& buf = heads.front().buf;
 
-      switch(quality) {
-        case kQualityMode_DirtFi:
-        default:
-          delayvals[0] = heads[0].mix.getValue() * buf[static_cast<size_t>(heads[0].read)];
-          delayvals[1] = heads[1].mix.getValue() * buf[static_cast<size_t>(heads[1].read)];
-          break;
-        case kQualityMode_HiFi:
-        case kQualityMode_UltraHiFi:
-          delayvals[0] = heads[0].mix.getValue() * dfx::math::InterpolateHermite(buf.data(), heads[0].read, bsize);
-          delayvals[1] = heads[1].mix.getValue() * dfx::math::InterpolateHermite(buf.data(), heads[1].read, bsize);
-          break;
+      for(size_t h = 0; h < dfx::TV::kNumDelays; h++) {
+        switch(quality) {
+          case kQualityMode_DirtFi:
+          default:
+            delayvals[h] = heads[h].mix.getValue() * buf[static_cast<size_t>(heads[h].read)];
+            break;
+          case kQualityMode_HiFi:
+          case kQualityMode_UltraHiFi:
+            delayvals[h] = heads[h].mix.getValue() * dfx::math::InterpolateHermite(buf.data(), heads[h].read, bsize);
+            break;
         }
+      }
 
       /* then write into buffer (w/ feedback) */
       if (!freeze) {
-        buf[writer] =
-          inAudio[i] +
-          (heads[0].feed.getValue() * delayvals[0]) +
-          (heads[1].feed.getValue() * delayvals[1]);
+        buf[writer] = inAudio[i];
+        for(size_t h = 0; h < dfx::TV::kNumDelays; h++) {
+          buf[writer] += heads[h].feed.getValue() * delayvals[h];
+        }
       }
 
       /* update rw heads */
@@ -324,16 +325,15 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       if (writer >= bsize)
         writer %= bsizeWriteWrap;
 
-      heads[0].read += heads[0].speed.getValue() * tomsoundMultiple_float;
-      heads[1].read += heads[1].speed.getValue() * tomsoundMultiple_float;
-
-      if (heads[0].read >= bsize_float)
-        heads[0].read = fmod_bipolar(heads[0].read, bsize_float);
-      if (heads[1].read >= bsize_float)
-        heads[1].read = fmod_bipolar(heads[1].read, bsize_float);
+      for (auto& head : heads) {
+        head.read += head.speed.getValue() * tomsoundMultiple_float;
+        if (head.read >= bsize_float)
+          head.read = fmod_bipolar(head.read, bsize_float);
+      }
 
       /* make output */
-      outAudio[i] = (inAudio[i] * drymix.getValue()) + delayvals[0] + delayvals[1];
+      outAudio[i] = (inAudio[i] * drymix.getValue()) +
+        std::accumulate(delayvals.cbegin(), delayvals.cend(), 0.f);
       //}  /* end of channels loop */
 
       incrementSmoothedAudioValues();

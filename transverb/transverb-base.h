@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -20,6 +20,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
 #pragma once
+
+#include <array>
 
 #include "dfxpluginproperties.h"
 
@@ -50,6 +52,11 @@ enum
 
 
 static constexpr size_t kNumDelays = 2;
+
+static constexpr std::array<long, kNumDelays> kSpeedParameters { kSpeed1, kSpeed2 };
+static constexpr std::array<long, kNumDelays> kFeedParameters { kFeed1, kFeed2 };
+static constexpr std::array<long, kNumDelays> kDistParameters { kDist1, kDist2 };
+static constexpr std::array<long, kNumDelays> kMixParameters { kMix1, kMix2 };
 
 enum { kQualityMode_DirtFi, kQualityMode_HiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes };
 

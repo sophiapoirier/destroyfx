@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -373,16 +373,11 @@ long TransverbEditor::OpenEditor()
 		auto const textDisplay = emplaceControl<DGTextDisplay>(this, tag, textDisplayPos, displayProc, userData, nullptr,
 															   dfx::TextAlignment::Right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
 
-		if (tag == kSpeed1)
+		if (auto const speedTag = std::find(kSpeedParameters.cbegin(), kSpeedParameters.cend(), tag); speedTag != kSpeedParameters.cend())
 		{
-			mSpeedDownButtons[0] = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
-			mSpeedUpButtons[0] = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
-			textDisplay->setTextToValueProc(speedTextConvertProcedure);
-		}
-		else if (tag == kSpeed2)
-		{
-			mSpeedDownButtons[1] = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
-			mSpeedUpButtons[1] = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
+			auto const head = static_cast<size_t>(std::distance(kSpeedParameters.cbegin(), speedTag));
+			mSpeedDownButtons[head] = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
+			mSpeedUpButtons[head] = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
 			textDisplay->setTextToValueProc(speedTextConvertProcedure);
 		}
 		else
@@ -392,17 +387,15 @@ long TransverbEditor::OpenEditor()
 		}
 
 		long yoff = kWideFaderInc;
-		if (tag == kDist1)
+		for (size_t head = 0; head < kNumDelays; head++)
 		{
-			yoff = kWideFaderMoreInc;
-			mDistanceTextDisplays[0] = textDisplay;
-			textDisplay->setValueFromTextConvertProc(distValueFromTextConvertProcedure);
-		}
-		else if (tag == kDist2)
-		{
-			yoff =  kWideFaderEvenMoreInc;
-			mDistanceTextDisplays[1] = textDisplay;
-			textDisplay->setValueFromTextConvertProc(distValueFromTextConvertProcedure);
+			if (tag == kDistParameters[head])
+			{
+				bool const lastHead = (kDistParameters[head] == kDistParameters.back());
+				yoff = lastHead ? kWideFaderEvenMoreInc : kWideFaderMoreInc;
+				mDistanceTextDisplays[head] = textDisplay;
+				textDisplay->setValueFromTextConvertProc(distValueFromTextConvertProcedure);
+			}
 		}
 		pos.offset(0, yoff);
 		textDisplayPos.offset(0, yoff);
@@ -444,7 +437,7 @@ long TransverbEditor::OpenEditor()
 	button->setUserProcedure(std::bind(&TransverbEditor::randomizeparameters, this, true));
 
 	// speed mode buttons
-	for (size_t speedModeIndex = 0; speedModeIndex < kNumDelays; speedModeIndex++)
+	for (size_t speedModeIndex = 0; speedModeIndex < mSpeedModeButtons.size(); speedModeIndex++)
 	{
 		pos.set(kSpeedModeButtonX, kSpeedModeButtonY + (((kWideFaderInc * 2) + kWideFaderMoreInc) * speedModeIndex),
 				speedModeButtonImage->getWidth() / 2, speedModeButtonImage->getHeight() / kSpeedMode_NumModes);
