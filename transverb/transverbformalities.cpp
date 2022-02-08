@@ -203,6 +203,8 @@ void TransverbDSP::processparameters() {
   // stereo-split-heads mode (head 1 goes to left output and 2 to right)
   if (getplugin()->asymmetricalchannels())
   {
+    static_assert(kNumDelays >= 2);
+    assert(getplugin()->getnumoutputs() == 2);
     if (GetChannelNum() == 0)
     {
       heads[1].mix.setValueNow(getparametermin_f(kMix2));
@@ -474,10 +476,19 @@ void Transverb::randomizeparameters()
 
 	// randomize the state parameters
 
-	// make higher qualities more probable (happen 4/5 of the time)
-	setparameter_i(kQuality, generateParameterRandomValue<int64_t>(1, (kQualityMode_NumModes * 2) - 1) % kQualityMode_NumModes);
 	// make TOMSOUND less probable (only 1/3 of the time)
-	setparameter_b(kTomsound, static_cast<bool>(generateParameterRandomValue<int64_t>(0, 2) % 2));
+	auto const newTomsound = static_cast<bool>(generateParameterRandomValue<int64_t>(0, 2) % 2);
+	setparameter_b(kTomsound, newTomsound);
+	if (newTomsound)
+	{
+		// split probability evenly between lowest and higher qualities, since the latter operate the same
+		setparameter_i(kQuality, generateParameterRandomValue<int64_t>(0, kQualityMode_NumModes) % kQualityMode_NumModes);
+	}
+	else
+	{
+		// make higher qualities more probable (happen 4/5 of the time)
+		setparameter_i(kQuality, generateParameterRandomValue<int64_t>(1, (kQualityMode_NumModes * 2) - 1) % kQualityMode_NumModes);
+	}
 
 
 	for (long i = 0; i < kNumParameters; i++)
