@@ -527,7 +527,7 @@ void DfxGuiEditor::randomizeparameter(long inParameterID, bool inWriteAutomation
 	dfxgui_GetEffectInstance()->randomizeparameter(inParameterID);
 	if (inWriteAutomation)
 	{
-		GenerateParameterAutomationSnapshot(inParameterID);
+		getEffect()->setParameterAutomated(inParameterID, getparameter_gen(inParameterID));
 	}
 #endif
 
@@ -582,9 +582,11 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 
 	if (inWriteAutomation)
 	{
-		GenerateParametersAutomationSnapshot();
 		for (long parameterIndex = 0; parameterIndex < GetNumParameters(); parameterIndex++)
 		{
+#ifdef TARGET_API_VST
+			getEffect()->setParameterAutomated(parameterIndex, getparameter_gen(parameterIndex));
+#endif
 			automationgesture_end(parameterIndex);
 		}
 	}
