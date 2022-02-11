@@ -612,6 +612,11 @@ void DfxPlugin::randomizeparameters()
 // do stuff necessary to inform the host of changes, etc.
 void DfxPlugin::update_parameter(long inParameterIndex)
 {
+	if (!parameterisvalid(inParameterIndex) || hasparameterattribute(inParameterIndex, DfxParam::kAttribute_Unused))
+	{
+		return;
+	}
+
 #ifdef TARGET_API_AUDIOUNIT
 	// make the global-scope element aware of the parameter's value
 	TARGET_API_BASE_CLASS::SetParameter(inParameterIndex, kAudioUnitScope_Global, AudioUnitElement(0), getparameter_f(inParameterIndex), 0);
@@ -642,7 +647,7 @@ void DfxPlugin::update_parameter(long inParameterIndex)
 // about a parameter change
 void DfxPlugin::postupdate_parameter(long inParameterIndex)
 {
-	if (!parameterisvalid(inParameterIndex))
+	if (!parameterisvalid(inParameterIndex) || hasparameterattribute(inParameterIndex, DfxParam::kAttribute_Unused))
 	{
 		return;
 	}
@@ -817,6 +822,7 @@ void DfxPlugin::addparametergroup(std::string const& inName, std::vector<long> c
 	assert(!inParameterIndices.empty());
 	assert(std::none_of(mParameterGroups.cbegin(), mParameterGroups.cend(), [&inName](auto const& item){ return (item.first == inName); }));
 	assert(std::none_of(inParameterIndices.cbegin(), inParameterIndices.cend(), [this](auto index){ return getparametergroup(index).has_value(); }));
+	// TODO: C++20 bind_front
 	assert(std::all_of(inParameterIndices.cbegin(), inParameterIndices.cend(), std::bind(&DfxPlugin::parameterisvalid, this, std::placeholders::_1)));
 	assert(std::unordered_set<long>(inParameterIndices.cbegin(), inParameterIndices.cend()).size() == inParameterIndices.size());
 
@@ -1258,12 +1264,14 @@ void DfxPlugin::incrementSmoothedAudioValues(DfxPluginCore* owner)
 std::optional<double> DfxPlugin::getSmoothedAudioValueTime() const
 {
 	// HACK: arbitrarily grabbing the first value's smoothing time, which is fine enough for our use cases
+	// TODO: thread safety
 	return mSmoothedAudioValues.empty() ? std::nullopt : std::make_optional(mSmoothedAudioValues.front().first->getSmoothingTime());
 }
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::setSmoothedAudioValueTime(double inSmoothingTimeInSeconds)
 {
+	// TODO: thread safety
 	std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), [inSmoothingTimeInSeconds](auto& value)
 	{
 		value.first->setSmoothingTime(inSmoothingTimeInSeconds);
