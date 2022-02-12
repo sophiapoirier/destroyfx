@@ -195,6 +195,10 @@ bool DfxGuiEditor::open(void* inWindow)
 #else
 	mParameterList.assign(static_cast<size_t>(GetNumParameters()), dfx::kParameterID_Invalid);
 	std::iota(mParameterList.begin(), mParameterList.end(), 0);
+	mParameterList.erase(std::remove_if(mParameterList.begin(), mParameterList.end(), [this](auto parameterID)
+										{
+											return HasParameterAttribute(parameterID, DfxParam::kAttribute_Unused);
+										}), mParameterList.cend());
 #endif
 
 	mEditorOpenErr = OpenEditor();
@@ -2017,7 +2021,7 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 			for (auto const parameterID : parameterList)
 			{
 				// TODO: C++20 use ranges view filter
-				if (HasParameterAttribute(parameterID, DfxParam::kAttribute_Unused) || HasParameterAttribute(parameterID, DfxParam::kAttribute_Hidden))
+				if (HasParameterAttribute(parameterID, DfxParam::kAttribute_Hidden))
 				{
 					continue;
 				}
