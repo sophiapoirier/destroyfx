@@ -324,6 +324,8 @@ public:
 	}
 #endif
 	void addparametergroup(std::string const& inName, std::vector<long> const& inParameterIndices);  // TODO: C++23 use std::span?
+	std::optional<size_t> getparametergroup(long inParameterIndex) const;
+	std::string getparametergroupname(size_t inGroupIndex) const;
 
 	void setparameter_f(long inParameterIndex, double inValue);
 	void setparameter_i(long inParameterIndex, int64_t inValue);
@@ -745,8 +747,6 @@ private:
 
 	void setpresetparameter(long inPresetIndex, long inParameterIndex, DfxParam::Value inValue);
 	DfxParam::Value getpresetparameter(long inPresetIndex, long inParameterIndex) const;
-
-	std::optional<size_t> getparametergroup(long inParameterIndex) const;
 
 	bool ischannelcountsupported(unsigned long inNumInputs, unsigned long inNumOutputs) const;
 

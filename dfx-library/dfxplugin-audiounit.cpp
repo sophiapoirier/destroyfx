@@ -31,6 +31,7 @@ This is where we connect the Audio Unit API to our DfxPlugin system.
 #include <cassert>
 #include <CoreServices/CoreServices.h>
 #include <cstring>
+#include <type_traits>
 
 #include "dfx-au-utilities.h"
 #include "dfxmisc.h"
@@ -253,6 +254,16 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			outWritable = false;
 			break;
 
+		case dfx::kPluginProperty_ParameterGroup:
+			outDataSize = sizeof(size_t);
+			outWritable = false;
+			break;
+
+		case dfx::kPluginProperty_ParameterGroupName:
+			outDataSize = dfx::kParameterGroupStringMaxLength;
+			outWritable = false;
+			break;
+
 		// randomize the parameters
 		case dfx::kPluginProperty_RandomizeParameter:
 			// when you "set" this "property", you send a boolean to say whether or not to write automation data
@@ -337,6 +348,22 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 
 	return status;
 }
+
+#if LOGIC_AU_PROPERTIES_AVAILABLE
+template <typename T>
+consteval auto DFX_EndianModeForScalarType()
+{
+	static_assert(std::is_scalar_v<T>);
+	if constexpr (sizeof(T) == sizeof(uint32_t))
+	{
+		return kLogicAUNodePropertyEndianMode_All32Bits;
+	}
+	else if constexpr (sizeof(T) == sizeof(uint64_t))
+	{
+		return kLogicAUNodePropertyEndianMode_All64Bits;
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // get specific information about Audio Unit Properties
@@ -671,6 +698,35 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			}
 			break;
 
+		case dfx::kPluginProperty_ParameterGroup:
+			if (!parameterisvalid(inElement))
+			{
+				status = kAudioUnitErr_InvalidParameter;
+			}
+			else
+			{
+				if (auto const groupIndex = getparametergroup(inElement))
+				{
+					*static_cast<size_t*>(outData) = *groupIndex;
+				}
+				else
+				{
+					status = kAudioUnitErr_PropertyNotInUse;
+				}
+			}
+			break;
+
+		case dfx::kPluginProperty_ParameterGroupName:
+			if (auto const groupName = getparametergroupname(inElement); !groupName.empty())
+			{
+				strlcpy(static_cast<char*>(outData), groupName.c_str(), dfx::kParameterGroupStringMaxLength);
+			}
+			else
+			{
+				status = kAudioUnitErr_InvalidPropertyValue;
+			}
+			break;
+
 		case dfx::kPluginProperty_SmoothedAudioValueTime:
 			if (auto const value = getSmoothedAudioValueTime())
 			{
@@ -719,47 +775,51 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			auto const nodePropertyDescs = static_cast<LogicAUNodePropertyDescription*>(outData);
 			for (long i = 0; i < dfx_GetNumPluginProperties(); i++)
 			{
-				nodePropertyDescs[i].mPropertyID = dfx::kPluginProperty_StartID + i;
-				nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_DontTouch;
-				nodePropertyDescs[i].mFlags = kLogicAUNodePropertyFlag_Synchronous | kLogicAUNodePropertyFlag_NeedsInitialization;
-				switch (nodePropertyDescs[i].mPropertyID)
+				auto& nodePropertyDesc = nodePropertyDescs[i];
+				nodePropertyDesc.mPropertyID = dfx::kPluginProperty_StartID + i;
+				nodePropertyDesc.mEndianMode = kLogicAUNodePropertyEndianMode_DontTouch;
+				nodePropertyDesc.mFlags = kLogicAUNodePropertyFlag_Synchronous | kLogicAUNodePropertyFlag_NeedsInitialization;
+				switch (nodePropertyDesc.mPropertyID)
 				{
 					case dfx::kPluginProperty_ParameterValue:
-						nodePropertyDescs[i].mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
+						nodePropertyDesc.mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
 						break;
 					case dfx::kPluginProperty_ParameterValueConversion:
-						nodePropertyDescs[i].mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
+						nodePropertyDesc.mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
 						break;
 					case dfx::kPluginProperty_ParameterValueString:
-						nodePropertyDescs[i].mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
+						nodePropertyDesc.mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
 						break;
 					case dfx::kPluginProperty_ParameterValueType:
 					case dfx::kPluginProperty_ParameterUnit:
-						nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
-						nodePropertyDescs[i].mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
+						nodePropertyDesc.mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
+						nodePropertyDesc.mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
 						break;
 					case dfx::kPluginProperty_ParameterAttributes;
-						nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
+						nodePropertyDesc.mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
+						break;
+					case dfx::kPluginProperty_ParameterGroup:
+						nodePropertyDesc.mEndianMode = DFX_EndianModeForScalarType<size_t>();
 						break;
 					case dfx::kPluginProperty_SmoothedAudioValueTime:
-						nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_All64Bits;
+						nodePropertyDesc.mEndianMode = kLogicAUNodePropertyEndianMode_All64Bits;
 						break;
 					case dfx::kPluginProperty_MidiLearner:
-						nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
+						nodePropertyDesc.mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
 						break;
 					case dfx::kPluginProperty_ParameterMidiAssignment:
-						nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
+						nodePropertyDesc.mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
 						break;
 					default:
 					{
 						size_t dfxDataSize {};
 						dfx::PropertyFlags dfxFlags {};
-						auto const dfxStatus = dfx_GetPropertyInfo(nodePropertyDescs[i].mPropertyID, dfx::kScope_Global, 0, dfxDataSize, dfxFlags);
+						auto const dfxStatus = dfx_GetPropertyInfo(nodePropertyDesc.mPropertyID, dfx::kScope_Global, 0, dfxDataSize, dfxFlags);
 						if (dfxStatus == dfx::kStatus_NoError)
 						{
 							if (dfxFlags & dfx::kPropertyFlag_BiDirectional)
 							{
-								nodePropertyDescs[i].mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
+								nodePropertyDesc.mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
 							}
 						}
 						break;
@@ -1300,9 +1360,9 @@ OSStatus DfxPlugin::CopyClumpName(AudioUnitScope inScope, UInt32 inClumpID,
 	}
 	AUSDK_Require(inScope == kAudioUnitScope_Global, kAudioUnitErr_InvalidScope);
 
-	auto const clumpIndex = inClumpID - kBaseClumpID;
-	AUSDK_Require(clumpIndex < mParameterGroups.size(), kAudioUnitErr_InvalidPropertyValue);
-	*outClumpName = CFStringCreateWithCString(kCFAllocatorDefault, mParameterGroups[clumpIndex].first.c_str(), DfxParam::kDefaultCStringEncoding);
+	auto const clumpName = getparametergroupname(inClumpID - kBaseClumpID);
+	AUSDK_Require(!clumpName.empty(), kAudioUnitErr_InvalidPropertyValue);
+	*outClumpName = CFStringCreateWithCString(kCFAllocatorDefault, clumpName.c_str(), DfxParam::kDefaultCStringEncoding);
 	return noErr;
 }
 

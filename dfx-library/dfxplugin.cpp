@@ -819,6 +819,7 @@ std::optional<std::string> DfxPlugin::getparametervaluestring(long inParameterIn
 //-----------------------------------------------------------------------------
 void DfxPlugin::addparametergroup(std::string const& inName, std::vector<long> const& inParameterIndices)
 {
+	assert(!inName.empty());
 	assert(!inParameterIndices.empty());
 	assert(std::none_of(mParameterGroups.cbegin(), mParameterGroups.cend(), [&inName](auto const& item){ return (item.first == inName); }));
 	assert(std::none_of(inParameterIndices.cbegin(), inParameterIndices.cend(), [this](auto index){ return getparametergroup(index).has_value(); }));
@@ -842,6 +843,16 @@ std::optional<size_t> DfxPlugin::getparametergroup(long inParameterIndex) const
 		return static_cast<size_t>(std::distance(mParameterGroups.cbegin(), foundGroup));
 	}
 	return {};
+}
+
+//-----------------------------------------------------------------------------
+std::string DfxPlugin::getparametergroupname(size_t inGroupIndex) const
+{
+	if (inGroupIndex >= mParameterGroups.size())
+	{
+		return {};
+	}
+	return mParameterGroups[inGroupIndex].first;
 }
 
 //-----------------------------------------------------------------------------

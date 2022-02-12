@@ -30,6 +30,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <exception>
 #include <functional>
 #include <locale>
+#include <map>
 #include <mutex>
 #include <numeric>
 #include <string_view>
@@ -1155,6 +1156,34 @@ bool DfxGuiEditor::HasParameterAttribute(long inParameterIndex, DfxParam::Attrib
 }
 
 //-----------------------------------------------------------------------------
+std::optional<size_t> DfxGuiEditor::GetParameterGroup(long inParameterIndex)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	return dfxgui_GetProperty<size_t>(dfx::kPluginProperty_ParameterGroup, dfx::kScope_Global, inParameterIndex);
+#else
+	return dfxgui_GetEffectInstance()->getparametergroup(inParameterIndex);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+std::string DfxGuiEditor::GetParameterGroupName(size_t inGroupIndex)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	std::array<char, dfx::kParameterGroupStringMaxLength> groupName {};
+	size_t dataSize = groupName.size() * sizeof(groupName.front());
+	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterGroupName, dfx::kScope_Global, 
+										   inGroupIndex, groupName.data(), dataSize);
+	if (status == noErr)
+	{
+		return groupName.data();
+	}
+	return {};
+#else
+	return dfxgui_GetEffectInstance()->getparametergroupname(inGroupIndex);
+#endif
+}
+
+//-----------------------------------------------------------------------------
 std::string DfxGuiEditor::getparametername(long inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
@@ -2013,24 +2042,8 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 	}
 	if (!parameterAttached)
 	{
-		if (auto const parameterList = GetParameterList(); !parameterList.empty())
+		if (auto const parametersSubMenu = createParametersContextualMenu())
 		{
-			auto const parametersSubMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
-			assert(parametersSubMenu.get());
-			parametersSubMenu->setStyle(kDfxGui_ContextualMenuStyle);
-			for (auto const parameterID : parameterList)
-			{
-				// TODO: C++20 use ranges view filter
-				if (HasParameterAttribute(parameterID, DfxParam::kAttribute_Hidden))
-				{
-					continue;
-				}
-				if (auto const parameterSubMenu = createParameterContextualMenu(parameterID))
-				{
-					parametersSubMenu->addEntry(parameterSubMenu, getparametername(parameterID));
-				}
-			}
-			assert(parametersSubMenu->getNbEntries() > 0);
 			resultMenu.addEntry(parametersSubMenu, "Parameters");
 		}
 	}
@@ -2179,6 +2192,57 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 	DFX_AppendCommandItemToMenu(*resultMenu, "Enter a MIDI CC assignment...", 
 								std::bind(&DfxGuiEditor::TextEntryForParameterMidiCC, this, inParameterID));
 #endif
+
+	return resultMenu;
+}
+
+//-----------------------------------------------------------------------------
+VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParametersContextualMenu()
+{
+	auto const parameterList = GetParameterList();
+	if (parameterList.empty())
+	{
+		return {};
+	}
+
+	auto const resultMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
+	assert(resultMenu.get());
+	resultMenu->setStyle(kDfxGui_ContextualMenuStyle);
+	std::map<size_t, VSTGUI::COptionMenu&> groupSubMenus;
+
+	for (auto const parameterID : parameterList)
+	{
+		// TODO: C++20 use ranges view filter
+		if (HasParameterAttribute(parameterID, DfxParam::kAttribute_Hidden))
+		{
+			continue;
+		}
+
+		if (auto const parameterSubMenu = createParameterContextualMenu(parameterID))
+		{
+			if (auto const groupIndex = GetParameterGroup(parameterID))
+			{
+				auto groupKeyValue = groupSubMenus.find(*groupIndex);
+				if (groupKeyValue == groupSubMenus.cend())
+				{
+					auto const groupSubMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
+					assert(groupSubMenu.get());
+					groupSubMenu->setStyle(kDfxGui_ContextualMenuStyle);
+					[[maybe_unused]] bool itemAdded {};
+					std::tie(groupKeyValue, itemAdded) = groupSubMenus.emplace(*groupIndex, *groupSubMenu);
+					assert(itemAdded);
+					std::string const knobsEmoji(reinterpret_cast<char const*>(u8"\U0001F39B"));
+					resultMenu->addEntry(groupSubMenu, knobsEmoji + " " + GetParameterGroupName(*groupIndex));
+				}
+				groupKeyValue->second.addEntry(parameterSubMenu, getparametername(parameterID));
+			}
+			else
+			{
+				resultMenu->addEntry(parameterSubMenu, getparametername(parameterID));
+			}
+		}
+	}
+	assert(resultMenu->getNbEntries() > 0);
 
 	return resultMenu;
 }

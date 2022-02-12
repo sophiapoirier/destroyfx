@@ -257,6 +257,8 @@ public:
 	DfxParam::Unit GetParameterUnit(long inParameterIndex);
 	bool GetParameterUseValueStrings(long inParameterIndex);
 	bool HasParameterAttribute(long inParameterIndex, DfxParam::Attribute inFlag);
+	std::optional<size_t> GetParameterGroup(long inParameterIndex);
+	std::string GetParameterGroupName(size_t inGroupIndex);
 
 	// the below methods all handle communication between the GUI component and the audio component
 	double getparameter_f(long inParameterID);
@@ -378,6 +380,7 @@ private:
 	[[nodiscard]] bool handleContextualMenuClick(VSTGUI::CControl* inControl, VSTGUI::CButtonState const& inButtons);
 	VSTGUI::COptionMenu createContextualMenu(IDGControl* inControl);
 	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParameterContextualMenu(long inParameterID);
+	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParametersContextualMenu();
 	long initClipboard();
 	long copySettings();
 	long pasteSettings(bool* inQueryPastabilityOnly);

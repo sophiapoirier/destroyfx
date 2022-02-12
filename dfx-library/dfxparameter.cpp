@@ -242,6 +242,8 @@ void DfxParam::initNames(std::vector<std::string_view> const& inNames)
 // set a value string's text contents
 void DfxParam::setusevaluestrings(bool inMode)
 {
+	assert(inMode ? mValueStrings.empty() : true);
+
 	mValueStrings.clear();
 #ifdef TARGET_API_AUDIOUNIT
 	mValueCFStrings.clear();

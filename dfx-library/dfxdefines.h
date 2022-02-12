@@ -110,6 +110,7 @@ namespace dfx
 	static constexpr size_t kPresetNameMaxLength = 64;
 	static constexpr size_t kParameterValueStringMaxLength = 256;
 	static constexpr size_t kParameterUnitStringMaxLength = 256;
+	static constexpr size_t kParameterGroupStringMaxLength = 256;
 }
 
 #endif
