@@ -246,6 +246,7 @@ public:
 #endif
 
 	long GetNumParameters();
+	std::vector<long> GetParameterList();
 	long GetNumAudioOutputs();
 	float dfxgui_ExpandParameterValue(long inParameterIndex, float inValue);
 	float dfxgui_ContractParameterValue(long inParameterIndex, float inValue);
@@ -255,6 +256,7 @@ public:
 	DfxParam::ValueType GetParameterValueType(long inParameterIndex);
 	DfxParam::Unit GetParameterUnit(long inParameterIndex);
 	bool GetParameterUseValueStrings(long inParameterIndex);
+	bool HasParameterAttribute(long inParameterIndex, DfxParam::Attribute inFlag);
 
 	// the below methods all handle communication between the GUI component and the audio component
 	double getparameter_f(long inParameterID);
@@ -289,7 +291,7 @@ public:
 	void SetParameterAlpha(long inParameterID, float inAlpha);
 #ifdef TARGET_API_AUDIOUNIT
 	AudioUnitParameter dfxgui_MakeAudioUnitParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope = kAudioUnitScope_Global, AudioUnitElement inElement = 0);
-	std::vector<AudioUnitParameterID> CreateParameterList(AudioUnitScope inScope = kAudioUnitScope_Global);
+	std::vector<long> CreateParameterList(AudioUnitScope inScope = kAudioUnitScope_Global);
 #endif
 	long dfxgui_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
 								size_t& outDataSize, dfx::PropertyFlags& outFlags);
@@ -418,6 +420,7 @@ private:
 
 	bool mJustOpened = false;
 	long mEditorOpenErr = dfx::kStatus_NoError;
+	std::vector<long> mParameterList;
 	unsigned long mNumInputChannels = 0;
 	unsigned long mNumOutputChannels = 0;
 
@@ -443,8 +446,7 @@ private:
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
-	std::vector<AudioUnitParameterID> mAUParameterList;
-	std::mutex mAUParameterListLock;
+	std::mutex mParameterListLock;
 	AudioUnitParameterID mAUMaxParameterID = 0;
 	dfx::UniqueOpaqueType<AUEventListenerRef, AUListenerDispose> mAUEventListener;
 	AudioUnitEvent mStreamFormatPropertyAUEvent {};

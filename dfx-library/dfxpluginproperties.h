@@ -52,6 +52,7 @@ enum : uint32_t
 	kPluginProperty_ParameterValueType,			// get parameter value type
 	kPluginProperty_ParameterUnit,				// get parameter unit
 	kPluginProperty_ParameterUseValueStrings,	// get whether parameter uses value strings
+	kPluginProperty_ParameterAttributes,		// get parameter attributes
 	kPluginProperty_RandomizeParameter,			// randomize a parameter
 	kPluginProperty_SmoothedAudioValueTime,		// get/set smoothing time (in seconds) of smoothed audio values
 	kPluginProperty_MidiLearn,					// get/set the MIDI learn state

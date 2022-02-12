@@ -31,6 +31,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <functional>
 #include <locale>
 #include <mutex>
+#include <numeric>
 #include <string_view>
 #include <type_traits>
 
@@ -188,9 +189,12 @@ bool DfxGuiEditor::open(void* inWindow)
 #ifdef TARGET_API_AUDIOUNIT
 	// create a cache of the parameter list before creating controls as the process depends on that information
 	{
-		std::lock_guard const guard(mAUParameterListLock);
-		mAUParameterList = CreateParameterList();
+		std::lock_guard const guard(mParameterListLock);
+		mParameterList = CreateParameterList();
 	}
+#else
+	mParameterList.assign(static_cast<size_t>(GetNumParameters()), dfx::kParameterID_Invalid);
+	std::iota(mParameterList.begin(), mParameterList.end(), 0);
 #endif
 
 	mEditorOpenErr = OpenEditor();
@@ -545,52 +549,40 @@ void DfxGuiEditor::randomizeparameter(long inParameterID, bool inWriteAutomation
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 {
-#ifdef TARGET_API_AUDIOUNIT
+	auto const parameterList = GetParameterList();
 	if (inWriteAutomation)
 	{
-		std::lock_guard const guard(mAUParameterListLock);
-		for (auto const& parameterID : mAUParameterList)
+		for (auto const parameterID : parameterList)
 		{
 			automationgesture_begin(parameterID);
 		}
 	}
 
+#ifdef TARGET_API_AUDIOUNIT
 	dfxgui_SetProperty(dfx::kPluginProperty_RandomizeParameter, 
 					   dfx::kScope_Global, kAUParameterListener_AnyParameter, 
 					   static_cast<Boolean>(inWriteAutomation));
+#endif
+
+#ifdef TARGET_API_VST
+	dfxgui_GetEffectInstance()->randomizeparameters();
+#endif
+
+#ifdef TARGET_API_RTAS
+	#warning "implementation missing"
+	assert(false);  // TODO: implement
+#endif
 
 	if (inWriteAutomation)
 	{
-		std::lock_guard const guard(mAUParameterListLock);
-		for (auto const& parameterID : mAUParameterList)
+		for (auto const parameterID : parameterList)
 		{
+#ifdef TARGET_API_VST
+			getEffect()->setParameterAutomated(parameterID, getparameter_gen(parameterID));
+#endif
 			automationgesture_end(parameterID);
 		}
 	}
-#else
-	// For VST, we just call its randomizeparameters(), but wrap in beginEdit/endEdit for each
-	// parameter if automating.
-	if (inWriteAutomation)
-	{
-		for (long parameterIndex = 0; parameterIndex < GetNumParameters(); parameterIndex++)
-		{
-			automationgesture_begin(parameterIndex);
-		}
-	}
-
-	dfxgui_GetEffectInstance()->randomizeparameters();
-
-	if (inWriteAutomation)
-	{
-		for (long parameterIndex = 0; parameterIndex < GetNumParameters(); parameterIndex++)
-		{
-#ifdef TARGET_API_VST
-			getEffect()->setParameterAutomated(parameterIndex, getparameter_gen(parameterIndex));
-#endif
-			automationgesture_end(parameterIndex);
-		}
-	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -602,18 +594,10 @@ void DfxGuiEditor::GenerateParameterAutomationSnapshot(long inParameterID)
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::GenerateParametersAutomationSnapshot()
 {
-#ifdef TARGET_API_AUDIOUNIT
-	std::lock_guard const guard(mAUParameterListLock);
-	for (auto const& parameterID : mAUParameterList)
+	for (auto const parameterID : GetParameterList())
 	{
 		GenerateParameterAutomationSnapshot(parameterID);
 	}
-#else
-	for (long parameterID = 0; parameterID < GetNumParameters(); parameterID++)
-	{
-		GenerateParameterAutomationSnapshot(parameterID);
-	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1090,18 +1074,10 @@ void DfxGuiEditor::setparameter_default(long inParameterID, bool inWrapWithAutom
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::setparameters_default(bool inWrapWithAutomationGesture)
 {
-#ifdef TARGET_API_AUDIOUNIT
-	std::lock_guard const guard(mAUParameterListLock);
-	for (auto const& parameterID : mAUParameterList)
+	for (auto const parameterID : GetParameterList())
 	{
 		setparameter_default(parameterID, inWrapWithAutomationGesture);
 	}
-#else
-	for (long parameterIndex = 0; parameterIndex < GetNumParameters(); parameterIndex++)
-	{
-		setparameter_default(parameterIndex, inWrapWithAutomationGesture);
-	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1154,6 +1130,17 @@ bool DfxGuiEditor::GetParameterUseValueStrings(long inParameterIndex)
 	return dfxgui_GetProperty<Boolean>(dfx::kPluginProperty_ParameterUseValueStrings, dfx::kScope_Global, inParameterIndex).value_or(false);
 #else
 	return dfxgui_GetEffectInstance()->getparameterusevaluestrings(inParameterIndex);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+bool DfxGuiEditor::HasParameterAttribute(long inParameterIndex, DfxParam::Attribute inFlag)
+{
+	assert(inFlag);
+#ifdef TARGET_API_AUDIOUNIT
+	return dfxgui_GetProperty<DfxParam::Attribute>(dfx::kPluginProperty_ParameterAttributes, dfx::kScope_Global, inParameterIndex).value_or(0) & inFlag;
+#else
+	return dfxgui_GetEffectInstance()->hasparameterattribute(inParameterIndex, inFlag);
 #endif
 }
 
@@ -1313,6 +1300,7 @@ long DfxGuiEditor::GetNumParameters()
 	auto const status = dfxgui_GetPropertyInfo(kAudioUnitProperty_ParameterList, dfx::kScope_Global, 0, dataSize, propFlags);
 	if (status == noErr)
 	{
+		assert((dataSize % sizeof(AudioUnitParameterID)) == 0);
 		return dataSize / sizeof(AudioUnitParameterID);
 	}
 #endif
@@ -1323,6 +1311,15 @@ long DfxGuiEditor::GetNumParameters()
 	return dfxgui_GetEffectInstance()->getnumparameters();
 #endif
 	return 0;
+}
+
+//-----------------------------------------------------------------------------
+std::vector<long> DfxGuiEditor::GetParameterList()
+{
+#ifdef TARGET_API_AUDIOUNIT
+	std::lock_guard const guard(mParameterListLock);
+#endif
+	return mParameterList;
 }
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -1338,7 +1335,7 @@ AudioUnitParameter DfxGuiEditor::dfxgui_MakeAudioUnitParameter(AudioUnitParamete
 }
 
 //-----------------------------------------------------------------------------
-std::vector<AudioUnitParameterID> DfxGuiEditor::CreateParameterList(AudioUnitScope inScope)
+std::vector<long> DfxGuiEditor::CreateParameterList(AudioUnitScope inScope)
 {
 	size_t dataSize {};
 	dfx::PropertyFlags propFlags {};
@@ -1368,7 +1365,8 @@ std::vector<AudioUnitParameterID> DfxGuiEditor::CreateParameterList(AudioUnitSco
 	assert(getParameterCount(dataSize) == parameterList.size());
 
 	mAUMaxParameterID = *std::max_element(parameterList.cbegin(), parameterList.cend());
-	return parameterList;
+
+	return std::vector<long>(parameterList.cbegin(), parameterList.cend());
 }
 #endif
 
@@ -1967,7 +1965,8 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 	resultMenu.setStyle(kDfxGui_ContextualMenuStyle);
 
 	// populate the parameter-specific section of the menu
-	if (inControl && inControl->isParameterAttached())
+	bool const parameterAttached = inControl && inControl->isParameterAttached();
+	if (parameterAttached)
 	{
 		auto const addParameterSubMenu = [this, &resultMenu](IDGControl const* control)
 		{
@@ -2001,6 +2000,29 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 	{
 		DFX_AppendCommandItemToMenu(resultMenu, "Set parameter value smoothing time...", 
 									std::bind(&DfxGuiEditor::TextEntryForSmoothedAudioValueTime, this));
+	}
+	if (!parameterAttached)
+	{
+		if (auto const parameterList = GetParameterList(); !parameterList.empty())
+		{
+			auto const parametersSubMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
+			assert(parametersSubMenu.get());
+			parametersSubMenu->setStyle(kDfxGui_ContextualMenuStyle);
+			for (auto const parameterID : parameterList)
+			{
+				// TODO: C++20 use ranges view filter
+				if (HasParameterAttribute(parameterID, DfxParam::kAttribute_Unused) || HasParameterAttribute(parameterID, DfxParam::kAttribute_Hidden))
+				{
+					continue;
+				}
+				if (auto const parameterSubMenu = createParameterContextualMenu(parameterID))
+				{
+					parametersSubMenu->addEntry(parameterSubMenu, getparametername(parameterID));
+				}
+			}
+			assert(parametersSubMenu->getNbEntries() > 0);
+			resultMenu.addEntry(parametersSubMenu, "Parameters");
+		}
 	}
 
 	resultMenu.addSeparator();
@@ -2083,6 +2105,7 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 											enabled, i == currentValue);
 			}
 		}
+		assert(valueStringsSubMenu->getNbEntries() > 0);
 		resultMenu->addEntry(valueStringsSubMenu, "Select value");
 	}
 	else if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Boolean)
@@ -2095,7 +2118,7 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 	}
 	else
 	{
-		DFX_AppendCommandItemToMenu(*resultMenu, "Type in a value...", 
+		DFX_AppendCommandItemToMenu(*resultMenu, "Enter a value...", 
 									std::bind(&DfxGuiEditor::TextEntryForParameterValue, this, inParameterID));
 	}
 	DFX_AppendCommandItemToMenu(*resultMenu, "Randomize value", 
@@ -2143,7 +2166,7 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 									std::bind(&DfxGuiEditor::parametermidiunassign, this, inParameterID), 
 									enableItem);
 	}
-	DFX_AppendCommandItemToMenu(*resultMenu, "Type in a MIDI CC assignment...", 
+	DFX_AppendCommandItemToMenu(*resultMenu, "Enter a MIDI CC assignment...", 
 								std::bind(&DfxGuiEditor::TextEntryForParameterMidiCC, this, inParameterID));
 #endif
 
@@ -2239,7 +2262,7 @@ public:
 		{
 			inString.remove_suffix(1);
 		}
-		
+
 		// Must start with [dfx-settings] and end with [/dfx-settings];
 		// this also allows us to reject non-pathological buffers in
 		// constant time.
@@ -2259,7 +2282,7 @@ public:
 		// Strip prefix and suffix.
 		inString.remove_prefix(kPasteTextPrefix.size());
 		inString.remove_suffix(kPasteTextSuffix.size());
-		
+
 		auto const matchBase64 = [](char character)
 		{
 			return std::isalnum(character, std::locale::classic()) || (character == '+') || (character == '/') || (character == '=');
@@ -2296,10 +2319,10 @@ private:
 		ret.reserve(kPasteTextPrefix.size() +
 					base64.dataSize +
 					kPasteTextSuffix.size());
-		for (char c : kPasteTextPrefix) ret.push_back((std::byte)c);
-		for (size_t i = 0; i < base64.dataSize; i++) ret.push_back((std::byte)base64.data[i]);
-		for (char c : kPasteTextSuffix) ret.push_back((std::byte)c);
-		for (char c : kPasteTextPadding) ret.push_back((std::byte)c);		 
+		for (char const c : kPasteTextPrefix) ret.push_back(static_cast<std::byte>(c));
+		for (size_t i = 0; i < base64.dataSize; i++) ret.push_back(static_cast<std::byte>(base64.data[i]));
+		for (char const c : kPasteTextSuffix) ret.push_back(static_cast<std::byte>(c));
+		for (char const c : kPasteTextPadding) ret.push_back(static_cast<std::byte>(c));
 		return ret;
 #else
 		return {inSettingsData, std::next(inSettingsData, inSettingsDataSize)};
@@ -2381,7 +2404,7 @@ long DfxGuiEditor::copySettings()
 			parameterValues.push_back(getEffect()->getParameter(parameterID));
 		}
 		vstSettingsData = parameterValues.data();
-		vstSettingsDataSize = parameterValues.size() * sizeof(parameterValues[0]);
+		vstSettingsDataSize = parameterValues.size() * sizeof(parameterValues.front());
 	}
 
 	#if TARGET_OS_MAC
@@ -2697,8 +2720,8 @@ void DfxGuiEditor::InstallAUEventListeners()
 	mAUEventListener.reset(auEventListener_temp);
 
 	{
-		std::lock_guard const guard(mAUParameterListLock);
-		for (auto const& parameterID : mAUParameterList)
+		std::lock_guard const guard(mParameterListLock);
+		for (auto const& parameterID : mParameterList)
 		{
 			auto const auParam = dfxgui_MakeAudioUnitParameter(parameterID);
 			AUListenerAddParameter(mAUEventListener.get(), this, &auParam);
@@ -2745,8 +2768,8 @@ void DfxGuiEditor::RemoveAUEventListeners()
 	}
 
 	{
-		std::lock_guard const guard(mAUParameterListLock);
-		for (auto const& parameterID : mAUParameterList)
+		std::lock_guard const guard(mParameterListLock);
+		for (auto const& parameterID : mParameterList)
 		{
 			auto const auParam = dfxgui_MakeAudioUnitParameter(parameterID);
 			AUListenerRemoveParameter(mAUEventListener.get(), this, &auParam);
@@ -2842,22 +2865,22 @@ void DfxGuiEditor::HandleStreamFormatChange()
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::HandleParameterListChange()
 {
-	std::lock_guard const guard(mAUParameterListLock);
+	std::lock_guard const guard(mParameterListLock);
 
 	if (mAUEventListener)
 	{
-		for (auto const& parameterID : mAUParameterList)
+		for (auto const& parameterID : mParameterList)
 		{
 			auto const auParam = dfxgui_MakeAudioUnitParameter(parameterID);
 			AUListenerRemoveParameter(mAUEventListener.get(), this, &auParam);
 		}
 	}
 
-	mAUParameterList = CreateParameterList();
+	mParameterList = CreateParameterList();
 
 	if (mAUEventListener)
 	{
-		for (auto const& parameterID : mAUParameterList)
+		for (auto const& parameterID : mParameterList)
 		{
 			auto const auParam = dfxgui_MakeAudioUnitParameter(parameterID);
 			AUListenerAddParameter(mAUEventListener.get(), this, &auParam);
@@ -2902,6 +2925,7 @@ void DfxGuiEditor::HandleMidiLearnerChange()
 DGButton* DfxGuiEditor::CreateMidiLearnButton(VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, DGImage* inImage, bool inDrawMomentaryState)
 {
 	mMidiLearnButton = emplaceControl<DGToggleImageButton>(this, inXpos, inYpos, inImage, inDrawMomentaryState);
+	// TODO: C++20 bind_front
 	mMidiLearnButton->setUserProcedure(std::bind(&DfxGuiEditor::setmidilearning, this, std::placeholders::_1));
 	return mMidiLearnButton;
 }
@@ -3061,7 +3085,7 @@ void DfxGuiEditor::SaveVSTStateToProgramFile(char const* inFilePath)
 			parameterValues[parameterID] = DFXGUI_CorrectEndian(getEffect()->getParameter(parameterID));
 		}
 
-		auto const parameterValuesDataSize = static_cast<uint32_t>(parameterValues.size() * sizeof(parameterValues[0]));
+		auto const parameterValuesDataSize = static_cast<uint32_t>(parameterValues.size() * sizeof(decltype(parameterValues)::value_type));
 		programData.byteSize = serializedInt(byteSizeBase + parameterValuesDataSize);
 		writeWithValidation(&programData, headerSize);
 		writeWithValidation(parameterValues.data(), parameterValuesDataSize);

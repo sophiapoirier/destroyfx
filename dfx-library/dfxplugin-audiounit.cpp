@@ -248,6 +248,11 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			outWritable = false;
 			break;
 
+		case dfx::kPluginProperty_ParameterAttributes:
+			outDataSize = sizeof(DfxParam::Attribute);
+			outWritable = false;
+			break;
+
 		// randomize the parameters
 		case dfx::kPluginProperty_RandomizeParameter:
 			// when you "set" this "property", you send a boolean to say whether or not to write automation data
@@ -655,6 +660,17 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			}
 			break;
 
+		case dfx::kPluginProperty_ParameterAttributes:
+			if (!parameterisvalid(inElement))
+			{
+				status = kAudioUnitErr_InvalidParameter;
+			}
+			else
+			{
+				*static_cast<DfxParam::Attribute*>(outData) = getparameterattributes(inElement);
+			}
+			break;
+
 		case dfx::kPluginProperty_SmoothedAudioValueTime:
 			if (auto const value = getSmoothedAudioValueTime())
 			{
@@ -721,6 +737,9 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					case dfx::kPluginProperty_ParameterUnit:
 						nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
 						nodePropertyDescs[i].mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
+						break;
+					case dfx::kPluginProperty_ParameterAttributes;
+						nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
 						break;
 					case dfx::kPluginProperty_SmoothedAudioValueTime:
 						nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_All64Bits;
