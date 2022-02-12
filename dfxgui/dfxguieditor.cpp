@@ -549,7 +549,13 @@ void DfxGuiEditor::randomizeparameter(long inParameterID, bool inWriteAutomation
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 {
-	auto const parameterList = GetParameterList();
+	auto parameterList = GetParameterList();
+	// TODO: C++20 use ranges view filter
+	parameterList.erase(std::remove_if(parameterList.begin(), parameterList.end(), [this](auto parameterID)
+									   {
+										   return HasParameterAttribute(parameterID, DfxParam::kAttribute_OmitFromRandomizeAll);
+									   }), parameterList.cend());
+
 	if (inWriteAutomation)
 	{
 		for (auto const parameterID : parameterList)
