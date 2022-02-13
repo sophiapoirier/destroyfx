@@ -24,7 +24,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <numeric>
 
 #include "dfxmath.h"
 #include "firfilter.h"
@@ -36,10 +35,11 @@ using namespace dfx::TV;
 
 void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long numSampleFrames) {
 
-  std::array<float, dfx::TV::kNumDelays> delayvals {};  // delay buffer output values
+  std::array<float, kNumDelays> delayvals {};  // delay buffer output values
   auto const bsize_float = static_cast<double>(bsize);  // cut down on casting
   auto const freeze = getparameter_b(kFreeze);
   int const writerIncrement = freeze ? 0 : 1;
+  auto const attenuateFeedbackByMixLevel = getparameter_b(kAttenuateFeedbackByMixLevel);
 
 
   /////////////   S O P H I A S O U N D   //////////////
@@ -49,14 +49,14 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
     auto const samplerate = getsamplerate();
     auto const speedSmoothingStride = dfx::math::GetFrequencyBasedSmoothingStride(samplerate);
     // int versions of these float values, for reducing casting operations
-    std::array<int, dfx::TV::kNumDelays> speed_ints {};
+    std::array<int, kNumDelays> speed_ints {};
     // position trackers for the lowpass filters
-    std::array<int, dfx::TV::kNumDelays> lowpasspos {};
+    std::array<int, kNumDelays> lowpasspos {};
     // the type of filtering to use in ultra hi-fi mode
-    std::array<FilterMode, dfx::TV::kNumDelays> filtermodes {};
+    std::array<FilterMode, kNumDelays> filtermodes {};
     filtermodes.fill(FilterMode::None);
     // make-up gain for lowpass filtering
-    std::array<float, dfx::TV::kNumDelays> mugs {};
+    std::array<float, kNumDelays> mugs {};
     mugs.fill(1.f);
 
     for (unsigned long i = 0; i < numSampleFrames; i++)  // samples loop
@@ -65,7 +65,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       bool const speedSmoothingStrideHit = ((i % speedSmoothingStride) == 0);
       float delaysum = 0.f;
 
-      for (size_t h = 0; h < dfx::TV::kNumDelays; h++)  // delay heads loop
+      for (size_t h = 0; h < kNumDelays; h++)  // delay heads loop
       {
         auto const read_int = static_cast<int>(heads[h].read);
 
@@ -163,7 +163,8 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
 
         // then write into buffer (w/ feedback)
         if (!freeze) {
-          heads[h].buf[writer] = inAudio[i] + (delayvals[h] * heads[h].feed.getValue() * heads[h].mix.getValue());
+          float const mixlevel = attenuateFeedbackByMixLevel ? heads[h].mix.getValue() : 1.f;
+          heads[h].buf[writer] = inAudio[i] + (delayvals[h] * heads[h].feed.getValue() * mixlevel);
         }
 
         // make output
@@ -296,27 +297,38 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
 
       /* read from read heads */
 
-      /* another characteristic of TOMSOUND is sharing a single buffer across heads */
-      auto& buf = heads.front().buf;
+      for(size_t h = 0; h < kNumDelays; h++) {
+        /* another characteristic of TOMSOUND is sharing a single buffer across heads */
+        /* (however it is only viable with the legacy behavior of applying mix to feedback) */
+        auto& buf = attenuateFeedbackByMixLevel ? heads.front().buf : heads[h].buf;
 
-      for(size_t h = 0; h < dfx::TV::kNumDelays; h++) {
         switch(quality) {
           case kQualityMode_DirtFi:
           default:
-            delayvals[h] = heads[h].mix.getValue() * buf[static_cast<size_t>(heads[h].read)];
+            delayvals[h] = buf[static_cast<size_t>(heads[h].read)];
             break;
           case kQualityMode_HiFi:
           case kQualityMode_UltraHiFi:
-            delayvals[h] = heads[h].mix.getValue() * dfx::math::InterpolateHermite(buf.data(), heads[h].read, bsize);
+            delayvals[h] = dfx::math::InterpolateHermite(buf.data(), heads[h].read, bsize);
             break;
         }
       }
 
       /* then write into buffer (w/ feedback) */
       if (!freeze) {
-        buf[writer] = inAudio[i];
-        for(size_t h = 0; h < dfx::TV::kNumDelays; h++) {
-          buf[writer] += heads[h].feed.getValue() * delayvals[h];
+        if(attenuateFeedbackByMixLevel) {
+          auto& buf = heads.front().buf;
+          buf[writer] = inAudio[i];
+          for(size_t h = 0; h < kNumDelays; h++) {
+            buf[writer] +=
+              heads[h].feed.getValue() * heads[h].mix.getValue() * delayvals[h];
+          }
+        } else {
+          for(size_t h = 0; h < kNumDelays; h++) {
+            heads[h].buf[writer] =
+              inAudio[i] +
+              (heads[h].feed.getValue() * delayvals[h]);
+          }
         }
       }
 
@@ -332,8 +344,10 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       }
 
       /* make output */
-      outAudio[i] = (inAudio[i] * drymix.getValue()) +
-        std::accumulate(delayvals.cbegin(), delayvals.cend(), 0.f);
+      outAudio[i] = inAudio[i] * drymix.getValue();
+      for(size_t h = 0; h < kNumDelays; h++) {
+        outAudio[i] += heads[h].mix.getValue() * delayvals[h];
+      }
       //}  /* end of channels loop */
 
       incrementSmoothedAudioValues();
