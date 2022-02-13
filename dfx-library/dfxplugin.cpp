@@ -601,7 +601,7 @@ void DfxPlugin::randomizeparameters()
 {
 	for (long i = 0; i < getnumparameters(); i++)
 	{
-		if (!hasparameterattribute(i, DfxParam::kAttribute_OmitFromRandomizeAll))
+		if (!hasparameterattribute(i, DfxParam::kAttribute_OmitFromRandomizeAll) && !hasparameterattribute(i, DfxParam::kAttribute_Unused))
 		{
 			randomizeparameter(i);
 		}

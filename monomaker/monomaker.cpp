@@ -60,7 +60,7 @@ Monomaker::Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparametervaluestring(kPanLaw, kPanLaw_Minus3dB, "-3 dB");
 	setparametervaluestring(kPanLaw, kPanLaw_Minus6dB, "-6 dB");
 	setparametervaluestring(kPanLaw, kPanLaw_SineCosine, "sine-cosine");
-	setparameterattributes(kPanLaw, DfxParam::kAttribute_Unused | DfxParam::kAttribute_OmitFromRandomizeAll);
+	setparameterattributes(kPanLaw, DfxParam::kAttribute_Unused);
 /*
 left_output = cos(p) * input
 right_output = sin(p) * input

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -56,11 +56,9 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_f(P_POINTPARAMS + POINT_DYDX, {"point:dydx", "PntDyDx", "PDyDx", "PDyx"}, 0.50, 0.50, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "gap");
   initparameter_f(P_POINTPARAMS + POINT_LEVEL, {"point:level", "PntLevl", "PLevel" "PLvl"}, 0.50, 0.50, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "level");
 
-  constexpr DfxParam::Attribute unusedflags =
-    DfxParam::kAttribute_Unused | DfxParam::kAttribute_OmitFromRandomizeAll;
   for(int pp = NUM_POINTSTYLES; pp < MAX_POINTSTYLES; pp++) {
     initparameter_f(P_POINTPARAMS + pp, {"pointparam:unused", "PUnused", "Pxxx"}, 0.04, 0.04, 0.0, 1.0, DfxParam::Unit::Generic);
-    setparameterattributes(P_POINTPARAMS + pp, unusedflags);  /* don't display as an available parameter */
+    setparameterattributes(P_POINTPARAMS + pp, DfxParam::kAttribute_Unused);  /* don't display as an available parameter */
   }
 
   initparameter_list(P_INTERPSTYLE, {"interpolate how", "IntHow", "IHow"}, INTERP_POLYGON, INTERP_POLYGON, MAX_INTERPSTYLES);
@@ -76,7 +74,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
   for(int ip = NUM_INTERPSTYLES; ip < MAX_INTERPSTYLES; ip++) {
     initparameter_f(P_INTERPARAMS + ip, {"inter:unused", "IUnused", "Ixxx"}, 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Generic);
-    setparameterattributes(P_INTERPARAMS + ip, unusedflags);  /* don't display as an available parameter */
+    setparameterattributes(P_INTERPARAMS + ip, DfxParam::kAttribute_Unused);  /* don't display as an available parameter */
   }
 
   initparameter_list(P_POINTOP1, {"pointop1", "PntOp1", "POp1"}, OP_NONE, OP_NONE, MAX_OPS);
@@ -101,9 +99,9 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
   for(int op = NUM_OPS; op < MAX_OPS; op++) {
     allop(op, "unused", "xxx", 0.5, DfxParam::Unit::Generic, {});
-    setparameterattributes(P_OPPAR1S + op, unusedflags);  /* don't display as an available parameter */
-    setparameterattributes(P_OPPAR2S + op, unusedflags);  /* don't display as an available parameter */
-    setparameterattributes(P_OPPAR3S + op, unusedflags);  /* don't display as an available parameter */
+    setparameterattributes(P_OPPAR1S + op, DfxParam::kAttribute_Unused);  /* don't display as an available parameter */
+    setparameterattributes(P_OPPAR2S + op, DfxParam::kAttribute_Unused);  /* don't display as an available parameter */
+    setparameterattributes(P_OPPAR3S + op, DfxParam::kAttribute_Unused);  /* don't display as an available parameter */
   }
 
   /* windowing */

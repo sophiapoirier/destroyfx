@@ -71,9 +71,13 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   addparameterattributes(kDist2, DfxParam::kAttribute_OmitFromRandomizeAll);
   addparameterattributes(kFreeze, DfxParam::kAttribute_OmitFromRandomizeAll);
 
-  addparametergroup("head #1", {kSpeed1, kFeed1, kDist1});
-  addparametergroup("head #2", {kSpeed2, kFeed2, kDist2});
-  addparametergroup("mix", {kDrymix, kMix1, kMix2});
+  std::vector<long> mixparameters(1, kDrymix);
+  for (size_t head = 0; head < kNumDelays; head++) {
+    addparametergroup("head #" + std::to_string(head + 1),
+      {kSpeedParameters[head], kFeedParameters[head], kDistParameters[head]});
+    mixparameters.push_back(kMixParameters[head]);
+  }
+  addparametergroup("mix", mixparameters);
 
 
   settailsize_seconds(getparametermax_f(kBsize) * 0.001);
@@ -416,12 +420,12 @@ void Transverb::randomizeparameters()
 
 	for (long i = 0; i < kDrymix; i++)
 	{
-		if (hasparameterattribute(i, DfxParam::kAttribute_OmitFromRandomizeAll))
+		if (hasparameterattribute(i, DfxParam::kAttribute_OmitFromRandomizeAll) || hasparameterattribute(i, DfxParam::kAttribute_Unused))
 		{
 			continue;
 		}
 		// make slow speeds more probable (for fairer distribution)
-		if ((i == kSpeed1) || (i == kSpeed1))
+		if (std::find(kSpeedParameters.cbegin(), kSpeedParameters.cend(), i) != kSpeedParameters.cend())
 		{
 			auto const rand = generateParameterRandomValue<double>(-1., 1.);
 			auto const range = (rand < 0.) ? getparametermin_f(i) : getparametermax_f(i); 
@@ -493,7 +497,7 @@ void Transverb::randomizeparameters()
 
 	for (long i = 0; i < kNumParameters; i++)
 	{
-		if (hasparameterattribute(i, DfxParam::kAttribute_OmitFromRandomizeAll))
+		if (hasparameterattribute(i, DfxParam::kAttribute_OmitFromRandomizeAll) || hasparameterattribute(i, DfxParam::kAttribute_Unused))
 		{
 			continue;
 		}
