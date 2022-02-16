@@ -195,7 +195,7 @@ void TransverbDSP::processparameters() {
     if (auto const dist = getparameterifchanged_f(kDistParameters[head]))
     {
       auto const bsize_f = static_cast<double>(bsize);
-      heads[h].read = fmod_bipolar(static_cast<double>(writer) - (*dist * bsize_f), bsize_f);
+      heads[head].read = fmod_bipolar(static_cast<double>(writer) - (*dist * bsize_f), bsize_f);
     }
   }
 
