@@ -46,6 +46,7 @@ enum
 	kQuality,
 	kTomsound,
 	kFreeze,
+	kAttenuateFeedbackByMixLevel,
 
 	kNumParameters
 };

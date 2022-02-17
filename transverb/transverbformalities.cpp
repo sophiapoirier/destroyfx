@@ -46,16 +46,17 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_f(kBsize, {"buffer size", "BufSize", "BufSiz", "BfSz"}, 2700.0, 333.0, 1.0, 3000.0, DfxParam::Unit::MS);
   initparameter_f(kDrymix, {"dry mix", "DryMix", "Dry"}, 1.0, 1.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
   initparameter_f(kMix1, {"1:mix", "1mix"}, 1.0, 1.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
-  initparameter_f(kDist1, {"1:dist", "1dst"}, 0.90009, 0.5, 0.0, 1.0, DfxParam::Unit::Scalar);
+  initparameter_f(kDist1, {"1:distance", "1:dist", "1dst"}, 0.90009, 0.5, 0.0, 1.0, DfxParam::Unit::Scalar);
   initparameter_f(kSpeed1, {"1:speed", "1speed", "1spd"}, 0.0, 0.0, -3.0, 6.0, DfxParam::Unit::Octaves);
   initparameter_f(kFeed1, {"1:feedback", "1feedbk", "1fedbk", "1fdb"}, 0.0, 33.3, 0.0, 100.0, DfxParam::Unit::Percent);
   initparameter_f(kMix2, {"2:mix", "2mix"}, 0.0, 1.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
-  initparameter_f(kDist2, {"2:dist", "2dst"}, 0.1, 0.5, 0.0, 1.0, DfxParam::Unit::Scalar);
+  initparameter_f(kDist2, {"2:distance", "2:dist", "2dst"}, 0.1, 0.5, 0.0, 1.0, DfxParam::Unit::Scalar);
   initparameter_f(kSpeed2, {"2:speed", "2speed", "2spd"}, 1.0, 0.0, -3.0, 6.0, DfxParam::Unit::Octaves);
   initparameter_f(kFeed2, {"2:feedback", "2feedbk", "2fedbk", "2fdb"}, 0.0, 33.3, 0.0, 100.0, DfxParam::Unit::Percent);
   initparameter_list(kQuality, {"quality", "Qualty", "Qlty"}, kQualityMode_UltraHiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes);
   initparameter_b(kTomsound, {"TOMSOUND", "TomSnd", "Tom7"}, false);
   initparameter_b(kFreeze, dfx::MakeParameterNames(dfx::kParameterNames_Freeze), false);
+  initparameter_b(kAttenuateFeedbackByMixLevel, {"attenuate feedback by mix level", "AtnFdbk", "AtnFdb", "-fdb"}, false);
 
   setparameterenforcevaluelimits(kBsize, true);
   setparameterenforcevaluelimits(kDist1, true);
@@ -70,6 +71,7 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   addparameterattributes(kDist1, DfxParam::kAttribute_OmitFromRandomizeAll);
   addparameterattributes(kDist2, DfxParam::kAttribute_OmitFromRandomizeAll);
   addparameterattributes(kFreeze, DfxParam::kAttribute_OmitFromRandomizeAll);
+  addparameterattributes(kAttenuateFeedbackByMixLevel, DfxParam::kAttribute_OmitFromRandomizeAll);
 
   std::vector<long> mixparameters(1, kDrymix);
   for (size_t head = 0; head < kNumDelays; head++) {
@@ -234,7 +236,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kMix1, 0.5);
 	setpresetparameter_f(i, kDist1, 0.1);
 	setpresetparameter_f(i, kSpeed1, 0.048406605 / 12.);
-	setpresetparameter_f(i, kFeed1, 67.0);
+	setpresetparameter_f(i, kFeed1, 33.5);
 	setpresetparameter_f(i, kMix2, 0.0);
 	setpresetparameter_f(i, kDist2, 0.0);
 	setpresetparameter_f(i, kSpeed2, getparametermin_f(kSpeed2));
@@ -250,7 +252,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kMix1, 0.5);
 	setpresetparameter_f(i, kDist1, 0.0);
 	setpresetparameter_f(i, kSpeed1, -0.12 / 12.);//-0.048542333 / 12.);
-	setpresetparameter_f(i, kFeed1, 76.0);
+	setpresetparameter_f(i, kFeed1, 38.);
 	setpresetparameter_f(i, kMix2, 0.0);
 	setpresetparameter_f(i, kDist2, 0.0);
 	setpresetparameter_f(i, kSpeed2, getparametermin_f(kSpeed2));
@@ -270,7 +272,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kMix2, 0.757);
 	setpresetparameter_f(i, kDist2, 0.557);
 	setpresetparameter_f(i, kSpeed2, 2.444534569);
-	setpresetparameter_f(i, kFeed2, 46.0);
+	setpresetparameter_f(i, kFeed2, 34.822);
 	setpresetparameter_i(i, kQuality, kQualityMode_UltraHiFi);
 	setpresetparameter_b(i, kTomsound, false);
 	setpresetparameter_b(i, kFreeze, false);
@@ -297,7 +299,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kFeed1, 73.0);
 	setpresetparameter_f(i, kDist1, 0.8143);
 	setpresetparameter_f(i, kSpeed2, 4.3 / 12.);
-	setpresetparameter_f(i, kFeed2, 41.0);
+	setpresetparameter_f(i, kFeed2, 5.0225);
 	setpresetparameter_f(i, kDist2, 0.4006);
 	setpresetparameter_f(i, kBsize, 16.8);
 	setpresetparameter_f(i, kDrymix, 0.000576);
@@ -361,7 +363,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kFeed1, 80.3769);
 	setpresetparameter_f(i, kDist1, 0.977638);
 	setpresetparameter_f(i, kSpeed2, 2.);
-	setpresetparameter_f(i, kFeed2, 29.21106);
+	setpresetparameter_f(i, kFeed2, 18.937530198);
 	setpresetparameter_f(i, kDist2, 0.989335);
 	setpresetparameter_f(i, kBsize, 1938.5203);
 	setpresetparameter_f(i, kDrymix, 0.);
@@ -587,17 +589,32 @@ void Transverb::settings_doChunkRestoreSetParameterStuff(long tag, float value, 
 		}
 	}
 
-	// invert old erroneously reversed dist parameter values
-	if ((dataVersion <= 0x00010502) && ((tag == kDist1) || (tag == kDist2)))
+	if (dataVersion <= 0x00010502)
 	{
-		auto const valueNormalized = 1. - contractparametervalue(tag, value);
+		// invert old erroneously reversed dist parameter values
+		if ((tag == kDist1) || (tag == kDist2))
+		{
+			auto const valueNormalized = 1. - contractparametervalue(tag, value);
+			if (presetisvalid(presetNum))
+			{
+				setpresetparameter_gen(presetNum, tag, valueNormalized);
+			}
+			else
+			{
+				setparameter_gen(tag, valueNormalized);
+			}
+		}
+
+		// apply legacy feedback behavior
+		// https://github.com/sophiapoirier/destroyfx/issues/61
+		constexpr bool attenuate = true;
 		if (presetisvalid(presetNum))
 		{
-			setpresetparameter_gen(presetNum, tag, valueNormalized);
+			setpresetparameter_b(presetNum, kAttenuateFeedbackByMixLevel, attenuate);
 		}
 		else
 		{
-			setparameter_gen(tag, valueNormalized);
+			setparameter_b(kAttenuateFeedbackByMixLevel, attenuate);
 		}
 	}
 }
