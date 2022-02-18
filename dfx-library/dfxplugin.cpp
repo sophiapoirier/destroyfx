@@ -1049,6 +1049,26 @@ double DfxPlugin::getpresetparameter_f(long inPresetIndex, long inParameterIndex
 }
 
 //-----------------------------------------------------------------------------
+int64_t DfxPlugin::getpresetparameter_i(long inPresetIndex, long inParameterIndex) const
+{
+	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
+	{
+		return mParameters[inParameterIndex].derive_i(mPresets[inPresetIndex].getvalue(inParameterIndex));
+	}
+	return 0;
+}
+
+//-----------------------------------------------------------------------------
+bool DfxPlugin::getpresetparameter_b(long inPresetIndex, long inParameterIndex) const
+{
+	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
+	{
+		return mParameters[inParameterIndex].derive_b(mPresets[inPresetIndex].getvalue(inParameterIndex));
+	}
+	return false;
+}
+
+//-----------------------------------------------------------------------------
 void DfxPlugin::setpresetparameter(long inPresetIndex, long inParameterIndex, DfxParam::Value inValue)
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))

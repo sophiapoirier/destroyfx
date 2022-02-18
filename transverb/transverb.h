@@ -76,6 +76,7 @@ private:
     auto const posFract = static_cast<float>(std::fmod(address, 1.));
     return (value1 * (1.0f - posFract)) + (value2 * posFract);
   }
+  static constexpr float interpolateLinear(float const* data, double readaddress, int arraysize/*, int writeaddress*/);
 
   // negative input values are bumped into non-negative range by incremements of modulo
   static constexpr int mod_bipolar(int value, int modulo);
@@ -202,22 +203,18 @@ constexpr float TransverbDSP::interpolateHermitePostLowpass(float const* data, f
 
   return (((a * posFract) + b) * posFract + c) * posFract + data[1];
 }
+*/
 
 constexpr float TransverbDSP::interpolateLinear(float const* data, double readaddress,
-                                                int arraysize, int writeaddress) {
-	int posPlus1 = 0;
-	auto const pos = static_cast<int>(readaddress);
-	auto const posFract = static_cast<float>(readaddress - static_cast<double>(pos));
-
-	if (mod_bipolar(writeaddress - pos, arraysize) == 1) {
-		// the upcoming sample is not contiguous because
-		// the write head is about to write to it
-		posPlus1 = pos;
-	} else {
-		// it's alright
-		posPlus1 = (pos + 1) % arraysize;
-	}
-	return (data[pos] * (1.0f - posFract)) +
-			(data[posPlus1] * posFract);
+                                                int arraysize/*, int writeaddress*/) {
+  auto const pos = static_cast<int>(readaddress);
+#if 0
+  if (mod_bipolar(writeaddress - pos, arraysize) == 1) {
+    // the upcoming sample is not contiguous because
+    // the write head is about to write to it
+    return data[pos];
+  }
+#endif
+  auto const posPlus1 = (pos + 1) % arraysize;
+  return interpolateLinear(data[pos], data[posPlus1], readaddress);
 }
-*/

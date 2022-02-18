@@ -475,6 +475,8 @@ public:
 	void setpresetparameter_gen(long inPresetIndex, long inParameterIndex, double inValue);
 	void postupdate_preset();
 	double getpresetparameter_f(long inPresetIndex, long inParameterIndex) const;
+	int64_t getpresetparameter_i(long inPresetIndex, long inParameterIndex) const;
+	bool getpresetparameter_b(long inPresetIndex, long inParameterIndex) const;
 
 	bool settingsMinimalValidate(void const* inData, size_t inBufferSize) const noexcept;
 

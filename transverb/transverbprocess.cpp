@@ -308,6 +308,8 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
             delayvals[h] = buf[static_cast<size_t>(heads[h].read)];
             break;
           case kQualityMode_HiFi:
+            delayvals[h] = interpolateLinear(buf.data(), heads[h].read, bsize);
+            break;
           case kQualityMode_UltraHiFi:
             delayvals[h] = dfx::math::InterpolateHermite(buf.data(), heads[h].read, bsize);
             break;

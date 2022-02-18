@@ -487,7 +487,7 @@ void Transverb::randomizeparameters()
 	setparameter_b(kTomsound, newTomsound);
 	if (newTomsound)
 	{
-		// split probability evenly between lowest and higher qualities, since the latter operate the same
+		// split probability evenly between lowest and higher qualities
 		setparameter_i(kQuality, generateParameterRandomValue<int64_t>(0, kQualityMode_NumModes) % kQualityMode_NumModes);
 	}
 	else
@@ -602,6 +602,25 @@ void Transverb::settings_doChunkRestoreSetParameterStuff(long tag, float value, 
 			else
 			{
 				setparameter_gen(tag, valueNormalized);
+			}
+		}
+
+		// hi-fi mode used to behave the same as and ultra hi-fi mode in TOMSOUND
+		if (tag == kTomsound)  // assumes that TOMSOUND parameter is restored after quality
+		{
+			if (presetisvalid(presetNum))
+			{
+				if (getpresetparameter_f(presetNum, kTomsound) && (getpresetparameter_i(presetNum, kQuality) == kQualityMode_HiFi))
+				{
+					setpresetparameter_i(presetNum, kQuality, kQualityMode_UltraHiFi);
+				}
+			}
+			else
+			{
+				if (getparameter_b(kTomsound) && (getparameter_i(kQuality) == kQualityMode_HiFi))
+				{
+					setparameter_i(kQuality, kQualityMode_UltraHiFi);
+				}
 			}
 		}
 
