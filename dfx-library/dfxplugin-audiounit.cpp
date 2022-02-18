@@ -1157,16 +1157,15 @@ OSStatus DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 	{
 		outParameterInfo.defaultValue = getparameterdefault_f(inParameterID);
 	}
-	// check if the parameter is used or not (stupid VST workaround)
+	// check if the parameter is used or not (workaround for plugin formats that require indexed parameters)
 	if (hasparameterattribute(inParameterID, DfxParam::kAttribute_Unused))
 	{
-		outParameterInfo.flags = 0;
-//		return kAudioUnitErr_InvalidParameter;  // XXX ey?
+		return kAudioUnitErr_InvalidParameter;
 	}
 	// if the parameter is hidden, then indicate that it's not readable or writable...
 	else if (hasparameterattribute(inParameterID, DfxParam::kAttribute_Hidden))
 	{
-		outParameterInfo.flags = 0;
+		outParameterInfo.flags = kAudioUnitParameterFlag_ExpertMode;
 	}
 	// ...otherwise all parameters are readable and writable
 	else
