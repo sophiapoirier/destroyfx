@@ -81,6 +81,7 @@ enum
 constexpr auto kDisplayFont = dfx::kFontName_Snooty10px;
 constexpr DGColor kDisplayTextColor(103, 161, 215);
 constexpr auto kDisplayTextSize = dfx::kFontSize_Snooty10px;
+constexpr float kUnusedControlAlpha = 0.39f;
 constexpr float kFineTuneInc = 0.0001f;
 constexpr float kSemitonesPerOctave = 12.0f;
 
@@ -442,6 +443,7 @@ long TransverbEditor::OpenEditor()
 		pos.set(kSpeedModeButtonX, kSpeedModeButtonY + (((kWideFaderInc * 2) + kWideFaderMoreInc) * speedModeIndex),
 				speedModeButtonImage->getWidth() / 2, speedModeButtonImage->getHeight() / kSpeedMode_NumModes);
 		mSpeedModeButtons[speedModeIndex] = emplaceControl<DGButton>(this, pos, speedModeButtonImage, kSpeedMode_NumModes, DGButton::Mode::Increment, true);
+		// TODO: C++20 bind_front
 		mSpeedModeButtons[speedModeIndex]->setUserProcedure(std::bind(&TransverbEditor::HandleSpeedModeButton, this, speedModeIndex, std::placeholders::_1));
 	}
 
@@ -489,6 +491,7 @@ void TransverbEditor::PostOpenEditor()
 	{
 		HandleSpeedModeChange(i);
 	}
+	HandleFreezeChange();
 }
 
 //-----------------------------------------------------------------------------
@@ -503,11 +506,16 @@ void TransverbEditor::CloseEditor()
 //-----------------------------------------------------------------------------
 void TransverbEditor::parameterChanged(long inParameterID)
 {
-	if (inParameterID == kBsize)
+	switch (inParameterID)
 	{
-		// trigger re-conversion of numerical value to text
-		std::for_each(mDistanceTextDisplays.begin(), mDistanceTextDisplays.end(),
-					  [](auto& display){ display->refreshText(); });
+		case kBsize:
+			// trigger re-conversion of numerical value to text
+			std::for_each(mDistanceTextDisplays.begin(), mDistanceTextDisplays.end(),
+						  [](auto& display){ display->refreshText(); });
+			break;
+		case kFreeze:
+			HandleFreezeChange();
+			break;
 	}
 }
 
@@ -546,4 +554,12 @@ void TransverbEditor::HandleSpeedModeChange(size_t inIndex)
 		mSpeedDownButtons.at(inIndex)->setTuneMode(*tuneMode);
 		mSpeedUpButtons.at(inIndex)->setTuneMode(*tuneMode);
 	}
+}
+
+//-----------------------------------------------------------------------------
+void TransverbEditor::HandleFreezeChange()
+{
+	float const alpha = getparameter_b(kFreeze) ? kUnusedControlAlpha : 1.f;
+	std::for_each(kFeedParameters.cbegin(), kFeedParameters.cend(),
+				  [this, alpha](auto parameterID){ SetParameterAlpha(parameterID, alpha); });
 }

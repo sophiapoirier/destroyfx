@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -66,6 +66,7 @@ public:
 private:
 	void HandleSpeedModeButton(size_t inIndex, long inValue);
 	void HandleSpeedModeChange(size_t inIndex);
+	void HandleFreezeChange();
 
 	std::array<DGButton*, dfx::TV::kNumDelays> mSpeedModeButtons {};
 	std::array<TransverbSpeedTuneButton*, dfx::TV::kNumDelays> mSpeedDownButtons {}, mSpeedUpButtons {};
