@@ -26,6 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <cmath>
 #include <cstdint>
 #include <numeric>
+#include <optional>
 #include <span>
 #include <vector>
 
@@ -59,6 +60,8 @@ private:
     dfx::SmoothedValue<float> mix, feed;
 
     double read = 0.;
+    std::optional<double> targetdist;
+    double distspeedfactor = 1.;
     std::vector<float> buf;
 
     dfx::IIRFilter filter;
@@ -85,16 +88,22 @@ private:
   static constexpr int mod_bipolar(int value, int modulo);
   static inline double fmod_bipolar(double value, double modulo);
 
+  // distance in samples of a read position from the current write position
+  double getdist(double read) const;
+  void processdist(double distnormalized, Head& head);
+
   // these store the parameter values
   int bsize = 0;
   dfx::SmoothedValue<float> drymix;
-  long quality = 0;
-  bool tomsound = false;
+  int distchangemode {};
 
   int writer = 0;
   std::array<Head, dfx::TV::kNumDelays> heads;
 
   int const MAXBUF;  // the size of the audio buffer (dependent on sampling rate)
+
+  bool firstrendersincereset = false;
+  std::vector<float>& buftemp;
 
   std::vector<float> const firCoefficientsWindow;
 };
@@ -118,6 +127,10 @@ public:
   dfx::StatusCode dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
                                   void const* inData, size_t inDataSize) override;
 
+  auto& getscratchbuffer() noexcept {
+    return buftemp;
+  }
+
 protected:
   size_t settings_sizeOfExtendedData() const noexcept override;
   void settings_saveExtendedData(void* outData, bool isPreset) const override;
@@ -134,6 +147,7 @@ private:
   }
 
   std::array<uint32_t, dfx::TV::kNumDelays> speedModeStates {};
+  std::vector<float> buftemp;  // shared between all DSP cores (memory optimization)
 };
 
 

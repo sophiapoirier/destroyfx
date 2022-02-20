@@ -48,6 +48,7 @@ enum : dfx::ParameterID
 	kTomsound,
 	kFreeze,
 	kAttenuateFeedbackByMixLevel,
+	kDistChangeMode,
 
 	kNumParameters
 };
@@ -65,6 +66,8 @@ enum { kQualityMode_DirtFi, kQualityMode_HiFi, kQualityMode_UltraHiFi, kQualityM
 // this stuff is for the speed parameter adjustment mode switch on the GUI
 enum : unsigned int { kSpeedMode_Fine, kSpeedMode_Semitone, kSpeedMode_Octave, kSpeedMode_NumModes };
 static constexpr dfx::PropertyID kTransverbProperty_SpeedModeBase = dfx::kPluginProperty_EndOfList;
+
+enum { kDistChangeMode_Reverse, kDistChangeMode_AdHocVarispeed, kDistChangeMode_DistanceVarispeed, kDistChangeMode_BufferVarispeed, kDistChangeMode_LoopingBufferVarispeed, kDistChangeMode_Count };
 
 
 dfx::PropertyID speedModeIndexToPropertyID(size_t inIndex) noexcept;
