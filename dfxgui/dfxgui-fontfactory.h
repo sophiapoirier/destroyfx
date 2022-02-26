@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier and Tom Murphy VII
+Copyright (C) 2002-2022  Sophia Poirier and Tom Murphy VII
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -50,7 +50,7 @@ public:
   virtual ~FontFactory() = default;
 
   FontFactory(FontFactory const&) = delete;
-  void operator=(FontFactory const&) = delete;
+  FontFactory& operator=(FontFactory const&) = delete;
   FontFactory(FontFactory&&) = delete;
   FontFactory& operator=(FontFactory&&) = delete;
 
