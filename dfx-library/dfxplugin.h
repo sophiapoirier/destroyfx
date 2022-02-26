@@ -115,10 +115,6 @@ TARGET_PLUGIN_HAS_GUI
 TARGET_API_AUDIOUNIT
 TARGET_API_VST
 
- necessary for Audio Unit:
-PLUGIN_ENTRY_POINT
-	a C string of the base plugin class name with "Entry" appended
-
  necessary for VST:
 VST_NUM_INPUTS
 VST_NUM_OUTPUTS

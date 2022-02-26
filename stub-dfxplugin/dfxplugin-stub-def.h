@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -44,11 +44,10 @@ or somehow define this stuff another way (in compiler settings, or whatever).
 // your subclass of DfxPlugin
 #define PLUGIN_CLASS_NAME	DfxStub
 // Audio Unit entry point:  plugin class name appended with "Entry"
-#define PLUGIN_ENTRY_POINT	"DfxStubEntry"
 // macOS bundle identifier
 #define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX "DfxStub" DFX_BUNDLE_ID_SUFFIX
 // copyright year(s) published in versioning metadata
-#define PLUGIN_COPYRIGHT_YEAR_STRING	"2002-2021"
+#define PLUGIN_COPYRIGHT_YEAR_STRING	"2002-2022"
 // 0 or 1
 #define TARGET_PLUGIN_USES_MIDI	1
 // 0 or 1	(1 implied 1 is also true for TARGET_PLUGIN_USES_MIDI)

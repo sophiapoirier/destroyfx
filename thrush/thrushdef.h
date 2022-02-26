@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier and Keith Fullerton Whitman
+Copyright (C) 2001-2022  Sophia Poirier and Keith Fullerton Whitman
 
 This file is part of Thrush.
 
@@ -31,13 +31,12 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_VERSION_MINOR	0
 #define PLUGIN_VERSION_BUGFIX	0
 #define PLUGIN_CLASS_NAME	Thrush
-#define PLUGIN_ENTRY_POINT	"ThrushFactory"
 #define TARGET_PLUGIN_USES_MIDI	0
 #define TARGET_PLUGIN_IS_INSTRUMENT	0
 #define TARGET_PLUGIN_USES_DSPCORE	0
 #define TARGET_PLUGIN_HAS_GUI	0
 //#define PLUGIN_BACKGROUND_IMAGE_FILENAME	"thrush-background.png"
-#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2021"
+#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2022"
 #define VST_NUM_CHANNELS	2
 
 
