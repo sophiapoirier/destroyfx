@@ -4,12 +4,13 @@
 
 #include "windowingstub.h"
 
-#include <stdio.h>
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdio>
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-  #ifndef _DFX_WINDOWINGSTUBEDITOR_H
   #include "windowingstubeditor.hpp"
-  #endif
 #endif
 
 /* this macro does boring entry point stuff for us */
@@ -23,22 +24,21 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_indexed(P_BUFSIZE, {"wsize"}, 9, 9, BUFFERSIZESSIZE, kDfxParamUnit_samples);
   initparameter_indexed(P_SHAPE, {"wshape"}, WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
 
-  long i;
   /* set up values for windowing */
-  char bufstr[64];
-  for (i=0; i < BUFFERSIZESSIZE; i++) {
+  for (long i = 0; i < BUFFERSIZESSIZE; i++) {
+    std::array<char, 64> bufstr {};
     if (buffersizes[i] > 1000)
-      sprintf(bufstr, "%ld,%03ld", buffersizes[i]/1000, buffersizes[i]%1000);
+      snprintf(bufstr.data(), bufstr.size(), "%ld,%03ld", buffersizes[i] / 1000, buffersizes[i] % 1000);
     else
-      sprintf(bufstr, "%ld", buffersizes[i]);
-    setparametervaluestring(P_BUFSIZE, i, bufstr);
+      snprintf(bufstr.data(), bufstr.size(), "%ld", buffersizes[i]);
+    setparametervaluestring(P_BUFSIZE, i, bufstr.data());
   }
 
   setparametervaluestring(P_SHAPE, WINDOW_TRIANGLE, "linear");
   setparametervaluestring(P_SHAPE, WINDOW_ARROW, "arrow");
   setparametervaluestring(P_SHAPE, WINDOW_WEDGE, "wedge");
   setparametervaluestring(P_SHAPE, WINDOW_COS, "best");
-  for (i=NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
+  for (long i = NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
     setparametervaluestring(P_SHAPE, i, "???");
 
   long delay_samples = buffersizes[getparameter_i(P_BUFSIZE)];
@@ -49,52 +49,25 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   makepresets();
 
   /* allow MIDI keys to be used to control parameters */
-  dfxsettings->setAllowPitchbendEvents(true);
-  dfxsettings->setAllowNoteEvents(true);
+  getsettings()->setAllowPitchbendEvents(true);
+  getsettings()->setAllowNoteEvents(true);
 
 #if !TARGET_PLUGIN_USES_DSPCORE
   addchannelconfig(1, 1);	/* mono */
-#endif
-
-  #ifdef TARGET_API_VST
-    /* if you have a GUI, need an Editor class... */
-    #if TARGET_PLUGIN_HAS_GUI
-      editor = new WindowingstubEditor(this);
-    #endif
-  #endif
-}
-
-PLUGIN::~PLUGIN() {
-
-#ifdef TARGET_API_VST
-  /* VST doesn't have initialize and cleanup methods like Audio Unit does, 
-    so we need to call this manually here */
-  do_cleanup();
 #endif
 }
 
 PLUGINCORE::PLUGINCORE(DfxPlugin * inInstance)
   : DfxPluginCore(inInstance) {
   /* determine the size of the largest window size */
-  long maxframe = 0;
-  for (int i = 0; i < BUFFERSIZESSIZE; i++)
-    maxframe = (buffersizes[i] > maxframe) ? buffersizes[i] : maxframe;
+  auto const maxframe = *std::max_element(std::cbegin(buffersizes), std::cend(buffersizes));
 
   /* add some leeway? */
-  in0 = (float*)malloc(maxframe * sizeof (float));
-  out0 = (float*)malloc(maxframe * 2 * sizeof (float));
+  in0.assign(maxframe, 0.f);
+  out0.assign(maxframe * 2, 0.f);
 
   /* prevmix is only a single third long */
-  prevmix = (float*)malloc((maxframe / 2) * sizeof (float));
-}
-
-
-PLUGINCORE::~PLUGINCORE() {
-  /* windowing buffers */
-  free (in0);
-  free (out0);
-
-  free (prevmix);
+  prevmix.assign(maxframe / 2, 0.f);
 }
 
 void PLUGINCORE::reset() {
@@ -104,24 +77,20 @@ void PLUGINCORE::reset() {
   bufsize = third * 3;
 
   /* set up buffers. Prevmix and first frame of output are always 
-     filled with zeros. XXX memset */
+     filled with zeros. */
 
-  for (int i = 0; i < third; i ++) {
-    prevmix[i] = 0.0f;
-  }
 
-  for (int j = 0; j < framesize; j ++) {
-    out0[j] = 0.0f;
-  }
+  std::fill_n(prevmix.begin(), third, 0.f);
+  std::fill_n(out0.begin(), framesize, 0.f);
   
   /* start input at beginning. Output has a frame of silence. */
   insize = 0;
   outstart = 0;
   outsize = framesize;
 
-  dfxplugin->setlatency_samples(framesize);
+  getplugin()->setlatency_samples(framesize);
   /* tail is the same as delay, of course */
-  dfxplugin->settailsize_samples(framesize);
+  getplugin()->settailsize_samples(framesize);
 }
 
 void PLUGINCORE::processparameters() {
@@ -132,7 +101,7 @@ void PLUGINCORE::processparameters() {
     /* this tells the host to call a suspend()-resume() pair, 
       which updates initialDelay value */
   if (getparameterchanged(P_BUFSIZE))
-    dfxplugin->setlatencychanged(true);
+    getplugin()->setlatencychanged(true);
   #endif
 }
 
@@ -140,10 +109,9 @@ void PLUGINCORE::processparameters() {
    write your DSP, and it will be always called with the same sample
    size (as long as the block size parameter stays the same) and
    automatically overlapped. */
-void PLUGINCORE::processw(float * in, float * out, long samples) {
+void PLUGINCORE::processw(float const * in, float * out, long samples) {
 
   memmove(out, in, samples * sizeof (float));
-
 }
 
 
@@ -172,28 +140,25 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
 */
 
 /* to improve: 
-   - use memcpy and arithmetic instead of
-     sample-by-sample copy 
    - can we use tail of out0 as prevmix, instead of copying?
    - can we use circular buffers instead of memmoving a lot?
      (probably not)
 */
 
 
-void PLUGINCORE::process(const float *tin, float *tout, unsigned long samples, bool replacing) {
-  int z = 0;
+void PLUGINCORE::process(float const *tin, float *tout, unsigned long samples) {
 
-  for (unsigned long ii = 0; ii < samples; ii++) {
+  for (unsigned long i = 0; i < samples; i++) {
 
     /* copy sample in */
-    in0[insize] = tin[ii];
+    in0[insize] = tin[i];
     insize ++;
  
     if (insize == framesize) {
       /* frame is full! */
 
       /* in0 -> process -> out0(first free space) */
-      processw(in0, out0+outstart+outsize, framesize);
+      processw(in0.data(), out0.data()+outstart+outsize, framesize);
 
       float oneDivThird = 1.0f / (float)third;
       /* apply envelope */
@@ -201,13 +166,13 @@ void PLUGINCORE::process(const float *tin, float *tout, unsigned long samples, b
       switch(shape) {
 
         case WINDOW_TRIANGLE:
-          for(z = 0; z < third; z++) {
+          for(int z = 0; z < third; z++) {
             out0[z+outstart+outsize] *= ((float)z * oneDivThird);
             out0[z+outstart+outsize+third] *= (1.0f - ((float)z * oneDivThird));
           }
           break;
         case WINDOW_ARROW:
-          for(z = 0; z < third; z++) {
+          for(int z = 0; z < third; z++) {
             float p = (float)z * oneDivThird;
             p *= p;
             out0[z+outstart+outsize] *= p;
@@ -215,15 +180,15 @@ void PLUGINCORE::process(const float *tin, float *tout, unsigned long samples, b
           }
           break;
         case WINDOW_WEDGE:
-          for(z = 0; z < third; z++) {
-            float p = sqrtf((float)z * oneDivThird);
+          for(int z = 0; z < third; z++) {
+            float p = std::sqrt((float)z * oneDivThird);
             out0[z+outstart+outsize] *= p;
             out0[z+outstart+outsize+third] *= (1.0f - p);
           }
           break;
         case WINDOW_COS:
-          for(z = 0; z < third; z ++) {
-            float p = 0.5f * (-cosf(PI * ((float)z * oneDivThird)) + 1.0f);
+          for(int z = 0; z < third; z ++) {
+            float p = 0.5f * (-std::cos(PI * ((float)z * oneDivThird)) + 1.0f);
             out0[z+outstart+outsize] *= p;
             out0[z+outstart+outsize+third] *= (1.0f - p);
           }
@@ -235,11 +200,11 @@ void PLUGINCORE::process(const float *tin, float *tout, unsigned long samples, b
         out0[u+outstart+outsize] += prevmix[u];
 
       /* prevmix becomes out1 */
-      memcpy(prevmix, out0 + outstart + outsize + third, third * sizeof (float));
+      std::copy_n(std::next(out0.cbegin(), outstart + outsize + third), third, prevmix.begin());
 
       /* copy 2nd third of input over in0 (need to re-use it for next frame), 
          now insize = third */
-      memcpy(in0, in0 + third, third * sizeof (float));
+      std::copy_n(std::next(in0.cbegin(), third), third, in0.begin());
 
       insize = third;
       
@@ -247,20 +212,14 @@ void PLUGINCORE::process(const float *tin, float *tout, unsigned long samples, b
     }
 
     /* send sample out */
-  #ifdef TARGET_API_VST
-    if (replacing)
-  #endif
-      tout[ii] = out0[outstart];
-  #ifdef TARGET_API_VST
-    else tout[ii] += out0[outstart];
-  #endif
+    tout[i] = out0[outstart];
 
     outstart ++;
     outsize --;
 
     /* make sure there is always enough room for a frame in out buffer */
     if (outstart == third) {
-      memmove(out0, out0 + outstart, outsize * sizeof (float));
+      memmove(out0.data(), out0.data() + outstart, outsize * sizeof (float));
       outstart = 0;
     }
   }

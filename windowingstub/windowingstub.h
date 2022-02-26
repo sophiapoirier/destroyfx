@@ -1,23 +1,22 @@
 
 /* Windowingstub, starring the Super Destroy FX Windowing System! */
 
-#ifndef _DFX_WINDOWINGSTUB_H
-#define _DFX_WINDOWINGSTUB_H
+#pragma once
 
 #include "dfxplugin.h"
 
+#include <vector>
+
 /* change these for your plugins */
 #define PLUGIN Windowingstub
-#define NUM_PRESETS 16
+#define PLUGINCORE WindowingstubDSP
 
-#define BUFFERSIZESSIZE 14
-const long buffersizes[BUFFERSIZESSIZE] = { 
+
+static constexpr long buffersizes[] = { 
   4, 8, 16, 32, 64, 128, 256, 512, 
   1024, 2048, 4096, 8192, 16384, 32768, 
 };
-
-
-#define PLUGINCORE WindowingstubDSP
+static constexpr long BUFFERSIZESSIZE = std::size(buffersizes);
 
 /* the types of window shapes available for smoothity */
 enum { WINDOW_TRIANGLE, 
@@ -34,55 +33,53 @@ enum { P_BUFSIZE, P_SHAPE,
 };
 
 
-class PLUGIN : public DfxPlugin {
+class PLUGIN final : public DfxPlugin {
 public:
-  PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance);
-  virtual ~PLUGIN();
+  explicit PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
 private:
+  static constexpr long NUM_PRESETS = 16;
+
   /* set up the built-in presets */
   void makepresets();
 };
 
-class PLUGINCORE : public DfxPluginCore {
+class PLUGINCORE final : public DfxPluginCore {
 public:
-  PLUGINCORE(DfxPlugin * inInstance);
-  virtual ~PLUGINCORE();
+  explicit PLUGINCORE(DfxPlugin * inInstance);
 
-  virtual void reset();
-  virtual void processparameters();
-  virtual void process(const float *in, float *out, unsigned long inNumFrames, bool replacing=true);
+  void reset() override;
+  void processparameters() override;
+  void process(float const * in, float * out, unsigned long inNumFrames) override;
 
-  long getwindowsize() { return third; }
+  long getwindowsize() const noexcept { return third; }
 
  private:
 
   /* input and output buffers. out is framesize*2 samples long, in is framesize
      samples long. (for maximum framesize)
   */
-  float * in0, * out0;
+  std::vector<float> in0, out0;
 
   /* bufsize is 3 * third, framesize is 2 * third 
      bufsize is used for outbuf.
   */
-  long bufsize, framesize, third;
+  long bufsize = 0, framesize = 0, third = 0;
 
-  void processw(float * in, float * out, long samples);
+  void processw(float const * in, float * out, long samples);
 
-  int shape;
+  int shape = 0;
 
   /* third-sized tail of previous processed frame. already has mixing envelope
      applied.
    */
-  float * prevmix;
+  std::vector<float> prevmix;
 
   /* number of samples in in0 */
-  int insize;
+  int insize = 0;
 
   /* number of samples and starting position of valid samples in out0 */
-  int outsize;
-  int outstart;
+  int outsize = 0;
+  int outstart = 0;
 
 };
-
-#endif
