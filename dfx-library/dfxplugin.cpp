@@ -406,7 +406,7 @@ void DfxPlugin::do_reset()
 	{
 		if (dspCore)
 		{
-			dspCore->do_reset();
+			dspCore->reset();
 		}
 	}
 #endif

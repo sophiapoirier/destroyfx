@@ -133,6 +133,11 @@ public:
 	explicit DfxGuiEditor(DGEditorListenerInstance inInstance);
 	virtual ~DfxGuiEditor();
 
+	DfxGuiEditor(DfxGuiEditor const&) = delete;
+	DfxGuiEditor(DfxGuiEditor&&) = delete;
+	DfxGuiEditor& operator=(DfxGuiEditor const&) = delete;
+	DfxGuiEditor& operator=(DfxGuiEditor&&) = delete;
+
 	// VSTGUI overrides
 	bool open(void* inWindow) final;
 	void close() final;

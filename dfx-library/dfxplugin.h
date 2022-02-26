@@ -1098,16 +1098,17 @@ public:
 		mDfxPlugin->unregisterAllSmoothedAudioValues(this);
 	}
 
-	void dfxplugincore_postconstructor()
-	{
-		do_reset();
-	}
+	DfxPluginCore(DfxPluginCore const&) = delete;
+	DfxPluginCore(DfxPluginCore&&) = delete;
+	DfxPluginCore& operator=(DfxPluginCore const&) = delete;
+	DfxPluginCore& operator=(DfxPluginCore&&) = delete;
 
-	virtual void process(float const* inStream, float* outStream, unsigned long inNumFrames) = 0;
-	void do_reset()
+	void dfxplugincore_postconstructor()
 	{
 		reset();
 	}
+
+	virtual void process(float const* inStream, float* outStream, unsigned long inNumFrames) = 0;
 	virtual void reset() {}
 	// NOTE: a weakness of the processparameters design, and then subsequent snapping of 
 	// all smoothed values if it is the first audio render since audio reset, is that you 
@@ -1208,13 +1209,13 @@ public:
 	}
 	void Reset() override
 	{
-		do_reset();
+		reset();
 	}
 #else
 	// Mimic what AUKernelBase does here. The channel is just the index
 	// in the mDSPCores vector.
 	void SetChannelNum(unsigned long inChannel) noexcept { mChannelNumber = inChannel; }
-	unsigned long GetChannelNum() const noexcept { return mChannelNumber; }
+	[[nodiscard]] unsigned long GetChannelNum() const noexcept { return mChannelNumber; }
 #endif
 
 
