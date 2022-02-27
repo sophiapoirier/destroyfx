@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2003-2021  Sophia Poirier
+Copyright (C) 2003-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -211,11 +211,11 @@ class DGMultiControl : /*public IDGMultiControl,*/ public DGControl<T>
 public:
 	using DGControl<T>::DGControl;
 
-	std::vector<IDGControl*> getChildren() override
+	std::vector<IDGControl*> getChildren() final
 	{
 		return {mChildren.cbegin(), mChildren.cend()};
 	}
-	std::vector<IDGControl const*> getChildren() const override
+	std::vector<IDGControl const*> getChildren() const final
 	{
 		return {mChildren.cbegin(), mChildren.cend()};
 	}

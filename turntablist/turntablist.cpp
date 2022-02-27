@@ -326,7 +326,7 @@ OSStatus Turntablist::SaveState(CFPropertyListRef* outData)
 					CFDictionarySetValue(dict, kTurntablistPreset_AudioFileAliasKey, aliasCFData.get());
 				}
 			}
-			DisposeHandle((Handle)aliasHandle);
+			DisposeHandle(reinterpret_cast<Handle>(aliasHandle));
 		}
 	}
 
@@ -418,7 +418,7 @@ OSStatus Turntablist::RestoreState(CFPropertyListRef inData)
 								}
 							}
 						}
-						DisposeHandle((Handle)aliasHandle);
+						DisposeHandle(reinterpret_cast<Handle>(aliasHandle));
 					}
 				}
 			}
@@ -464,121 +464,107 @@ OSStatus Turntablist::PostNotification_AudioFileNotFound(CFStringRef inFileName)
 }
 
 //-----------------------------------------------------------------------------
-OSStatus Turntablist::GetPropertyInfo(AudioUnitPropertyID inPropertyID, 
-									  AudioUnitScope inScope, AudioUnitElement inElement, 
-									  UInt32& outDataSize, bool& outWritable)
+long Turntablist::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID,
+									  dfx::Scope inScope, unsigned long inItemIndex,
+									  size_t& outDataSize, dfx::PropertyFlags& outFlags)
 {
-	OSStatus status = noErr;
-
 	switch (inPropertyID)
 	{
 		case kTurntablistProperty_Play:
 			outDataSize = sizeof(Boolean);
-			outWritable = true;
-			break;
+			outFlags = dfx::kPropertyFlag_Readable | dfx::kPropertyFlag_Writable;
+			return dfx::kStatus_NoError;
 
 		case kTurntablistProperty_AudioFile:
-			if (FSIsFSRefValid(&m_fsAudioFile))
+		{
+			if (!FSIsFSRefValid(&m_fsAudioFile))
 			{
-				AliasHandle alias = nullptr;
-				Size aliasSize = 0;
-				status = createAudioFileAlias(&alias, &aliasSize);
-				if (status == noErr)
-				{
-					outDataSize = aliasSize;
-					outWritable = true;
-					DisposeHandle((Handle)alias);
-				}
+				return errFSBadFSRef;
 			}
-			else
+			AliasHandle alias = nullptr;
+			Size aliasSize = 0;
+			auto const status = createAudioFileAlias(&alias, &aliasSize);
+			if (status != noErr)
 			{
-				status = errFSBadFSRef;
+				return status;
 			}
-			break;
+			outDataSize = aliasSize;
+			outFlags = dfx::kPropertyFlag_Readable | dfx::kPropertyFlag_Writable;
+			DisposeHandle(reinterpret_cast<Handle>(alias));
+			return dfx::kStatus_NoError;
+		}
 
 		default:
-			status = DfxPlugin::GetPropertyInfo(inPropertyID, inScope, inElement, outDataSize, outWritable);
-			break;
+			return DfxPlugin::dfx_GetPropertyInfo(inPropertyID, inScope, inItemIndex, outDataSize, outFlags);
 	}
-
-	return status;
 }
 
 //-----------------------------------------------------------------------------
-OSStatus Turntablist::GetProperty(AudioUnitPropertyID inPropertyID, 
-								  AudioUnitScope inScope, AudioUnitElement inElement, 
+long Turntablist::dfx_GetProperty(dfx::PropertyID inPropertyID,
+								  dfx::Scope inScope, unsigned long inItemIndex,
 								  void* outData)
 {
-	OSStatus status = noErr;
-
 	switch (inPropertyID)
 	{
 		case kTurntablistProperty_Play:
 			*static_cast<Boolean*>(outData) = m_bPlay;
-			break;
+			return dfx::kStatus_NoError;
 
 		case kTurntablistProperty_AudioFile:
-			if (FSIsFSRefValid(&m_fsAudioFile))
+		{
+			if (!FSIsFSRefValid(&m_fsAudioFile))
 			{
-				AliasHandle alias = nullptr;
-				Size aliasSize = 0;
-				status = createAudioFileAlias(&alias, &aliasSize);
-				if (status == noErr)
-				{
-					memcpy(outData, *alias, aliasSize);
-					DisposeHandle((Handle)alias);
-				}
+				return errFSBadFSRef;
 			}
-			else
+			AliasHandle alias = nullptr;
+			Size aliasSize = 0;
+			auto const status = createAudioFileAlias(&alias, &aliasSize);
+			if (status != noErr)
 			{
-				status = errFSBadFSRef;
+				return status;
 			}
-			break;
+			memcpy(outData, *alias, aliasSize);
+			DisposeHandle(reinterpret_cast<Handle>(alias));
+			return dfx::kStatus_NoError;
+		}
 
 		default:
-			status = DfxPlugin::GetProperty(inPropertyID, inScope, inElement, outData);
-			break;
+			return DfxPlugin::dfx_GetProperty(inPropertyID, inScope, inItemIndex, outData);
 	}
-
-	return status;
 }
 
 //-----------------------------------------------------------------------------
-OSStatus Turntablist::SetProperty(AudioUnitPropertyID inPropertyID, 
-								  AudioUnitScope inScope, AudioUnitElement inElement, 
-								  void const* inData, UInt32 inDataSize)
+long Turntablist::dfx_SetProperty(dfx::PropertyID inPropertyID,
+								  dfx::Scope inScope, unsigned long inItemIndex,
+								  void const* inData, size_t inDataSize)
 {
-	OSStatus status = noErr;
-
 	switch (inPropertyID)
 	{
 		case kTurntablistProperty_Play:
 			m_bPlay = *static_cast<Boolean const*>(inData);
 			playNote(m_bPlay);
-			break;
+			return dfx::kStatus_NoError;
 
 		case kTurntablistProperty_AudioFile:
+		{
+			AliasHandle alias = nullptr;
+			auto status = PtrToHand(inData, (Handle*)(&alias), inDataSize);
+			if (status != noErr)
 			{
-				AliasHandle alias = nullptr;
-				status = PtrToHand(inData, (Handle*)(&alias), inDataSize);
-				if ((status == noErr) && alias)
-				{
-					status = resolveAudioFileAlias(alias);
-					DisposeHandle((Handle)alias);
-				}
-				else
-				{
-					status = memFullErr;
-				}
+				return status;
 			}
-			break;
+			if (!alias)
+			{
+				return memFullErr;
+			}
+			status = resolveAudioFileAlias(alias);
+			DisposeHandle(reinterpret_cast<Handle>(alias));
+			return status;
+		}
 
 		default:
-			status = DfxPlugin::SetProperty(inPropertyID, inScope, inElement, inData, inDataSize);
-			break;
+			return DfxPlugin::dfx_SetProperty(inPropertyID, inScope, inItemIndex, inData, inDataSize);
 	}
-
-	return status;
 }
 
 //-----------------------------------------------------------------------------------------

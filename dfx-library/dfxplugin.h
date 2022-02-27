@@ -878,44 +878,44 @@ private:
 public:
 
 #ifdef TARGET_API_AUDIOUNIT
-	void PostConstructor() override;
-	void PreDestructor() override;
-	OSStatus Initialize() override;
-	void Cleanup() override;
-	OSStatus Reset(AudioUnitScope inScope, AudioUnitElement inElement) override;
+	void PostConstructor() final;
+	void PreDestructor() final;
+	OSStatus Initialize() final;
+	void Cleanup() final;
+	OSStatus Reset(AudioUnitScope inScope, AudioUnitElement inElement) final;
 
 	#if TARGET_PLUGIN_IS_INSTRUMENT
 	OSStatus Render(AudioUnitRenderActionFlags& ioActionFlags, 
-					AudioTimeStamp const& inTimeStamp, UInt32 inFramesToProcess) override;
+					AudioTimeStamp const& inTimeStamp, UInt32 inFramesToProcess) final;
 	#else
 	OSStatus ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 
 								AudioBufferList const& inBuffer, AudioBufferList& outBuffer, 
-								UInt32 inFramesToProcess) override;
+								UInt32 inFramesToProcess) final;
 	#endif
 	#if TARGET_PLUGIN_USES_DSPCORE
-	std::unique_ptr<ausdk::AUKernelBase> NewKernel() override;
+	std::unique_ptr<ausdk::AUKernelBase> NewKernel() final;
 	#endif
 
 	OSStatus GetPropertyInfo(AudioUnitPropertyID inPropertyID, 
 							 AudioUnitScope inScope, AudioUnitElement inElement, 
-							 UInt32& outDataSize, bool& outWritable) override;
+							 UInt32& outDataSize, bool& outWritable) final;
 	OSStatus GetProperty(AudioUnitPropertyID inPropertyID, 
 						 AudioUnitScope inScope, AudioUnitElement inElement, 
-						 void* outData) override;
+						 void* outData) final;
 	OSStatus SetProperty(AudioUnitPropertyID inPropertyID, 
 						 AudioUnitScope inScope, AudioUnitElement inElement, 
-						 void const* inData, UInt32 inDataSize) override;
+						 void const* inData, UInt32 inDataSize) final;
 	void PropertyChanged(AudioUnitPropertyID inPropertyID, 
-						 AudioUnitScope inScope, AudioUnitElement inElement) override;
+						 AudioUnitScope inScope, AudioUnitElement inElement) final;
 
-	UInt32 SupportedNumChannels(AUChannelInfo const** outInfo) override;
-	Float64 GetLatency() override;
-	Float64 GetTailTime() override;
-	bool SupportsTail() override
+	UInt32 SupportedNumChannels(AUChannelInfo const** outInfo) final;
+	Float64 GetLatency() final;
+	Float64 GetTailTime() final;
+	bool SupportsTail() final
 	{
 		return true;
 	}
-	CFURLRef CopyIconLocation() override;
+	CFURLRef CopyIconLocation() final;
 
 	OSStatus GetParameterInfo(AudioUnitScope inScope, 
 							  AudioUnitParameterID inParameterID, 
@@ -926,35 +926,35 @@ public:
 						   UInt32 inDesiredNameLength, CFStringRef* outClumpName) override;
 	OSStatus SetParameter(AudioUnitParameterID inParameterID, 
 						  AudioUnitScope inScope, AudioUnitElement inElement, 
-						  Float32 inValue, UInt32 inBufferOffsetInFrames) override;
+						  Float32 inValue, UInt32 inBufferOffsetInFrames) final;
 
 	OSStatus ChangeStreamFormat(AudioUnitScope inScope, 
 								AudioUnitElement inElement, 
 								AudioStreamBasicDescription const& inPrevFormat, 
-								AudioStreamBasicDescription const& inNewFormat) override;
+								AudioStreamBasicDescription const& inNewFormat) final;
 
 	OSStatus SaveState(CFPropertyListRef* outData) override;
 	OSStatus RestoreState(CFPropertyListRef inData) override;
-	OSStatus GetPresets(CFArrayRef* outData) const override;
-	OSStatus NewFactoryPresetSet(AUPreset const& inNewFactoryPreset) override;
+	OSStatus GetPresets(CFArrayRef* outData) const final;
+	OSStatus NewFactoryPresetSet(AUPreset const& inNewFactoryPreset) final;
 
 	#if TARGET_PLUGIN_USES_MIDI
-	OSStatus HandleNoteOn(UInt8 inChannel, UInt8 inNoteNumber, UInt8 inVelocity, UInt32 inStartFrame) override;
-	OSStatus HandleNoteOff(UInt8 inChannel, UInt8 inNoteNumber, UInt8 inVelocity, UInt32 inStartFrame) override;
-	OSStatus HandleAllNotesOff(UInt8 inChannel) override;
-	OSStatus HandleControlChange(UInt8 inChannel, UInt8 inController, UInt8 inValue, UInt32 inStartFrame) override;
-	OSStatus HandlePitchWheel(UInt8 inChannel, UInt8 inPitchLSB, UInt8 inPitchMSB, UInt32 inStartFrame) override;
-	OSStatus HandleChannelPressure(UInt8 inChannel, UInt8 inValue, UInt32 inStartFrame) override;
-	OSStatus HandleProgramChange(UInt8 inChannel, UInt8 inProgramNum) override;
-	OSStatus HandlePolyPressure(UInt8 inChannel, UInt8 inKey, UInt8 inValue, UInt32 inStartFrame) override
+	OSStatus HandleNoteOn(UInt8 inChannel, UInt8 inNoteNumber, UInt8 inVelocity, UInt32 inStartFrame) final;
+	OSStatus HandleNoteOff(UInt8 inChannel, UInt8 inNoteNumber, UInt8 inVelocity, UInt32 inStartFrame) final;
+	OSStatus HandleAllNotesOff(UInt8 inChannel) final;
+	OSStatus HandleControlChange(UInt8 inChannel, UInt8 inController, UInt8 inValue, UInt32 inStartFrame) final;
+	OSStatus HandlePitchWheel(UInt8 inChannel, UInt8 inPitchLSB, UInt8 inPitchMSB, UInt32 inStartFrame) final;
+	OSStatus HandleChannelPressure(UInt8 inChannel, UInt8 inValue, UInt32 inStartFrame) final;
+	OSStatus HandleProgramChange(UInt8 inChannel, UInt8 inProgramNum) final;
+	OSStatus HandlePolyPressure(UInt8 inChannel, UInt8 inKey, UInt8 inValue, UInt32 inStartFrame) final
 	{
 		return noErr;
 	}
-	OSStatus HandleResetAllControllers(UInt8 inChannel) override
+	OSStatus HandleResetAllControllers(UInt8 inChannel) final
 	{
 		return noErr;
 	}
-	OSStatus HandleAllSoundOff(UInt8 inChannel) override
+	OSStatus HandleAllSoundOff(UInt8 inChannel) final
 	{
 		return noErr;
 	}
@@ -962,9 +962,9 @@ public:
 	#if TARGET_PLUGIN_IS_INSTRUMENT
 	OSStatus StartNote(MusicDeviceInstrumentID inInstrument,
 					   MusicDeviceGroupID inGroupID, NoteInstanceID* outNoteInstanceID, 
-					   UInt32 inOffsetSampleFrame, MusicDeviceNoteParams const& inParams) override;
+					   UInt32 inOffsetSampleFrame, MusicDeviceNoteParams const& inParams) final;
 	OSStatus StopNote(MusicDeviceGroupID inGroupID, 
-					  NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame) override;
+					  NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame) final;
 
 	// this is a convenience function swiped from AUEffectBase, but not included in MusicDeviceBase
 	Float64 GetSampleRate()
@@ -972,11 +972,11 @@ public:
 		return Output(0).GetStreamFormat().mSampleRate;
 	}
 	// this is handled by AUEffectBase, but not in MusicDeviceBase
-	bool StreamFormatWritable(AudioUnitScope inScope, AudioUnitElement inElement) override
+	bool StreamFormatWritable(AudioUnitScope inScope, AudioUnitElement inElement) final
 	{
 		return !IsInitialized();
 	}
-	bool CanScheduleParameters() const override
+	[[nodiscard]] bool CanScheduleParameters() const final
 	{
 		return true;
 	}
@@ -986,60 +986,60 @@ public:
 
 
 #ifdef TARGET_API_VST
-	void close() override;
+	void close() final;
 
-	void processReplacing(float** inputs, float** outputs, VstInt32 sampleFrames) override;
+	void processReplacing(float** inputs, float** outputs, VstInt32 sampleFrames) final;
 
-	void suspend() override;
-	void resume() override;
-	void setSampleRate(float newRate) override;
+	void suspend() final;
+	void resume() final;
+	void setSampleRate(float newRate) final;
 
 	// Note typo (getGet) from VST SDK.
-	VstInt32 getGetTailSize() override;
-	bool getInputProperties(VstInt32 index, VstPinProperties* properties) override;
-	bool getOutputProperties(VstInt32 index, VstPinProperties* properties) override;
+	VstInt32 getGetTailSize() final;
+	bool getInputProperties(VstInt32 index, VstPinProperties* properties) final;
+	bool getOutputProperties(VstInt32 index, VstPinProperties* properties) final;
 
-	void setProgram(VstInt32 inProgramNum) override;
-	void setProgramName(char* inName) override;
-	void getProgramName(char* outText) override;
-	bool getProgramNameIndexed(VstInt32 inCategory, VstInt32 inIndex, char* outText) override;
+	void setProgram(VstInt32 inProgramNum) final;
+	void setProgramName(char* inName) final;
+	void getProgramName(char* outText) final;
+	bool getProgramNameIndexed(VstInt32 inCategory, VstInt32 inIndex, char* outText) final;
 
-	void setParameter(VstInt32 index, float value) override;
-	float getParameter(VstInt32 index) override;
-	void getParameterName(VstInt32 index, char* name) override;
-	void getParameterDisplay(VstInt32 index, char* text) override;
-	void getParameterLabel(VstInt32 index, char* label) override;
-	bool getParameterProperties(VstInt32 index, VstParameterProperties* properties) override;
+	void setParameter(VstInt32 index, float value) final;
+	float getParameter(VstInt32 index) final;
+	void getParameterName(VstInt32 index, char* name) final;
+	void getParameterDisplay(VstInt32 index, char* text) final;
+	void getParameterLabel(VstInt32 index, char* label) final;
+	bool getParameterProperties(VstInt32 index, VstParameterProperties* properties) final;
 
-	bool getEffectName(char* outText) override;
-	VstInt32 getVendorVersion() override;
-	bool getVendorString(char* outText) override;
-	bool getProductString(char* outText) override;
+	bool getEffectName(char* outText) final;
+	VstInt32 getVendorVersion() final;
+	bool getVendorString(char* outText) final;
+	bool getProductString(char* outText) final;
 
-	VstInt32 canDo(char* text) override;
+	VstInt32 canDo(char* text) final;
 
 	#if TARGET_PLUGIN_USES_MIDI
-	VstInt32 processEvents(VstEvents* events) override;
-	VstInt32 setChunk(void* data, VstInt32 byteSize, bool isPreset) override;
-	VstInt32 getChunk(void** data, bool isPreset) override;
+	VstInt32 processEvents(VstEvents* events) final;
+	VstInt32 setChunk(void* data, VstInt32 byteSize, bool isPreset) final;
+	VstInt32 getChunk(void** data, bool isPreset) final;
 	#endif
 #endif
 // end of VST API methods
 
 
 #ifdef TARGET_API_RTAS
-	void Free() override;
-	ComponentResult ResetPlugInState() override;
-	ComponentResult Prime(Boolean inPriming) override;
-	void UpdateControlValueInAlgorithm(long inParameterIndex) override;
-	ComponentResult IsControlAutomatable(long inControlIndex, short* outItIs) override;
-	ComponentResult GetControlNameOfLength(long inParameterIndex, char* outName, long inNameLength, OSType inControllerType, FicBoolean* outReverseHighlight) override;
-	ComponentResult GetValueString(long inParameterIndex, long inValue, StringPtr outValueString, long inMaxLength) override;
-	ComponentResult SetChunk(OSType inChunkID, SFicPlugInChunk* chunk) override;
-	void DoTokenIdle() override;
-	CPlugInView* CreateCPlugInView() override;
+	void Free() final;
+	ComponentResult ResetPlugInState() final;
+	ComponentResult Prime(Boolean inPriming) final;
+	void UpdateControlValueInAlgorithm(long inParameterIndex) final;
+	ComponentResult IsControlAutomatable(long inControlIndex, short* outItIs) final;
+	ComponentResult GetControlNameOfLength(long inParameterIndex, char* outName, long inNameLength, OSType inControllerType, FicBoolean* outReverseHighlight) final;
+	ComponentResult GetValueString(long inParameterIndex, long inValue, StringPtr outValueString, long inMaxLength) final;
+	ComponentResult SetChunk(OSType inChunkID, SFicPlugInChunk* chunk) final;
+	void DoTokenIdle() final;
+	CPlugInView* CreateCPlugInView() final;
 #ifdef TARGET_API_AUDIOSUITE
-	void SetViewOrigin(Point anOrigin) override;
+	void SetViewOrigin(Point anOrigin) final;
 #endif
 
 	// AU->RTAS glue convenience functions
@@ -1048,31 +1048,31 @@ public:
 	bool GetParameter_b_FromRTAS(long inParameterID);
 
 	#if TARGET_PLUGIN_HAS_GUI
-	void SetViewPort(GrafPtr inPort) override;
-	void GetViewRect(Rect* outViewRect) override;
-	long SetControlValue(long inControlIndex, long inValue) override;
-	long GetControlValue(long inControlIndex, long* aValue) override;
-	long GetControlDefaultValue(long inControlIndex, long* outValue) override;
+	void SetViewPort(GrafPtr inPort) final;
+	void GetViewRect(Rect* outViewRect) final;
+	long SetControlValue(long inControlIndex, long inValue) final;
+	long GetControlValue(long inControlIndex, long* aValue) final;
+	long GetControlDefaultValue(long inControlIndex, long* outValue) final;
 	ComponentResult UpdateControlGraphic(long inControlIndex, long inValue);
 	ComponentResult SetControlHighliteInfo(long inControlIndex, short inIsHighlighted, short inColor);
 	ComponentResult ChooseControl(Point inLocalCoord, long* outControlIndex);
 
-	void setEditor(void* inEditor) override
+	void setEditor(void* inEditor) final
 	{
 		mCustomUI_p = static_cast<ITemplateCustomUI*>(inEditor);
 	}
-	int ProcessTouchControl(long inControlIndex) override;
-	int ProcessReleaseControl(long inControlIndex) override;
-	void ProcessDoIdle() override;
-	void* ProcessGetModuleHandle() override
+	int ProcessTouchControl(long inControlIndex) final;
+	int ProcessReleaseControl(long inControlIndex) final;
+	void ProcessDoIdle() final;
+	void* ProcessGetModuleHandle() final
 	{
 		return mModuleHandle_p;
 	}
-	short ProcessUseResourceFile() override
+	short ProcessUseResourceFile() final
 	{
 		return fProcessType->GetProcessGroup()->UseResourceFile();
 	}
-	void ProcessRestoreResourceFile(short resFile) override
+	void ProcessRestoreResourceFile(short resFile) final
 	{
 		fProcessType->GetProcessGroup()->RestoreResourceFile(resFile);
 	}
@@ -1086,11 +1086,11 @@ public:
 
 protected:
 #ifdef TARGET_API_RTAS
-	void EffectInit() override;
+	void EffectInit() final;
 #ifdef TARGET_API_AUDIOSUITE
-	UInt32 ProcessAudio(bool inIsGlobalBypassed) override;
+	UInt32 ProcessAudio(bool inIsGlobalBypassed) final;
 #endif
-	void RenderAudio(float** inAudioStreams, float** outAudioStreams, long inNumFramesToProcess) override;
+	void RenderAudio(float** inAudioStreams, float** outAudioStreams, long inNumFramesToProcess) final;
 #endif
 };
 static_assert(std::has_virtual_destructor_v<DfxPlugin>);
@@ -1224,12 +1224,12 @@ public:
 	}
 
 #ifdef TARGET_API_AUDIOUNIT
-	void Process(Float32 const* inStream, Float32* outStream, UInt32 inNumFrames, bool& ioSilence) override
+	void Process(Float32 const* inStream, Float32* outStream, UInt32 inNumFrames, bool& ioSilence) final
 	{
 		process(inStream, outStream, inNumFrames);
 		ioSilence = false;  // TODO: allow DSP cores to communicate their output silence status
 	}
-	void Reset() override
+	void Reset() final
 	{
 		reset();
 	}
@@ -1263,7 +1263,7 @@ static_assert(std::has_virtual_destructor_v<DfxPluginCore>);
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-class DfxEffectGroup : public CEffectGroup
+class DfxEffectGroup final : public CEffectGroup
 {
 public:
 	DfxEffectGroup();
@@ -1286,7 +1286,7 @@ private:
 
 
 //-----------------------------------------------------------------------------
-class CPluginControl_DfxCurved : virtual public CPluginControl_Continuous
+class CPluginControl_DfxCurved final : virtual public CPluginControl_Continuous
 {
 public:
 	CPluginControl_DfxCurved(OSType id, char const* name, double min, double max, 
@@ -1310,7 +1310,7 @@ private:
 
 
 //-----------------------------------------------------------------------------
-class CPluginControl_DfxCurvedFrequency : public CPluginControl_Frequency, public CPluginControl_DfxCurved
+class CPluginControl_DfxCurvedFrequency final : public CPluginControl_Frequency, public CPluginControl_DfxCurved
 {
 public:
 	CPluginControl_DfxCurvedFrequency(OSType id, char const* name, double min, double max, 
