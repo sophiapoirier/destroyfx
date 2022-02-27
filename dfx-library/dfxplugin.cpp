@@ -163,6 +163,9 @@ DfxPlugin::DfxPlugin(
 	mParametersChangedAsOfPreProcess(inNumParameters, false),
 	mParametersTouchedAsOfPreProcess(inNumParameters, false),
 	mParametersChangedInProcessHavePosted(inNumParameters)
+#if TARGET_PLUGIN_USES_DSPCORE
+	, mDSPCoreParameterValuesCache(inNumParameters)
+#endif
 {
 	updatesamplerate();  // XXX have it set to something here?
 
@@ -320,7 +323,9 @@ long DfxPlugin::do_initialize()
 	#endif
 	}
 
-#ifndef TARGET_API_AUDIOUNIT
+	#ifndef TARGET_API_AUDIOUNIT
+	cacheDSPCoreParameterValues();  // AU handles this in its Initialize override, since it must occur before the AU SDK base class' implementation
+
 	// regenerate the DSP core instances whenever the audio I/O format changes
 	mDSPCores.clear();
 	mDSPCores.reserve(getnumoutputs());
@@ -328,7 +333,7 @@ long DfxPlugin::do_initialize()
 	{
 		mDSPCores.emplace_back(dspCoreFactory(ch));
 	}
-#endif
+	#endif
 #endif  // TARGET_PLUGIN_USES_DSPCORE
 
 	std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), 
@@ -380,6 +385,10 @@ void DfxPlugin::do_cleanup()
 // non-virtual function that calls reset() and insures that some stuff happens
 void DfxPlugin::do_reset()
 {
+#if TARGET_PLUGIN_USES_DSPCORE
+	cacheDSPCoreParameterValues();
+#endif
+
 #ifdef TARGET_API_AUDIOUNIT
 	// no need to do this if we're not even in Initialized state 
 	// because this will basically happen when we become initialized
@@ -388,10 +397,7 @@ void DfxPlugin::do_reset()
 	{
 //		return;
 	}
-	#if !TARGET_PLUGIN_IS_INSTRUMENT
-	// resets the kernels, if any
 	TARGET_API_BASE_CLASS::Reset(kAudioUnitScope_Global, AudioUnitElement(0));
-	#endif
 #endif
 
 	mIsFirstRenderSinceReset = true;
@@ -692,19 +698,24 @@ DfxParam::Value DfxPlugin::getparameter(long inParameterIndex) const
 // return a (hopefully) 0 to 1 scalar version of the parameter's current value
 double DfxPlugin::getparameter_scalar(long inParameterIndex) const
 {
+	return getparameter_scalar(inParameterIndex, getparameter_f(inParameterIndex));
+}
+
+//-----------------------------------------------------------------------------
+double DfxPlugin::getparameter_scalar(long inParameterIndex, double inValue) const
+{
 	if (parameterisvalid(inParameterIndex))
 	{
-		auto const& parameter = mParameters[inParameterIndex];
 		switch (getparameterunit(inParameterIndex))
 		{
 			case DfxParam::Unit::Percent:
 			case DfxParam::Unit::DryWetMix:
-				return parameter.get_f() * 0.01;
+				return inValue * 0.01;
 			case DfxParam::Unit::Scalar:
-				return parameter.get_f();
+				return inValue;
 			// XXX should we not just use contractparametervalue() here?
 			default:
-				return parameter.get_f() / parameter.getmax_f();
+				return inValue / mParameters[inParameterIndex].getmax_f();
 		}
 	}
 	return 0.0;
@@ -858,6 +869,7 @@ std::string DfxPlugin::getparametergroupname(size_t inGroupIndex) const
 //-----------------------------------------------------------------------------
 bool DfxPlugin::getparameterchanged(long inParameterIndex) const
 {
+	assert(std::this_thread::get_id() == mAudioRenderThreadID);  // only valid during audio rendering
 	if (parameterisvalid(inParameterIndex))
 	{
 		return mParametersChangedAsOfPreProcess[inParameterIndex];
@@ -868,6 +880,7 @@ bool DfxPlugin::getparameterchanged(long inParameterIndex) const
 //-----------------------------------------------------------------------------
 bool DfxPlugin::getparametertouched(long inParameterIndex) const
 {
+	assert(std::this_thread::get_id() == mAudioRenderThreadID);  // only valid during audio rendering
 	if (parameterisvalid(inParameterIndex))
 	{
 		return mParametersTouchedAsOfPreProcess[inParameterIndex];
@@ -1935,6 +1948,10 @@ void DfxPlugin::preprocessaudio()
 	mMidiState.preprocessEvents();
 #endif
 
+#if TARGET_PLUGIN_USES_DSPCORE
+	cacheDSPCoreParameterValues();
+#endif
+
 	// fetch the latest musical tempo/time/location information from the host
 	processtimeinfo();
 
@@ -1978,6 +1995,35 @@ void DfxPlugin::do_processparameters()
 }
 
 #if TARGET_PLUGIN_USES_DSPCORE
+//-----------------------------------------------------------------------------
+double DfxPlugin::getdspcoreparameter_gen(long inParameterIndex) const
+{
+	if (parameterisvalid(inParameterIndex))
+	{
+		return contractparametervalue(inParameterIndex, mParameters[inParameterIndex].derive_f(mDSPCoreParameterValuesCache[inParameterIndex]));
+	}
+	return 0.;
+}
+
+//-----------------------------------------------------------------------------
+double DfxPlugin::getdspcoreparameter_scalar(long inParameterIndex) const
+{
+	if (parameterisvalid(inParameterIndex))
+	{
+		getparameter_scalar(inParameterIndex, mParameters[inParameterIndex].derive_f(mDSPCoreParameterValuesCache[inParameterIndex]));
+	}
+	return 0.;
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::cacheDSPCoreParameterValues()
+{
+	for (long i = 0; i < getnumparameters(); i++)
+	{
+		mDSPCoreParameterValuesCache[i] = getparameter(i);
+	}
+}
+
 //-----------------------------------------------------------------------------
 DfxPluginCore* DfxPlugin::getplugincore(unsigned long inChannel) const
 {

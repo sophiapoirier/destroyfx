@@ -114,18 +114,17 @@ void DfxPlugin::PreDestructor()
 // this is where DSP-specific resources should be allocated
 OSStatus DfxPlugin::Initialize()
 {
-	OSStatus status = noErr;
-
 #if TARGET_PLUGIN_IS_INSTRUMENT
 	// if this AU supports only specific I/O channel count configs, then check whether the current format is allowed
 	AUSDK_Require(ischannelcountsupported(getnuminputs(), getnumoutputs()), kAudioUnitErr_FormatNotSupported);
-#else
-	// call the inherited class' Initialize routine
-	status = TARGET_API_BASE_CLASS::Initialize();
 #endif
-// TARGET_PLUGIN_IS_INSTRUMENT
 
-	// call our initialize routine
+#if TARGET_PLUGIN_USES_DSPCORE
+	cacheDSPCoreParameterValues();
+#endif
+
+	auto status = TARGET_API_BASE_CLASS::Initialize();
+
 	if (status == noErr)
 	{
 		status = do_initialize();
@@ -146,7 +145,7 @@ void DfxPlugin::Cleanup()
 }
 
 //-----------------------------------------------------------------------------
-// this is called when an audio stream is broken somehow 
+// this is called when an audio stream timeline is broken somehow 
 // (playback stop/restart, change of playback position, etc.)
 // any DSP state variables should be reset here 
 // (contents of buffers, position trackers, IIR filter histories, etc.)
@@ -1514,8 +1513,7 @@ OSStatus DfxPlugin::RestoreState(CFPropertyListRef inData)
 	}
 	if (!success)
 	{
-#endif
-// TARGET_PLUGIN_USES_MIDI
+#endif  // TARGET_PLUGIN_USES_MIDI
 
 // XXX should we rethink this and load parameter settings always before mDfxSettings->restore()?
 	// load the parameter settings that were restored 
@@ -1663,8 +1661,7 @@ OSStatus DfxPlugin::Render(AudioUnitRenderActionFlags& ioActionFlags,
 	return noErr;
 }
 
-#else
-// !TARGET_PLUGIN_IS_INSTRUMENT
+#else  // !TARGET_PLUGIN_IS_INSTRUMENT
 
 //-----------------------------------------------------------------------------
 // this is the audio processing routine
@@ -1672,7 +1669,7 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags
 									   AudioBufferList const& inBuffer, AudioBufferList& outBuffer, 
 									   UInt32 inFramesToProcess)
 {
-	OSStatus result = noErr;
+	OSStatus status = noErr;
 
 	// do any pre-DSP prep
 	preprocessaudio();
@@ -1703,7 +1700,7 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags
 
 	// if the plugin uses DSP cores, then we just call the 
 	// inherited base class implementation, which handles "Kernels"
-	result = TARGET_API_BASE_CLASS::ProcessBufferLists(ioActionFlags, *inputBufferPtr, outBuffer, inFramesToProcess);
+	status = TARGET_API_BASE_CLASS::ProcessBufferLists(ioActionFlags, *inputBufferPtr, outBuffer, inFramesToProcess);
 
 #else
 	auto const numInputBuffers = inBuffer.mNumberBuffers;
@@ -1721,8 +1718,7 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags
 
 	// now do the processing
 	processaudio(mInputAudioStreams_au.data(), mOutputAudioStreams_au.data(), inFramesToProcess);
-#endif
-// end of if/else TARGET_PLUGIN_USES_DSPCORE
+#endif  // end of if/else TARGET_PLUGIN_USES_DSPCORE
 
 	// TODO: allow effects to communicate their output silence status, or calculate time-out from tail size and latency?
 	bool const effectHasTail = !SupportsTail() || (gettailsize_samples() > 0) || (getlatency_samples() > 0);
@@ -1734,10 +1730,9 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags
 	// do any post-DSP stuff
 	postprocessaudio();
 
-	return result;
+	return status;
 }
-#endif
-// TARGET_PLUGIN_IS_INSTRUMENT
+#endif  // TARGET_PLUGIN_IS_INSTRUMENT
 
 
 
@@ -1823,8 +1818,6 @@ OSStatus DfxPlugin::StopNote(MusicDeviceGroupID inGroupID,
 	handlemidi_noteoff(inGroupID, inNoteInstanceID, 0, inOffsetSampleFrame);
 	return noErr;
 }
-#endif
-// TARGET_PLUGIN_IS_INSTRUMENT
+#endif  // TARGET_PLUGIN_IS_INSTRUMENT
 
-#endif
-// TARGET_PLUGIN_USES_MIDI
+#endif  // TARGET_PLUGIN_USES_MIDI

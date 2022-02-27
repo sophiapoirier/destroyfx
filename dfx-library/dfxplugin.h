@@ -641,6 +641,23 @@ public:
 	virtual void settings_crisisAlert(DfxSettings::CrisisReasonFlags /*inFlags*/) {}
 #endif
 
+#if TARGET_PLUGIN_USES_DSPCORE
+	double getdspcoreparameter_f(long inParameterIndex) const
+	{
+		return parameterisvalid(inParameterIndex) ? mParameters[inParameterIndex].derive_f(mDSPCoreParameterValuesCache[inParameterIndex]) : 0.;
+	}
+	int64_t getdspcoreparameter_i(long inParameterIndex) const
+	{
+		return parameterisvalid(inParameterIndex) ? mParameters[inParameterIndex].derive_i(mDSPCoreParameterValuesCache[inParameterIndex]) : 0;
+	}
+	bool getdspcoreparameter_b(long inParameterIndex) const
+	{
+		return parameterisvalid(inParameterIndex) ? mParameters[inParameterIndex].derive_b(mDSPCoreParameterValuesCache[inParameterIndex]) : false;
+	}
+	double getdspcoreparameter_gen(long inParameterIndex) const;
+	double getdspcoreparameter_scalar(long inParameterIndex) const;
+#endif
+
 	// handling of AU properties specific to Logic
 #if defined(TARGET_API_AUDIOUNIT) && LOGIC_AU_PROPERTIES_AVAILABLE
 	UInt32 getSupportedLogicNodeOperationMode() const noexcept
@@ -740,6 +757,7 @@ private:
 
 	void setparameter(long inParameterIndex, DfxParam::Value inValue);
 	DfxParam::Value getparameter(long inParameterIndex) const;
+	double getparameter_scalar(long inParameterIndex, double inValue) const;
 	// synchronize the underlying API/preset/etc. parameter value representation to the current value in DfxPlugin
 	void update_parameter(long inParameterIndex);
 
@@ -780,14 +798,22 @@ private:
 #if TARGET_PLUGIN_USES_DSPCORE
 	template <class DSPCoreClass>
 	[[nodiscard]] std::unique_ptr<DSPCoreClass> dspCoreFactory();
-#ifdef TARGET_API_AUDIOUNIT
+
+	// updates the parameter value cache used by DSP cores
+	// this prevents potential later parameter value updates being visible to higher channel number DSP cores
+	// (must call this immediately before any call path that leads to DSP core operations)
+	void cacheDSPCoreParameterValues();
+
+	std::vector<DfxParam::Value> mDSPCoreParameterValuesCache;
+
+	#ifdef TARGET_API_AUDIOUNIT
 	ausdk::AUBufferList mAsymmetricalInputBufferList;
-#else
+	#else
 	[[nodiscard]] std::unique_ptr<DfxPluginCore> dspCoreFactory(unsigned long inChannel);
 	std::vector<std::unique_ptr<DfxPluginCore>> mDSPCores;  // we have to manage this ourselves outside of the AU SDK
 	std::vector<float> mAsymmetricalInputAudioBuffer;
-#endif
-#endif
+	#endif
+#endif  // TARGET_PLUGIN_USES_DSPCORE
 
 #ifdef TARGET_API_AUDIOUNIT
 	bool mAUElementsHaveBeenCreated = false;
@@ -1115,7 +1141,7 @@ public:
 	// initially miss that snap if you getValue a smoothed value within processparameters
 	virtual void processparameters() {}
 
-	auto const getplugin() const noexcept
+	auto getplugin() const noexcept
 	{
 		return mDfxPlugin;
 	}
@@ -1129,43 +1155,43 @@ public:
 	}
 	double getparameter_f(long inParameterIndex) const
 	{
-		return mDfxPlugin->getparameter_f(inParameterIndex);
+		return mDfxPlugin->getdspcoreparameter_f(inParameterIndex);
 	}
 	int64_t getparameter_i(long inParameterIndex) const
 	{
-		return mDfxPlugin->getparameter_i(inParameterIndex);
+		return mDfxPlugin->getdspcoreparameter_i(inParameterIndex);
 	}
 	bool getparameter_b(long inParameterIndex) const
 	{
-		return mDfxPlugin->getparameter_b(inParameterIndex);
+		return mDfxPlugin->getdspcoreparameter_b(inParameterIndex);
 	}
 	double getparameter_scalar(long inParameterIndex) const
 	{
-		return mDfxPlugin->getparameter_scalar(inParameterIndex);
+		return mDfxPlugin->getdspcoreparameter_scalar(inParameterIndex);
 	}
 	double getparameter_gen(long inParameterIndex) const
 	{
-		return mDfxPlugin->getparameter_gen(inParameterIndex);
+		return mDfxPlugin->getdspcoreparameter_gen(inParameterIndex);
 	}
-	auto getparameterifchanged_f(long inParameterIndex) const
+	std::optional<double> getparameterifchanged_f(long inParameterIndex) const
 	{
-		return mDfxPlugin->getparameterifchanged_f(inParameterIndex);
+		return getparameterchanged(inParameterIndex) ? std::make_optional(getparameter_f(inParameterIndex)) : std::nullopt;
 	}
-	auto getparameterifchanged_i(long inParameterIndex) const
+	std::optional<int64_t> getparameterifchanged_i(long inParameterIndex) const
 	{
-		return mDfxPlugin->getparameterifchanged_i(inParameterIndex);
+		return getparameterchanged(inParameterIndex) ? std::make_optional(getparameter_i(inParameterIndex)) : std::nullopt;
 	}
-	auto getparameterifchanged_b(long inParameterIndex) const
+	std::optional<bool> getparameterifchanged_b(long inParameterIndex) const
 	{
-		return mDfxPlugin->getparameterifchanged_b(inParameterIndex);
+		return getparameterchanged(inParameterIndex) ? std::make_optional(getparameter_b(inParameterIndex)) : std::nullopt;
 	}
-	auto getparameterifchanged_scalar(long inParameterIndex) const
+	std::optional<double> getparameterifchanged_gen(long inParameterIndex) const
 	{
-		return mDfxPlugin->getparameterifchanged_scalar(inParameterIndex);
+		return getparameterchanged(inParameterIndex) ? std::make_optional(getparameter_gen(inParameterIndex)) : std::nullopt;
 	}
-	auto getparameterifchanged_gen(long inParameterIndex) const
+	std::optional<double> getparameterifchanged_scalar(long inParameterIndex) const
 	{
-		return mDfxPlugin->getparameterifchanged_gen(inParameterIndex);
+		return getparameterchanged(inParameterIndex) ? std::make_optional(getparameter_scalar(inParameterIndex)) : std::nullopt;
 	}
 	double getparametermin_f(long inParameterIndex) const
 	{
@@ -1186,10 +1212,6 @@ public:
 	bool getparameterchanged(long inParameterIndex) const
 	{
 		return mDfxPlugin->getparameterchanged(inParameterIndex);
-	}
-	bool getparametertouched(long inParameterIndex) const
-	{
-		return mDfxPlugin->getparametertouched(inParameterIndex);
 	}
 	void registerSmoothedAudioValue(dfx::ISmoothedValue* smoothedValue)
 	{
