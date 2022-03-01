@@ -2135,7 +2135,7 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 	{
 		auto const parameterIsOn = getparameter_b(inParameterID);
 		constexpr bool enabled = true;
-		DFX_AppendCommandItemToMenu(*resultMenu, "Set value", 
+		DFX_AppendCommandItemToMenu(*resultMenu, "Enable", 
 									std::bind(&DfxGuiEditor::setparameter_b, this, inParameterID, !parameterIsOn, automationGesture), 
 									enabled, parameterIsOn);
 	}
@@ -2231,8 +2231,7 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParametersContext
 					[[maybe_unused]] bool itemAdded {};
 					std::tie(groupKeyValue, itemAdded) = groupSubMenus.emplace(*groupIndex, *groupSubMenu);
 					assert(itemAdded);
-					std::string const knobsEmoji(reinterpret_cast<char const*>(u8"\U0001F39B"));
-					resultMenu->addEntry(groupSubMenu, knobsEmoji + " " + GetParameterGroupName(*groupIndex));
+					resultMenu->addEntry(groupSubMenu, "[" + GetParameterGroupName(*groupIndex) + "]");
 				}
 				groupKeyValue->second.addEntry(parameterSubMenu, getparametername(parameterID));
 			}
