@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -106,11 +106,6 @@ inline constexpr int kFontYOffset_Snooty10px = -2;
 inline constexpr int kFontYOffset_Pasement9px = -1;
 
 static constexpr char const* const kFontName_BoringBoron = "Boring Boron";
-
-
-// VSTGUI does not define named constants for these onKeyDown and onKeyUp result values
-static constexpr int32_t kKeyEventHandled = 1;
-static constexpr int32_t kKeyEventNotHandled = -1;
 
 
 }  // namespace dfx

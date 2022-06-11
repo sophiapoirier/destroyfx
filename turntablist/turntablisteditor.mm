@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2004-2021  Sophia Poirier
+Copyright (C) 2004-2022  Sophia Poirier
 
 This file is part of Turntablist.
 
@@ -196,6 +196,8 @@ public:
 
 		return result;
 	}
+
+	CLASS_METHODS(TurntablistScratchSlider, DGSlider)
 };
 
 
@@ -301,7 +303,7 @@ OSType gSupportedAudioFileTypeCodes[] =
 static void DFX_InitializeSupportedAudioFileTypesArrays()
 {
 	static std::once_flag onceFlag;
-	std::call_once(onceFlag, []()
+	std::call_once(onceFlag, []
 	{
 		UInt32 propertySize = 0;
 		auto status = AudioFileGetGlobalInfoSize(kAudioFileGlobalInfo_ReadableTypes, 0, nullptr, &propertySize);
@@ -480,12 +482,14 @@ long TurntablistEditor::OpenEditor()
 	button->setHelpText(helpText.get());
 
 	mPlayButton = emplaceControl<DGToggleImageButton>(this, kPlayButtonX, kPlayButtonY, playButtonImage);
+	// TODO: C++20 bind_front
 	mPlayButton->setUserProcedure(std::bind(&TurntablistEditor::HandlePlayButton, this, std::placeholders::_1));
 	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("use this to start or stop the audio sample playback"), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Play button")));
 	mPlayButton->setHelpText(helpText.get());
 
 	button = emplaceControl<DGToggleImageButton>(this, kMidiLearnX, kMidiLearnY, onOffButtonImage);
+	// TODO: C++20 bind_front
 	button->setUserProcedure(std::bind(&TurntablistEditor::HandleMidiLearnButton, this, std::placeholders::_1));
 	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("This switches MIDI learn mode on or off.  When MIDI learn is on, you can click on a parameter control to enable that parameter as the \"learner\" for incoming MIDI CC messages."), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the MIDI Learn button")));
@@ -506,8 +510,9 @@ long TurntablistEditor::OpenEditor()
 
 	pos.set(kAboutSplashX, kAboutSplashY, kAboutSplashWidth, kAboutSplashHeight);
 	button = emplaceControl<DGButton>(this, pos, nullptr, 2, DGButton::Mode::Increment);
+	// TODO: C++20 bind_front
 	button->setUserProcedure(std::bind(&TurntablistAboutButtonProc, std::placeholders::_1));
-//	button->setHelpText(CFSTR("click here to go to the "PLUGIN_CREATOR_NAME_STRING" web site"));
+	//button->setHelpText(CFSTR("click here to go to the "PLUGIN_CREATOR_NAME_STRING" web site"));
 	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("click here to go to the Destroy FX web site"), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the About hot-spot")));
 	button->setHelpText(helpText.get());

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code
 for creating audio processing plug-ins.
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -206,33 +206,37 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor*							inOwnerEditor,
 {
 	DFXGUI_ConfigureTextDisplay(inOwnerEditor, this, inTextAlignment, inFontSize, inFontColor, inFontName);
 
+	// TODO: C++20 bind_front
 	setValueToStringFunction(std::bind(&DGTextDisplay::valueToTextProcBridge, this,
 									   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	refreshText();	// trigger an initial value->text conversion
 
 	mTextToValueProc = textToValueProc_Generic;
+	// TODO: C++20 bind_front
 	setStringToValueFunction(std::bind(&DGTextDisplay::textToValueProcBridge, this,
 									   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGTextDisplay::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGTextDisplay::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 {
-	if (!mTextEditEnabled)
+	if (mTextEditEnabled)
 	{
-		return VSTGUI::kMouseEventNotHandled;
+		DGControl<VSTGUI::CTextEdit>::onMouseDownEvent(ioEvent);
 	}
-	return DGControl<VSTGUI::CTextEdit>::onMouseDown(inPos, inButtons);
 }
 
 //-----------------------------------------------------------------------------
-bool DGTextDisplay::onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons)
+void DGTextDisplay::onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent)
 {
 	if (getFrame()->getFocusView() == this)
 	{
-		return VSTGUI::CTextEdit::onWheel(inPos, inAxis, inDistance, inButtons);
+		VSTGUI::CTextEdit::onMouseWheelEvent(ioEvent);
 	}
-	return DGControl<VSTGUI::CTextEdit>::onWheel(inPos, inAxis, inDistance, inButtons);
+	else
+	{
+		DGControl<VSTGUI::CTextEdit>::onMouseWheelEvent(ioEvent);
+	}
 }
 
 //-----------------------------------------------------------------------------

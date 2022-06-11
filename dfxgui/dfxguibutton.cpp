@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -77,11 +77,11 @@ void DGButton::draw(VSTGUI::CDrawContext* inContext)
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGButton::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGButton::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 {
-	if (!inButtons.isLeftButton())
+	if (!ioEvent.buttonState.isLeft())
 	{
-		return VSTGUI::kMouseEventNotHandled;
+		return;
 	}
 
 	beginEdit();
@@ -89,7 +89,7 @@ VSTGUI::CMouseEventResult DGButton::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::C
 	mEntryValue = mNewValue = getValue_i();
 	constexpr long min = 0;
 	long const max = getNumStates() - 1;
-	auto const isDirectionReversed = inButtons.isAltSet();
+	auto const isDirectionReversed = ioEvent.modifiers.has(VSTGUI::ModifierKey::Alt);
 
 	setMouseIsDown(true);
 
@@ -106,7 +106,7 @@ VSTGUI::CMouseEventResult DGButton::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::C
 			mNewValue = mEntryValue + (isDirectionReversed ? 1 : -1);
 			break;
 		case Mode::Radio:
-			mNewValue = getRadioValue(inPos) + min;
+			mNewValue = getRadioValue(ioEvent.mousePosition) + min;
 			break;
 		default:
 			break;
@@ -123,31 +123,32 @@ VSTGUI::CMouseEventResult DGButton::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::C
 		}
 	}
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGButton::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGButton::onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent)
 {
 	if (!isEditing())
 	{
-		return VSTGUI::kMouseEventNotHandled;
+		return;
 	}
 
-	if (!inButtons.isLeftButton())
+	if (!ioEvent.buttonState.isLeft())
 	{
-		return VSTGUI::kMouseEventHandled;
+		ioEvent.consumed = true;
+		return;
 	}
 
 	auto const currentValue = getValue_i();
 
-	if (hitTest(inPos))
+	if (hitTest(ioEvent.mousePosition))
 	{
 		setMouseIsDown(true);
 
 		if (mMode == Mode::Radio)
 		{
-			mNewValue = getRadioValue(inPos);
+			mNewValue = getRadioValue(ioEvent.mousePosition);
 		}
 		if (mNewValue != currentValue)
 		{
@@ -180,11 +181,11 @@ VSTGUI::CMouseEventResult DGButton::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::
 
 	notifyIfChanged();
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGButton::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& /*inButtons*/)
+void DGButton::onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent)
 {
 	setMouseIsDown(false);
 
@@ -195,7 +196,7 @@ VSTGUI::CMouseEventResult DGButton::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CBu
 
 	notifyIfChanged();
 
-	if (hitTest(inPos))
+	if (hitTest(ioEvent.mousePosition))
 	{
 		if (mUserReleaseProcedure)
 		{
@@ -205,11 +206,11 @@ VSTGUI::CMouseEventResult DGButton::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CBu
 
 	endEdit();
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGButton::onMouseCancel()
+void DGButton::onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent)
 {
 	if (isEditing())
 	{
@@ -218,17 +219,16 @@ VSTGUI::CMouseEventResult DGButton::onMouseCancel()
 		endEdit();
 	}
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
-bool DGButton::onWheel(VSTGUI::CPoint const& /*inPos*/, VSTGUI::CMouseWheelAxis const& /*inAxis*/, 
-					   float const& inDistance, VSTGUI::CButtonState const& /*inButtons*/)
+void DGButton::onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent)
 {
 	// not controlling a parameter
 	if (!isParameterAttached())
 	{
-		return false;
+		return;
 	}
 
 	onMouseWheelEditing();
@@ -246,7 +246,8 @@ bool DGButton::onWheel(VSTGUI::CPoint const& /*inPos*/, VSTGUI::CMouseWheelAxis 
 	}
 	else
 	{
-		long const delta = (inDistance < 0.0f) ? -1 : 1;
+		auto const compositeDelta = ioEvent.deltaX + ioEvent.deltaY;  // TODO: limit control to one axis?
+		long const delta = (compositeDelta == 0.) ? 0 : ((compositeDelta < 0.) ? -1 : 1);
 		newValue = constrainValue(getValue_i() + delta);
 		if (newValue != getValue_i())
 		{
@@ -266,7 +267,7 @@ bool DGButton::onWheel(VSTGUI::CPoint const& /*inPos*/, VSTGUI::CMouseWheelAxis 
 		}
 	}
 
-	return true;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -452,11 +453,11 @@ void DGFineTuneButton::draw(VSTGUI::CDrawContext* inContext)
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGFineTuneButton::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGFineTuneButton::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 {
-	if (!inButtons.isLeftButton())
+	if (!ioEvent.buttonState.isLeft())
 	{
-		return VSTGUI::kMouseEventNotHandled;
+		return;
 	}
 
 	beginEdit();
@@ -465,20 +466,23 @@ VSTGUI::CMouseEventResult DGFineTuneButton::onMouseDown(VSTGUI::CPoint& inPos, V
 	mEntryValue = getValue();
 	mNewValue = std::clamp(mEntryValue + mValueChangeAmount, getMin(), getMax());
 
-	mMouseIsDown = false;  // "dirty" it for onMouseMoved
-	return onMouseMoved(inPos, inButtons);
+	mMouseIsDown = false;  // "dirty" it for onMouseMoveEvent
+
+	VSTGUI::MouseMoveEvent mouseMoveEvent(ioEvent);
+	onMouseMoveEvent(mouseMoveEvent);
+	ioEvent.consumed = mouseMoveEvent.consumed;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGFineTuneButton::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& /*inButtons*/)
+void DGFineTuneButton::onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent)
 {
 	if (!isEditing())
 	{
-		return VSTGUI::kMouseEventNotHandled;
+		return;
 	}
 
 	auto const oldMouseDown = mMouseIsDown;
-	mMouseIsDown = hitTest(inPos);
+	mMouseIsDown = hitTest(ioEvent.mousePosition);
 
 	if (mMouseIsDown && !oldMouseDown)
 	{
@@ -506,11 +510,11 @@ VSTGUI::CMouseEventResult DGFineTuneButton::onMouseMoved(VSTGUI::CPoint& inPos, 
 
 	notifyIfChanged();
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGFineTuneButton::onMouseUp(VSTGUI::CPoint& /*inPos*/, VSTGUI::CButtonState const& /*inButtons*/)
+void DGFineTuneButton::onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent)
 {
 	if (std::exchange(mMouseIsDown, false))
 	{
@@ -519,11 +523,11 @@ VSTGUI::CMouseEventResult DGFineTuneButton::onMouseUp(VSTGUI::CPoint& /*inPos*/,
 
 	endEdit();
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGFineTuneButton::onMouseCancel()
+void DGFineTuneButton::onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent)
 {
 	if (isEditing())
 	{
@@ -532,7 +536,7 @@ VSTGUI::CMouseEventResult DGFineTuneButton::onMouseCancel()
 		endEdit();
 	}
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 
@@ -574,11 +578,11 @@ void DGValueSpot::draw(VSTGUI::CDrawContext* inContext)
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGValueSpot::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGValueSpot::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 {
-	if (!inButtons.isLeftButton())
+	if (!ioEvent.buttonState.isLeft())
 	{
-		return VSTGUI::kMouseEventNotHandled;
+		return;
 	}
 
 	beginEdit();
@@ -586,30 +590,32 @@ VSTGUI::CMouseEventResult DGValueSpot::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI
 	mEntryValue = getValue();
 	mLastMousePos(-1, -1);
 
-	return onMouseMoved(inPos, inButtons);
+	VSTGUI::MouseMoveEvent mouseMoveEvent(ioEvent);
+	onMouseMoveEvent(mouseMoveEvent);
+	ioEvent.consumed = mouseMoveEvent.consumed;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGValueSpot::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGValueSpot::onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent)
 {
 	if (!isEditing())
 	{
-		return VSTGUI::kMouseEventNotHandled;
+		return;
 	}
 
-	if (inButtons.isLeftButton())
+	if (ioEvent.buttonState.isLeft())
 	{
 		auto const oldButtonIsPressed = mButtonIsPressed;
-		if (hitTest(inPos) && !hitTest(mLastMousePos))
+		if (hitTest(ioEvent.mousePosition) && !hitTest(mLastMousePos))
 		{
 			setValue(mValueToSet);
 			mButtonIsPressed = true;
 		}
-		else if (!hitTest(inPos) && hitTest(mLastMousePos))
+		else if (!hitTest(ioEvent.mousePosition) && hitTest(mLastMousePos))
 		{
 			mButtonIsPressed = false;
 		}
-		mLastMousePos = inPos;
+		mLastMousePos = ioEvent.mousePosition;
 
 		notifyIfChanged();
 		if (oldButtonIsPressed != mButtonIsPressed)
@@ -618,22 +624,22 @@ VSTGUI::CMouseEventResult DGValueSpot::onMouseMoved(VSTGUI::CPoint& inPos, VSTGU
 		}
 	}
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGValueSpot::onMouseUp(VSTGUI::CPoint& /*inPos*/, VSTGUI::CButtonState const& /*inButtons*/)
+void DGValueSpot::onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent)
 {
 	endEdit();
 
 	mButtonIsPressed = false;
 	redraw();
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGValueSpot::onMouseCancel()
+void DGValueSpot::onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent)
 {
 	if (isEditing())
 	{
@@ -642,7 +648,7 @@ VSTGUI::CMouseEventResult DGValueSpot::onMouseCancel()
 		endEdit();
 	}
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 
@@ -666,33 +672,35 @@ DGWebLink::DGWebLink(DfxGuiEditor*	inOwnerEditor,
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGWebLink::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGWebLink::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 {
-	if (!inButtons.isLeftButton())
+	if (!ioEvent.buttonState.isLeft())
 	{
-		return VSTGUI::kMouseEventNotHandled;
+		return;
 	}
 
 	beginEdit();
 
-	return onMouseMoved(inPos, inButtons);
+	VSTGUI::MouseMoveEvent mouseMoveEvent(ioEvent);
+	onMouseMoveEvent(mouseMoveEvent);
+	ioEvent.consumed = mouseMoveEvent.consumed;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGWebLink::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& /*inButtons*/)
+void DGWebLink::onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent)
 {
 	if (!isEditing())
 	{
-		return VSTGUI::kMouseEventNotHandled;
+		return;
 	}
 
-	setValue(hitTest(inPos) ? getMax() : getMin());
+	setValue(hitTest(ioEvent.mousePosition) ? getMax() : getMin());
 	if (isDirty())
 	{
 		invalid();
 	}
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -702,7 +710,7 @@ VSTGUI::CMouseEventResult DGWebLink::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI:
 // This allows the user to accidentally push the button, but avoid the 
 // associated action (launching an URL) by moving the mouse pointer away 
 // before releasing the mouse button.
-VSTGUI::CMouseEventResult DGWebLink::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& /*inButtons*/)
+void DGWebLink::onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent)
 {
 	setValue(getMin());
 	if (isDirty())
@@ -711,18 +719,18 @@ VSTGUI::CMouseEventResult DGWebLink::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CB
 	}
 
 	// only launch the URL if the mouse pointer is still in the button's region
-	if (hitTest(inPos) && !mURL.empty())
+	if (hitTest(ioEvent.mousePosition) && !mURL.empty())
 	{
 		dfx::LaunchURL(mURL);
 	}
 
 	endEdit();
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGWebLink::onMouseCancel()
+void DGWebLink::onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent)
 {
 	if (isEditing())
 	{
@@ -734,7 +742,7 @@ VSTGUI::CMouseEventResult DGWebLink::onMouseCancel()
 		endEdit();
 	}
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 

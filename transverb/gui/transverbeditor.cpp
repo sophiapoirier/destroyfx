@@ -262,11 +262,11 @@ static double nearestIntegerAbove(double number)
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult TransverbSpeedTuneButton::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void TransverbSpeedTuneButton::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 {
-	if ((mTuneMode == kSpeedMode_Fine) || !inButtons.isLeftButton())
+	if ((mTuneMode == kSpeedMode_Fine) || !ioEvent.buttonState.isLeft())
 	{
-		return DGFineTuneButton::onMouseDown(inPos, inButtons);
+		return DGFineTuneButton::onMouseDownEvent(ioEvent);
 	}
 
 	beginEdit();
@@ -295,7 +295,7 @@ VSTGUI::CMouseEventResult TransverbSpeedTuneButton::onMouseDown(VSTGUI::CPoint& 
 		invalid();
 	}
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 

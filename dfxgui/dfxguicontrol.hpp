@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -25,7 +25,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cassert>
 #include <cmath>
 #include <memory>
-#include <numeric>
 #include <type_traits>
 
 #include "dfxguieditor.h"
@@ -178,14 +177,14 @@ bool DGControl<T>::notifyIfChanged()
 //-----------------------------------------------------------------------------
 namespace detail
 {
-	bool onWheel(IDGControl* inControl, VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons);
+	void onMouseWheelEvent(IDGControl* inControl, VSTGUI::MouseWheelEvent& ioEvent);
 }
 
 //-----------------------------------------------------------------------------
 template <class T>
-bool DGControl<T>::onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons)
+void DGControl<T>::onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent)
 {
-	return detail::onWheel(this, inPos, inAxis, inDistance, inButtons);
+	detail::onMouseWheelEvent(this, ioEvent);
 }
 
 //-----------------------------------------------------------------------------
@@ -302,14 +301,16 @@ void DGMultiControl<T>::setViewSize(VSTGUI::CRect const& inPos, bool inInvalidat
 
 //-----------------------------------------------------------------------------
 template <class T>
-bool DGMultiControl<T>::onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons)
+void DGMultiControl<T>::onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent)
 {
-	auto result = DGControl<T>::onWheel(inPos, inAxis, inDistance, inButtons);
-	forEachChild([inPos, inAxis, inDistance, inButtons, &result](auto&& child)
+	DGControl<T>::onMouseWheelEvent(ioEvent);
+	bool anyConsumed = ioEvent.consumed;
+	forEachChild([&ioEvent, &anyConsumed](auto&& child)
 	{
-		result |= detail::onWheel(child, inPos, inAxis, inDistance, inButtons);
+		detail::onMouseWheelEvent(child, ioEvent);
+		anyConsumed |= ioEvent.consumed;
 	});
-	return result;
+	ioEvent.consumed = anyConsumed;
 }
 
 //-----------------------------------------------------------------------------
@@ -325,20 +326,6 @@ template <class T>
 bool DGMultiControl<T>::isDirty() const
 {
 	return DGControl<T>::isDirty() || std::any_of(mChildren.cbegin(), mChildren.cend(), [](auto const& child){ return child->asCControl()->isDirty(); });
-}
-
-//-----------------------------------------------------------------------------
-template <class T>
-bool DGMultiControl<T>::checkDefaultValue_all(VSTGUI::CButtonState inButtons)
-{
-	return std::accumulate(mChildren.cbegin(), mChildren.cend(), DGControl<T>::checkDefaultValue(inButtons), 
-						   [inButtons](auto const anyDefaulted, auto&& child)
-	{
-		// checkDefaultValue has desired side effects, so always execute it prior to testing the existing result, 
-		// so that execution cannot be skipped during the logical OR operation
-		auto const childDefaulted = child->asCControl()->checkDefaultValue(inButtons);
-		return childDefaulted || anyDefaulted;
-	});
 }
 
 //-----------------------------------------------------------------------------

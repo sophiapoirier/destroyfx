@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -26,26 +26,27 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-bool detail::onWheel(IDGControl* inControl, VSTGUI::CPoint const& /*inPos*/, VSTGUI::CMouseWheelAxis const& /*inAxis*/, 
-					 float const& inDistance, VSTGUI::CButtonState const& inButtons)
+void detail::onMouseWheelEvent(IDGControl* inControl, VSTGUI::MouseWheelEvent& ioEvent)
 {
 	inControl->onMouseWheelEditing();
 
+	auto const compositeDelta = static_cast<float>(ioEvent.deltaX + ioEvent.deltaY);  // TODO: limit controls to one axis?
 	if (inControl->getNumStates() > 0)
 	{
-		long const delta = (inDistance < 0.0f) ? -1 : 1;
+		long const delta = (compositeDelta == 0.f) ? 0 : ((compositeDelta < 0.f) ? -1 : 1);
 		auto const newValue = inControl->getValue_i() + delta;
 		inControl->setValue_i(newValue);
 	}
 	else
 	{
 		auto const cControl = inControl->asCControl();
-		auto const delta = inDistance * cControl->getWheelInc() / ((inButtons & cControl->kZoomModifier) ? inControl->getFineTuneFactor() : 1.0f);
+		auto const changeAmountDivisor = (VSTGUI::buttonStateFromEventModifiers(ioEvent.modifiers) & cControl->kZoomModifier) ? inControl->getFineTuneFactor() : 1.f;
+		auto const delta = compositeDelta * cControl->getWheelInc() / changeAmountDivisor;
 		cControl->setValueNormalized(cControl->getValueNormalized() + delta);
 	}
 	inControl->notifyIfChanged();
 
-	return true;
+	ioEvent.consumed = true;
 }
 
 

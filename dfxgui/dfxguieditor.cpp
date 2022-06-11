@@ -114,6 +114,30 @@ DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 	#error "implementation needed"
 #endif
 		dfx::InitGUI();
+
+		static auto const originalCheckDefaultValueEventFunc = VSTGUI::CControl::CheckDefaultValueEventFunc;
+		VSTGUI::CControl::CheckDefaultValueEventFunc = [](VSTGUI::CControl* inControl, VSTGUI::MouseDownEvent& ioEvent)
+		{
+			auto const result = originalCheckDefaultValueEventFunc(inControl, ioEvent);
+			auto const dgControl = dynamic_cast<IDGControl*>(inControl);
+			if (result && dgControl)
+			{
+				for (auto const childControl : dgControl->getChildren())
+				{
+					auto const childCControl = childControl->asCControl();
+					auto const defaultValue = childCControl->getDefaultValue();
+					if (defaultValue != childCControl->getValue())
+					{
+						childCControl->beginEdit();
+						childCControl->setValue(defaultValue);
+						childCControl->valueChanged();
+						childCControl->endEdit();
+						childCControl->setDirty();
+					}
+				}
+			}
+			return result;
+		};
 	});
 
 	// This activates embedded font resources. We do this as early as
@@ -246,7 +270,7 @@ void DfxGuiEditor::close()
 
 	for (auto& control : mControlsList)
 	{
-		control->asCControl()->unregisterViewMouseListener(this);
+		control->asCControl()->unregisterViewEventListener(this);
 	}
 	mControlsList.clear();
 
@@ -317,16 +341,6 @@ void DfxGuiEditor::valueChanged(VSTGUI::CControl* inControl)
 	}
 }
 
-//-----------------------------------------------------------------------------
-int32_t DfxGuiEditor::controlModifierClicked(VSTGUI::CControl* inControl, VSTGUI::CButtonState inButtons)
-{
-	static constexpr int32_t kNotHandled = 0;
-	static constexpr int32_t kHandled = 1;
-
-	auto const handled = handleContextualMenuClick(inControl, inButtons);
-	return handled ? kHandled : kNotHandled;
-}
-
 #ifndef TARGET_API_VST
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::beginEdit(int32_t inParameterIndex)
@@ -373,6 +387,12 @@ void DfxGuiEditor::idle()
 		ShowMessage(std::exchange(mPendingErrorMessage, {}));
 	}
 
+#ifdef TARGET_API_RTAS
+	// Called by GUI when idle time available; NO_UI: Call process' DoIdle() method.  
+	// Keeps other processes from starving during certain events (like mouse down).
+	dfxgui_GetEffectInstance()->ProcessDoIdle();
+#endif
+
 	// call any child class implementation
 	dfxgui_Idle();
 }
@@ -404,7 +424,7 @@ IDGControl* DfxGuiEditor::addControl(IDGControl* inControl)
 	{
 		assert(std::find(mControlsList.cbegin(), mControlsList.cend(), inControl) == mControlsList.cend());
 		mControlsList.push_back(inControl);
-		inControl->asCControl()->registerViewMouseListener(this);
+		inControl->asCControl()->registerViewEventListener(this);
 	}
 
 	[[maybe_unused]] auto const success = getFrame()->addView(inControl->asCControl());
@@ -425,7 +445,7 @@ void DfxGuiEditor::removeControl(IDGControl* inControl)
 		mControlsList.erase(foundControl);
 	}
 
-	inControl->asCControl()->unregisterViewMouseListener(this);
+	inControl->asCControl()->unregisterViewEventListener(this);
 	[[maybe_unused]] auto const success = getFrame()->removeView(inControl->asCControl());
 	assert(success);
 }
@@ -827,53 +847,69 @@ void DfxGuiEditor::onMouseExited(VSTGUI::CView* inView, VSTGUI::CFrame* /*inFram
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DfxGuiEditor::onMouseDown(VSTGUI::CFrame* inFrame, VSTGUI::CPoint const& inPos, VSTGUI::CButtonState const& inButtons)
+void DfxGuiEditor::onMouseEvent(VSTGUI::MouseEvent& ioEvent, VSTGUI::CFrame* inFrame)
 {
-	if (!inFrame->getViewAt(inPos, VSTGUI::GetViewOptions().mouseEnabled().deep()))
+	switch (ioEvent.type)
 	{
-		auto const handled = handleContextualMenuClick(nullptr, inButtons);
-		if (handled)
-		{
-			return VSTGUI::kMouseDownEventHandledButDontNeedMovedOrUpEvents;
-		}
-	}
+		case VSTGUI::EventType::MouseDown:
+			if (!inFrame->getViewAt(ioEvent.mousePosition, VSTGUI::GetViewOptions().mouseEnabled().deep()))
+			{
+				auto const handled = handleContextualMenuClick(nullptr, ioEvent.buttonState);
+				if (handled)
+				{
+					ioEvent.consumed = true;
+					VSTGUI::castMouseDownEvent(ioEvent).ignoreFollowUpMoveAndUpEvents(true);
+				}
+			}
+			break;
 
-	return VSTGUI::kMouseEventNotHandled;
+		// entered and exited is not enough because they stop notifying when mouse buttons are pressed
+		case VSTGUI::EventType::MouseMove:
+		{
+			IDGControl* currentControl = nullptr;
+			if (auto const currentView = inFrame->getViewAt(ioEvent.mousePosition, VSTGUI::GetViewOptions().deep()))
+			{
+				if (auto const dgControl = dynamic_cast<IDGControl*>(currentView))
+				{
+					currentControl = dgControl;
+				}
+			}
+			setCurrentControl_mouseover(currentControl);
+			break;
+		}
+
+		default:
+			break;
+	}
 }
 
 //-----------------------------------------------------------------------------
-// entered and exited is not enough because they stop notifying when mouse buttons are pressed
-VSTGUI::CMouseEventResult DfxGuiEditor::onMouseMoved(VSTGUI::CFrame* inFrame, VSTGUI::CPoint const& inPos, VSTGUI::CButtonState const& /*inButtons*/)
+void DfxGuiEditor::viewOnEvent(VSTGUI::CView* inView, VSTGUI::Event& ioEvent)
 {
-	IDGControl* currentControl = nullptr;
-	if (auto const currentView = inFrame->getViewAt(inPos, VSTGUI::GetViewOptions().deep()))
+	if ((ioEvent.type != VSTGUI::EventType::MouseDown) || !inView->getMouseEnabled())
 	{
-		if (auto const dgControl = dynamic_cast<IDGControl*>(currentView))
-		{
-			currentControl = dgControl;
-		}
+		return;
 	}
-	setCurrentControl_mouseover(currentControl);
-
-	return VSTGUI::kMouseEventNotHandled;
-}
-
-//-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DfxGuiEditor::viewOnMouseDown(VSTGUI::CView* inView, VSTGUI::CPoint inPos, VSTGUI::CButtonState inButtons)
-{
-	auto const dgControl = dynamic_cast<IDGControl*>(inView);
-	if (dgControl && inView->getMouseEnabled())
+	if (auto const dgControl = dynamic_cast<IDGControl*>(inView))
 	{
 		dgControl->invalidateMouseWheelEditingTimer();
+
+		auto const mouseButtonState = VSTGUI::castMouseEvent(ioEvent).buttonState;
+		auto const handled = handleContextualMenuClick(dgControl->asCControl(), mouseButtonState);
+		if (handled)
+		{
+			ioEvent.consumed = true;
+			return;
+		}
+
 #if TARGET_PLUGIN_USES_MIDI
 		auto const isMultiControl = !dgControl->getChildren().empty();  // multi-controls should self-manage learn
-		if (dgControl->isParameterAttached() && !isMultiControl && getmidilearning() && inButtons.isLeftButton())
+		if (dgControl->isParameterAttached() && !isMultiControl && getmidilearning() && mouseButtonState.isLeft())
 		{
 			setmidilearner(dgControl->getParameterID());
 		}
 #endif
 	}
-	return VSTGUI::ViewMouseListenerAdapter::viewOnMouseDown(inView, inPos, inButtons);
 }
 
 //-----------------------------------------------------------------------------
@@ -1971,13 +2007,9 @@ VSTGUI::CMenuItem* DFX_AppendCommandItemToMenu(VSTGUI::COptionMenu& ioMenu, VSTG
 }  // namespace
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::handleContextualMenuClick(VSTGUI::CControl* inControl, VSTGUI::CButtonState const& inButtons)
+bool DfxGuiEditor::handleContextualMenuClick(VSTGUI::CControl* inControl, VSTGUI::MouseEventButtonState inButtonState)
 {
-	auto isContextualMenuClick = inButtons.isRightButton();
-#if TARGET_OS_MAC
-	isContextualMenuClick |= (inButtons.isLeftButton() && inButtons.isAppleSet());
-#endif
-	if (!isContextualMenuClick)
+	if (!inButtonState.isRight())
 	{
 		return false;
 	}
@@ -3194,17 +3226,6 @@ void DfxGuiEditor::SetBackgroundRect(sRect* inRect)
 	rect.left = inRect->left;
 	rect.bottom = inRect->bottom;
 	rect.right = inRect->right;
-}
-
-//-----------------------------------------------------------------------------
-// Called by GUI when idle time available; NO_UI: Call process' DoIdle() method.  
-// Keeps other processes from starving during certain events (like mouse down).
-// XXX TODO: is this actually ever called by anything? seemingly not for AU
-void DfxGuiEditor::doIdleStuff()
-{
-	TARGET_API_EDITOR_BASE_CLASS::doIdleStuff();  // XXX do this?
-
-	dfxgui_GetEffectInstance()->ProcessDoIdle();
 }
 
 //-----------------------------------------------------------------------------

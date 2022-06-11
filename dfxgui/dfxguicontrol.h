@@ -89,7 +89,7 @@ public:
 
 	bool notifyIfChanged() final;
 
-	bool onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons) override;
+	void onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent) override;
 	void onMouseWheelEditing() final
 	{
 		mMouseWheelEditingSupport.onMouseWheelEditing();
@@ -162,13 +162,13 @@ protected:
 		return rect.offset(T::getViewSize().getTopLeft());
 	}
 
-	// Apple on Mac, Control on others.
-	static bool isPlatformMetaSet(const VSTGUI::CButtonState &button)
+	// Control key on all platforms (but VSTGUI names it differently on macOS)
+	static bool isPlatformMetaSet(VSTGUI::Modifiers modifiers)
 	{
 		#if TARGET_OS_MAC
-		return button.isAppleSet();
+		return modifiers.has(VSTGUI::ModifierKey::Super);
 		#else
-		return button.isControlSet();
+		return modifiers.has(VSTGUI::ModifierKey::Control);
 		#endif
 	}
 
@@ -221,12 +221,11 @@ public:
 	}
 
 	void setViewSize(VSTGUI::CRect const& inPos, bool inInvalidate = true) override;
-	bool onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons) override;
+	void onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent) override;
 
 	void setDirty_all(bool inValue);
 	bool isDirty() const override;
 
-	bool checkDefaultValue_all(VSTGUI::CButtonState inButtons);
 	void beginEdit_all();
 	void endEdit_all();
 	bool isEditing_any() const;

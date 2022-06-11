@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2015-2021  Sophia Poirier
+Copyright (C) 2015-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -37,23 +37,32 @@ constexpr VSTGUI::CCoord kButtonHeight = 20.0;
 constexpr VSTGUI::CCoord kTextLabelHeight = 14.0;
 constexpr VSTGUI::CCoord kTextEditHeight = 20.0;
 constexpr VSTGUI::CCoord kFocusIndicatorThickness = 2.4;
-static auto const kFont = VSTGUI::kSystemFont;
 
+
+//-----------------------------------------------------------------------------
+// a function rather than a global constant to avoid static initializer order dependency
+static auto DFXGUI_GetDialogFont() noexcept
+{
+	return VSTGUI::kSystemFont;
+}
 
 //-----------------------------------------------------------------------------
 static bool DFXGUI_PressButton(VSTGUI::CTextButton* inButton, bool inState)
 {
 	if (inButton)
 	{
-		auto mousePos = inButton->getMouseableArea().getCenter();
+		auto const mousePos = inButton->getMouseableArea().getCenter();
 		if (inState)
 		{
-			inButton->onMouseDown(mousePos, VSTGUI::CButtonState(VSTGUI::kLButton));
+			VSTGUI::MouseDownEvent event(mousePos, VSTGUI::MouseButton::Left);
+			event.clickCount = 1;
+			inButton->onMouseDownEvent(event);
 			inButton->valueChanged();  // required to trigger the change handler upon mouse-down rather than mouse-up
 		}
 		else
 		{
-			inButton->onMouseUp(mousePos, VSTGUI::CButtonState());
+			VSTGUI::MouseUpEvent event(mousePos, {});
+			inButton->onMouseUpEvent(event);
 		}
 		return true;
 	}
@@ -82,7 +91,7 @@ public:
 		setTextColor(textColor);
 		setTextColorHighlighted(DGColor::getSystem(DGColor::System::AccentControlText));
 		setFrameColorHighlighted(DGColor::getSystem(DGColor::System::AccentPressed));
-		setFont(kFont);
+		setFont(DFXGUI_GetDialogFont());
 
 		constexpr float gradientDarkAmount = 0.6f;
 		constexpr float accentFillAlpha = 0.72f;
@@ -108,22 +117,21 @@ public:
 		setFrameWidth(1.0);
 	}
 
-	int32_t onKeyDown(VstKeyCode& inKeyCode) override
+	void onKeyboardEvent(VSTGUI::KeyboardEvent& ioEvent) override
 	{
-		if (auto const result = handleKeyEvent(inKeyCode.virt, true))
+		switch (ioEvent.virt)
 		{
-			return *result;
+			case VSTGUI::VirtualKey::Return:
+				// let the parent dialog handle this key
+				break;
+			case VSTGUI::VirtualKey::Space:
+				DFXGUI_PressButton(this, ioEvent.type == VSTGUI::EventType::KeyDown);
+				ioEvent.consumed = true;
+				break;
+			default:
+				VSTGUI::CTextButton::onKeyboardEvent(ioEvent);
+				break;
 		}
-		return VSTGUI::CTextButton::onKeyDown(inKeyCode);
-	}
-
-	int32_t onKeyUp(VstKeyCode& inKeyCode) override
-	{
-		if (auto const result = handleKeyEvent(inKeyCode.virt, false))
-		{
-			return *result;
-		}
-		return VSTGUI::CTextButton::onKeyUp(inKeyCode);
 	}
 
 	DGDialog::Selection getSelection() const noexcept
@@ -150,21 +158,6 @@ public:
 	CLASS_METHODS(DGDialogButton, VSTGUI::CTextButton)
 
 private:
-	std::optional<int32_t> handleKeyEvent(unsigned char inVirtualKey, bool inIsPressed)
-	{
-		// let the parent dialog handle this key
-		if (inVirtualKey == VKEY_RETURN)
-		{
-			return dfx::kKeyEventNotHandled;
-		}
-		else if (inVirtualKey == VKEY_SPACE)
-		{
-			DFXGUI_PressButton(this, inIsPressed);
-			return dfx::kKeyEventHandled;
-		}
-		return {};
-	}
-
 	DGDialog::Selection const mSelection;
 	bool const mIsDefaultButton;
 };
@@ -192,7 +185,7 @@ public:
 		setHoriAlign(VSTGUI::kCenterText);
 		setStyle(kRoundRectStyle);
 		setRoundRectRadius(3.0);
-		setFont(kFont);
+		setFont(DFXGUI_GetDialogFont());
 	}
 
 	void draw(VSTGUI::CDrawContext* inContext) override
@@ -214,34 +207,38 @@ public:
 		}
 	}
 
-	int32_t onKeyDown(VstKeyCode& keyCode) override
+	void onKeyboardEvent(VSTGUI::KeyboardEvent& ioEvent) override
 	{
-		// HACK: Workaround for bug where pressing the dialog's OK button in Logic produces
-		// a platform text edit cancel event. This event is mapped to an ESC key event,
-		// so by consuming those, we avert the text-discarding effect of the cancellation.
-		// This is definitely a hack, but I don't think there is a good reason for this
-		// text edit object itself to be cancelable (we handle that at the dialog level).
-		if (keyCode.virt == VKEY_ESCAPE)
+		if (ioEvent.virt == VSTGUI::VirtualKey::Escape)
 		{
-			return dfx::kKeyEventHandled;
+			// HACK: Workaround for bug where pressing the dialog's OK button in Logic produces
+			// a platform text edit cancel event. This event is mapped to an ESC key event,
+			// so by consuming those, we avert the text-discarding effect of the cancellation.
+			// This is definitely a hack, but I don't think there is a good reason for this
+			// text edit object itself to be cancellable (we handle that at the dialog level).
+			if (ioEvent.type == VSTGUI::EventType::KeyDown)
+			{
+				ioEvent.consumed = true;
+			}
+			// HACK: unfortunately the Logic bug workaround results in failing to act on 
+			// actual ESC key presses in the text edit field, but a real key press event 
+			// will also be followed by a key-up event, and so we can work around the 
+			// workaround by taking the pair of actions upon ESC key-up events
+			else
+			{
+				auto const entryConsumed = ioEvent.consumed;
+				ioEvent.type = VSTGUI::EventType::KeyDown;
+				VSTGUI::CTextEdit::onKeyboardEvent(ioEvent);
+				bool const downConsumed = std::exchange(ioEvent.consumed, entryConsumed);
+				ioEvent.type = VSTGUI::EventType::KeyUp;
+				VSTGUI::CTextEdit::onKeyboardEvent(ioEvent);
+				ioEvent.consumed = ioEvent.consumed || downConsumed;
+			}
 		}
-		return VSTGUI::CTextEdit::onKeyDown(keyCode);
-	}
-
-	int32_t onKeyUp(VstKeyCode& keyCode) override
-	{
-		// HACK: unfortunately the Logic bug workaround results in failing to act on 
-		// actual ESC key presses in the text edit field, but a real key press event 
-		// will also be followed by a key-up event, and so we can work around the 
-		// workaround by taking the pair of actions upon ESC key-up events
-		if (keyCode.virt == VKEY_ESCAPE)
+		else
 		{
-			auto const downResult = VSTGUI::CTextEdit::onKeyDown(keyCode);
-			auto const upResult = VSTGUI::CTextEdit::onKeyUp(keyCode);
-			auto const anyHandled = (downResult == dfx::kKeyEventHandled) || (upResult == dfx::kKeyEventHandled);
-			return anyHandled ? dfx::kKeyEventHandled : dfx::kKeyEventNotHandled;
+			VSTGUI::CTextEdit::onKeyboardEvent(ioEvent);
 		}
-		return VSTGUI::CTextEdit::onKeyUp(keyCode);
 	}
 
 	CLASS_METHODS(DGDialogTextEdit, VSTGUI::CTextEdit)
@@ -283,7 +280,7 @@ DGDialog::DGDialog(DGRect const& inRegion,
 		label->setHoriAlign(VSTGUI::kLeftText);
 		label->setLineLayout(VSTGUI::CMultiLineTextLabel::LineLayout::wrap);
 //		label->setAutoHeight(true);
-		auto const font = VSTGUI::makeOwned<VSTGUI::CFontDesc>(*kFont);
+		auto const font = VSTGUI::makeOwned<VSTGUI::CFontDesc>(*DFXGUI_GetDialogFont());
 		font->setStyle(font->getStyle() | VSTGUI::kBoldFace);
 		label->setFont(font);
 		addView(label);
@@ -374,37 +371,29 @@ DGDialog::DGDialog(DGRect const& inRegion,
 }
 
 //-----------------------------------------------------------------------------
-int32_t DGDialog::onKeyDown(VstKeyCode& inKeyCode)
+void DGDialog::onKeyboardEvent(VSTGUI::KeyboardEvent& ioEvent)
 {
-	if (handleKeyEvent(inKeyCode.virt, true))
+	auto const handled = [this, &ioEvent]
 	{
-		return dfx::kKeyEventHandled;
-	}
-	return VSTGUI::CViewContainer::onKeyDown(inKeyCode);
-}
-
-//-----------------------------------------------------------------------------
-int32_t DGDialog::onKeyUp(VstKeyCode& inKeyCode)
-{
-	if (handleKeyEvent(inKeyCode.virt, false))
+		bool const isPressed = (ioEvent.type == VSTGUI::EventType::KeyDown);
+		if (ioEvent.virt == VSTGUI::VirtualKey::Return)
+		{
+			return DFXGUI_PressButton(getButton(kSelection_OK), isPressed);
+		}
+		if (ioEvent.virt == VSTGUI::VirtualKey::Escape)
+		{
+			return DFXGUI_PressButton(getButton(kSelection_Cancel), isPressed);
+		}
+		return false;
+	}();
+	if (handled)
 	{
-		return dfx::kKeyEventHandled;
+		ioEvent.consumed = true;
 	}
-	return VSTGUI::CViewContainer::onKeyUp(inKeyCode);
-}
-
-//-----------------------------------------------------------------------------
-bool DGDialog::handleKeyEvent(unsigned char inVirtualKey, bool inIsPressed)
-{
-	if (inVirtualKey == VKEY_RETURN)
+	else
 	{
-		return DFXGUI_PressButton(getButton(kSelection_OK), inIsPressed);
+		VSTGUI::CViewContainer::onKeyboardEvent(ioEvent);
 	}
-	else if (inVirtualKey == VKEY_ESCAPE)
-	{
-		return DFXGUI_PressButton(getButton(kSelection_Cancel), inIsPressed);
-	}
-	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -557,7 +546,7 @@ DGTextEntryDialog::DGTextEntryDialog(long inParamID, std::string const& inMessag
 		label->setBackColor(VSTGUI::kTransparentCColor);
 		label->setFrameColor(VSTGUI::kTransparentCColor);
 		label->setHoriAlign(VSTGUI::kLeftText);
-		label->setFont(kFont);
+		label->setFont(DFXGUI_GetDialogFont());
 		label->sizeToFit();
 		addView(label);
 
@@ -637,7 +626,7 @@ long DGTextEntryDialog::getParameterID() const noexcept
 DGTextScrollDialog::DGTextScrollDialog(DGRect const& inRegion, std::string const& inMessage)
 :	VSTGUI::CScrollView(inRegion, inRegion, 
 						VSTGUI::CScrollView::kVerticalScrollbar | VSTGUI::CScrollView::kAutoHideScrollbars | VSTGUI::CScrollView::kOverlayScrollbars, 
-						kFont->getSize())  // seems reasonable to size the scrollbar relative to the font
+						DFXGUI_GetDialogFont()->getSize())  // seems reasonable to size the scrollbar relative to the font
 {
 	assert(!inMessage.empty());
 
@@ -652,28 +641,35 @@ DGTextScrollDialog::DGTextScrollDialog(DGRect const& inRegion, std::string const
 	label->setHoriAlign(VSTGUI::kLeftText);
 	label->setLineLayout(VSTGUI::CMultiLineTextLabel::LineLayout::wrap);
 //	label->setAutoHeight(true);
-	label->setFont(kFont);
+	label->setFont(DFXGUI_GetDialogFont());
 	addView(label);
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGTextScrollDialog::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGTextScrollDialog::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 {
 	mModalSession.reset();
-	return VSTGUI::kMouseDownEventHandledButDontNeedMovedOrUpEvents;
+	ioEvent.consumed = true;
+	ioEvent.ignoreFollowUpMoveAndUpEvents(true);
 }
 
 //-----------------------------------------------------------------------------
-int32_t DGTextScrollDialog::onKeyDown(VstKeyCode& inKeyCode)
+void DGTextScrollDialog::onKeyboardEvent(VSTGUI::KeyboardEvent& ioEvent)
 {
-	switch (inKeyCode.virt)
+	if (ioEvent.type != VSTGUI::EventType::KeyDown)
 	{
-		case VKEY_RETURN:
-		case VKEY_ESCAPE:
+		return VSTGUI::CScrollView::onKeyboardEvent(ioEvent);
+	}
+	switch (ioEvent.virt)
+	{
+		case VSTGUI::VirtualKey::Return:
+		case VSTGUI::VirtualKey::Escape:
 			mModalSession.reset();
-			return dfx::kKeyEventHandled;
+			ioEvent.consumed = true;
+			break;
 		default:
-			return VSTGUI::CScrollView::onKeyDown(inKeyCode);
+			VSTGUI::CScrollView::onKeyboardEvent(ioEvent);
+			break;
 	}
 }
 

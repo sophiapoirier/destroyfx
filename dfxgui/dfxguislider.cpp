@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -33,13 +33,59 @@ namespace
 {
 
 //-----------------------------------------------------------------------------
-static VSTGUI::CButtonState ConstrainButtons(VSTGUI::CButtonState const& inButtons, long inNumStates)
+// TODO: migrate fully to VSTGUI::Modifiers
+static VSTGUI::CButtonState ConstrainButtons(VSTGUI::MouseEvent const& inEvent, long inNumStates)
 {
+	auto const buttons = VSTGUI::buttonStateFromMouseEvent(inEvent);
 	if (inNumStates > 0)
 	{
-		return inButtons & ~VSTGUI::CControl::kZoomModifier;
+		return buttons & ~VSTGUI::CControl::kZoomModifier;
 	}
-	return inButtons;
+	return buttons;
+}
+
+//-----------------------------------------------------------------------------
+// TODO: migrate fully to VSTGUI::MouseEvent
+static void ApplyMouseEventResult(VSTGUI::CMouseEventResult inMouseEventResult, VSTGUI::MouseEvent& ioEvent)
+{
+	switch (inMouseEventResult)
+	{
+		case VSTGUI::kMouseEventHandled:
+			ioEvent.consumed = true;
+			break;
+		case VSTGUI::kMouseDownEventHandledButDontNeedMovedOrUpEvents:
+			ioEvent.consumed = true;
+			if (ioEvent.type == VSTGUI::EventType::MouseDown)
+			{
+				VSTGUI::castMouseDownEvent(ioEvent).ignoreFollowUpMoveAndUpEvents(true);
+			}
+			else
+			{
+				assert(false);
+			}
+			break;
+		case VSTGUI::kMouseMoveEventHandledButDontNeedMoreEvents:
+			ioEvent.consumed = true;
+			if (ioEvent.type == VSTGUI::EventType::MouseMove)
+			{
+				VSTGUI::castMouseMoveEvent(ioEvent).ignoreFollowUpMoveAndUpEvents(true);
+			}
+			else
+			{
+				assert(false);
+			}
+			break;
+		default:
+			break;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// workaround for https://github.com/steinbergmedia/vstgui/issues/253
+static bool operator==(VSTGUI::Modifiers const& a, VSTGUI::Modifiers const& b) noexcept
+{
+	static_assert(dfx::IsTriviallySerializable<VSTGUI::Modifiers>);
+	return (std::memcmp(&a, &b, sizeof(a)) == 0);
 }
 
 //-----------------------------------------------------------------------------
@@ -114,24 +160,24 @@ void DGSlider::draw(VSTGUI::CDrawContext* inContext)
 #endif
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGSlider::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGSlider::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 {
 	DiscreteValueConstrainer const dvc(this);
-	return VSTGUI::CSlider::onMouseDown(inPos, ConstrainButtons(inButtons, getNumStates()));
+	ApplyMouseEventResult(VSTGUI::CSlider::onMouseDown(ioEvent.mousePosition, ConstrainButtons(ioEvent, getNumStates())), ioEvent);
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGSlider::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGSlider::onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent)
 {
 	DiscreteValueConstrainer const dvc(isEditing() ? this : nullptr);
-	return VSTGUI::CSlider::onMouseMoved(inPos, ConstrainButtons(inButtons, getNumStates()));
+	ApplyMouseEventResult(VSTGUI::CSlider::onMouseMoved(ioEvent.mousePosition, ConstrainButtons(ioEvent, getNumStates())), ioEvent);
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGSlider::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGSlider::onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent)
 {
 	DiscreteValueConstrainer const dvc(this);
-	return VSTGUI::CSlider::onMouseUp(inPos, ConstrainButtons(inButtons, getNumStates()));
+	ApplyMouseEventResult(VSTGUI::CSlider::onMouseUp(ioEvent.mousePosition, ConstrainButtons(ioEvent, getNumStates())), ioEvent);
 }
 
 //-----------------------------------------------------------------------------
@@ -255,26 +301,21 @@ void DGRangeSlider::draw(VSTGUI::CDrawContext* inContext)
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGRangeSlider::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGRangeSlider::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 {
-	if (!inButtons.isLeftButton())
+	if (!ioEvent.buttonState.isLeft())
 	{
-		return VSTGUI::kMouseEventNotHandled;
-	}
-
-	if (checkDefaultValue_all(inButtons))
-	{
-		return VSTGUI::kMouseDownEventHandledButDontNeedMovedOrUpEvents;
+		return;
 	}
 
 	beginEdit_all();
 
 	mLowerStartValue = mLowerControl->asCControl()->getValueNormalized();
 	mUpperStartValue = mUpperControl->asCControl()->getValueNormalized();
-	mClickStartValue = static_cast<float>(inPos.x - mMinXPos) / mEffectiveRange;
-	mOldPosY = inPos.y;
+	mClickStartValue = static_cast<float>(ioEvent.mousePosition.x - mMinXPos) / mEffectiveRange;
+	mOldPosY = ioEvent.mousePosition.y;
 
-	mAnchorControl = [this]()
+	mAnchorControl = [this]
 	{
 		auto const lowerDifference = std::fabs(mClickStartValue - mLowerStartValue);
 		auto const upperDifference = std::fabs(mClickStartValue - mUpperStartValue);
@@ -295,7 +336,7 @@ VSTGUI::CMouseEventResult DGRangeSlider::onMouseDown(VSTGUI::CPoint& inPos, VSTG
 	mClickBetween = ((mClickStartValue >= (mLowerStartValue - pixelValue)) && (mClickStartValue <= (mUpperStartValue + pixelValue)));
 
 	// the following stuff allows you click within a handle and have the value not "jump" at all
-	mClickOffsetInValue = [this]()
+	mClickOffsetInValue = [this]
 	{
 		if (mLowerMainHandleImage && mUpperMainHandleImage)
 		{
@@ -325,15 +366,15 @@ VSTGUI::CMouseEventResult DGRangeSlider::onMouseDown(VSTGUI::CPoint& inPos, VSTG
 
 	mNewValue = mClickStartValue + mClickOffsetInValue;
 	mOldValue = mNewValue;
-	mFineTuneStartValue = [this, inButtons]()
+	mFineTuneStartValue = [this, buttons = VSTGUI::buttonStateFromMouseEvent(ioEvent)]
 	{
-		if (mClickBetween || (inButtons.getModifierState() & ~kZoomModifier))
+		if (mClickBetween || (buttons.getModifierState() & ~kZoomModifier))
 		{
 			return mNewValue;
 		}
 		return (mAnchorControl == mLowerControl) ? mUpperStartValue : mLowerStartValue;
 	}();
-	mOldButtons = inButtons;
+	mOldModifiers = ioEvent.modifiers;
 
 #if TARGET_PLUGIN_USES_MIDI
 	if (getOwnerEditor()->getmidilearning())
@@ -343,53 +384,55 @@ VSTGUI::CMouseEventResult DGRangeSlider::onMouseDown(VSTGUI::CPoint& inPos, VSTG
 	}
 #endif
 
-	return onMouseMoved(inPos, inButtons);
+	VSTGUI::MouseMoveEvent mouseMoveEvent(ioEvent);
+	onMouseMoveEvent(mouseMoveEvent);
+	ioEvent.consumed = mouseMoveEvent.consumed;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGRangeSlider::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGRangeSlider::onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent)
 {
-	if (!(inButtons.isLeftButton() && isEditing_any()))
+	if (!(ioEvent.buttonState.isLeft() && isEditing_any()))
 	{
-		return VSTGUI::kMouseEventNotHandled;
+		return;
 	}
 
 	DiscreteValueConstrainer const dvc1(mLowerControl->asCControl()->isEditing() ? mLowerControl : nullptr);
 	DiscreteValueConstrainer const dvc2(mUpperControl->asCControl()->isEditing() ? mUpperControl : nullptr);
 
-	bool const isFineTune = (inButtons & kZoomModifier);
-	if ((mOldButtons != inButtons) && isFineTune)
+	bool const isFineTune = (VSTGUI::buttonStateFromMouseEvent(ioEvent) & kZoomModifier);
+	if ((mOldModifiers != ioEvent.modifiers) && isFineTune)
 	{
 		mOldValue = mFineTuneStartValue = mNewValue;
-		mOldButtons = inButtons;
+		mOldModifiers = ioEvent.modifiers;
 	}
 	else if (!isFineTune)
 	{
 		mOldValue = mNewValue;
-		mOldButtons = inButtons;
+		mOldModifiers = ioEvent.modifiers;
 	}
-	mNewValue = (static_cast<float>(inPos.x - mMinXPos) / mEffectiveRange) + mClickOffsetInValue;
+	mNewValue = (static_cast<float>(ioEvent.mousePosition.x - mMinXPos) / mEffectiveRange) + mClickOffsetInValue;
 	if (isFineTune)
 	{
 		mNewValue = mFineTuneStartValue + ((mNewValue - mOldValue) / getFineTuneFactor());
 	}
 
-	auto const [lowerValue, upperValue] = [this, inPos, inButtons, isFineTune]() -> std::pair<float, float>
+	auto const [lowerValue, upperValue] = [this, pos = ioEvent.mousePosition, modifiers = ioEvent.modifiers, isFineTune]() -> std::pair<float, float>
 	{
 		// unfortunately VSTGUI on macOS hijacks control-left-button and remaps it to right-button (even after mouse-down)
-		auto const controlKeyPressed = isPlatformMetaSet(inButtons);
+		auto const controlKeyPressed = isPlatformMetaSet(modifiers);
 
 		// move both parameters to the new value
-		if (controlKeyPressed && !inButtons.isAltSet())
+		if (controlKeyPressed && !modifiers.has(VSTGUI::ModifierKey::Alt))
 		{
 			return {mNewValue, mNewValue};
 		}
 
 		// reverso axis convergence/divergence mode
-		if (controlKeyPressed && inButtons.isAltSet())
+		if (controlKeyPressed && modifiers.has(VSTGUI::ModifierKey::Alt))
 		{
 			//auto const diff = currentXpos - oldXpos;
-			auto const diff = mOldPosY - inPos.y;
+			auto const diff = mOldPosY - pos.y;
 			auto const changeAmountDivisor = isFineTune ? getFineTuneFactor() : 1.0f;
 			float const changeAmount = (static_cast<float>(diff) / mEffectiveRange) / changeAmountDivisor;
 			auto lowerValue = mLowerControl->asCControl()->getValueNormalized() - changeAmount;
@@ -405,7 +448,7 @@ VSTGUI::CMouseEventResult DGRangeSlider::onMouseMoved(VSTGUI::CPoint& inPos, VST
 		}
 
 		// move both parameters, preserving relationship
-		if ((inButtons.isAltSet() && !controlKeyPressed) || mClickBetween)
+		if ((modifiers.has(VSTGUI::ModifierKey::Alt) && !controlKeyPressed) || mClickBetween)
 		{
 			// the click offset stuff is annoying in this mode, so remove it
 			auto const valueChange = mNewValue - mClickStartValue - mClickOffsetInValue;
@@ -454,30 +497,30 @@ VSTGUI::CMouseEventResult DGRangeSlider::onMouseMoved(VSTGUI::CPoint& inPos, VST
 	mLowerControl->asCControl()->setValueNormalized(lowerValue);
 	mUpperControl->asCControl()->setValueNormalized(upperValue);
 
-	mOldPosY = inPos.y;
+	mOldPosY = ioEvent.mousePosition.y;
 
 	notifyIfChanged_all();
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGRangeSlider::onMouseUp(VSTGUI::CPoint& /*inPos*/, VSTGUI::CButtonState const& /*inButtons*/)
+void DGRangeSlider::onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent)
 {
 	EndControl(mLowerControl);
 	EndControl(mUpperControl);
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGRangeSlider::onMouseCancel()
+void DGRangeSlider::onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent)
 {
 	CancelControl(mLowerControl, mLowerStartValue);
 	CancelControl(mUpperControl, mUpperStartValue);
 	notifyIfChanged_all();
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -561,7 +604,7 @@ void DGXYBox::draw(VSTGUI::CDrawContext* inContext)
 									 mMaxYPos + mHandleHeight - getViewSize().top);
 	rect.bound(boundingRect);
 
-	auto const activeHandleImage = [this]()
+	auto const activeHandleImage = [this]
 	{
 #if TARGET_PLUGIN_USES_MIDI
 		auto const midiLearner = getOwnerEditor()->getmidilearner();
@@ -589,29 +632,24 @@ void DGXYBox::draw(VSTGUI::CDrawContext* inContext)
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGXYBox::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGXYBox::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 {
-	if (!inButtons.isLeftButton())
+	if (!ioEvent.buttonState.isLeft())
 	{
-		return VSTGUI::kMouseEventNotHandled;
-	}
-
-	if (checkDefaultValue_all(inButtons))
-	{
-		return VSTGUI::kMouseDownEventHandledButDontNeedMovedOrUpEvents;
+		return;
 	}
 
 	beginEdit_all();
 
 	mStartValueX = mOldValueX = mControlX->asCControl()->getValueNormalized();
 	mStartValueY = mOldValueY = mControlY->asCControl()->getValueNormalized();
-	mOldButtons = inButtons;
+	mOldModifiers = ioEvent.modifiers;
 
 	// the following stuff allows you click within a handle and have the value not "jump" at all
 	auto const handleWidthInValue = static_cast<float>(mHandleWidth) / mEffectiveRangeX;
 	auto const handleHeightInValue = static_cast<float>(mHandleHeight) / mEffectiveRangeY;
-	auto const clickValueX = mapValueX(static_cast<float>(inPos.x - mMouseableOrigin.x) / mEffectiveRangeX);
-	auto const clickValueY = mapValueY(static_cast<float>(inPos.y - mMouseableOrigin.y) / mEffectiveRangeY);
+	auto const clickValueX = mapValueX(static_cast<float>(ioEvent.mousePosition.x - mMouseableOrigin.x) / mEffectiveRangeX);
+	auto const clickValueY = mapValueY(static_cast<float>(ioEvent.mousePosition.y - mMouseableOrigin.y) / mEffectiveRangeY);
 	auto const startDiffX = clickValueX - mStartValueX;
 	auto const startDiffY = clickValueY - mStartValueY;
 	mClickOffset = {};
@@ -635,26 +673,28 @@ VSTGUI::CMouseEventResult DGXYBox::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CB
 	}
 #endif
 
-	return onMouseMoved(inPos, inButtons);
+	VSTGUI::MouseMoveEvent mouseMoveEvent(ioEvent);
+	onMouseMoveEvent(mouseMoveEvent);
+	ioEvent.consumed = mouseMoveEvent.consumed;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGXYBox::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGXYBox::onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent)
 {
-	if (!(inButtons.isLeftButton() && isEditing_any()))
+	if (!(ioEvent.buttonState.isLeft() && isEditing_any()))
 	{
-		return VSTGUI::kMouseEventNotHandled;
+		return;
 	}
 
 	DiscreteValueConstrainer const dvcX(mControlX->asCControl()->isEditing() ? mControlX : nullptr);
 	DiscreteValueConstrainer const dvcY(mControlY->asCControl()->isEditing() ? mControlY : nullptr);
 
-	bool const isFineTune = (inButtons & kZoomModifier);
-	if ((mOldButtons != inButtons) && isFineTune)
+	bool const isFineTune = (VSTGUI::buttonStateFromMouseEvent(ioEvent) & kZoomModifier);
+	if ((mOldModifiers != ioEvent.modifiers) && isFineTune)
 	{
 		mOldValueX = mControlX->asCControl()->getValueNormalized();
 		mOldValueY = mControlY->asCControl()->getValueNormalized();
-		mOldButtons = inButtons;
+		mOldModifiers = ioEvent.modifiers;
 	}
 	else if (!isFineTune)
 	{
@@ -663,11 +703,11 @@ VSTGUI::CMouseEventResult DGXYBox::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::C
 	}
 
 	// option/alt locks the X axis, so only adjust the X value if option is not being pressed
-	if (!inButtons.isAltSet())
+	if (!ioEvent.modifiers.has(VSTGUI::ModifierKey::Alt))
 	{
-		auto const value = [this, inPos, isFineTune]()
+		auto const value = [this, pos = ioEvent.mousePosition, isFineTune]
 		{
-			auto const newValue = mapValueX(static_cast<float>(inPos.x - mMouseableOrigin.x + mClickOffset.x) / mEffectiveRangeX);
+			auto const newValue = mapValueX(static_cast<float>(pos.x - mMouseableOrigin.x + mClickOffset.x) / mEffectiveRangeX);
 			if (isFineTune)
 			{
 				return mOldValueX + ((newValue - mOldValueX) / getFineTuneFactor());
@@ -678,12 +718,12 @@ VSTGUI::CMouseEventResult DGXYBox::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::C
 	}
 
 	// control locks the Y axis, so only adjust the Y value if control is not being pressed
-	auto const lockY = !isPlatformMetaSet(inButtons);
+	auto const lockY = !isPlatformMetaSet(ioEvent.modifiers);
 	if (lockY)
 	{
-		auto const value = [this, inPos, isFineTune]()
+		auto const value = [this, pos = ioEvent.mousePosition, isFineTune]
 		{
-			auto const newValue = mapValueY(static_cast<float>(inPos.y - mMouseableOrigin.y + mClickOffset.y) / mEffectiveRangeY);
+			auto const newValue = mapValueY(static_cast<float>(pos.y - mMouseableOrigin.y + mClickOffset.y) / mEffectiveRangeY);
 			if (isFineTune)
 			{
 				return mOldValueY + ((newValue - mOldValueY) / getFineTuneFactor());
@@ -695,33 +735,49 @@ VSTGUI::CMouseEventResult DGXYBox::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::C
 
 	notifyIfChanged_all();
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGXYBox::onMouseUp(VSTGUI::CPoint& /*inPos*/, VSTGUI::CButtonState const& /*inButtons*/)
+void DGXYBox::onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent)
 {
 	EndControl(mControlX);
 	EndControl(mControlY);
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGXYBox::onMouseCancel()
+void DGXYBox::onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent)
 {
 	CancelControl(mControlX, mStartValueX);
 	CancelControl(mControlY, mStartValueY);
 	notifyIfChanged_all();
 
-	return VSTGUI::kMouseEventHandled;
+	ioEvent.consumed = true;
 }
 
 //-----------------------------------------------------------------------------
-bool DGXYBox::onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons)
+void DGXYBox::onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent)
 {
-	auto const control = (inAxis == VSTGUI::kMouseWheelAxisX) ? mControlX : mControlY;
-	return detail::onWheel(control, inPos, inAxis, inDistance, inButtons);
+	bool anyConsumed = false;
+
+	if (ioEvent.deltaX != 0.)
+	{
+		auto const entryDeltaY = std::exchange(ioEvent.deltaY, 0.);
+		detail::onMouseWheelEvent(mControlX, ioEvent);
+		ioEvent.deltaY = entryDeltaY;
+		anyConsumed |= ioEvent.consumed;
+	}
+	if (ioEvent.deltaY != 0.)
+	{
+		auto const entryDeltaX = std::exchange(ioEvent.deltaX, 0.);
+		detail::onMouseWheelEvent(mControlY, ioEvent);
+		ioEvent.deltaX = entryDeltaX;
+		anyConsumed |= ioEvent.consumed;
+	}
+
+	ioEvent.consumed = anyConsumed;
 }
 
 //-----------------------------------------------------------------------------
@@ -796,27 +852,27 @@ void DGAnimation::draw(VSTGUI::CDrawContext* inContext)
 #endif
 
 //------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGAnimation::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGAnimation::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 {
 	DiscreteValueConstrainer const dvc(this);
-	mEntryMousePos = inPos;
-	return VSTGUI::CAnimKnob::onMouseDown(inPos, ConstrainButtons(inButtons, getNumStates()));
+	mEntryMousePos = ioEvent.mousePosition;
+	ApplyMouseEventResult(VSTGUI::CAnimKnob::onMouseDown(ioEvent.mousePosition, ConstrainButtons(ioEvent, getNumStates())), ioEvent);
 }
 
 //------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGAnimation::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGAnimation::onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent)
 {
 	DiscreteValueConstrainer const dvc(isEditing() ? this : nullptr);
-	inPos = constrainMousePosition(inPos);
-	return VSTGUI::CAnimKnob::onMouseMoved(inPos, ConstrainButtons(inButtons, getNumStates()));
+	auto pos = constrainMousePosition(ioEvent.mousePosition);
+	ApplyMouseEventResult(VSTGUI::CAnimKnob::onMouseMoved(pos, ConstrainButtons(ioEvent, getNumStates())), ioEvent);
 }
 
 //------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGAnimation::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+void DGAnimation::onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent)
 {
 	DiscreteValueConstrainer const dvc(this);
-	inPos = constrainMousePosition(inPos);
-	return VSTGUI::CAnimKnob::onMouseUp(inPos, ConstrainButtons(inButtons, getNumStates()));
+	auto pos = constrainMousePosition(ioEvent.mousePosition);
+	ApplyMouseEventResult(VSTGUI::CAnimKnob::onMouseUp(pos, ConstrainButtons(ioEvent, getNumStates())), ioEvent);
 }
 
 //------------------------------------------------------------------------

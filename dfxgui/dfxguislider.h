@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -37,9 +37,9 @@ public:
 #ifdef TARGET_API_RTAS
 	void draw(VSTGUI::CDrawContext* inContext) override;
 #endif
-	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
+	void onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent) override;
+	void onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent) override;
 
 	void setHandle(VSTGUI::CBitmap* inHandle) override;
 	void setAlternateHandle(VSTGUI::CBitmap* inHandle);
@@ -78,10 +78,10 @@ public:
 				  long inOvershoot = 0);
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
-	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseCancel() override;
+	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
+	void onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent) override;
+	void onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent) override;
+	void onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent) override;
 
 	void setAlternateHandles(VSTGUI::CBitmap* inLowerHandle, VSTGUI::CBitmap* inUpperHandle);
 
@@ -115,7 +115,7 @@ private:
 	float mNewValue = 0.0f, mOldValue = 0.0f;
 	float mFineTuneStartValue = 0.0f;
 	VSTGUI::CCoord mOldPosY {};
-	VSTGUI::CButtonState mOldButtons;
+	VSTGUI::Modifiers mOldModifiers;
 };
 
 
@@ -130,11 +130,11 @@ public:
 			int inStyle = VSTGUI::CSliderBase::kLeft | VSTGUI::CSliderBase::kBottom);
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
-	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseCancel() override;
-	bool onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons) override;
+	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
+	void onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent) override;
+	void onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent) override;
+	void onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent) override;
+	void onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent) override;
 
 	void setAlternateHandles(VSTGUI::CBitmap* inHandleX, VSTGUI::CBitmap* inHandleY);
 
@@ -171,7 +171,7 @@ private:
 	VSTGUI::CPoint mClickOffset;
 
 	float mOldValueX = 0.0f, mOldValueY = 0.0f;
-	VSTGUI::CButtonState mOldButtons;
+	VSTGUI::Modifiers mOldModifiers;
 	bool mIntegralPosition = false;
 };
 
@@ -188,9 +188,9 @@ public:
 #ifdef TARGET_API_RTAS
 	void draw(VSTGUI::CDrawContext* inContext) override;
 #endif
-	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
+	void onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent) override;
+	void onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent) override;
 
 	void setMouseAxis(dfx::Axis inMouseAxis) noexcept
 	{

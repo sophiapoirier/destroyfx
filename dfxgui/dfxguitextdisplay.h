@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -52,8 +52,8 @@ public:
 				  dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.0f, 
 				  DGColor inFontColor = VSTGUI::kBlackCColor, char const* inFontName = nullptr);
 
-	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	bool onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons) override;
+	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
+	void onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent) override;
 
 	void setTextAlignment(dfx::TextAlignment inTextAlignment);
 	dfx::TextAlignment getTextAlignment() const noexcept;

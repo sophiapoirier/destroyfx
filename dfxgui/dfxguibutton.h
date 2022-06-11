@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -51,12 +51,11 @@ public:
 			 long inNumStates, Mode inMode, bool inDrawMomentaryState = false);
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
-	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseCancel() override;
-	bool onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, 
-				 float const& inDistance, VSTGUI::CButtonState const& inButtons) override;
+	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
+	void onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent) override;
+	void onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent) override;
+	void onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent) override;
+	void onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent) override;
 
 
 	void setMouseIsDown(bool newMouseState);
@@ -129,10 +128,10 @@ public:
 					 DGImage* inImage, float inValueChangeAmount = 0.0001f);
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
-	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseCancel() override;
+	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
+	void onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent) override;
+	void onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent) override;
+	void onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent) override;
 
 	CLASS_METHODS(DGFineTuneButton, VSTGUI::CControl)
 
@@ -151,10 +150,10 @@ public:
 	DGValueSpot(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage, double inValue);
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
-	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseCancel() override;
+	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
+	void onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent) override;
+	void onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent) override;
+	void onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent) override;
 
 	CLASS_METHODS(DGValueSpot, VSTGUI::CControl)
 
@@ -173,14 +172,11 @@ class DGWebLink : public DGButton
 public:
 	DGWebLink(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inImage, char const* inURL);
 
-	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseCancel() override;
-	bool onWheel(VSTGUI::CPoint const&, VSTGUI::CMouseWheelAxis const&, float const&, VSTGUI::CButtonState const&) override
-	{
-		return false;
-	}
+	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
+	void onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent) override;
+	void onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent) override;
+	void onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent) override;
+	void onMouseWheelEvent(VSTGUI::MouseWheelEvent&) override {}
 
 	CLASS_METHODS(DGWebLink, DGButton)
 

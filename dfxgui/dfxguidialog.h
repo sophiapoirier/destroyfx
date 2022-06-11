@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2015-2021  Sophia Poirier
+Copyright (C) 2015-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -78,8 +78,7 @@ public:
 			 char const* inOkButtonTitle = nullptr, char const* inCancelButtonTitle = nullptr, char const* inOtherButtonTitle = nullptr);
 
 	// CView override
-	int32_t onKeyDown(VstKeyCode& inKeyCode) override;
-	int32_t onKeyUp(VstKeyCode& inKeyCode) override;
+	void onKeyboardEvent(VSTGUI::KeyboardEvent& ioEvent) override;
 
 	// CViewContainer overrides
 	void drawBackgroundRect(VSTGUI::CDrawContext* inContext, VSTGUI::CRect const& inUpdateRect) override;
@@ -104,8 +103,6 @@ private:
 		kButtons_CancelBit = 1 << kSelection_Cancel,
 		kButtons_OtherBit = 1 << kSelection_Other,
 	};
-
-	bool handleKeyEvent(unsigned char inVirtualKey, bool inIsPressed);
 
 	Listener* mListener = nullptr;
 	DialogChoiceSelectedCallback mDialogChoiceSelectedCallback;
@@ -148,8 +145,8 @@ public:
 	DGTextScrollDialog(DGRect const& inRegion, std::string const& inMessage);
 
 	// CView overrides
-	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	int32_t onKeyDown(VstKeyCode& inKeyCode) override;
+	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
+	void onKeyboardEvent(VSTGUI::KeyboardEvent& ioEvent) override;
 
 	// CViewContainer overrides
 	bool attached(VSTGUI::CView* inParent) override;

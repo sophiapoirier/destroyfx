@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -92,26 +92,28 @@ public:
 	{
 	}
 
-	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override
+	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override
 	{
 		setHandle(mClickedHandle);
 		redraw();  // ensure that the change in slider handle is reflected
-		return DGSlider::onMouseDown(inPos, inButtons);
+		DGSlider::onMouseDownEvent(ioEvent);
 	}
 
-	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override
+	void onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent) override
 	{
 		setHandle(mRegularHandle);
 		redraw();
-		return DGSlider::onMouseUp(inPos, inButtons);
+		DGSlider::onMouseUpEvent(ioEvent);
 	}
 
-	VSTGUI::CMouseEventResult onMouseCancel() override
+	void onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent) override
 	{
 		setHandle(mRegularHandle);
 		redraw();
-		return DGSlider::onMouseCancel();
+		DGSlider::onMouseCancelEvent(ioEvent);
 	}
+
+	CLASS_METHODS(EQSyncSlider, DGSlider)
 
 private:
 	VSTGUI::SharedPointer<DGImage> const mRegularHandle;

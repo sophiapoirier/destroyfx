@@ -38,12 +38,14 @@ public:
 	:	DGFineTuneButton(inOwnerEditor, inParamID, inRegion, inImage, inValueChangeAmount)
 	{}
 
-	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
 
 	void setTuneMode(long inTuneMode) noexcept
 	{
 		mTuneMode = inTuneMode;
 	}
+
+	CLASS_METHODS(TransverbSpeedTuneButton, DGFineTuneButton)
 
 private:
 	long mTuneMode {};

@@ -104,7 +104,7 @@ class DGTextScrollDialog;
 class DfxGuiEditor :	public TARGET_API_EDITOR_BASE_CLASS, 
 						public VSTGUI::IControlListener, 
 						public VSTGUI::IMouseObserver,
-						public VSTGUI::ViewMouseListenerAdapter
+						public VSTGUI::ViewEventListenerAdapter
 {
 public:
 #ifdef TARGET_API_AUDIOUNIT
@@ -143,7 +143,6 @@ public:
 	void close() final;
 	void setParameter(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex, float inValue) final;
 	void valueChanged(VSTGUI::CControl* inControl) final;
-	int32_t controlModifierClicked(VSTGUI::CControl* inControl, VSTGUI::CButtonState inButtons) final;
 #ifndef TARGET_API_VST
 	void beginEdit(int32_t inParameterIndex) final;
 	void endEdit(int32_t inParameterIndex) final;
@@ -234,10 +233,9 @@ public:
 	// IMouseObserver overrides
 	void onMouseEntered(VSTGUI::CView* inView, VSTGUI::CFrame* inFrame) final;
 	void onMouseExited(VSTGUI::CView* inView, VSTGUI::CFrame* inFrame) final;
-	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CFrame* inFrame, VSTGUI::CPoint const& inPos, VSTGUI::CButtonState const& inButtons) final;
-	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CFrame* inFrame, VSTGUI::CPoint const& inPos, VSTGUI::CButtonState const& inButtons) final;
-	// ViewMouseListenerAdapter override
-	VSTGUI::CMouseEventResult viewOnMouseDown(VSTGUI::CView* inView, VSTGUI::CPoint inPos, VSTGUI::CButtonState inButtons) final;
+	void onMouseEvent(VSTGUI::MouseEvent& ioEvent, VSTGUI::CFrame* inFrame) final;
+	// ViewEventListenerAdapter override
+	void viewOnEvent(VSTGUI::CView* inView, VSTGUI::Event& ioEvent) final;
 
 #ifdef TARGET_API_RTAS
 	void GetBackgroundRect(sRect* outRect);
@@ -245,9 +243,6 @@ public:
 	void GetControlIndexFromPoint(long inXpos, long inYpos, long* outControlIndex);  // Called by CProcess::ChooseControl
 	void SetControlHighlight(long inControlIndex, short inIsHighlighted, short inColor);
 	void drawControlHighlight(VSTGUI::CDrawContext* inContext, VSTGUI::CControl* inControl);
-
-	// VSTGUI: needed the following so that the algorithm is updated while the mouse is down
-	void doIdleStuff() final;
 #endif
 
 	long GetNumParameters();
@@ -382,7 +377,7 @@ private:
 	// optional: inSendingControl can specify the originating control to omit it from circular notification
 	void updateParameterControls(long inParameterIndex, float inValue, VSTGUI::CControl* inSendingControl = nullptr);
 
-	[[nodiscard]] bool handleContextualMenuClick(VSTGUI::CControl* inControl, VSTGUI::CButtonState const& inButtons);
+	[[nodiscard]] bool handleContextualMenuClick(VSTGUI::CControl* inControl, VSTGUI::MouseEventButtonState inButtonState);
 	VSTGUI::COptionMenu createContextualMenu(IDGControl* inControl);
 	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParameterContextualMenu(long inParameterID);
 	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParametersContextualMenu();
