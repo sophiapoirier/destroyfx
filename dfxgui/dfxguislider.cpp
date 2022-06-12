@@ -420,7 +420,7 @@ void DGRangeSlider::onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent)
 	auto const [lowerValue, upperValue] = [this, pos = ioEvent.mousePosition, modifiers = ioEvent.modifiers, isFineTune]() -> std::pair<float, float>
 	{
 		// unfortunately VSTGUI on macOS hijacks control-left-button and remaps it to right-button (even after mouse-down)
-		auto const controlKeyPressed = isPlatformMetaSet(modifiers);
+		auto const controlKeyPressed = isPlatformControlKeySet(modifiers);
 
 		// move both parameters to the new value
 		if (controlKeyPressed && !modifiers.has(VSTGUI::ModifierKey::Alt))
@@ -718,7 +718,7 @@ void DGXYBox::onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent)
 	}
 
 	// control locks the Y axis, so only adjust the Y value if control is not being pressed
-	auto const lockY = !isPlatformMetaSet(ioEvent.modifiers);
+	auto const lockY = !isPlatformControlKeySet(ioEvent.modifiers);
 	if (lockY)
 	{
 		auto const value = [this, pos = ioEvent.mousePosition, isFineTune]

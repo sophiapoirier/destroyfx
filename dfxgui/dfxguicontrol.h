@@ -163,7 +163,7 @@ protected:
 	}
 
 	// Control key on all platforms (but VSTGUI names it differently on macOS)
-	static bool isPlatformMetaSet(VSTGUI::Modifiers modifiers)
+	static bool isPlatformControlKeySet(VSTGUI::Modifiers modifiers)
 	{
 		#if TARGET_OS_MAC
 		return modifiers.has(VSTGUI::ModifierKey::Super);
