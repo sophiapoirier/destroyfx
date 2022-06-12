@@ -899,6 +899,7 @@ void DfxGuiEditor::viewOnEvent(VSTGUI::CView* inView, VSTGUI::Event& ioEvent)
 		if (handled)
 		{
 			ioEvent.consumed = true;
+			VSTGUI::castMouseDownEvent(ioEvent).ignoreFollowUpMoveAndUpEvents(true);
 			return;
 		}
 
