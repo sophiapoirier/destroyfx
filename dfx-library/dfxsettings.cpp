@@ -21,7 +21,7 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
-Welcome to our settings persistance mess.
+Welcome to our settings persistence mess.
 ------------------------------------------------------------------------*/
 
 #include "dfxsettings.h"
@@ -434,7 +434,7 @@ if (!(oldVST && inIsPreset))
 	for (size_t i = 0; i < std::min(paramMap.size(), mParameterAssignments.size()); i++)
 	{
 		auto const mappedTag = paramMap[i];
-		if ((mappedTag != dfx::kParameterID_Invalid) && (mappedTag >= 0) && (mappedTag < numStoredParameters))
+		if ((mappedTag != dfx::kParameterID_Invalid) && (mappedTag >= 0) && ((unsigned)mappedTag < numStoredParameters))
 		{
 			memcpy(&(mParameterAssignments[i]), 
 				   newParameterAssignments + (mappedTag * storedParameterAssignmentSize), 
@@ -1403,7 +1403,7 @@ long DfxSettings::getParameterTagFromID(long inParamID, size_t inNumSearchIDs, i
 	assert(inSearchIDs || (inNumSearchIDs == 0));
 
 	// search for the ID in the table that matches the requested ID
-	for (long i = 0; i < inNumSearchIDs; i++)
+	for (size_t i = 0; i < inNumSearchIDs; i++)
 	{
 		// return the parameter tag if a match is found
 		if (inSearchIDs[i] == inParamID)
