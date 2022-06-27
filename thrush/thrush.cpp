@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 
 #include "dfxmisc.h"
 
@@ -223,7 +224,7 @@ double Thrush::processLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const
 	auto lfoOffset = lfoLayer2.process();  // this is the offset from the first layer LFO's rate, caused by the second layer LFO
 
 	// scale the 0 - 1 LFO output value to the depth range of the second layer LFO
-	lfoOffset = (lfoOffset * (kLFO2DepthMax - kLFO2DepthMin)) + kLFO2DepthMin;
+	lfoOffset = std::lerp(kLFO2DepthMin, kLFO2DepthMax, lfoOffset);
 
 	// update the first layer LFO's cycle phase step size as modulated by the second layer LFO
 	lfoLayer1.setStepSize(lfoLayer1.mEffectiveRateHz * lfoOffset * mOneDivSR);

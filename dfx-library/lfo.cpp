@@ -29,8 +29,8 @@ Welcome to our Low Frequency Oscillator.
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-
-#include "dfxmath.h"
+#include <numbers>
+#include <numeric>
 
 
 //------------------------------------------------------------------------
@@ -191,7 +191,7 @@ double dfx::LFO::process() const
 	if (mShape == kShape_RandomInterpolating)
 	{
 		// interpolate between the previous random number and the new one
-		outValue = (mRandomNumber * mPosition) + (mPrevRandomNumber * (1. - mPosition));
+		outValue = std::lerp(mPrevRandomNumber, mRandomNumber, mPosition);
 	}
 	else if (mShape == kShape_Random)
 	{
@@ -209,7 +209,7 @@ double dfx::LFO::process() const
 // oscillates from 0 to 1 and back to 0
 double dfx::LFO::sineGenerator(double inPosition)
 {
-	return (std::sin((inPosition - 0.25) * 2. * dfx::math::kPi<double>) + 1.) * 0.5;
+	return (std::sin((inPosition - 0.25) * 2. * std::numbers::pi_v<double>) + 1.) * 0.5;
 }
 
 //-----------------------------------------------------------------------------------------

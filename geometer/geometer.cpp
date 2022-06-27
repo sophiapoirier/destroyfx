@@ -32,6 +32,7 @@ Featuring the Super Destroy FX Windowing System!
 #include <cmath>
 #include <cstdint>
 #include <mutex>
+#include <numbers>
 #include <numeric>
 #include <string>
 
@@ -272,7 +273,7 @@ void PLUGIN::updatewindowcache(PLUGINCORE * geometercore)
   std::copy_n(geometercore->getinput(), GeometerViewData::samples, windowcache_writer->inputs.data());
 #else
   for (int i=0; i < GeometerViewData::samples; i++) {
-    windowcache_writer->inputs[i] = std::sin((i * 10 * dfx::math::kPi<float>) / GeometerViewData::samples);
+    windowcache_writer->inputs[i] = std::sin((i * 10 * std::numbers::pi_v<float>) / GeometerViewData::samples);
   }
 #endif
 
@@ -1049,7 +1050,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
       for(int z=px[u-1]; z < px[u]; z++) {
         float const pct = (float)(z-px[u-1]) / denom;
 
-        float p = 0.5f * (-std::cos(dfx::math::kPi<float> * pct) + 1.0f);
+        float p = 0.5f * (-std::cos(std::numbers::pi_v<float> * pct) + 1.0f);
 
         if (interparam > 0.5f) {
           p = std::pow(p, (interparam - 0.16666667f) * 3.0f);
@@ -1121,7 +1122,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
       for(int z=px[u-1]; z < px[u]; z++) {
         float const pct = (float)(z-px[u-1]) * oodenom;
 
-        float const wand = sinf(2.0f * dfx::math::kPi<float> * pct);
+        float const wand = sinf(2.0f * std::numbers::pi_v<float> * pct);
         out[z] = wand *
           interparam +
           ((1.0f-interparam) *
@@ -1290,7 +1291,7 @@ void PLUGINCORE::updatewindowshape()
       break;
     case WINDOW_COS:
       for(int z = 0; z < third; z++) {
-        float const p = 0.5f * (-std::cos(dfx::math::kPi<float> * (static_cast<float>(z) * oneDivThird)) + 1.0f);
+        float const p = 0.5f * (-std::cos(std::numbers::pi_v<float> * (static_cast<float>(z) * oneDivThird)) + 1.0f);
         windowenvelope[z] = p;
         windowenvelope[z+third] = (1.0f - p);
       }

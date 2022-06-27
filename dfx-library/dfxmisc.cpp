@@ -274,16 +274,8 @@ bool LaunchDocumentation()
 	// XXX this will load latest docs on our website which may not match the version of the running software
 	// TODO: embed the documentation into Windows builds somehow?
 	auto docsFileName = ToLower(PLUGIN_NAME_STRING ".html");
-	while (true)
-	{
-		auto const isSpace = std::bind(std::isspace<std::string::value_type>, std::placeholders::_1, std::locale::classic());
-		auto const foundCharacter = std::find_if(docsFileName.cbegin(), docsFileName.cend(), isSpace);
-		if (foundCharacter == docsFileName.end())
-		{
-			break;
-		}
-		docsFileName.erase(foundCharacter);
-	}
+	auto const isSpace = std::bind(std::isspace<std::string::value_type>, std::placeholders::_1, std::locale::classic());
+	std::erase_if(docsFileName, isSpace);
 	return LaunchURL(DESTROYFX_URL "/docs/" + docsFileName);
 #endif  // TARGET_OS_MAC
 

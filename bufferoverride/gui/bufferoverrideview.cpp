@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2021-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <numeric>
 #include <tuple>
 #include <utility>
 
@@ -213,8 +214,8 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
   const auto legend_width = legend_right - legend_left;
   constexpr CCoord LEGEND_DASH_STRIDE = 2;
   constexpr CCoord LEGEND_DASH_WIDTH = 1;
-  // TODO: C++20 use std::midpoint
-  const auto legend_dash_y = std::floor((legend_top + legend_bottom) * 0.5);
+  const auto legend_dash_y = std::floor(std::midpoint(legend_top,
+                                                      legend_bottom));
 
   // legend bounding
   offc->setFrameColor(color_legend);
@@ -231,12 +232,9 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
   }
 
   // legend label
-  const auto legend_label = [](auto window_sec) {
-    if (window_sec < 1) {
-      return std::to_string(std::lround(window_sec * 1000)) + " ms";
-    }
-    return std::to_string(std::lround(window_sec)) + " sec";
-  }(window_sec);
+  const auto legend_label = (window_sec < 1) ?
+    (std::to_string(std::lround(window_sec * 1000)) + " ms") :
+    (std::to_string(std::lround(window_sec)) + " sec");
   constexpr bool LABEL_ANTIALIAS = false;
   constexpr CCoord LABEL_PADDING = 12;
   const auto label_width = offc->getStringWidth(legend_label.c_str()) +

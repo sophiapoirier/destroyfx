@@ -1284,10 +1284,10 @@ void DfxPlugin::registerSmoothedAudioValue(dfx::ISmoothedValue* smoothedValue, D
 //-----------------------------------------------------------------------------
 void DfxPlugin::unregisterAllSmoothedAudioValues(DfxPluginCore* owner)
 {
-	mSmoothedAudioValues.erase(std::remove_if(mSmoothedAudioValues.begin(), mSmoothedAudioValues.end(), [owner](auto const& value)
-											  {
-												  return (owner == value.second);
-											  }), mSmoothedAudioValues.cend());
+	std::erase_if(mSmoothedAudioValues, [owner](auto const& value)
+	{
+		return (owner == value.second);
+	});
 }
 
 //-----------------------------------------------------------------------------

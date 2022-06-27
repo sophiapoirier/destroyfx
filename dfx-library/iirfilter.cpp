@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -28,13 +28,15 @@ Welcome to our Infinite Impulse Response filter.
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
+#include <numbers>
 #include <numeric>
 
 #include "dfxmath.h"
 
 
 //------------------------------------------------------------------------
-static double const kDefaultQ_LP_HP = std::sqrt(2.0) / 2.0;  // C++20 constexpr 1.0 / std::numbers::sqrt2_v<double>
+constexpr double kDefaultQ_LP_HP = std::numbers::sqrt2_v<double> / 2.; 
 constexpr double kUnityGain = 1.;
 
 //------------------------------------------------------------------------
@@ -48,11 +50,11 @@ struct PreCoeff
 	double mBeta {};  // shelf
 
 	PreCoeff(double inFrequency, double inQ, double inSampleRate)
-	:	mOmega(2. * dfx::math::kPi<double> * inFrequency / inSampleRate),
+	:	mOmega(2. * std::numbers::pi_v<double> * inFrequency / inSampleRate),
 		mSinOmega(std::sin(mOmega)),
 		mCosOmega(std::cos(mOmega)),
 		mAlpha(mSinOmega / (2. * inQ))
-		//mAlpha(mSinOmega * std::sinh(std::numbers::ln2 / 2. * inQ * mOmega / mSinOmega))  // http://musicdsp.org/showone.php?id=64
+		//mAlpha(mSinOmega * std::sinh(std::numbers::ln2_v<double> / 2. * inQ * mOmega / mSinOmega))  // http://musicdsp.org/showone.php?id=64
 	{
 	}
 
@@ -179,7 +181,13 @@ void dfx::IIRFilter::setCoefficients(Coefficients const& inCoefficients)
 dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setCoefficients(FilterType inFilterType, double inFrequency, double inQ, double inGain)
 {
 	assert(inFrequency > 0.);
+	assert(!std::isinf(inFrequency));
+	assert(!std::isnan(inFrequency));
 	assert(inQ > 0.);
+	assert(!std::isinf(inQ));
+	assert(!std::isnan(inQ));
+	assert(!std::isinf(inGain));
+	assert(!std::isnan(inGain));
 
 	mFilterType = inFilterType;
 	mFilterFrequency = inFrequency;
@@ -197,7 +205,11 @@ dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setCoefficients(FilterType i
 		   (inFilterType != FilterType::LowShelf) && 
 		   (inFilterType != FilterType::HighShelf));
 	assert(inFrequency > 0.);
+	assert(!std::isinf(inFrequency));
+	assert(!std::isnan(inFrequency));
 	assert(inQ > 0.);
+	assert(!std::isinf(inQ));
+	assert(!std::isnan(inQ));
 
 	mFilterType = inFilterType;
 	mFilterFrequency = inFrequency;
@@ -225,6 +237,7 @@ dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setLowpassCoefficients(doubl
 //------------------------------------------------------------------------
 dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setHighpassCoefficients(double inCutoffFrequency)
 {
+	assert(inCutoffFrequency <= mSampleRate);
 	return setCoefficients(FilterType::Highpass, inCutoffFrequency, kDefaultQ_LP_HP);
 }
 
@@ -261,7 +274,7 @@ dfx::Crossover::Crossover(unsigned long inChannelCount, double inSampleRate, dou
 {
 	assert(inSampleRate > 0.);
 	assert(inFrequency > 0.);
-	assert(inFrequency <= (inSampleRate / 2.));
+	//assert(inFrequency <= (inSampleRate / 2.));
 	inFrequency = std::min(inFrequency, inSampleRate / 2.);  // upper-limit to Nyquist
 
 #if !DFX_CROSSOVER_LINKWITZ_RILEY_MUSICDSP
@@ -287,17 +300,16 @@ void dfx::Crossover::setFrequency(double inFrequency)
 {
 #if DFX_CROSSOVER_LINKWITZ_RILEY_MUSICDSP
 	// https://www.musicdsp.org/en/latest/Filters/266-4th-order-linkwitz-riley-filters.html
-	double const wc = 2. * dfx::math::kPi<double> * inFrequency;
+	double const wc = 2. * std::numbers::pi_v<double> * inFrequency;
 	auto const wc2 = wc * wc;
 	auto const wc3 = wc2 * wc;
 	auto const wc4 = wc2 * wc2;
-	double const k = wc / std::tan(dfx::math::kPi<double> * inFrequency / mSampleRate);
+	double const k = wc / std::tan(std::numbers::pi_v<double> * inFrequency / mSampleRate);
 	auto const k2 = k * k;
 	auto const k3 = k2 * k;
 	auto const k4 = k2 * k2;
-	static double const sqrt2 = std::sqrt(2.);
-	auto const sq_tmp1 = sqrt2 * wc3 * k;
-	auto const sq_tmp2 = sqrt2 * wc * k3;
+	auto const sq_tmp1 = std::numbers::sqrt2_v<double> * wc3 * k;
+	auto const sq_tmp2 = std::numbers::sqrt2_v<double> * wc * k3;
 	auto const a_tmp = (4. * wc2 * k2) + (2. * sq_tmp1) + k4 + (2. * sq_tmp2) + wc4;
 	auto const a_tmp_inv = (a_tmp != 0.) ? (1. / a_tmp) : 1.;
 

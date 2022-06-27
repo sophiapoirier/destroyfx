@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -321,7 +321,7 @@ try
 	std::vector<long> paramMap(mNumParameters, dfx::kParameterID_Invalid);
 	for (size_t tag = 0; tag < mParameterIDs.size(); tag++)
 	{
-		paramMap[tag] = getParameterTagFromID(mParameterIDs[tag], numStoredParameters, newParameterIDs);
+		paramMap[tag] = getParameterTagFromID(mParameterIDs[tag], {newParameterIDs, numStoredParameters});
 	}
 
 	// point to the next data element after the parameter IDs:  the first preset name
@@ -434,10 +434,10 @@ if (!(oldVST && inIsPreset))
 	for (size_t i = 0; i < std::min(paramMap.size(), mParameterAssignments.size()); i++)
 	{
 		auto const mappedTag = paramMap[i];
-		if ((mappedTag != dfx::kParameterID_Invalid) && (mappedTag >= 0) && ((unsigned)mappedTag < numStoredParameters))
+		if ((mappedTag != dfx::kParameterID_Invalid) && (mappedTag >= 0) && (dfx::math::ToUnsigned(mappedTag) < numStoredParameters))
 		{
 			memcpy(&(mParameterAssignments[i]), 
-				   newParameterAssignments + (mappedTag * storedParameterAssignmentSize), 
+				   newParameterAssignments + (dfx::math::ToUnsigned(mappedTag) * storedParameterAssignmentSize), 
 				   copyParameterAssignmentSize);
 		}
 	}
@@ -581,9 +581,8 @@ if (!(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset))
 	// and reverse the byte order of each event assignment
 	auto const dataParameterAssignments = reinterpret_cast<dfx::ParameterAssignment*>(dataPresets);
 	validateRange(dataParameterAssignments, sizeof(*dataParameterAssignments) * numStoredParameters, "parameter assignments");
-	for (uint32_t i = 0; i < numStoredParameters; i++)
+	for (auto& pa : std::span(dataParameterAssignments, numStoredParameters))
 	{
-		auto& pa = dataParameterAssignments[i];
 		dfx::ReverseBytes(pa.mEventType);
 		dfx::ReverseBytes(pa.mEventChannel);
 		dfx::ReverseBytes(pa.mEventNum);
@@ -1398,21 +1397,13 @@ dfx::MidiEventType DfxSettings::getParameterAssignmentType(long inParamTag) cons
 
 //-----------------------------------------------------------------------------
 // given a parameter ID, find the tag (index) for that parameter in a table of parameter IDs
-long DfxSettings::getParameterTagFromID(long inParamID, size_t inNumSearchIDs, int32_t const* inSearchIDs)
+long DfxSettings::getParameterTagFromID(long inParamID, std::span<int32_t const> inSearchIDs)
 {
-	assert(inSearchIDs || (inNumSearchIDs == 0));
-
-	// search for the ID in the table that matches the requested ID
-	for (size_t i = 0; i < inNumSearchIDs; i++)
+	auto const foundID = std::find(inSearchIDs.begin(), inSearchIDs.end(), inParamID);
+	if (foundID != inSearchIDs.end())
 	{
-		// return the parameter tag if a match is found
-		if (inSearchIDs[i] == inParamID)
-		{
-			return i;
-		}
+		return std::distance(inSearchIDs.begin(), foundID);
 	}
-
-	// if nothing was found, then return the error ID
 	return dfx::kParameterID_Invalid;
 }
 
@@ -1420,7 +1411,7 @@ long DfxSettings::getParameterTagFromID(long inParamID, size_t inNumSearchIDs, i
 // search using the internal table
 long DfxSettings::getParameterTagFromID(long inParamID) const
 {
-	return getParameterTagFromID(inParamID, mParameterIDs.size(), mParameterIDs.data());
+	return getParameterTagFromID(inParamID, mParameterIDs);
 }
 
 

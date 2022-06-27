@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "rezsynth.h"
 
 #include <algorithm>
+#include <numbers>
 
 #include "dfxmath.h"
 #include "dfxmisc.h"
@@ -122,7 +123,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 long RezSynth::initialize()
 {
 	// these are values that are always needed during calculateCoefficients
-	mPiDivSR = dfx::math::kPi<double> / getsamplerate();
+	mPiDivSR = std::numbers::pi_v<double> / getsamplerate();
 	mTwoPiDivSR = mPiDivSR * 2.0;
 	mNyquist = getsamplerate() / 2.0;
 

@@ -220,10 +220,10 @@ bool DfxGuiEditor::open(void* inWindow)
 #else
 	mParameterList.assign(static_cast<size_t>(GetNumParameters()), dfx::kParameterID_Invalid);
 	std::iota(mParameterList.begin(), mParameterList.end(), 0);
-	mParameterList.erase(std::remove_if(mParameterList.begin(), mParameterList.end(), [this](auto parameterID)
-										{
-											return HasParameterAttribute(parameterID, DfxParam::kAttribute_Unused);
-										}), mParameterList.cend());
+	std::erase_if(mParameterList, [this](auto parameterID)
+	{
+		return HasParameterAttribute(parameterID, DfxParam::kAttribute_Unused);
+	});
 #endif
 
 	mEditorOpenErr = OpenEditor();
@@ -576,10 +576,10 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 {
 	auto parameterList = GetParameterList();
 	// TODO: C++20 use ranges view filter
-	parameterList.erase(std::remove_if(parameterList.begin(), parameterList.end(), [this](auto parameterID)
-									   {
-										   return HasParameterAttribute(parameterID, DfxParam::kAttribute_OmitFromRandomizeAll);
-									   }), parameterList.cend());
+	std::erase_if(parameterList, [this](auto parameterID)
+	{
+		return HasParameterAttribute(parameterID, DfxParam::kAttribute_OmitFromRandomizeAll);
+	});
 
 	if (inWriteAutomation)
 	{
