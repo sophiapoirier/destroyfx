@@ -44,10 +44,6 @@ namespace dfx::math
 // constants
 //-----------------------------------------------------------------------------
 
-// TODO: C++20 replace usage of this with std::numbers::pi_v<T>
-template <typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>>
-constexpr T kPi(3.14159265358979323846264338327950288);
-
 // the AU SDK handles denormals for us, and ARM processors don't have denormal performance issues
 constexpr bool kDenormalProblem = 
 #if defined(TARGET_API_AUDIOUNIT) || defined(__arm__) || defined(__arm64__)

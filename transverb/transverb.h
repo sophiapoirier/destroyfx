@@ -25,6 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cassert>
 #include <cmath>
 #include <cstdint>
+#include <numeric>
 #include <vector>
 
 #include "dfxplugin.h"
@@ -74,7 +75,7 @@ private:
   static constexpr float interpolateLinear(float value1, float value2, double address)
   {
     auto const posFract = static_cast<float>(std::fmod(address, 1.));
-    return (value1 * (1.0f - posFract)) + (value2 * posFract);
+    return std::lerp(value1, value2, posFract);
   }
   static constexpr float interpolateLinear(float const* data, double readaddress, int arraysize/*, int writeaddress*/);
 

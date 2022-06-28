@@ -262,7 +262,7 @@ double DfxEnvelope::calculateRise(double inPosNormalized) const
 	}
 
 	// sine fade (stupendously inefficient)
-//	return (std::sin((inPosNormalized * dfx::math::kPi<double>) - (dfx::math::kPi<double> * 0.5)) + 1.0) * 0.5;
+//	return (std::sin((inPosNormalized * std::numbers::pi_v<double>) - (std::numbers::pi_v<double> * 0.5)) + 1.) * 0.5;
 
 	return inPosNormalized;
 }

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier and Tom Murphy VII
+Copyright (C) 2001-2022  Sophia Poirier and Tom Murphy VII
 
 This file is part of Buffer Override.
 
@@ -89,7 +89,7 @@ static_assert(dfx::IsTriviallySerializable<BufferOverrideViewData>);
 namespace detail
 {
 // where 16-byte lock-free atomics are not supported, we slice it into halves (Clang can but GCC cannot)
-static constexpr auto getAtomicViewDataInstance()
+static consteval auto getAtomicViewDataInstance()
 {
 	using UnifiedT = std::atomic<BufferOverrideViewData>;
 

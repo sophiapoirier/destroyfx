@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -40,7 +40,6 @@ double RezSynth::calculateAmpEvener(int currentNote) const
 
 	if (mScaleMode <= kScaleMode_None)
 	{
-//		ampEvener = 0.0000000000009 * std::pow((static_cast<double>(fBandwidth) + 0.72), 1.8) * baseFreq * baseFreq / std::sqrt(static_cast<double>(mNumBands) * 0.0000003);
 		ampEvener = 0.0000000000009 * std::pow(contractparametervalue(kBandwidthAmount_Hz, noteBandwidth) + 0.72, 1.8) * baseFreq * baseFreq / std::sqrt(static_cast<double>(mNumBands) * 0.0000003);
 	}
 	else if (mScaleMode == kScaleMode_RMS)
@@ -210,11 +209,7 @@ void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outA
 		{
 			auto const clampInfinities = [](double value)
 			{
-#if __GNUC__
-				if (__builtin_expect(std::isinf(value), 0))  // TODO: C++20 [[unlikely]]
-#else
-				if (std::isinf(value))
-#endif
+				if (std::isinf(value)) [[unlikely]]
 				{
 					return std::copysign(std::numeric_limits<decltype(value)>::max(), value);
 				}
@@ -248,11 +243,7 @@ void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outA
 				outAudio[ch][sampleIndex] += scaledBandOutputSum * envedTotalAmp;
 			}
 
-#if __GNUC__
-			if (__builtin_expect(std::isinf(outAudio[ch][sampleIndex]), 0))  // TODO: C++20 [[unlikely]]
-#else
-			if (std::isinf(outAudio[ch][sampleIndex]))
-#endif
+			if (std::isinf(outAudio[ch][sampleIndex])) [[unlikely]]
 			{
 				outAudio[ch][sampleIndex] = entryOutput;
 			}

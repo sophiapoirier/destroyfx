@@ -26,6 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <functional>
 #include <optional>
 
 #include "dfxmisc.h"
@@ -128,7 +129,7 @@ DGColor DGColor::getSystem(System inSystemColorID)
 	};
 	#define DFX_SELECTOR(x) @selector(x)
 #else
-	auto const fromNSColorProperty = []()
+	auto const fromNSColorProperty = []
 	{
 		return OptionalColor();
 	};
@@ -197,8 +198,9 @@ std::string dfx::SanitizeNumericalInput(std::string const& inText)
 {
 	// remove digit separators
 	// XXX TODO: this doesn't support locale, assumes comma
-	std::string resultText(inText.size(), '\0');
-	resultText.erase(std::remove_copy(inText.cbegin(), inText.cend(), resultText.begin(), ','), resultText.cend());
+	auto resultText = inText;
+	// TODO: C++20 bind_front
+	std::erase_if(resultText, std::bind(std::equal_to<>{}, std::placeholders::_1, ','));
 
 	// trim white space and any other noise (with respect to numerical parsing)
 	while (!resultText.empty())

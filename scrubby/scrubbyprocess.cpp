@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 
 #include "dfxmath.h"
 
@@ -37,7 +38,7 @@ inline double calculateTargetSpeed(double a, double n, double k)
 	double const lambertInput = (n * a) / k;
 	double b = k * dfx::math::LambertW(lambertInput) / n;  // the target speed
 	// cuz I don't totally trust my Lambert W function...
-	if (std::isnan(b) || !std::isfinite(b))
+	if (!std::isfinite(b))
 	{
 		b = 1.0;
 	}
@@ -430,8 +431,8 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 #if 0  // melody test
 			for (unsigned long ch = 0; ch < numChannels; ch++)
 			{
-				mAudioBuffers[ch][mWritePos] = 0.69f * std::sin(24.0f * dfx::math::kPi<float> * (static_cast<float>(samplecount) / static_cast<float>(inNumFrames)));
-				mAudioBuffers[ch][mWritePos] = 0.69f * std::sin(2.0f * dfx::math::kPi<float> * (static_cast<float>(mSineCount) / 169.0f));
+				mAudioBuffers[ch][mWritePos] = 0.69f * std::sin(24.f * std::numbers::pi_v<float> * (static_cast<float>(samplecount) / static_cast<float>(inNumFrames)));
+				mAudioBuffers[ch][mWritePos] = 0.69f * std::sin(2.f * std::numbers::pi_v<float> * (static_cast<float>(mSineCount) / 169.f));
 			}
 			// produce a sine wave of C4 when using 44.1 kHz sample rate
 			if (++mSineCount > 168)

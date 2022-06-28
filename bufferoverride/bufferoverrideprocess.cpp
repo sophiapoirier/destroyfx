@@ -24,8 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <algorithm>
 #include <cmath>
-
-#include "dfxmath.h"
+#include <numbers>
 
 
 
@@ -233,10 +232,10 @@ void BufferOverride::updateBuffer(unsigned long samplePos, bool& ioViewDataChang
 //		mSqrtFadeOut = std::sqrt(1.0f - mSmoothStep);
 //		mSmoothFract = mSmoothStep;
 
-		mFadeOutGain = std::cos(dfx::math::kPi<float> / static_cast<float>(4 * mSmoothDur));
-		mFadeInGain = std::sin(dfx::math::kPi<float> / static_cast<float>(4 * mSmoothDur));
-		mRealFadePart = (mFadeOutGain * mFadeOutGain) - (mFadeInGain * mFadeInGain);  // std::cos(dfx::math::kPi<float> / 2.0f / n)
-		mImaginaryFadePart = 2.0f * mFadeOutGain * mFadeInGain;  // std::sin(dfx::math::kPi<float> / 2.0f / n)
+		mFadeOutGain = std::cos(std::numbers::pi_v<float> / static_cast<float>(4 * mSmoothDur));
+		mFadeInGain = std::sin(std::numbers::pi_v<float> / static_cast<float>(4 * mSmoothDur));
+		mRealFadePart = (mFadeOutGain * mFadeOutGain) - (mFadeInGain * mFadeInGain);  // std::cos(std::numbers::pi_v<float> / 2.f / n)
+		mImaginaryFadePart = 2.f * mFadeOutGain * mFadeInGain;  // std::sin(std::numbers::pi_v<float> / 2.f / n)
 	}
 }
 

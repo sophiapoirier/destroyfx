@@ -19,7 +19,7 @@ VSTGUI=../../vstgui/vstgui
 # https://sourceforge.net/p/mingw-w64/mailman/mingw-w64-public/thread/20200920130036.1e6b6508%40ext.localdomain/
 DEFINES=-DWIN32=1 -D_WIN32_WINNT=0x0601 -DTARGET_OS_WIN32=1 -DTARGET_API_VST=1 -DVSTGUI_ENABLE_DEPRECATED_METHODS=0 -DNDEBUG=1 -DGetMatchingFonts=GetMatchingFonts_
 INCLUDES=-I .. -I $(DFXLIB) -I $(VSTSDK) -I $(DFXGUI) -I $(VSTGUI) -I $(VSTGUI)/plugin-bindings -include "../geometerdef.h"
-CXXFLAGS=$(DEFINES) $(INCLUDES) -m64 -Wall -Wno-unknown-pragmas --std=c++17 -O2
+CXXFLAGS=$(DEFINES) $(INCLUDES) -m64 -Wall -Wno-unknown-pragmas --std=c++20 -O2
 # -mwindows to select the GUI subsystem (not console)
 # -s (strip unexported symbols) for release! 18mb DLL unstripped, 2.5mb stripped.
 # -static-libgcc and -static-libstdc++ avoid having the output depend on these mingw DLLs.

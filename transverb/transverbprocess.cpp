@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <numeric>
 
 #include "dfxmath.h"
 #include "firfilter.h"
@@ -90,8 +91,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
                 if (std::exchange(heads[h].speedHasChanged, false))
                 {
                   dfx::FIRFilter::calculateIdealLowpassCoefficients((samplerate / heads[h].speed.getValue()) * dfx::FIRFilter::kShelfStartLowpass,
-                                                                    samplerate, kNumFIRTaps, heads[h].firCoefficients.data(),
-                                                                    firCoefficientsWindow.data());
+                                                                    samplerate, heads[h].firCoefficients, firCoefficientsWindow);
                   heads[h].filter.reset();
                 }
               }
@@ -138,10 +138,10 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
               case FilterMode::LowpassFIR:
               {
                 // get two consecutive FIR output values for linear interpolation
-                auto const lp1 = dfx::FIRFilter::process(heads[h].buf.data(), kNumFIRTaps, heads[h].firCoefficients.data(),
-                                                         mod_bipolar(read_int - static_cast<int>(kNumFIRTaps), bsize), bsize);
-                auto const lp2 = dfx::FIRFilter::process(heads[h].buf.data(), kNumFIRTaps, heads[h].firCoefficients.data(),
-                                                         mod_bipolar(read_int - static_cast<int>(kNumFIRTaps) + 1, bsize), bsize);
+                auto const lp1 = dfx::FIRFilter::process(std::span(heads[h].buf).subspan(0, bsize), heads[h].firCoefficients,
+                                                         mod_bipolar(read_int - static_cast<int>(kNumFIRTaps), bsize));
+                auto const lp2 = dfx::FIRFilter::process(std::span(heads[h].buf).subspan(0, bsize), heads[h].firCoefficients,
+                                                         mod_bipolar(read_int - static_cast<int>(kNumFIRTaps) + 1, bsize));
                 // interpolate output linearly (avoid shit sound) and compensate gain
                 delayvals[h] = interpolateLinear(lp1, lp2, heads[h].read) * mugs[h];
                 break;
@@ -157,7 +157,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
         // the current sample if smoothing is in progress
         if (heads[h].smoothcount > 0) {
           auto const smoothpos = heads[h].smoothstep * static_cast<float>(heads[h].smoothcount);
-          delayvals[h] = (delayvals[h] * (1.f - smoothpos)) + (heads[h].lastdelayval * smoothpos);
+          delayvals[h] = std::lerp(delayvals[h], heads[h].lastdelayval, smoothpos);
           heads[h].smoothcount--;
         }
 

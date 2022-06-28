@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -73,7 +73,9 @@ This is our Destroy FX plugin data storage stuff
 
 
 #include <atomic>
+#include <bit>
 #include <cstddef>
+#include <span>
 #include <vector>
 
 #include "dfxdefines.h"
@@ -307,13 +309,9 @@ public:
 		return mCrisisBehavior;
 	}
 
-	static constexpr bool serializationIsNativeEndian() noexcept
+	static consteval bool serializationIsNativeEndian() noexcept
 	{
-#if __BIG_ENDIAN__
-		return true;
-#else
-		return false;
-#endif
+		return std::endian::native == std::endian::big;
 	}
 
 
@@ -396,8 +394,7 @@ private:
 		return (inParamTag >= 0) && (static_cast<unsigned long>(inParamTag) < mNumParameters);
 	}
 
-	// TODO: C++20 use std::span
-	static long getParameterTagFromID(long inParamID, size_t inNumSearchIDs, int32_t const* inSearchIDs);
+	static long getParameterTagFromID(long inParamID, std::span<int32_t const> inSearchIDs);
 	long getParameterTagFromID(long inParamID) const;
 
 #if TARGET_PLUGIN_USES_MIDI

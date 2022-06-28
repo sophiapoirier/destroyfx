@@ -153,12 +153,12 @@ static bool speedDisplayProcedure(float inValue, char* outText, void*)
 
 static std::optional<float> speedTextConvertProcedure(std::string const& inText, DGTextDisplay*)
 {
-	std::string filteredText(inText.size(), '\0');
+	auto filteredText = inText;
 	// TODO: does not support locale for number format, and ignores minus and periods that are not part of fractional numbers
-	filteredText.erase(std::remove_copy_if(inText.cbegin(), inText.cend(), filteredText.begin(), [](auto character)
-										   {
-										     return !(std::isdigit(character) || std::isspace(character) || (character == '-') || (character == '.'));
-										   }), filteredText.cend());
+	std::erase_if(filteredText, [](auto character)
+	{
+		return !(std::isdigit(character) || std::isspace(character) || (character == '-') || (character == '.'));
+	});
 
 	float octaves = 0.0f, semitones = 0.0f;
 	auto const scanCount = sscanf(filteredText.c_str(), "%f%f", &octaves, &semitones);
