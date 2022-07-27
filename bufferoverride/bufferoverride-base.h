@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 #include <atomic>
+#include <type_traits>
 
 #include "dfxmisc.h"
 #include "dfxpluginproperties.h"
@@ -88,37 +89,25 @@ static_assert(dfx::IsTriviallySerializable<BufferOverrideViewData>);
 
 namespace detail
 {
+using UnifiedT = std::atomic<BufferOverrideViewData>;
+
 // where 16-byte lock-free atomics are not supported, we slice it into halves (Clang can but GCC cannot)
-static consteval auto getAtomicViewDataInstance()
+struct CompositeT
 {
-	using UnifiedT = std::atomic<BufferOverrideViewData>;
+	using SegmentT = std::atomic<BufferOverrideViewData::Segment>;
+	SegmentT mPreLFO, mPostLFO;
+	static_assert(SegmentT::is_always_lock_free);
 
-	struct CompositeT
+	void store(BufferOverrideViewData value, std::memory_order order) noexcept
 	{
-		using SegmentT = std::atomic<BufferOverrideViewData::Segment>;
-		SegmentT mPreLFO, mPostLFO;
-		static_assert(SegmentT::is_always_lock_free);
-
-		void store(BufferOverrideViewData value, std::memory_order order) noexcept
-		{
-			mPreLFO.store(value.mPreLFO, order);
-			mPostLFO.store(value.mPostLFO, order);
-		}
-		BufferOverrideViewData load(std::memory_order order) const noexcept
-		{
-			return {.mPreLFO = mPreLFO.load(order), .mPostLFO = mPostLFO.load(order)};
-		}
-	};
-
-	if constexpr (UnifiedT::is_always_lock_free)
-	{
-		return UnifiedT{};
+		mPreLFO.store(value.mPreLFO, order);
+		mPostLFO.store(value.mPostLFO, order);
 	}
-	else
+	BufferOverrideViewData load(std::memory_order order) const noexcept
 	{
-		return CompositeT{};
+		return {.mPreLFO = mPreLFO.load(order), .mPostLFO = mPostLFO.load(order)};
 	}
-}
+};
 }  // namespace detail
 
-using AtomicBufferOverrideViewData = decltype(detail::getAtomicViewDataInstance());
+using AtomicBufferOverrideViewData = std::conditional_t<detail::UnifiedT::is_always_lock_free, detail::UnifiedT, detail::CompositeT>;
