@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier and Tom Murphy 7
+Copyright (C) 2002-2022  Sophia Poirier and Tom Murphy 7
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -43,13 +43,13 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#pragma clang diagnostic push
 	#pragma clang diagnostic ignored "-Wunused-parameter"
 	#if TARGET_PLUGIN_IS_INSTRUMENT
-		#include "MusicDeviceBase.h"
+		#include <AudioUnitSDK/MusicDeviceBase.h>
 		using TARGET_API_BASE_CLASS = ausdk::MusicDeviceBase;
 	#elif TARGET_PLUGIN_USES_MIDI
-		#include "AUMIDIEffectBase.h"
+		#include <AudioUnitSDK/AUMIDIEffectBase.h>
 		using TARGET_API_BASE_CLASS = ausdk::AUMIDIEffectBase;
 	#else
-		#include "AUEffectBase.h"
+		#include <AudioUnitSDK/AUEffectBase.h>
 		using TARGET_API_BASE_CLASS = ausdk::AUEffectBase;
 	#endif
 	using TARGET_API_BASE_INSTANCE_TYPE = AudioComponentInstance;

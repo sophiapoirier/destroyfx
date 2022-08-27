@@ -127,40 +127,64 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		ECD5987F253DEB0000ED0061 /* AudioUnitSDK */ = {
+		EC8FBE4828B5B8D900B23A3E /* src */ = {
 			isa = PBXGroup;
 			children = (
-				ECD59888253DEB0000ED0061 /* Source */,
+				EC8FBE4928B5B8D900B23A3E /* AudioUnitSDK */,
 			);
-			name = AudioUnitSDK;
-			path = ../../AudioUnitSDK;
+			path = src;
 			sourceTree = "<group>";
 		};
-		ECD59888253DEB0000ED0061 /* Source */ = {
+		EC8FBE4928B5B8D900B23A3E /* AudioUnitSDK */ = {
+			isa = PBXGroup;
+			children = (
+				ECD5988D253DEB0000ED0061 /* AUBase.cpp */,
+				ECD5989B253DEB0000ED0061 /* AUBuffer.cpp */,
+				EC31B43C257406C300CD5063 /* AUBufferAllocator.cpp */,
+				ECD59897253DEB0000ED0061 /* AUEffectBase.cpp */,
+				ECD598A1253DEB0000ED0061 /* AUInputElement.cpp */,
+				ECD59894253DEB0000ED0061 /* AUOutputElement.cpp */,
+				ECD59898253DEB0000ED0061 /* AUPlugInDispatch.cpp */,
+				ECD5988B253DEB0000ED0061 /* AUScopeElement.cpp */,
+				ECD59889253DEB0000ED0061 /* ComponentBase.cpp */,
+			);
+			path = AudioUnitSDK;
+			sourceTree = "<group>";
+		};
+		EC8FBE5628B5B8D900B23A3E /* include */ = {
+			isa = PBXGroup;
+			children = (
+				EC8FBE5728B5B8D900B23A3E /* AudioUnitSDK */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		EC8FBE5728B5B8D900B23A3E /* AudioUnitSDK */ = {
 			isa = PBXGroup;
 			children = (
 				ECD59890253DEB0000ED0061 /* AUBase.h */,
-				ECD5988D253DEB0000ED0061 /* AUBase.cpp */,
 				ECD5989E253DEB0000ED0061 /* AUBuffer.h */,
-				ECD5989B253DEB0000ED0061 /* AUBuffer.cpp */,
-				EC31B43C257406C300CD5063 /* AUBufferAllocator.cpp */,
 				ECD598A0253DEB0000ED0061 /* AudioUnitSDK.h */,
 				ECD59899253DEB0000ED0061 /* AUEffectBase.h */,
-				ECD59897253DEB0000ED0061 /* AUEffectBase.cpp */,
 				ECD5988E253DEB0000ED0061 /* AUInputElement.h */,
-				ECD598A1253DEB0000ED0061 /* AUInputElement.cpp */,
 				ECD5989A253DEB0000ED0061 /* AUOutputElement.h */,
-				ECD59894253DEB0000ED0061 /* AUOutputElement.cpp */,
 				ECD59891253DEB0000ED0061 /* AUPlugInDispatch.h */,
-				ECD59898253DEB0000ED0061 /* AUPlugInDispatch.cpp */,
 				ECD5989F253DEB0000ED0061 /* AUScopeElement.h */,
-				ECD5988B253DEB0000ED0061 /* AUScopeElement.cpp */,
 				ECD59896253DEB0000ED0061 /* AUSilentTimeout.h */,
 				ECD59895253DEB0000ED0061 /* AUUtility.h */,
 				ECD5988C253DEB0000ED0061 /* ComponentBase.h */,
-				ECD59889253DEB0000ED0061 /* ComponentBase.cpp */,
 			);
-			path = Source;
+			path = AudioUnitSDK;
+			sourceTree = "<group>";
+		};
+		ECD5987F253DEB0000ED0061 /* AudioUnitSDK */ = {
+			isa = PBXGroup;
+			children = (
+				EC8FBE5628B5B8D900B23A3E /* include */,
+				EC8FBE4828B5B8D900B23A3E /* src */,
+			);
+			name = AudioUnitSDK;
+			path = ../../AudioUnitSDK;
 			sourceTree = "<group>";
 		};
 		ECEF1449244B4FEB0073380B /* Frameworks */ = {
@@ -327,16 +351,16 @@
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_PKGINFO_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					../../AudioUnitSDK/include,
+				);
 				INFOPLIST_FILE = "rmsbuddy-info.plist";
 				INSTALL_MODE_FLAG = "u+w,a+rX";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				PRODUCT_BUNDLE_IDENTIFIER = org.destroyfx.RMSBuddy;
 				PRODUCT_NAME = "dfx RMS Buddy";
-				USER_HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					../../AudioUnitSDK/Source,
-				);
 				USE_HEADERMAP = NO;
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -377,6 +401,10 @@
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_PKGINFO_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					../../AudioUnitSDK/include,
+				);
 				INFOPLIST_FILE = "rmsbuddy-info.plist";
 				INSTALL_MODE_FLAG = "u+w,a+rX";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components";
@@ -384,10 +412,6 @@
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = org.destroyfx.RMSBuddy;
 				PRODUCT_NAME = "dfx RMS Buddy";
-				USER_HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					../../AudioUnitSDK/Source,
-				);
 				USE_HEADERMAP = NO;
 				WARNING_CFLAGS = (
 					"-Wall",

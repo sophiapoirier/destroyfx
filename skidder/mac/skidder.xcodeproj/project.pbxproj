@@ -340,6 +340,60 @@
 			path = ../gui/graphics;
 			sourceTree = SOURCE_ROOT;
 		};
+		EC13F89928B91342001797D5 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				EC13F89A28B91342001797D5 /* AudioUnitSDK */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		EC13F89A28B91342001797D5 /* AudioUnitSDK */ = {
+			isa = PBXGroup;
+			children = (
+				ECD59921253DECAA00ED0061 /* AUBase.h */,
+				ECD5992F253DECAA00ED0061 /* AUBuffer.h */,
+				ECD59931253DECAA00ED0061 /* AudioUnitSDK.h */,
+				ECD5992A253DECAA00ED0061 /* AUEffectBase.h */,
+				ECD5991F253DECAA00ED0061 /* AUInputElement.h */,
+				ECD59923253DECAA00ED0061 /* AUMIDIBase.h */,
+				ECD59920253DECAA00ED0061 /* AUMIDIEffectBase.h */,
+				ECD5992B253DECAA00ED0061 /* AUOutputElement.h */,
+				ECD59922253DECAA00ED0061 /* AUPlugInDispatch.h */,
+				ECD59930253DECAA00ED0061 /* AUScopeElement.h */,
+				ECD59927253DECAA00ED0061 /* AUSilentTimeout.h */,
+				ECD59926253DECAA00ED0061 /* AUUtility.h */,
+				ECD5991D253DECAA00ED0061 /* ComponentBase.h */,
+			);
+			path = AudioUnitSDK;
+			sourceTree = "<group>";
+		};
+		EC13F8AA28B91343001797D5 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				EC13F8AB28B91343001797D5 /* AudioUnitSDK */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		EC13F8AB28B91343001797D5 /* AudioUnitSDK */ = {
+			isa = PBXGroup;
+			children = (
+				ECD5991E253DECAA00ED0061 /* AUBase.cpp */,
+				ECD5992C253DECAA00ED0061 /* AUBuffer.cpp */,
+				EC4FB16A256AD6D800AFC27A /* AUBufferAllocator.cpp */,
+				ECD59928253DECAA00ED0061 /* AUEffectBase.cpp */,
+				ECD59932253DECAA00ED0061 /* AUInputElement.cpp */,
+				ECD59924253DECAA00ED0061 /* AUMIDIBase.cpp */,
+				ECD5992D253DECAA00ED0061 /* AUMIDIEffectBase.cpp */,
+				ECD59925253DECAA00ED0061 /* AUOutputElement.cpp */,
+				ECD59929253DECAA00ED0061 /* AUPlugInDispatch.cpp */,
+				ECD5991C253DECAA00ED0061 /* AUScopeElement.cpp */,
+				ECD5991A253DECAA00ED0061 /* ComponentBase.cpp */,
+			);
+			path = AudioUnitSDK;
+			sourceTree = "<group>";
+		};
 		EC6CCCE7248A04D40048D27F /* DFX GUI */ = {
 			isa = PBXGroup;
 			children = (
@@ -394,41 +448,11 @@
 		ECD59910253DECAA00ED0061 /* AudioUnitSDK */ = {
 			isa = PBXGroup;
 			children = (
-				ECD59919253DECAA00ED0061 /* Source */,
+				EC13F89928B91342001797D5 /* include */,
+				EC13F8AA28B91343001797D5 /* src */,
 			);
 			name = AudioUnitSDK;
 			path = ../../AudioUnitSDK;
-			sourceTree = "<group>";
-		};
-		ECD59919253DECAA00ED0061 /* Source */ = {
-			isa = PBXGroup;
-			children = (
-				ECD59921253DECAA00ED0061 /* AUBase.h */,
-				ECD5991E253DECAA00ED0061 /* AUBase.cpp */,
-				ECD5992F253DECAA00ED0061 /* AUBuffer.h */,
-				ECD5992C253DECAA00ED0061 /* AUBuffer.cpp */,
-				EC4FB16A256AD6D800AFC27A /* AUBufferAllocator.cpp */,
-				ECD59931253DECAA00ED0061 /* AudioUnitSDK.h */,
-				ECD5992A253DECAA00ED0061 /* AUEffectBase.h */,
-				ECD59928253DECAA00ED0061 /* AUEffectBase.cpp */,
-				ECD5991F253DECAA00ED0061 /* AUInputElement.h */,
-				ECD59932253DECAA00ED0061 /* AUInputElement.cpp */,
-				ECD59923253DECAA00ED0061 /* AUMIDIBase.h */,
-				ECD59924253DECAA00ED0061 /* AUMIDIBase.cpp */,
-				ECD59920253DECAA00ED0061 /* AUMIDIEffectBase.h */,
-				ECD5992D253DECAA00ED0061 /* AUMIDIEffectBase.cpp */,
-				ECD5992B253DECAA00ED0061 /* AUOutputElement.h */,
-				ECD59925253DECAA00ED0061 /* AUOutputElement.cpp */,
-				ECD59922253DECAA00ED0061 /* AUPlugInDispatch.h */,
-				ECD59929253DECAA00ED0061 /* AUPlugInDispatch.cpp */,
-				ECD59930253DECAA00ED0061 /* AUScopeElement.h */,
-				ECD5991C253DECAA00ED0061 /* AUScopeElement.cpp */,
-				ECD59927253DECAA00ED0061 /* AUSilentTimeout.h */,
-				ECD59926253DECAA00ED0061 /* AUUtility.h */,
-				ECD5991D253DECAA00ED0061 /* ComponentBase.h */,
-				ECD5991A253DECAA00ED0061 /* ComponentBase.cpp */,
-			);
-			path = Source;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

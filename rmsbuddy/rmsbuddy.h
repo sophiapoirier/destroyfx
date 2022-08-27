@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of RMS Buddy.
 
@@ -21,11 +21,10 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #pragma once
 
+#include <AudioUnitSDK/AUEffectBase.h>
 #include <optional>
 #include <utility>
 #include <vector>
-
-#include "AUEffectBase.h"
 
 
 //----------------------------------------------------------------------------- 

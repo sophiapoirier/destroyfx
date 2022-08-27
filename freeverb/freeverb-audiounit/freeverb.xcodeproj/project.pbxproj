@@ -115,29 +115,11 @@
 		4932F45B06800F80006A9591 /* AudioUnitSDK */ = {
 			isa = PBXGroup;
 			children = (
-				EC85B0BF266FF65100749CFA /* AUBase.h */,
-				EC85B0AD266FF65100749CFA /* AUBase.cpp */,
-				EC85B0B8266FF65100749CFA /* AUBuffer.h */,
-				EC85B0B5266FF65100749CFA /* AUBuffer.cpp */,
-				EC85B0B9266FF65100749CFA /* AUBufferAllocator.cpp */,
-				EC85B0C0266FF65100749CFA /* AudioUnitSDK.h */,
-				EC85B0C3266FF65100749CFA /* AUEffectBase.h */,
-				EC85B0B2266FF65100749CFA /* AUEffectBase.cpp */,
-				EC85B0B7266FF65100749CFA /* AUInputElement.h */,
-				EC85B0B0266FF65100749CFA /* AUInputElement.cpp */,
-				EC85B0B1266FF65100749CFA /* AUOutputElement.h */,
-				EC85B0BA266FF65100749CFA /* AUOutputElement.cpp */,
-				EC85B0C2266FF65100749CFA /* AUPlugInDispatch.h */,
-				EC85B0C1266FF65100749CFA /* AUPlugInDispatch.cpp */,
-				EC85B0C6266FF65100749CFA /* AUScopeElement.h */,
-				EC85B0BC266FF65100749CFA /* AUScopeElement.cpp */,
-				EC85B0B4266FF65100749CFA /* AUSilentTimeout.h */,
-				EC85B0C5266FF65100749CFA /* AUUtility.h */,
-				EC85B0BD266FF65100749CFA /* ComponentBase.h */,
-				EC85B0B3266FF65100749CFA /* ComponentBase.cpp */,
+				EC8FBE2B28B5B60100B23A3E /* include */,
+				EC8FBE1D28B5B60100B23A3E /* src */,
 			);
 			name = AudioUnitSDK;
-			path = ../../AudioUnitSDK/Source;
+			path = ../../AudioUnitSDK;
 			sourceTree = SOURCE_ROOT;
 		};
 		4946CFA30802E07800209478 /* freeverb */ = {
@@ -174,6 +156,56 @@
 			name = "DFX Library";
 			path = "../../dfx-library";
 			sourceTree = SOURCE_ROOT;
+		};
+		EC8FBE1D28B5B60100B23A3E /* src */ = {
+			isa = PBXGroup;
+			children = (
+				EC8FBE1E28B5B60100B23A3E /* AudioUnitSDK */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		EC8FBE1E28B5B60100B23A3E /* AudioUnitSDK */ = {
+			isa = PBXGroup;
+			children = (
+				EC85B0AD266FF65100749CFA /* AUBase.cpp */,
+				EC85B0B5266FF65100749CFA /* AUBuffer.cpp */,
+				EC85B0B9266FF65100749CFA /* AUBufferAllocator.cpp */,
+				EC85B0B2266FF65100749CFA /* AUEffectBase.cpp */,
+				EC85B0B0266FF65100749CFA /* AUInputElement.cpp */,
+				EC85B0BA266FF65100749CFA /* AUOutputElement.cpp */,
+				EC85B0C1266FF65100749CFA /* AUPlugInDispatch.cpp */,
+				EC85B0BC266FF65100749CFA /* AUScopeElement.cpp */,
+				EC85B0B3266FF65100749CFA /* ComponentBase.cpp */,
+			);
+			path = AudioUnitSDK;
+			sourceTree = "<group>";
+		};
+		EC8FBE2B28B5B60100B23A3E /* include */ = {
+			isa = PBXGroup;
+			children = (
+				EC8FBE2C28B5B60100B23A3E /* AudioUnitSDK */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		EC8FBE2C28B5B60100B23A3E /* AudioUnitSDK */ = {
+			isa = PBXGroup;
+			children = (
+				EC85B0BF266FF65100749CFA /* AUBase.h */,
+				EC85B0B8266FF65100749CFA /* AUBuffer.h */,
+				EC85B0C0266FF65100749CFA /* AudioUnitSDK.h */,
+				EC85B0C3266FF65100749CFA /* AUEffectBase.h */,
+				EC85B0B7266FF65100749CFA /* AUInputElement.h */,
+				EC85B0B1266FF65100749CFA /* AUOutputElement.h */,
+				EC85B0C2266FF65100749CFA /* AUPlugInDispatch.h */,
+				EC85B0C6266FF65100749CFA /* AUScopeElement.h */,
+				EC85B0B4266FF65100749CFA /* AUSilentTimeout.h */,
+				EC85B0C5266FF65100749CFA /* AUUtility.h */,
+				EC85B0BD266FF65100749CFA /* ComponentBase.h */,
+			);
+			path = AudioUnitSDK;
+			sourceTree = "<group>";
 		};
 		ECF4BC6C251B905400AF7369 /* Frameworks */ = {
 			isa = PBXGroup;
@@ -335,7 +367,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					../components,
-					../../AudioUnitSDK/Source,
+					../../AudioUnitSDK/include,
 					"../../dfx-library",
 				);
 				INFOPLIST_FILE = "freeverb-info.plist";
@@ -389,7 +421,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					../components,
-					../../AudioUnitSDK/Source,
+					../../AudioUnitSDK/include,
 					"../../dfx-library",
 				);
 				INFOPLIST_FILE = "freeverb-info.plist";

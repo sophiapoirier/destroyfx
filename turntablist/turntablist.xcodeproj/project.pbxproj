@@ -370,6 +370,8 @@
 		EC53BDFF25257C12005A1D50 /* AudioUnitSDK */ = {
 			isa = PBXGroup;
 			children = (
+				EC9DF10828B5BADC00681622 /* include */,
+				EC9DF11928B5BADC00681622 /* src */,
 				EC53BE0825257C12005A1D50 /* Source */,
 			);
 			name = AudioUnitSDK;
@@ -379,28 +381,6 @@
 		EC53BE0825257C12005A1D50 /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				EC53BE1025257C12005A1D50 /* AUBase.h */,
-				EC53BE0D25257C12005A1D50 /* AUBase.cpp */,
-				EC53BE1E25257C12005A1D50 /* AUBuffer.h */,
-				EC53BE1B25257C12005A1D50 /* AUBuffer.cpp */,
-				EC4FB16E256ADCDD00AFC27A /* AUBufferAllocator.cpp */,
-				EC53BE2025257C12005A1D50 /* AudioUnitSDK.h */,
-				EC53BE0E25257C12005A1D50 /* AUInputElement.h */,
-				EC53BE1225257C12005A1D50 /* AUMIDIBase.h */,
-				EC53BE1325257C12005A1D50 /* AUMIDIBase.cpp */,
-				EC53BE1A25257C12005A1D50 /* AUOutputElement.h */,
-				EC53BE1425257C12005A1D50 /* AUOutputElement.cpp */,
-				EC53BE1125257C12005A1D50 /* AUPlugInDispatch.h */,
-				EC53BE1825257C12005A1D50 /* AUPlugInDispatch.cpp */,
-				EC53BE1F25257C12005A1D50 /* AUScopeElement.h */,
-				EC53BE0B25257C12005A1D50 /* AUScopeElement.cpp */,
-				EC53BE1625257C12005A1D50 /* AUSilentTimeout.h */,
-				EC53BE1525257C12005A1D50 /* AUUtility.h */,
-				EC53BE2125257C12005A1D50 /* AUInputElement.cpp */,
-				EC53BE0C25257C12005A1D50 /* ComponentBase.h */,
-				EC53BE0925257C12005A1D50 /* ComponentBase.cpp */,
-				EC53BE1D25257C12005A1D50 /* MusicDeviceBase.h */,
-				EC53BE0A25257C12005A1D50 /* MusicDeviceBase.cpp */,
 			);
 			path = Source;
 			sourceTree = "<group>";
@@ -422,6 +402,58 @@
 				EC89B508208D371600E15129 /* plugguieditor.cpp */,
 			);
 			path = "plugin-bindings";
+			sourceTree = "<group>";
+		};
+		EC9DF10828B5BADC00681622 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				EC9DF10928B5BADC00681622 /* AudioUnitSDK */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		EC9DF10928B5BADC00681622 /* AudioUnitSDK */ = {
+			isa = PBXGroup;
+			children = (
+				EC53BE1025257C12005A1D50 /* AUBase.h */,
+				EC53BE1E25257C12005A1D50 /* AUBuffer.h */,
+				EC53BE2025257C12005A1D50 /* AudioUnitSDK.h */,
+				EC53BE0E25257C12005A1D50 /* AUInputElement.h */,
+				EC53BE1225257C12005A1D50 /* AUMIDIBase.h */,
+				EC53BE1A25257C12005A1D50 /* AUOutputElement.h */,
+				EC53BE1125257C12005A1D50 /* AUPlugInDispatch.h */,
+				EC53BE1F25257C12005A1D50 /* AUScopeElement.h */,
+				EC53BE1625257C12005A1D50 /* AUSilentTimeout.h */,
+				EC53BE1525257C12005A1D50 /* AUUtility.h */,
+				EC53BE0C25257C12005A1D50 /* ComponentBase.h */,
+				EC53BE1D25257C12005A1D50 /* MusicDeviceBase.h */,
+			);
+			path = AudioUnitSDK;
+			sourceTree = "<group>";
+		};
+		EC9DF11928B5BADC00681622 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				EC9DF11A28B5BADC00681622 /* AudioUnitSDK */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		EC9DF11A28B5BADC00681622 /* AudioUnitSDK */ = {
+			isa = PBXGroup;
+			children = (
+				EC53BE0D25257C12005A1D50 /* AUBase.cpp */,
+				EC53BE1B25257C12005A1D50 /* AUBuffer.cpp */,
+				EC4FB16E256ADCDD00AFC27A /* AUBufferAllocator.cpp */,
+				EC53BE2125257C12005A1D50 /* AUInputElement.cpp */,
+				EC53BE1325257C12005A1D50 /* AUMIDIBase.cpp */,
+				EC53BE1425257C12005A1D50 /* AUOutputElement.cpp */,
+				EC53BE1825257C12005A1D50 /* AUPlugInDispatch.cpp */,
+				EC53BE0B25257C12005A1D50 /* AUScopeElement.cpp */,
+				EC53BE0925257C12005A1D50 /* ComponentBase.cpp */,
+				EC53BE0A25257C12005A1D50 /* MusicDeviceBase.cpp */,
+			);
+			path = AudioUnitSDK;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

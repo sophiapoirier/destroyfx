@@ -330,37 +330,61 @@
 		ECD59837253DEA0100ED0061 /* AudioUnitSDK */ = {
 			isa = PBXGroup;
 			children = (
-				ECD59840253DEA0100ED0061 /* Source */,
+				ECDD3E1B28B7C3910001767B /* include */,
+				ECDD3E2C28B7C3910001767B /* src */,
 			);
 			name = AudioUnitSDK;
 			path = ../../AudioUnitSDK;
 			sourceTree = "<group>";
 		};
-		ECD59840253DEA0100ED0061 /* Source */ = {
+		ECDD3E1B28B7C3910001767B /* include */ = {
+			isa = PBXGroup;
+			children = (
+				ECDD3E1C28B7C3910001767B /* AudioUnitSDK */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		ECDD3E1C28B7C3910001767B /* AudioUnitSDK */ = {
 			isa = PBXGroup;
 			children = (
 				ECD59848253DEA0100ED0061 /* AUBase.h */,
-				ECD59845253DEA0100ED0061 /* AUBase.cpp */,
 				ECD59856253DEA0100ED0061 /* AUBuffer.h */,
-				ECD59853253DEA0100ED0061 /* AUBuffer.cpp */,
-				EC4FB181256AE26100AFC27A /* AUBufferAllocator.cpp */,
 				ECD59858253DEA0100ED0061 /* AudioUnitSDK.h */,
 				ECD59851253DEA0100ED0061 /* AUEffectBase.h */,
-				ECD5984F253DEA0100ED0061 /* AUEffectBase.cpp */,
 				ECD59846253DEA0100ED0061 /* AUInputElement.h */,
-				ECD59859253DEA0100ED0061 /* AUInputElement.cpp */,
 				ECD59852253DEA0100ED0061 /* AUOutputElement.h */,
-				ECD5984C253DEA0100ED0061 /* AUOutputElement.cpp */,
 				ECD59849253DEA0100ED0061 /* AUPlugInDispatch.h */,
-				ECD59850253DEA0100ED0061 /* AUPlugInDispatch.cpp */,
 				ECD59857253DEA0100ED0061 /* AUScopeElement.h */,
-				ECD59843253DEA0100ED0061 /* AUScopeElement.cpp */,
 				ECD5984E253DEA0100ED0061 /* AUSilentTimeout.h */,
 				ECD5984D253DEA0100ED0061 /* AUUtility.h */,
 				ECD59844253DEA0100ED0061 /* ComponentBase.h */,
+			);
+			path = AudioUnitSDK;
+			sourceTree = "<group>";
+		};
+		ECDD3E2C28B7C3910001767B /* src */ = {
+			isa = PBXGroup;
+			children = (
+				ECDD3E2D28B7C3910001767B /* AudioUnitSDK */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		ECDD3E2D28B7C3910001767B /* AudioUnitSDK */ = {
+			isa = PBXGroup;
+			children = (
+				ECD59845253DEA0100ED0061 /* AUBase.cpp */,
+				ECD59853253DEA0100ED0061 /* AUBuffer.cpp */,
+				EC4FB181256AE26100AFC27A /* AUBufferAllocator.cpp */,
+				ECD5984F253DEA0100ED0061 /* AUEffectBase.cpp */,
+				ECD59859253DEA0100ED0061 /* AUInputElement.cpp */,
+				ECD5984C253DEA0100ED0061 /* AUOutputElement.cpp */,
+				ECD59850253DEA0100ED0061 /* AUPlugInDispatch.cpp */,
+				ECD59843253DEA0100ED0061 /* AUScopeElement.cpp */,
 				ECD59841253DEA0100ED0061 /* ComponentBase.cpp */,
 			);
-			path = Source;
+			path = AudioUnitSDK;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
