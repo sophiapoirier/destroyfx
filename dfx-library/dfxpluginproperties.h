@@ -30,7 +30,7 @@ These are our extended Audio Unit property IDs and types.
 #include "dfxparameter.h"
 
 #ifdef TARGET_API_AUDIOUNIT
-	#include <AudioToolbox/AudioUnitUtilities.h>	// for kAUParameterListener_AnyParameter
+	#include <AudioToolbox/AudioUnitProperties.h>
 #endif
 
 

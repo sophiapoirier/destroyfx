@@ -46,6 +46,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
+	#include <AudioToolbox/AudioUnitUtilities.h>
 	using DGEditorListenerInstance = AudioComponentInstance;
 #endif
 #ifdef TARGET_API_VST

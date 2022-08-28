@@ -28,6 +28,7 @@ This is where we connect the Audio Unit API to our DfxPlugin system.
 #include "dfxplugin.h"
 
 #include <algorithm>
+#include <AudioToolbox/AudioUnitUtilities.h>  // for kAUParameterListener_AnyParameter
 #include <cassert>
 #include <CoreServices/CoreServices.h>
 #include <cstring>
