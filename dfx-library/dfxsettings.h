@@ -202,7 +202,7 @@ public:
 	// if you set this to something and data is received during restore()
 	// which has a version number in its header that is lower than this, 
 	// then loading will fail
-	void setLowestLoadableVersion(long inVersion) noexcept
+	void setLowestLoadableVersion(unsigned int inVersion) noexcept
 	{
 		mSettingsInfo.mLowestLoadableVersion = inVersion;
 	}
@@ -347,11 +347,11 @@ private:
 		// (the easiest thing is probably to use your plugin's ID code)
 		uint32_t mMagic = 0;
 		// the version number of the plugin that is creating the data
-		int32_t mVersion = 0;
+		uint32_t mVersion = 0;
 		// this defaults to 0, but you can set it to be the earliest version 
 		// number of your plugin that would be able to handle the storage data
 		// (then lower versions of the plugin will fail to load the data)
-		int32_t mLowestLoadableVersion = 0;
+		uint32_t mLowestLoadableVersion = 0;
 		// the size (in bytes) of the header data that the plugin 
 		// will store in the settings data
 		uint32_t mStoredHeaderSize = 0;

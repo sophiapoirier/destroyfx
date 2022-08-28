@@ -561,7 +561,7 @@ void Transverb::settings_saveExtendedData(void* outData, bool /*isPreset*/)
 }
 
 void Transverb::settings_restoreExtendedData(void const* inData, size_t storedExtendedDataSize,
-                                             long dataVersion, bool /*isPreset*/)
+                                             unsigned int /*dataVersion*/, bool /*isPreset*/)
 {
   if (storedExtendedDataSize >= settings_sizeOfExtendedData())
   {
@@ -573,7 +573,7 @@ void Transverb::settings_restoreExtendedData(void const* inData, size_t storedEx
   }
 }
 
-void Transverb::settings_doChunkRestoreSetParameterStuff(long tag, float value, long dataVersion, long presetNum)
+void Transverb::settings_doChunkRestoreSetParameterStuff(long tag, float value, unsigned int dataVersion, long presetNum)
 {
 	// prevent old speed mode 1 settings from applying to freeze
 	if ((dataVersion < 0x00010501) && (tag == kFreeze))

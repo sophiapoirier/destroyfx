@@ -177,7 +177,7 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 
 //-----------------------------------------------------------------------------
 // for backwerds compaxibilitee
-inline bool DFX_IsOldVstVersionNumber(long inVersion)
+inline bool DFX_IsOldVstVersionNumber(uint32_t inVersion) noexcept
 {
 	return (inVersion < 0x00010000);
 }

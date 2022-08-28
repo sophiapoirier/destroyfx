@@ -331,7 +331,6 @@ public:
 	void TextEntryForSmoothedAudioValueTime();
 	void LoadPresetFile();
 	void SavePresetFile();
-	std::tuple<uint8_t, uint8_t, uint8_t> getPluginVersion() const;
 
 	// Create a VSTGUI font via the editor's font factory.
 	VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFont(float inFontSize, char const* inFontName = nullptr)
@@ -394,6 +393,7 @@ private:
 	void ShowMessage(std::string const& inMessage);
 	void ShowAcknowledgements();
 	static void Require(bool inCondition, char const* inFailureMessage = "");
+	static std::tuple<uint8_t, uint8_t, uint8_t> getPluginVersion() noexcept;
 
 #ifndef TARGET_API_VST
 	// in VST2, this method is provided by AEffEditor

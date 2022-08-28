@@ -1684,9 +1684,9 @@ void DfxGuiEditor::SavePresetFile()
 }
 
 //-----------------------------------------------------------------------------
-std::tuple<uint8_t, uint8_t, uint8_t> DfxGuiEditor::getPluginVersion() const
+std::tuple<uint8_t, uint8_t, uint8_t> DfxGuiEditor::getPluginVersion() noexcept
 {
-	auto const compositeVersion = static_cast<unsigned int>(dfx::CompositePluginVersionNumberValue());
+	auto const compositeVersion = dfx::CompositePluginVersionNumberValue();
 	return {(compositeVersion & 0xFFFF0000) >> 16, (compositeVersion & 0x0000FF00) >> 8, compositeVersion & 0x000000FF};
 }
 

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -125,7 +125,7 @@ size_t StrLCpy(char* dst, std::string_view src, size_t maxlen)
 
 
 //------------------------------------------------------
-long CompositePluginVersionNumberValue()
+unsigned int CompositePluginVersionNumberValue() noexcept
 {
 	return (PLUGIN_VERSION_MAJOR << 16) | (PLUGIN_VERSION_MINOR << 8) | PLUGIN_VERSION_BUGFIX;
 }

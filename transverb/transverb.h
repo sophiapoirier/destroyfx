@@ -120,8 +120,8 @@ protected:
   size_t settings_sizeOfExtendedData() const noexcept override;
   void settings_saveExtendedData(void* outData, bool isPreset) override;
   void settings_restoreExtendedData(void const* inData, size_t storedExtendedDataSize,
-                                    long dataVersion, bool isPreset) override;
-  void settings_doChunkRestoreSetParameterStuff(long tag, float value, long dataVersion, long presetNum) override;
+                                    unsigned int dataVersion, bool isPreset) override;
+  void settings_doChunkRestoreSetParameterStuff(long tag, float value, unsigned int dataVersion, long presetNum) override;
 
 private:
   static constexpr long kNumPresets = 16;

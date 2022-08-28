@@ -556,7 +556,7 @@ public:
 	void setInPlaceAudioProcessingAllowed(bool inEnable);
 
 	std::string getpluginname() const;
-	long getpluginversion() const;
+	unsigned int getpluginversion() const noexcept;
 
 	// Register a smoothed value with the given owner. Values can be updated en masse
 	// by incrementSmoothedAudioValues, and are automatically snapped to their target values
@@ -611,7 +611,7 @@ public:
 	// sections of the settings data
 	virtual void settings_saveExtendedData(void* outData, bool isPreset) {}
 	virtual void settings_restoreExtendedData(void const* inData, size_t storedExtendedDataSize, 
-											  long dataVersion, bool isPreset) {}
+											  unsigned int dataVersion, bool isPreset) {}
 	//
 	// this can be overridden to react when parameter values are 
 	// restored from settings that are loaded during restore()
@@ -621,7 +621,7 @@ public:
 	// it's the version number of the plugin that created the data)
 	// (presetNum of -1 indicates that we're just working with the current 
 	// state of the plugin)
-	virtual void settings_doChunkRestoreSetParameterStuff(long tag, float value, long dataVersion, long presetNum = -1) {}
+	virtual void settings_doChunkRestoreSetParameterStuff(long tag, float value, unsigned int dataVersion, long presetNum = -1) {}
 	//
 	// these can be overridden to do something and extend the MIDI event processing
 	virtual void settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, int eventChannel, 

@@ -1269,7 +1269,7 @@ std::string DfxPlugin::getpluginname() const
 }
 
 //-----------------------------------------------------------------------------
-long DfxPlugin::getpluginversion() const
+unsigned int DfxPlugin::getpluginversion() const noexcept
 {
 	return dfx::CompositePluginVersionNumberValue();
 }
