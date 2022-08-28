@@ -164,14 +164,14 @@ public:
 	void assignParam(long inParamTag, dfx::MidiEventType inEventType, long inEventChannel, 
 					 long inEventNum, long inEventNum2 = 0, 
 					 dfx::MidiEventBehaviorFlags inEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
-					 long inDataInt1 = 0, long inDataInt2 = 0, 
+					 int inDataInt1 = 0, int inDataInt2 = 0, 
 					 float inDataFloat1 = 0.0f, float inDataFloat2 = 0.0f);
 	// remove a parameter's MIDI event assignment
 	void unassignParam(long inParamTag);
 
 	// define or report the actively learning parameter during MIDI learn mode
 	void setLearner(long inParamTag, dfx::MidiEventBehaviorFlags inEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
-					long inDataInt1 = 0, long inDataInt2 = 0, 
+					int inDataInt1 = 0, int inDataInt2 = 0, 
 					float inDataFloat1 = 0.0f, float inDataFloat2 = 0.0f);
 	auto getLearner() const noexcept
 	{
@@ -398,8 +398,8 @@ private:
 	long getParameterTagFromID(long inParamID) const;
 
 #if TARGET_PLUGIN_USES_MIDI
-	void handleMidi_assignParam(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, unsigned long inOffsetFrames);
-	void handleMidi_automateParams(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inByte2, unsigned long inOffsetFrames, bool inIsNoteOn = false);
+	void handleMidi_assignParam(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, unsigned long inOffsetFrames);
+	void handleMidi_automateParams(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, int inByte2, unsigned long inOffsetFrames, bool inIsNoteOn = false);
 #endif // TARGET_PLUGIN_USES_MIDI
 
 
@@ -453,12 +453,12 @@ private:
 	// for the current MIDI-learning parameter
 	dfx::MidiEventBehaviorFlags mLearnerEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None;
 	// lets the plugin pass along an extra context-specific data bytes
-	std::atomic<long> mLearnerDataInt1 {0}, mLearnerDataInt2 {0};
+	std::atomic<int> mLearnerDataInt1 {0}, mLearnerDataInt2 {0};
 	std::atomic<float> mLearnerDataFloat1 {0.0f}, mLearnerDataFloat2 {0.0f};  // TODO: unused, remove? (but serialized data compatibility)
 
 	// if a note range is being learned for a parameter, this will be true
 	std::atomic<bool> mNoteRangeHalfwayDone {false};
 	// the note that is the first part of the 2-note range being learned
-	std::atomic<long> mHalfwayNoteNum {0};
+	std::atomic<int> mHalfwayNoteNum {0};
 #endif // TARGET_PLUGIN_USES_MIDI
 };

@@ -624,10 +624,10 @@ public:
 	virtual void settings_doChunkRestoreSetParameterStuff(long tag, float value, long dataVersion, long presetNum = -1) {}
 	//
 	// these can be overridden to do something and extend the MIDI event processing
-	virtual void settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, long eventChannel, 
-												long eventNum, unsigned long offsetFrames, long eventNum2 = 0, 
+	virtual void settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, int eventChannel, 
+												int eventNum, unsigned long offsetFrames, int eventNum2 = 0, 
 												dfx::MidiEventBehaviorFlags eventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
-												long data1 = 0, long data2 = 0, 
+												int data1 = 0, int data2 = 0, 
 												float fdata1 = 0.0f, float fdata2 = 0.0f) {}
 	virtual void settings_doMidiAutomatedSetParameterStuff(long tag, float value, unsigned long offsetFrames) {}
 	// HACK: the return type is overloaded for this purpose, contains more data than used in this context

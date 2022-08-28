@@ -96,10 +96,10 @@ public:
 	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
 
 	// stuff for extending DfxSettings
-	void settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, long eventChannel,
-										long eventNum, unsigned long offsetFrames, long eventNum2 = 0,
+	void settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, int eventChannel,
+										int eventNum, unsigned long offsetFrames, int eventNum2 = 0,
 										dfx::MidiEventBehaviorFlags eventBehaviourFlags = dfx::kMidiEventBehaviorFlag_None,
-										long data1 = 0, long data2 = 0, float fdata1 = 0.0f, float fdata2 = 0.0f) override;
+										int data1 = 0, int data2 = 0, float fdata1 = 0.0f, float fdata2 = 0.0f) override;
 //	void settings_unassignParam(long tag) override;
 
 	// true for unified single-point automation of both parameter range values

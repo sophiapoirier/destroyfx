@@ -889,7 +889,7 @@ void DfxSettings::handlePitchBend(int inMidiChannel, int inValueLSB, int inValue
 	// do this because MIDI byte 2 is not used to specify 
 	// type for pitchbend as it does for some other events, 
 	// and stuff below assumes that byte 2 means that
-	constexpr long fakeEventNum = 0;
+	constexpr int fakeEventNum = 0;
 	handleMidi_assignParam(dfx::MidiEventType::PitchBend, inMidiChannel, fakeEventNum, inOffsetFrames);
 	handleMidi_automateParams(dfx::MidiEventType::PitchBend, inMidiChannel, inValueLSB, inValueMSB, inOffsetFrames);
 }
@@ -950,7 +950,7 @@ void DfxSettings::handleAllNotesOff(int inMidiChannel, unsigned long inOffsetFra
 
 //-----------------------------------------------------------------------------------------
 // assign an incoming MIDI event to the learner parameter
-void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, unsigned long inOffsetFrames)
+void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, unsigned long inOffsetFrames)
 {
 	// we don't need to make an assignment to a parameter if MIDI learning is off
 	if (!mMidiLearn || !paramTagIsValid(mLearner))
@@ -958,7 +958,7 @@ void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long in
 		return;
 	}
 
-	auto const handleAssignment = [this, inEventType, inMidiChannel, inOffsetFrames](long eventNum, long eventNum2)
+	auto const handleAssignment = [this, inEventType, inMidiChannel, inOffsetFrames](int eventNum, int eventNum2)
 	{
 		// assign the learner parameter to the event that sent the message
 		assignParam(mLearner, inEventType, inMidiChannel, eventNum, eventNum2, 
@@ -985,7 +985,7 @@ void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long in
 			if (inByte1 != mHalfwayNoteNum)
 			{
 				mNoteRangeHalfwayDone = false;
-				long note1 {}, note2 {};
+				int note1 {}, note2 {};
 				if (inByte1 > mHalfwayNoteNum)
 				{
 					note1 = mHalfwayNoteNum;
@@ -1007,14 +1007,14 @@ void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long in
 	}
 	else
 	{
-		constexpr long fakeEventNum2 = 0;  // not used in this case
+		constexpr int fakeEventNum2 = 0;  // not used in this case
 		handleAssignment(inByte1, fakeEventNum2);
 	}
 }
 
 //-----------------------------------------------------------------------------------------
 // automate assigned parameters in response to a MIDI event
-void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inByte2, unsigned long inOffsetFrames, bool inIsNoteOn)
+void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, int inByte2, unsigned long inOffsetFrames, bool inIsNoteOn)
 {
 	float valueNormalized = static_cast<float>(inByte2) * DfxMidi::kValueScalar;
 	if (inEventType == dfx::MidiEventType::ChannelAftertouch)
@@ -1164,7 +1164,7 @@ void DfxSettings::clearAssignments()
 // assign a CC to a parameter
 void DfxSettings::assignParam(long inParamTag, dfx::MidiEventType inEventType, long inEventChannel, long inEventNum, 
 							  long inEventNum2, dfx::MidiEventBehaviorFlags inEventBehaviorFlags, 
-							  long inDataInt1, long inDataInt2, float inDataFloat1, float inDataFloat2)
+							  int inDataInt1, int inDataInt2, float inDataFloat1, float inDataFloat2)
 {
 	// bail if the parameter index is not valid
 	if (!paramTagIsValid(inParamTag))
@@ -1295,7 +1295,7 @@ bool DfxSettings::isLearner(long inParamTag) const noexcept
 //-----------------------------------------------------------------------------
 // define the actively learning parameter during MIDI learn mode
 void DfxSettings::setLearner(long inParamTag, dfx::MidiEventBehaviorFlags inEventBehaviorFlags, 
-							 long inDataInt1, long inDataInt2, float inDataFloat1, float inDataFloat2)
+							 int inDataInt1, int inDataInt2, float inDataFloat1, float inDataFloat2)
 {
 	// allow this invalid parameter tag, and then exit
 	if (inParamTag == kNoLearner)

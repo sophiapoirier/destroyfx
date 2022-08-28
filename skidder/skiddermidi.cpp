@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2021  Sophia Poirier
+Copyright (C) 2000-2022  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -196,9 +196,9 @@ bool Skidder::isAnyNoteOn() const
 //-----------------------------------------------------------------------------
 // this gets called when Skidder automates a parameter from CC messages.
 // this is where we can link parameter automation for rangeslider points.
-void Skidder::settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, long eventChannel, long eventNum,
-											 unsigned long /*offsetFrames*/, long eventNum2, dfx::MidiEventBehaviorFlags eventBehaviourFlags,
-											 long data1, long data2, float fdata1, float fdata2)
+void Skidder::settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, int eventChannel, int eventNum,
+											 unsigned long /*offsetFrames*/, int eventNum2, dfx::MidiEventBehaviorFlags eventBehaviourFlags,
+											 int data1, int data2, float fdata1, float fdata2)
 {
 	if (getsettings().getSteal())
 	{
