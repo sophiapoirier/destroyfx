@@ -169,8 +169,8 @@ public:
 	// HandlePropertyChange will be called for the registered properties when they change.
 	// inScope is global-only for many properties, but some require more granular scope to be specified.
 	// inItemIndex is optionally used for some properties and its meaning is contextual to that property.
-	void RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0);
-	virtual void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) {}
+	void RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned int inItemIndex = 0);
+	virtual void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex) {}
 
 	// Adds the control to mControlsList, only if attached to a parameter, 
 	// since those are the only controls for which we manage extra functionality.
@@ -296,12 +296,12 @@ public:
 	AudioUnitParameter dfxgui_MakeAudioUnitParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope = kAudioUnitScope_Global, AudioUnitElement inElement = 0);
 	std::vector<long> CreateParameterList(AudioUnitScope inScope = kAudioUnitScope_Global);
 #endif
-	long dfxgui_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+	long dfxgui_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
 								size_t& outDataSize, dfx::PropertyFlags& outFlags);
-	long dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+	long dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
 							void* outData, size_t& ioDataSize);
 	template <typename T>
-	std::optional<T> dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0)
+	std::optional<T> dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned int inItemIndex = 0)
 	{
 		static_assert(dfx::IsTriviallySerializable<T>);
 		T value {};
@@ -309,11 +309,11 @@ public:
 		auto const status = dfxgui_GetProperty(inPropertyID, inScope, inItemIndex, &value, dataSize);
 		return ((status == dfx::kStatus_NoError) && (dataSize == sizeof(value))) ? std::make_optional(value) : std::nullopt;
 	}
-	long dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
+	long dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
 							void const* inData, size_t inDataSize);
 	// Assumes the data's size is sizeof(T). Returns true if successful.
 	template <typename T>
-	bool dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, T const &data)
+	bool dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, T const &data)
 	{
 		static_assert(dfx::IsTriviallySerializable<T>);
 		return dfx::kStatus_NoError == dfxgui_SetProperty(inPropertyID, inScope, inItemIndex, &data, sizeof data);
@@ -388,7 +388,7 @@ private:
 	void addMousedOverControl(IDGControl* inMousedOverControl);
 	void removeMousedOverControl(IDGControl* inMousedOverControl);
 
-	bool IsPropertyRegistered(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) const;
+	bool IsPropertyRegistered(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex) const;
 
 	void ShowMessage(std::string const& inMessage);
 	void ShowAcknowledgements();
@@ -429,7 +429,7 @@ private:
 	unsigned long mNumOutputChannels = 0;
 
 	// Custom properties that have been registered for HandlePropertyChange calls.
-	std::vector<std::tuple<dfx::PropertyID, dfx::Scope, unsigned long>> mRegisteredProperties;
+	std::vector<std::tuple<dfx::PropertyID, dfx::Scope, unsigned int>> mRegisteredProperties;
 
 	VSTGUI::SharedPointer<DGTextEntryDialog> mTextEntryDialog;
 	VSTGUI::SharedPointer<DGDialog> mErrorDialog;

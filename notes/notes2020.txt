@@ -538,8 +538,8 @@ HandlePropertyChange() seems to be where the SpeedUp and SpeedDown buttons have 
 when the SpeedMode button is used. And so presumably the gap is just this from dfxplugin:
 
 	// TODO: implement plumbing to these for VST etc.
-	void RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0);
-	virtual void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) {}
+	void RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned int inItemIndex = 0);
+	virtual void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex) {}
 
 ... HandlePropertyChange is only called in AudioUnitEventListenerProc.
 Probably this can be quite simple for VST... just call HandlePropertyChange for the editor whenever SetProperty happens?

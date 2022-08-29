@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -50,9 +50,9 @@ public:
 
   void dfx_PostConstructor() override;
 
-  long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
+  long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
                            size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
-  long dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
+  long dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
                        void* outData) override;
 
   void randomizeparameter(long inParameterIndex) override;

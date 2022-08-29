@@ -109,11 +109,11 @@ public:
   bool loadpreset(long index) override;  // overridden to support the random preset
   void randomizeparameters() override;
 
-  long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
+  long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
                            size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
-  long dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
+  long dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
                        void* outData) override;
-  long dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
+  long dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
                        void const* inData, size_t inDataSize) override;
 
 protected:

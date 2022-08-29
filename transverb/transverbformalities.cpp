@@ -507,7 +507,7 @@ void Transverb::randomizeparameters()
 	}
 }
 
-long Transverb::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
+long Transverb::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
                                     size_t& outDataSize, dfx::PropertyFlags& outFlags)
 {
   if (isSpeedModePropertyID(inPropertyID))
@@ -519,7 +519,7 @@ long Transverb::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inS
   return DfxPlugin::dfx_GetPropertyInfo(inPropertyID, inScope, inItemIndex, outDataSize, outFlags);
 }
 
-long Transverb::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
+long Transverb::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
                                 void* outData)
 {
   if (isSpeedModePropertyID(inPropertyID))
@@ -530,7 +530,7 @@ long Transverb::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope
   return DfxPlugin::dfx_GetProperty(inPropertyID, inScope, inItemIndex, outData);
 }
 
-long Transverb::dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
+long Transverb::dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
                                 void const* inData, size_t inDataSize)
 {
   if (isSpeedModePropertyID(inPropertyID))

@@ -465,7 +465,7 @@ OSStatus Turntablist::PostNotification_AudioFileNotFound(CFStringRef inFileName)
 
 //-----------------------------------------------------------------------------
 long Turntablist::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID,
-									  dfx::Scope inScope, unsigned long inItemIndex,
+									  dfx::Scope inScope, unsigned int inItemIndex,
 									  size_t& outDataSize, dfx::PropertyFlags& outFlags)
 {
 	switch (inPropertyID)
@@ -501,7 +501,7 @@ long Turntablist::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID,
 
 //-----------------------------------------------------------------------------
 long Turntablist::dfx_GetProperty(dfx::PropertyID inPropertyID,
-								  dfx::Scope inScope, unsigned long inItemIndex,
+								  dfx::Scope inScope, unsigned int inItemIndex,
 								  void* outData)
 {
 	switch (inPropertyID)
@@ -535,7 +535,7 @@ long Turntablist::dfx_GetProperty(dfx::PropertyID inPropertyID,
 
 //-----------------------------------------------------------------------------
 long Turntablist::dfx_SetProperty(dfx::PropertyID inPropertyID,
-								  dfx::Scope inScope, unsigned long inItemIndex,
+								  dfx::Scope inScope, unsigned int inItemIndex,
 								  void const* inData, size_t inDataSize)
 {
 	switch (inPropertyID)

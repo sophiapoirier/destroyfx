@@ -45,8 +45,8 @@ public:
 	void processparameters() override;
 	void parameterChanged(long inParameterIndex) override;
 
-	long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
-	long dfx_GetProperty(dfx::PropertyID, dfx::Scope inScope, unsigned long inItemIndex, void* outData) override;
+	long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
+	long dfx_GetProperty(dfx::PropertyID, dfx::Scope inScope, unsigned int inItemIndex, void* outData) override;
 
 private:
 	static constexpr long kNumPresets = 16;

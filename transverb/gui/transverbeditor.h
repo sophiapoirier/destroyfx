@@ -63,7 +63,7 @@ public:
 	void PostOpenEditor() override;
 	void CloseEditor() override;
 	void parameterChanged(long inParameterID) override;
-	void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) override;
+	void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex) override;
 
 private:
 	void HandleSpeedModeButton(size_t inIndex, long inValue);

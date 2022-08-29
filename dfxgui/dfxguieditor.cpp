@@ -399,7 +399,7 @@ void DfxGuiEditor::idle()
 
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex)
+void DfxGuiEditor::RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex)
 {
 	assert(!IsOpen());  // you need to register these all before opening a view
 	assert(!IsPropertyRegistered(inPropertyID, inScope, inItemIndex));
@@ -408,7 +408,7 @@ void DfxGuiEditor::RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Sco
 }
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::IsPropertyRegistered(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) const
+bool DfxGuiEditor::IsPropertyRegistered(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex) const
 {
 	auto const property = std::make_tuple(inPropertyID, inScope, inItemIndex);
 	return std::find(mRegisteredProperties.cbegin(), mRegisteredProperties.cend(), property) != mRegisteredProperties.cend();
@@ -1447,7 +1447,7 @@ std::vector<long> DfxGuiEditor::CreateParameterList(AudioUnitScope inScope)
 #endif
 
 //-----------------------------------------------------------------------------
-long DfxGuiEditor::dfxgui_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+long DfxGuiEditor::dfxgui_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
 										  size_t& outDataSize, dfx::PropertyFlags& outFlags)
 {
 #ifdef TARGET_API_AUDIOUNIT
@@ -1472,7 +1472,7 @@ long DfxGuiEditor::dfxgui_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Sco
 }
 
 //-----------------------------------------------------------------------------
-long DfxGuiEditor::dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+long DfxGuiEditor::dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
 									  void* outData, size_t& ioDataSize)
 {
 #ifdef TARGET_API_AUDIOUNIT
@@ -1491,13 +1491,14 @@ long DfxGuiEditor::dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope i
 }
 
 //-----------------------------------------------------------------------------
-long DfxGuiEditor::dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+long DfxGuiEditor::dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
 									  void const* inData, size_t inDataSize)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	AUSDK_Require(dfxgui_GetEffectInstance(), kAudioUnitErr_Uninitialized);
 
-	return AudioUnitSetProperty(dfxgui_GetEffectInstance(), inPropertyID, inScope, inItemIndex, inData, inDataSize);
+	return AudioUnitSetProperty(dfxgui_GetEffectInstance(), inPropertyID, inScope, inItemIndex, 
+								inData, static_cast<UInt32>(inDataSize));
 #else
 	long const res = dfxgui_GetEffectInstance()->dfx_SetProperty(inPropertyID, inScope, inItemIndex, inData, inDataSize);
 	// AU system framework handles this notification in AU, but VST needs to manage it manually.

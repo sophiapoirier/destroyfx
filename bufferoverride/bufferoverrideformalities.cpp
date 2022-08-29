@@ -453,7 +453,7 @@ void BufferOverride::updateViewDataCache()
 }
 
 //-------------------------------------------------------------------------
-long BufferOverride::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
+long BufferOverride::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
 										 size_t& outDataSize, dfx::PropertyFlags& outFlags)
 {
 	switch (inPropertyID)
@@ -472,7 +472,7 @@ long BufferOverride::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scop
 }
 
 //-------------------------------------------------------------------------
-long BufferOverride::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
+long BufferOverride::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
 									 void* outData)
 {
 	switch (inPropertyID)

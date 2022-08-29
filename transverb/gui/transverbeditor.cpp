@@ -520,7 +520,7 @@ void TransverbEditor::parameterChanged(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-void TransverbEditor::HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope /*inScope*/, unsigned long /*inItemIndex*/)
+void TransverbEditor::HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope /*inScope*/, unsigned int /*inItemIndex*/)
 {
 	if (isSpeedModePropertyID(inPropertyID))
 	{

@@ -142,7 +142,7 @@ public:
 	void CloseEditor() override;
 
 	void parameterChanged(long inParameterID) override;
-	void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) override;
+	void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex) override;
 
 	void dfxgui_Idle() override;
 #if DRAG_N_DROP
@@ -650,7 +650,7 @@ void TurntablistEditor::parameterChanged(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-void TurntablistEditor::HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex)
+void TurntablistEditor::HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex)
 {
 	switch (inPropertyID)
 	{
