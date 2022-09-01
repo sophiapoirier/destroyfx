@@ -81,20 +81,6 @@ static void ApplyMouseEventResult(VSTGUI::CMouseEventResult inMouseEventResult, 
 }
 
 //-----------------------------------------------------------------------------
-// workaround for https://github.com/steinbergmedia/vstgui/issues/253
-static bool operator==(VSTGUI::Modifiers const& a, VSTGUI::Modifiers const& b) noexcept
-{
-	static_assert(dfx::IsTriviallySerializable<VSTGUI::Modifiers>);
-	return (std::memcmp(&a, &b, sizeof(a)) == 0);
-}
-
-static bool operator!=(VSTGUI::Modifiers const& a, VSTGUI::Modifiers const& b) noexcept
-{
-	static_assert(dfx::IsTriviallySerializable<VSTGUI::Modifiers>);
-	return (std::memcmp(&a, &b, sizeof(a)) != 0);
-}
-
-//-----------------------------------------------------------------------------
 static void EndControl(IDGControl* inControl)
 {
 	if (inControl->asCControl()->isEditing())
