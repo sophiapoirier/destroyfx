@@ -83,11 +83,11 @@ public:
 	void cleanup() override;
 	void reset() override;
 
-	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
+	void processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames) override;
 	void processparameters() override;
 
 private:
-	static constexpr long kPresetCount = 16;
+	static constexpr size_t kPresetCount = 16;
 	static constexpr long kDelaySamplesMin = 1;
 	static constexpr long kDelaySamplesMax = 128;
 	static constexpr long kDelayBufferSize = kDelaySamplesMax * 2;

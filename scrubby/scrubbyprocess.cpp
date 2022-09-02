@@ -117,7 +117,7 @@ void Scrubby::checkTempoSyncStuff()
 
 	// reset cycle state stuff if playback has changed (for measure sync)
 	auto const numChannels = getnumoutputs();
-	for (unsigned long ch = 0; ch < numChannels; ch++)
+	for (size_t ch = 0; ch < numChannels; ch++)
 	{
 		if (mNeedResync[ch])
 		{
@@ -127,7 +127,7 @@ void Scrubby::checkTempoSyncStuff()
 }
 
 //-----------------------------------------------------------------------------------------
-void Scrubby::generateNewTarget(unsigned long channel)
+void Scrubby::generateNewTarget(size_t channel)
 {
 	double currentSeekRate {};
 
@@ -172,7 +172,7 @@ void Scrubby::generateNewTarget(unsigned long channel)
 	// do bar sync if we're in tempo sync and things resyncing is in order
 	if (mNeedResync[channel])
 	{
-		auto const samplesUntilBar = gettimeinfo().mSamplesToNextBar;
+		auto const samplesUntilBar = std::lround(gettimeinfo().mSamplesToNextBar);
 		// because a 0 for mSeekCount will be soon turned into 1, which is not so good for DJ mode
 		if (samplesUntilBar > 0)
 		{
@@ -398,7 +398,7 @@ double Scrubby::processPitchConstraint(double readStep) const
 
 
 //-----------------------------------------------------------------------------------------
-void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
+void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames)
 {
 	auto const numChannels = getnumoutputs();
 
@@ -416,22 +416,22 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 	// now remember the current situation for informing the next processing block
 	mNotesWereAlreadyActive = notesActive;
 
-	for (unsigned long samplecount = 0; samplecount < inNumFrames; samplecount++)
+	for (size_t sampleIndex = 0; sampleIndex < inNumFrames; sampleIndex++)
 	{
 		// cache first channel input audio sample so that in-place processing can overwrite it for subsequent channels
-		auto const inputValue_firstChannel = inAudio[0][samplecount];
+		auto const inputValue_firstChannel = inAudio[0][sampleIndex];
 
 		// update the buffers with the latest samples
 		if (!mFreeze)
 		{
-			for (unsigned long ch = 0; ch < numChannels; ch++)
+			for (size_t ch = 0; ch < numChannels; ch++)
 			{
-				mAudioBuffers[ch][mWritePos] = inAudio[std::min(ch, getnuminputs() - 1)][samplecount];
+				mAudioBuffers[ch][mWritePos] = inAudio[std::min(ch, getnuminputs() - 1)][sampleIndex];
 			}
 #if 0  // melody test
-			for (unsigned long ch = 0; ch < numChannels; ch++)
+			for (size_t ch = 0; ch < numChannels; ch++)
 			{
-				mAudioBuffers[ch][mWritePos] = 0.69f * std::sin(24.f * std::numbers::pi_v<float> * (static_cast<float>(samplecount) / static_cast<float>(inNumFrames)));
+				mAudioBuffers[ch][mWritePos] = 0.69f * std::sin(24.f * std::numbers::pi_v<float> * (static_cast<float>(sampleIndex) / static_cast<float>(inNumFrames)));
 				mAudioBuffers[ch][mWritePos] = 0.69f * std::sin(2.f * std::numbers::pi_v<float> * (static_cast<float>(mSineCount) / 169.f));
 			}
 			// produce a sine wave of C4 when using 44.1 kHz sample rate
@@ -443,12 +443,12 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 		}
 
 		// write the output to the output streams, interpolated for smoothness
-		for (unsigned long ch = 0; ch < numChannels; ch++)
+		for (size_t ch = 0; ch < numChannels; ch++)
 		{
-			auto const inputValue = (ch < getnuminputs()) ? inAudio[ch][samplecount] : inputValue_firstChannel;
+			auto const inputValue = (ch < getnuminputs()) ? inAudio[ch][sampleIndex] : inputValue_firstChannel;
 			auto outputValue = dfx::math::InterpolateHermite(mAudioBuffers[ch].data(), mReadPos[ch], mMaxAudioBufferSize);
 			outputValue = mHighpassFilters[ch].process(outputValue);
-			outAudio[ch][samplecount] = (inputValue * mInputGain.getValue()) + (outputValue * mOutputGain.getValue());
+			outAudio[ch][sampleIndex] = (inputValue * mInputGain.getValue()) + (outputValue * mOutputGain.getValue());
 		}
 
 		// increment/decrement the position trackers and counters
@@ -456,7 +456,7 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 		{
 			mWritePos = (mWritePos + 1) % mMaxAudioBufferSize;
 		}
-		for (unsigned long ch = 0; ch < numChannels; ch++)
+		for (size_t ch = 0; ch < numChannels; ch++)
 		{
 			mSeekCount[ch]--;
 			mMoveCount[ch]--;
@@ -485,7 +485,7 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 		// find a new target to seek for the right channel if we're in split channels mode
 		if (mSplitChannels)
 		{
-			for (unsigned long ch = 1; ch < numChannels; ch++)
+			for (size_t ch = 1; ch < numChannels; ch++)
 			{
 				if (mSeekCount[ch] < 0)
 				{
@@ -495,7 +495,7 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 		}
 		//
 		// only increment the read position trackers if we're still moving towards the target
-		for (unsigned long ch = 0; ch < numChannels; ch++)
+		for (size_t ch = 0; ch < numChannels; ch++)
 		{
 			if (mMoveCount[ch] >= 0)
 			{
@@ -537,7 +537,7 @@ void Scrubby::processMidiNotes()
 		oldNotes[i] = getparameter_b(i + kPitchStep0);
 	}
 
-	for (long i = 0; i < getmidistate().getBlockEventCount(); i++)
+	for (size_t i = 0; i < getmidistate().getBlockEventCount(); i++)
 	{
 		// wrap the note value around to our 1-octave range
 		int const currentNote = (getmidistate().getBlockEvent(i).mByte1) % kNumPitchSteps;

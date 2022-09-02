@@ -64,7 +64,7 @@ protected:
   std::optional<dfx::ParameterAssignment> settings_getLearningAssignData(long inParameterIndex) const override;
 
 private:
-  static constexpr long NUM_PRESETS = 16;
+  static constexpr size_t NUM_PRESETS = 16;
 
   /* set up the built-in presets */
   void makepresets();
@@ -87,7 +87,7 @@ public:
 
   void reset() override;
   void processparameters() override;
-  void process(float const* inAudio, float* outAudio, unsigned long inNumFrames) override;
+  void process(float const* inAudio, float* outAudio, size_t inNumFrames) override;
 
   /* several of these are needed by geometerview. */
   int processw(float const * in, float * out, int samples,

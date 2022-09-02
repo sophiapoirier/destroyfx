@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of RMS Buddy.
 
@@ -454,7 +454,7 @@ OSStatus RMSBuddy::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags,
 
 
 	// figure out if it's time to tell the GUI to refresh its display
-	auto const analysisWindow = static_cast<unsigned long>(AUEffectBase::GetParameter(kParameter_AnalysisWindowSize) * GetSampleRate() * 0.001);
+	auto const analysisWindow = static_cast<uint64_t>(AUEffectBase::GetParameter(kParameter_AnalysisWindowSize) * GetSampleRate() * 0.001);
 	auto const nextCount = mAnalysisWindowSampleCounter + inFramesToProcess;  // predict the total after the next processing window
 	if ((mAnalysisWindowSampleCounter > analysisWindow) || 
 		(std::labs(static_cast<long>(mAnalysisWindowSampleCounter) - static_cast<long>(analysisWindow)) < std::labs(static_cast<long>(nextCount) - static_cast<long>(analysisWindow))))  // round

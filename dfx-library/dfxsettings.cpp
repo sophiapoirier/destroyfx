@@ -55,8 +55,9 @@ Welcome to our settings persistence mess.
 //-----------------------------------------------------------------------------
 DfxSettings::DfxSettings(uint32_t inMagic, DfxPlugin* inPlugin, size_t inSizeofExtendedData)
 :	mPlugin(inPlugin),
-	mNumParameters(std::max(inPlugin->getnumparameters(), 1L)),	// we need at least 1 parameter
-	mNumPresets(std::max(inPlugin->getnumpresets(), 1L)),	// we need at least 1 set of parameters
+	// TODO C++23: integer literal suffix UZ
+	mNumParameters(std::max(inPlugin->getnumparameters(), size_t(1))),	// we need at least one parameter
+	mNumPresets(std::max(inPlugin->getnumpresets(), size_t(1))),	// we need at least one set of parameters
 	mSizeOfExtendedData(inSizeofExtendedData),
 	mParameterIDs(mNumParameters, dfx::kParameterID_Invalid),
 	mParameterAssignments(mNumParameters)
@@ -114,7 +115,8 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 	// and a few pointers to elements within that data, just for ease of use
 	auto const firstSharedParameterID = reinterpret_cast<int32_t*>(data.data() + sizeof(SettingsInfo));
 	auto const firstSharedPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(firstSharedParameterID) + mSizeOfParameterIDs);
-	auto const savePresetCount = static_cast<size_t>(inIsPreset ? 1 : mNumPresets);
+	// TODO C++23: integer literal suffix UZ
+	auto const savePresetCount = inIsPreset ? size_t(1) : mNumPresets;
 	auto const firstSharedParameterAssignment = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<std::byte*>(firstSharedPreset) + (mSizeOfPreset * savePresetCount));
 
 	// first store the special chunk infos
@@ -135,7 +137,7 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 	if (inIsPreset)
 	{
 		dfx::StrLCpy(firstSharedPreset->mName, mPlugin->getpresetname(mPlugin->getcurrentpresetnum()), std::size(firstSharedPreset->mName));
-		for (unsigned long i = 0; i < mNumParameters; i++)
+		for (size_t i = 0; i < mNumParameters; i++)
 		{
 			firstSharedPreset->mParameterValues[i] = mPlugin->getparameter_f(i);
 		}
@@ -144,12 +146,12 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 	else
 	{
 		auto tempSharedPresets = firstSharedPreset;
-		for (long j = 0; j < static_cast<long>(mNumPresets); j++)
+		for (size_t j = 0; j < mNumPresets; j++)
 		{
 			// copy the preset name to the chunk
 			dfx::StrLCpy(tempSharedPresets->mName, mPlugin->getpresetname(j), std::size(tempSharedPresets->mName));
 			// copy all of the parameters for this preset to the chunk
-			for (unsigned long i = 0; i < mNumParameters; i++)
+			for (size_t i = 0; i < mNumParameters; i++)
 			{
 				tempSharedPresets->mParameterValues[i] = mPlugin->getpresetparameter_f(j, i);
 			}
@@ -248,7 +250,8 @@ try
 
 	// figure out how many presets we should try to load 
 	// if the incoming chunk doesn't match what we're expecting
-	auto const copyPresets = std::min(static_cast<unsigned long>(numStoredPresets), inIsPreset ? 1UL : mNumPresets);
+	// TODO C++23: integer literal suffix UZ
+	auto const copyPresets = std::min(static_cast<size_t>(numStoredPresets), inIsPreset ? size_t(1) : mNumPresets);
 	// figure out how much of the dfx::ParameterAssignment structure we can import
 	auto const copyParameterAssignmentSize = std::min(storedParameterAssignmentSize, mSettingsInfo.mStoredParameterAssignmentSize);
 
@@ -369,7 +372,7 @@ try
 					mPlugin->setparameter_f(i, newPreset->mParameterValues[mappedTag]);
 				}
 				// allow for additional tweaking of the stored parameter setting
-				mPlugin->settings_doChunkRestoreSetParameterStuff(i, newPreset->mParameterValues[mappedTag], newSettingsInfo->mVersion);
+				mPlugin->settings_doChunkRestoreSetParameterStuff(i, newPreset->mParameterValues[mappedTag], newSettingsInfo->mVersion, {});
 			}
 		}
 		// point past the preset
@@ -380,7 +383,7 @@ try
 	{
 		// we're loading an entire bank of presets plus the MIDI event assignments, 
 		// so cycle through all of the presets and load them up, as many as we can
-		for (unsigned long j = 0; j < copyPresets; j++)
+		for (size_t j = 0; j < copyPresets; j++)
 		{
 			// copy the preset name from the chunk
 			mPlugin->setpresetname(j, getPresetNameWithFallback(*newPreset));
@@ -720,7 +723,7 @@ bool DfxSettings::saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDicti
 		return false;
 	}
 
-	unsigned long assignmentsFoundCount = 0;
+	size_t assignmentsFoundCount = 0;
 	for (long i = 0; i < static_cast<long>(mNumParameters); i++)
 	{
 		if (getParameterAssignmentType(i) != dfx::MidiEventType::None)
@@ -740,7 +743,7 @@ bool DfxSettings::saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDicti
 		return false;
 	}
 
-	for (unsigned long i = 0; i < mNumParameters; i++)
+	for (size_t i = 0; i < mNumParameters; i++)
 	{
 		auto const assignmentCFDictionary = dfx::MakeUniqueCFType(CFDictionaryCreateMutable(kCFAllocatorDefault, 10, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
 		if (assignmentCFDictionary)
@@ -852,7 +855,7 @@ bool DfxSettings::restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDiction
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleCC(int inMidiChannel, int inControllerNumber, int inValue, unsigned long inOffsetFrames)
+void DfxSettings::handleCC(int inMidiChannel, int inControllerNumber, int inValue, size_t inOffsetFrames)
 {
 	// don't allow the "all notes off" CC because almost every sequencer uses that when playback stops
 	if (inControllerNumber == DfxMidi::kCC_AllNotesOff)
@@ -865,21 +868,21 @@ void DfxSettings::handleCC(int inMidiChannel, int inControllerNumber, int inValu
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleChannelAftertouch(int inMidiChannel, int inValue, unsigned long inOffsetFrames)
+void DfxSettings::handleChannelAftertouch(int inMidiChannel, int inValue, size_t inOffsetFrames)
 {
 	if (!mAllowChannelAftertouchEvents)
 	{
 		return;
 	}
 
-	constexpr long fakeEventNum = 0;  // not used for this type of event
+	constexpr int fakeEventNum = 0;  // not used for this type of event
 	handleMidi_assignParam(dfx::MidiEventType::ChannelAftertouch, inMidiChannel, fakeEventNum, inOffsetFrames);
-	constexpr long fakeByte2 = 0;  // not used for this type of event
+	constexpr int fakeByte2 = 0;  // not used for this type of event
 	handleMidi_automateParams(dfx::MidiEventType::ChannelAftertouch, inMidiChannel, inValue, fakeByte2, inOffsetFrames);
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames)
+void DfxSettings::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames)
 {
 	if (!mAllowPitchbendEvents)
 	{
@@ -895,7 +898,7 @@ void DfxSettings::handlePitchBend(int inMidiChannel, int inValueLSB, int inValue
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames)
+void DfxSettings::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames)
 {
 	if (!mAllowNoteEvents)
 	{
@@ -907,7 +910,7 @@ void DfxSettings::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVeloci
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames)
+void DfxSettings::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames)
 {
 	if (!mAllowNoteEvents)
 	{
@@ -935,7 +938,7 @@ void DfxSettings::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVeloc
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleAllNotesOff(int inMidiChannel, unsigned long inOffsetFrames)
+void DfxSettings::handleAllNotesOff(int inMidiChannel, size_t inOffsetFrames)
 {
 	if (!mAllowNoteEvents)
 	{
@@ -950,7 +953,7 @@ void DfxSettings::handleAllNotesOff(int inMidiChannel, unsigned long inOffsetFra
 
 //-----------------------------------------------------------------------------------------
 // assign an incoming MIDI event to the learner parameter
-void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, unsigned long inOffsetFrames)
+void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, size_t inOffsetFrames)
 {
 	// we don't need to make an assignment to a parameter if MIDI learning is off
 	if (!mMidiLearn || !paramTagIsValid(mLearner))
@@ -1014,7 +1017,7 @@ void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, int inM
 
 //-----------------------------------------------------------------------------------------
 // automate assigned parameters in response to a MIDI event
-void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, int inByte2, unsigned long inOffsetFrames, bool inIsNoteOn)
+void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, int inByte2, size_t inOffsetFrames, bool inIsNoteOn)
 {
 	float valueNormalized = static_cast<float>(inByte2) * DfxMidi::kValueScalar;
 	if (inEventType == dfx::MidiEventType::ChannelAftertouch)
@@ -1042,7 +1045,7 @@ void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, int 
 
 	// search for parameters that have this MIDI event assigned to them and, 
 	// if any are found, automate them with the event message's value
-	for (unsigned long tag = 0; tag < mNumParameters; tag++)
+	for (size_t tag = 0; tag < mNumParameters; tag++)
 	{
 		auto const& pa = mParameterAssignments.at(tag);
 
@@ -1187,7 +1190,7 @@ void DfxSettings::assignParam(long inParamTag, dfx::MidiEventType inEventType, l
 	// parameter assignment(s) if using stealing
 	if (mStealAssignments)
 	{
-		for (unsigned long i = 0; i < mNumParameters; i++)
+		for (size_t i = 0; i < mNumParameters; i++)
 		{
 			auto const& pa = mParameterAssignments.at(i);
 			// skip this parameter if the event type doesn't match

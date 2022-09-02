@@ -57,12 +57,12 @@ public:
 	void cleanup() override;
 	void reset() override;
 
-	void processaudio(float const* const* in, float** out, unsigned long inNumFrames, bool replacing = true) override;
+	void processaudio(float const* const* in, float** out, size_t inNumFrames) override;
 	void processparameters() override;
 #endif
 
 private:
-	static constexpr long kNumPresets = 16;
+	static constexpr size_t kNumPresets = 16;
 	static constexpr double kBufferSize_Seconds = 3.0;  // audio buffer size in seconds
 
 	// the different states of the indexed parameter
@@ -100,7 +100,7 @@ public:
 	void reset() override;
 
 	void processparameters() override;
-	void process(float const* inStream, float* outStream, unsigned long inNumFrames, bool replacing = true) override;
+	void process(float const* inStream, float* outStream, size_t inNumFrames) override;
 
 private:
 	// handy usable copies of the parameters

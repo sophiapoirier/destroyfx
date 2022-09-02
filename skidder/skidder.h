@@ -93,11 +93,11 @@ public:
 	void reset() override;
 
 	void processparameters() override;
-	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
+	void processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames) override;
 
 	// stuff for extending DfxSettings
 	void settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, int eventChannel,
-										int eventNum, unsigned long offsetFrames, int eventNum2 = 0,
+										int eventNum, size_t offsetFrames, int eventNum2 = 0,
 										dfx::MidiEventBehaviorFlags eventBehaviourFlags = dfx::kMidiEventBehaviorFlag_None,
 										int data1 = 0, int data2 = 0, float fdata1 = 0.0f, float fdata2 = 0.0f) override;
 //	void settings_unassignParam(long tag) override;
@@ -107,7 +107,7 @@ public:
 
 
 private:
-	static constexpr long kNumPresets = 16;
+	static constexpr size_t kNumPresets = 16;
 
 	// these are the states of the process:
 	enum class SkidState
@@ -125,7 +125,7 @@ private:
 	float processOutput(float in1, float in2, float panGain);
 	void processMidiNotes();
 
-	void noteOn(unsigned long offsetFrames);
+	void noteOn(size_t offsetFrames);
 	void noteOff();
 	bool isAnyNoteOn() const;
 	void resetMidi();

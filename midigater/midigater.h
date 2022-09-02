@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -60,7 +60,7 @@ public:
 	void cleanup() override;
 	void reset() override;
 	void processparameters() override;
-	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
+	void processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames) override;
 
 private:
 	void resetFilters();

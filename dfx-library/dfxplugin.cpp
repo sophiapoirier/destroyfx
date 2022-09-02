@@ -35,6 +35,7 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 #include <thread>
 #include <unordered_set>
 
+#include "dfxmath.h"
 #include "dfxmisc.h"
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -141,8 +142,8 @@ static void DFX_UnregisterIdleClient(DfxPlugin* const inIdleClient)
 //-----------------------------------------------------------------------------
 DfxPlugin::DfxPlugin(
 					TARGET_API_BASE_INSTANCE_TYPE inInstance
-					, long inNumParameters
-					, long inNumPresets
+					, size_t inNumParameters
+					, size_t inNumPresets
 					) :
 
 // setup the constructors of the inherited base classes, for the appropriate API
@@ -170,7 +171,7 @@ DfxPlugin::DfxPlugin(
 	updatesamplerate();  // XXX have it set to something here?
 
 	mPresets.reserve(inNumPresets);
-	for (long i = 0; i < inNumPresets; i++)
+	for (size_t i = 0; i < inNumPresets; i++)
 	{
 		mPresets.emplace_back(inNumParameters);
 	}
@@ -329,7 +330,7 @@ long DfxPlugin::do_initialize()
 	// regenerate the DSP core instances whenever the audio I/O format changes
 	mDSPCores.clear();
 	mDSPCores.reserve(getnumoutputs());
-	for (unsigned long ch = 0; ch < getnumoutputs(); ch++)
+	for (size_t ch = 0; ch < getnumoutputs(); ch++)
 	{
 		mDSPCores.emplace_back(dspCoreFactory(ch));
 	}
@@ -630,9 +631,9 @@ void DfxPlugin::update_parameter(long inParameterIndex)
 
 #ifdef TARGET_API_VST
 	auto const vstPresetIndex = getProgram();
-	if (presetisvalid(vstPresetIndex))
+	if ((vstPresetIndex >= 0) && presetisvalid(dfx::math::ToIndex(vstPresetIndex)))
 	{
-		setpresetparameter(vstPresetIndex, inParameterIndex, getparameter(inParameterIndex));
+		setpresetparameter(dfx::math::ToIndex(vstPresetIndex), inParameterIndex, getparameter(inParameterIndex));
 	}
 	#if TARGET_PLUGIN_HAS_GUI
 	// the VST2 editor interface has no real listener mechanism for parameters and therefore 
@@ -937,15 +938,15 @@ DfxParam& DfxPlugin::getparameterobject(long inParameterIndex)
 
 //-----------------------------------------------------------------------------
 // whether or not the index is a valid preset
-bool DfxPlugin::presetisvalid(long inPresetIndex) const
+bool DfxPlugin::presetisvalid(size_t inPresetIndex) const noexcept
 {
-	return (inPresetIndex >= 0) && (inPresetIndex < getnumpresets());
+	return (inPresetIndex < getnumpresets());
 }
 
 //-----------------------------------------------------------------------------
 // whether or not the index is a valid preset with a valid name
 // this is mostly just for Audio Unit
-bool DfxPlugin::presetnameisvalid(long inPresetIndex) const
+bool DfxPlugin::presetnameisvalid(size_t inPresetIndex) const
 {
 	if (!presetisvalid(inPresetIndex))
 	{
@@ -961,7 +962,7 @@ bool DfxPlugin::presetnameisvalid(long inPresetIndex) const
 
 //-----------------------------------------------------------------------------
 // load the settings of a preset
-bool DfxPlugin::loadpreset(long inPresetIndex)
+bool DfxPlugin::loadpreset(size_t inPresetIndex)
 {
 	if (!presetisvalid(inPresetIndex))
 	{
@@ -974,7 +975,7 @@ bool DfxPlugin::loadpreset(long inPresetIndex)
 	// for the program index to set parameter values, which means that the currently 
 	// selected program will have its parameter values overwritten by those of the 
 	// program currently being loaded, unless we do this first
-	TARGET_API_BASE_CLASS::setProgram(inPresetIndex);
+	TARGET_API_BASE_CLASS::setProgram(dfx::math::ToSigned(inPresetIndex));
 #endif
 
 	for (long i = 0; i < getnumparameters(); i++)
@@ -1005,7 +1006,7 @@ void DfxPlugin::postupdate_preset()
 
 #ifdef TARGET_API_AUDIOUNIT
 	AUPreset au_preset {};
-	au_preset.presetNumber = getcurrentpresetnum();
+	au_preset.presetNumber = dfx::math::ToSigned(getcurrentpresetnum());
 	au_preset.presetName = getpresetcfname(getcurrentpresetnum());
 	SetAFactoryPresetAsCurrent(au_preset);
 	PropertyChanged(kAudioUnitProperty_PresentPreset, kAudioUnitScope_Global, AudioUnitElement(0));
@@ -1013,7 +1014,7 @@ void DfxPlugin::postupdate_preset()
 #endif
 
 #ifdef TARGET_API_VST
-	TARGET_API_BASE_CLASS::setProgram(getcurrentpresetnum());
+	TARGET_API_BASE_CLASS::setProgram(dfx::math::ToSigned(getcurrentpresetnum()));
 	// XXX Cubase SX will crash if custom-GUI plugs call updateDisplay 
 	// while the editor is closed, so as a workaround, only do it 
 	// if the plugin has no custom GUI
@@ -1032,7 +1033,7 @@ void DfxPlugin::initpresetsparameter(long inParameterIndex)
 {
 	// first fill in the presets with the init settings 
 	// so that there are no "stale" unset values
-	for (long i = 0; i < getnumpresets(); i++)
+	for (size_t i = 0; i < getnumpresets(); i++)
 	{
 		if (!presetnameisvalid(i))  // only if it's an "empty" preset
 		{
@@ -1042,7 +1043,7 @@ void DfxPlugin::initpresetsparameter(long inParameterIndex)
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value DfxPlugin::getpresetparameter(long inPresetIndex, long inParameterIndex) const
+DfxParam::Value DfxPlugin::getpresetparameter(size_t inPresetIndex, long inParameterIndex) const
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
@@ -1052,7 +1053,7 @@ DfxParam::Value DfxPlugin::getpresetparameter(long inPresetIndex, long inParamet
 }
 
 //-----------------------------------------------------------------------------
-double DfxPlugin::getpresetparameter_f(long inPresetIndex, long inParameterIndex) const
+double DfxPlugin::getpresetparameter_f(size_t inPresetIndex, long inParameterIndex) const
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
@@ -1062,7 +1063,7 @@ double DfxPlugin::getpresetparameter_f(long inPresetIndex, long inParameterIndex
 }
 
 //-----------------------------------------------------------------------------
-int64_t DfxPlugin::getpresetparameter_i(long inPresetIndex, long inParameterIndex) const
+int64_t DfxPlugin::getpresetparameter_i(size_t inPresetIndex, long inParameterIndex) const
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
@@ -1072,7 +1073,7 @@ int64_t DfxPlugin::getpresetparameter_i(long inPresetIndex, long inParameterInde
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::getpresetparameter_b(long inPresetIndex, long inParameterIndex) const
+bool DfxPlugin::getpresetparameter_b(size_t inPresetIndex, long inParameterIndex) const
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
@@ -1082,7 +1083,7 @@ bool DfxPlugin::getpresetparameter_b(long inPresetIndex, long inParameterIndex) 
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter(long inPresetIndex, long inParameterIndex, DfxParam::Value inValue)
+void DfxPlugin::setpresetparameter(size_t inPresetIndex, long inParameterIndex, DfxParam::Value inValue)
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
@@ -1091,7 +1092,7 @@ void DfxPlugin::setpresetparameter(long inPresetIndex, long inParameterIndex, Df
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_f(long inPresetIndex, long inParameterIndex, double inValue)
+void DfxPlugin::setpresetparameter_f(size_t inPresetIndex, long inParameterIndex, double inValue)
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
@@ -1101,7 +1102,7 @@ void DfxPlugin::setpresetparameter_f(long inPresetIndex, long inParameterIndex, 
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_i(long inPresetIndex, long inParameterIndex, int64_t inValue)
+void DfxPlugin::setpresetparameter_i(size_t inPresetIndex, long inParameterIndex, int64_t inValue)
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
@@ -1111,7 +1112,7 @@ void DfxPlugin::setpresetparameter_i(long inPresetIndex, long inParameterIndex, 
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_b(long inPresetIndex, long inParameterIndex, bool inValue)
+void DfxPlugin::setpresetparameter_b(size_t inPresetIndex, long inParameterIndex, bool inValue)
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
@@ -1121,7 +1122,7 @@ void DfxPlugin::setpresetparameter_b(long inPresetIndex, long inParameterIndex, 
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_gen(long inPresetIndex, long inParameterIndex, double inValue)
+void DfxPlugin::setpresetparameter_gen(size_t inPresetIndex, long inParameterIndex, double inValue)
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
@@ -1132,7 +1133,7 @@ void DfxPlugin::setpresetparameter_gen(long inPresetIndex, long inParameterIndex
 
 //-----------------------------------------------------------------------------
 // set the text of a preset name
-void DfxPlugin::setpresetname(long inPresetIndex, std::string_view inText)
+void DfxPlugin::setpresetname(size_t inPresetIndex, std::string_view inText)
 {
 	assert(!inText.empty());
 
@@ -1144,7 +1145,7 @@ void DfxPlugin::setpresetname(long inPresetIndex, std::string_view inText)
 
 //-----------------------------------------------------------------------------
 // get a copy of the text of a preset name
-std::string DfxPlugin::getpresetname(long inPresetIndex) const
+std::string DfxPlugin::getpresetname(size_t inPresetIndex) const
 {
 	if (presetisvalid(inPresetIndex))
 	{
@@ -1156,7 +1157,7 @@ std::string DfxPlugin::getpresetname(long inPresetIndex) const
 #ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
 // get the CFString version of a preset name
-CFStringRef DfxPlugin::getpresetcfname(long inPresetIndex) const
+CFStringRef DfxPlugin::getpresetcfname(size_t inPresetIndex) const
 {
 	if (presetisvalid(inPresetIndex))
 	{
@@ -1361,17 +1362,14 @@ void DfxPlugin::do_idle()
 
 //-----------------------------------------------------------------------------
 // return the number of audio inputs
-unsigned long DfxPlugin::getnuminputs()
+size_t DfxPlugin::getnuminputs()
 {
 #ifdef TARGET_API_AUDIOUNIT
 	if (Inputs().GetNumberOfElements() > 0)
 	{
 		return GetStreamFormat(kAudioUnitScope_Input, AudioUnitElement(0)).mChannelsPerFrame;
 	}
-	else
-	{
-		return 0;
-	}
+	return 0;
 #endif
 
 #ifdef TARGET_API_VST
@@ -1386,27 +1384,24 @@ unsigned long DfxPlugin::getnuminputs()
 			DAEConnectionPtr inputConnection = GetInputConnection(ch);
 			if (!inputConnection)
 			{
-				return static_cast<unsigned long>(ch);
+				return dfx::math::ToIndex(ch);
 			}
 		}
 	}
-	return static_cast<unsigned long>(GetNumInputs());
+	return dfx::math::ToUnsigned(GetNumInputs());
 #endif
 }
 
 //-----------------------------------------------------------------------------
 // return the number of audio outputs
-unsigned long DfxPlugin::getnumoutputs()
+size_t DfxPlugin::getnumoutputs()
 {
 #ifdef TARGET_API_AUDIOUNIT
 	if (Outputs().GetNumberOfElements() > 0)
 	{
 		return GetStreamFormat(kAudioUnitScope_Output, AudioUnitElement(0)).mChannelsPerFrame;
 	}
-	else
-	{
-		return 0;
-	}
+	return 0;
 #endif
 
 #ifdef TARGET_API_VST
@@ -1421,11 +1416,11 @@ unsigned long DfxPlugin::getnumoutputs()
 			DAEConnectionPtr outputConnection = GetOutputConnection(ch);
 			if (!outputConnection)
 			{
-				return static_cast<unsigned long>(ch);
+				return dfx::math::ToIndex(ch);
 			}
 		}
 	}
-	return static_cast<unsigned long>(GetNumOutputs());
+	return dfx::math::ToUnsigned(GetNumOutputs());
 #endif
 }
 
@@ -1436,18 +1431,18 @@ bool DfxPlugin::asymmetricalchannels()
 }
 
 //-----------------------------------------------------------------------------
-unsigned long DfxPlugin::getmaxframes()
+size_t DfxPlugin::getmaxframes()
 {
 #ifdef TARGET_API_AUDIOUNIT
 	return GetMaxFramesPerSlice();
 #endif
 
 #ifdef TARGET_API_VST
-	return static_cast<unsigned long>(getBlockSize());
+	return dfx::math::ToUnsigned(getBlockSize());
 #endif
 
 #ifdef TARGET_API_RTAS
-	return static_cast<unsigned long>(GetMaximumRTASQuantum());
+	return dfx::math::ToUnsigned(GetMaximumRTASQuantum());
 #endif
 }
 
@@ -1481,7 +1476,7 @@ void DfxPlugin::addchannelconfig(ChannelConfig inChannelConfig)
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::ischannelcountsupported(unsigned long inNumInputs, unsigned long inNumOutputs) const
+bool DfxPlugin::ischannelcountsupported(size_t inNumInputs, size_t inNumOutputs) const
 {
 	if (mChannelConfigs.empty())
 	{
@@ -1517,8 +1512,8 @@ bool DfxPlugin::ischannelcountsupported(unsigned long inNumInputs, unsigned long
 		{
 			assert((configNumInputs >= 0) || (configNumInputs == kChannelConfigCount_Any));
 			assert((configNumOutputs >= 0) || (configNumOutputs == kChannelConfigCount_Any));
-			bool const inputMatch = (configNumInputs == kChannelConfigCount_Any) || (inNumInputs == static_cast<unsigned long>(configNumInputs));
-			bool const outputMatch = (configNumOutputs == kChannelConfigCount_Any) || (inNumOutputs == static_cast<unsigned long>(configNumOutputs));
+			bool const inputMatch = (configNumInputs == kChannelConfigCount_Any) || (inNumInputs == static_cast<size_t>(configNumInputs));
+			bool const outputMatch = (configNumOutputs == kChannelConfigCount_Any) || (inNumOutputs == static_cast<size_t>(configNumOutputs));
 			// if input and output are both allowed in this I/O pair description, then we found a match
 			if (inputMatch && outputMatch)
 			{
@@ -1757,7 +1752,7 @@ void DfxPlugin::processtimeinfo()
 	mTimeInfo.mNumerator = 4.0;
 	mTimeInfo.mDenominator = 4.0;
 	mTimeInfo.mTimeSignatureIsValid = false;
-	mTimeInfo.mSamplesToNextBar = 0;
+	mTimeInfo.mSamplesToNextBar = 0.;
 	mTimeInfo.mSamplesToNextBarIsValid = false;
 	mTimeInfo.mPlaybackChanged = false;
 	mTimeInfo.mPlaybackIsOccurring = true;
@@ -1889,12 +1884,9 @@ else fprintf(stderr, "CallHostTransportState() error %ld\n", status);
 		mTimeInfo.mTempo = 120.0;
 	}
 	mTimeInfo.mTempo_BPS = mTimeInfo.mTempo / 60.0;
-	mTimeInfo.mSamplesPerBeat = std::lround(getsamplerate() / mTimeInfo.mTempo_BPS);
+	mTimeInfo.mSamplesPerBeat = getsamplerate() / mTimeInfo.mTempo_BPS;
 
-	if (mTimeInfo.mTempoIsValid && mTimeInfo.mBeatPosIsValid && mTimeInfo.mBarPosIsValid && mTimeInfo.mTimeSignatureIsValid)
-	{
-		mTimeInfo.mSamplesToNextBarIsValid = true;
-	}
+	mTimeInfo.mSamplesToNextBarIsValid = (mTimeInfo.mTempoIsValid && mTimeInfo.mBeatPosIsValid && mTimeInfo.mBarPosIsValid && mTimeInfo.mTimeSignatureIsValid);
 
 	// it will screw up the while loop below bigtime if the numerator isn't a positive number
 	if (mTimeInfo.mNumerator <= 0.0)
@@ -1930,22 +1922,23 @@ else fprintf(stderr, "CallHostTransportState() error %ld\n", status);
 		}
 
 		// convert the value for the distance to the next measure from beats to samples
-		mTimeInfo.mSamplesToNextBar = std::lround(numBeatsToBar * getsamplerate() / mTimeInfo.mTempo_BPS);
-		// protect against wacky values
-		mTimeInfo.mSamplesToNextBar = std::max(mTimeInfo.mSamplesToNextBar, 0L);
+		mTimeInfo.mSamplesToNextBar = std::max(numBeatsToBar * mTimeInfo.mSamplesPerBeat, 0.);
 	}
 }
 
 
 //-----------------------------------------------------------------------------
 // this is called immediately before processing a block of audio
-void DfxPlugin::preprocessaudio()
+void DfxPlugin::preprocessaudio(size_t inNumFrames)
 {
+	assert(inNumFrames <= getmaxframes());
+	assert(inNumFrames > 0);
+
 	mAudioIsRendering = true;
 	mAudioRenderThreadID = std::this_thread::get_id();
 
 #if TARGET_PLUGIN_USES_MIDI
-	mMidiState.preprocessEvents();
+	mMidiState.preprocessEvents(inNumFrames);
 #endif
 
 #if TARGET_PLUGIN_USES_DSPCORE
@@ -1956,7 +1949,7 @@ void DfxPlugin::preprocessaudio()
 	processtimeinfo();
 
 	// deal with current parameter values for usage during audio processing
-	for (long i = 0; i < getnumparameters(); i++)
+	for (size_t i = 0; i < getnumparameters(); i++)
 	{
 		mParametersChangedAsOfPreProcess[i] = mParameters[i].setchanged(false);
 		mParametersTouchedAsOfPreProcess[i] = mParameters[i].settouched(false);
@@ -1982,7 +1975,7 @@ void DfxPlugin::do_processparameters()
 	processparameters();
 
 #if TARGET_PLUGIN_USES_DSPCORE
-	for (unsigned long ch = 0; ch < getnumoutputs(); ch++)
+	for (size_t ch = 0; ch < getnumoutputs(); ch++)
 	{
 		getplugincore(ch)->processparameters();
 	}
@@ -2018,14 +2011,14 @@ double DfxPlugin::getdspcoreparameter_scalar(long inParameterIndex) const
 //-----------------------------------------------------------------------------
 void DfxPlugin::cacheDSPCoreParameterValues()
 {
-	for (long i = 0; i < getnumparameters(); i++)
+	for (size_t i = 0; i < getnumparameters(); i++)
 	{
 		mDSPCoreParameterValuesCache[i] = getparameter(i);
 	}
 }
 
 //-----------------------------------------------------------------------------
-DfxPluginCore* DfxPlugin::getplugincore(unsigned long inChannel) const
+DfxPluginCore* DfxPlugin::getplugincore(size_t inChannel) const
 {
 #ifdef TARGET_API_AUDIOUNIT
 	return dynamic_cast<DfxPluginCore*>(GetKernel(inChannel));
@@ -2047,70 +2040,70 @@ DfxPluginCore* DfxPlugin::getplugincore(unsigned long inChannel) const
 #if TARGET_PLUGIN_USES_MIDI
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_noteon(int inChannel, int inNote, int inVelocity, unsigned long inOffsetFrames)
+void DfxPlugin::handlemidi_noteon(int inChannel, int inNote, int inVelocity, size_t inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "note on:  note = %d, velocity = %d, channel = %d, sample offset = %lu\n", inNote, inVelocity, inChannel, inOffsetFrames);
+fprintf(stderr, "note on:  note = %d, velocity = %d, channel = %d, sample offset = %zu\n", inNote, inVelocity, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleNoteOn(inChannel, inNote, inVelocity, inOffsetFrames);
 	mDfxSettings->handleNoteOn(inChannel, inNote, inVelocity, inOffsetFrames);
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_noteoff(int inChannel, int inNote, int inVelocity, unsigned long inOffsetFrames)
+void DfxPlugin::handlemidi_noteoff(int inChannel, int inNote, int inVelocity, size_t inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "note off:  note = %d, velocity = %d, channel = %d, sample offset = %lu\n", inNote, inVelocity, inChannel, inOffsetFrames);
+fprintf(stderr, "note off:  note = %d, velocity = %d, channel = %d, sample offset = %zu\n", inNote, inVelocity, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleNoteOff(inChannel, inNote, inVelocity, inOffsetFrames);
 	mDfxSettings->handleNoteOff(inChannel, inNote, inVelocity, inOffsetFrames);
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_allnotesoff(int inChannel, unsigned long inOffsetFrames)
+void DfxPlugin::handlemidi_allnotesoff(int inChannel, size_t inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "all notes off:  channel = %d, sample offset = %lu\n", inChannel, inOffsetFrames);
+fprintf(stderr, "all notes off:  channel = %d, sample offset = %zu\n", inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleAllNotesOff(inChannel, inOffsetFrames);
 	mDfxSettings->handleAllNotesOff(inChannel, inOffsetFrames);
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_channelaftertouch(int inChannel, int inValue, unsigned long inOffsetFrames)
+void DfxPlugin::handlemidi_channelaftertouch(int inChannel, int inValue, size_t inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "channel aftertouch:  value = %d, channel = %d, sample offset = %lu\n", inValue, inChannel, inOffsetFrames);
+fprintf(stderr, "channel aftertouch:  value = %d, channel = %d, sample offset = %zu\n", inValue, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleChannelAftertouch(inChannel, inValue, inOffsetFrames);
 	mDfxSettings->handleChannelAftertouch(inChannel, inValue, inOffsetFrames);
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames)
+void DfxPlugin::handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "pitchbend:  LSB = %d, MSB = %d, channel = %d, sample offset = %lu\n", inValueLSB, inValueMSB, inChannel, inOffsetFrames);
+fprintf(stderr, "pitchbend:  LSB = %d, MSB = %d, channel = %d, sample offset = %zu\n", inValueLSB, inValueMSB, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handlePitchBend(inChannel, inValueLSB, inValueMSB, inOffsetFrames);
 	mDfxSettings->handlePitchBend(inChannel, inValueLSB, inValueMSB, inOffsetFrames);
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_cc(int inChannel, int inControllerNum, int inValue, unsigned long inOffsetFrames)
+void DfxPlugin::handlemidi_cc(int inChannel, int inControllerNum, int inValue, size_t inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "MIDI CC:  controller = 0x%02X, value = %d, channel = %d, sample offset = %lu\n", inControllerNum, inValue, inChannel, inOffsetFrames);
+fprintf(stderr, "MIDI CC:  controller = 0x%02X, value = %d, channel = %d, sample offset = %zu\n", inControllerNum, inValue, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleCC(inChannel, inControllerNum, inValue, inOffsetFrames);
 	mDfxSettings->handleCC(inChannel, inControllerNum, inValue, inOffsetFrames);
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_programchange(int inChannel, int inProgramNum, unsigned long inOffsetFrames)
+void DfxPlugin::handlemidi_programchange(int inChannel, int inProgramNum, size_t inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "program change:  program num = %d, channel = %d, sample offset = %lu\n", inProgramNum, inChannel, inOffsetFrames);
+fprintf(stderr, "program change:  program num = %d, channel = %d, sample offset = %zu\n", inProgramNum, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleProgramChange(inChannel, inProgramNum, inOffsetFrames);
 }

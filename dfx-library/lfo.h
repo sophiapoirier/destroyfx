@@ -65,9 +65,9 @@ public:
 	void setShape(Shape inShape) noexcept;
 
 	void setStepSize(double inStepSize) noexcept;
-	void syncToTheBeat(long inSamplesToBar);
+	void syncToTheBeat(double inSamplesToBar);
 
-	void updatePosition(long inNumSteps = 1);
+	void updatePosition(size_t inNumSteps = 1);
 	double process() const;
 
 	//--------------------------------------------------------------------------------------
@@ -78,10 +78,10 @@ public:
 	}
 
 protected:
-	static constexpr long kSmoothDur = 48;
+	static constexpr size_t kSmoothDur = 48;
 	[[maybe_unused]] static constexpr double kSmoothStep = 1. / static_cast<double>(kSmoothDur);
 
-	long mSmoothSamples = 0;  // TODO: a counter for the position during a smoothing fade
+	size_t mSmoothSamples = 0;  // TODO: a counter for the position during a smoothing fade
 
 private:
 	using Generator = double(*)(double);

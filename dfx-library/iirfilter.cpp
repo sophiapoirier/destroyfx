@@ -262,7 +262,7 @@ void dfx::IIRFilter::copyCoefficients(IIRFilter const& inSourceFilter) noexcept
 #pragma mark -
 
 //------------------------------------------------------------------------
-dfx::Crossover::Crossover(unsigned long inChannelCount, double inSampleRate, double inFrequency)
+dfx::Crossover::Crossover(size_t inChannelCount, double inSampleRate, double inFrequency)
 :	mSampleRate(inSampleRate),
 #if DFX_CROSSOVER_LINKWITZ_RILEY_MUSICDSP
 	mLowpassHistories(inChannelCount),
@@ -370,7 +370,7 @@ void dfx::Crossover::reset()
 }
 
 //------------------------------------------------------------------------
-std::pair<float, float> dfx::Crossover::process(unsigned long inChannel, float inSample)
+std::pair<float, float> dfx::Crossover::process(size_t inChannel, float inSample)
 {
 #if DFX_CROSSOVER_LINKWITZ_RILEY_MUSICDSP
 	auto const process = [input = inSample, this](InputCoeff const& coeff, History& history)

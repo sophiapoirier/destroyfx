@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -142,8 +142,8 @@ public:
 		int mStatus = 0;  // the event status MIDI byte
 		int mByte1 = 0;  // the first MIDI data byte
 		int mByte2 = 0;  // the second MIDI data byte
-		unsigned long mOffsetFrames = 0;  // the delta offset (the sample position in the current block where the event occurs)
 		int mChannel = 0;  // the MIDI channel
+		size_t mOffsetFrames = 0;  // the delta offset (the sample position in the current block where the event occurs)
 	};
 
 	//-----------------------------------------------------------------------------
@@ -166,7 +166,7 @@ public:
 		MusicNoteAudio& operator=(MusicNoteAudio&&) = default;
 
 		std::vector<float> mLastOutValue;  // capture the most recent output value of each audio channel for smoothing, if necessary
-		unsigned long mSmoothSamples = 0;  // counter for quickly fading cut-off notes, for smoothity
+		size_t mSmoothSamples = 0;  // counter for quickly fading cut-off notes, for smoothity
 		std::vector<std::vector<float>> mTails;  // per-channel little buffer of output samples for smoothing a cut-off note
 	};
 
@@ -174,37 +174,37 @@ public:
 
 	void reset();  // resets the variables
 	void setSampleRate(double inSampleRate);
-	void setChannelCount(unsigned long inChannelCount);
+	void setChannelCount(size_t inChannelCount);
 	void setEnvParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur);  // ADSR
 	void setEnvParameters(double inAttackDur, double inReleaseDur);  // AR
 	void setEnvCurveType(DfxEnvelope::CurveType inCurveType);
 	void setResumedAttackMode(bool inNewMode);
 
 	// handlers for the types of MIDI events that we support
-	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames);
-	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames);
-	void handleAllNotesOff(int inMidiChannel, unsigned long inOffsetFrames);
-	void handleChannelAftertouch(int inMidiChannel, int inValue, unsigned long inOffsetFrames);
-	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames);
-	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, unsigned long inOffsetFrames);
-	void handleProgramChange(int inMidiChannel, int inProgramNumber, unsigned long inOffsetFrames);
+	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames);
+	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames);
+	void handleAllNotesOff(int inMidiChannel, size_t inOffsetFrames);
+	void handleChannelAftertouch(int inMidiChannel, int inValue, size_t inOffsetFrames);
+	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames);
+	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, size_t inOffsetFrames);
+	void handleProgramChange(int inMidiChannel, int inProgramNumber, size_t inOffsetFrames);
 
-	void preprocessEvents();
+	void preprocessEvents(size_t inNumFrames);
 	void postprocessEvents();
 
 	// this is where new MIDI events are reckoned with during audio processing
-	void heedEvents(long inEventNum, float inVelocityCurve, float inVelocityInfluence);
+	void heedEvents(size_t inEventIndex, float inVelocityCurve, float inVelocityInfluence);
 
 	auto getBlockEventCount() const noexcept
 	{
 		return mNumBlockEvents;
 	}
-	auto const& getBlockEvent(long inIndex) const
+	auto const& getBlockEvent(size_t inIndex) const
 	{
 		return mBlockEvents.at(inIndex);
 	}
 	// XXX TODO: this is a hack just for Buffer Override, maybe should rethink
-	void invalidateBlockEvent(long inIndex)
+	void invalidateBlockEvent(size_t inIndex)
 	{
 		mBlockEvents.at(inIndex).mStatus = kInvalidValue;
 	}
@@ -257,11 +257,11 @@ public:
 
 	// this writes the audio output for smoothing the tips of cut-off notes
 	// by sloping down from the last sample outputted by the note
-	void processSmoothingOutputSample(float* const* outAudio, unsigned long inNumFrames, int inMidiNote);
+	void processSmoothingOutputSample(float* const* outAudio, size_t inNumFrames, int inMidiNote);
 
 	// this writes the audio output for smoothing the tips of cut-off notes
 	// by fading out the samples stored in the tail buffers
-	void processSmoothingOutputBuffer(float* const* outAudio, unsigned long inNumFrames, int inMidiNote);
+	void processSmoothingOutputBuffer(float* const* outAudio, size_t inNumFrames, int inMidiNote);
 
 
 private:
@@ -288,7 +288,7 @@ private:
 
 	std::array<int, kNumNotes> mNoteQueue {};  // a chronologically ordered queue of all active notes
 	std::array<Event, kEventQueueSize> mBlockEvents {};  // the new MIDI events for a given processing block
-	long mNumBlockEvents = 0;  // the number of new MIDI events in a given processing block
+	size_t mNumBlockEvents = 0;  // the number of new MIDI events in a given processing block
 
 	double mPitchBendNormalized = 0.0;  // bipolar normalized value of the most recent pitchbend message
 	double mPitchBend = 1.0;  // a frequency scalar value for the current pitchbend setting
@@ -299,6 +299,6 @@ private:
 	bool mSustain = false;  // whether sustain pedal is active
 	bool mLegatoMode = false;
 
-	unsigned long mStolenNoteFadeDur = 0;
+	size_t mStolenNoteFadeDur = 0;
 	float mStolenNoteFadeStep = 0.0f;
 };

@@ -228,7 +228,7 @@ void TransverbDSP::processparameters() {
 
 void Transverb::initPresets() {
 
-	long i = 1;
+	size_t i = 1;
 
 	setpresetname(i, "phaser up");
 	setpresetparameter_f(i, kBsize, 48.687074827);
@@ -397,10 +397,12 @@ void Transverb::initPresets() {
 }
 
 //-----------------------------------------------------------------------------
-bool Transverb::loadpreset(long index)
+bool Transverb::loadpreset(size_t index)
 {
 	if (!presetisvalid(index))
+	{
 		return false;
+	}
 
 	if (getpresetname(index) == "random")
 	{
@@ -573,15 +575,15 @@ void Transverb::settings_restoreExtendedData(void const* inData, size_t storedEx
   }
 }
 
-void Transverb::settings_doChunkRestoreSetParameterStuff(long tag, float value, unsigned int dataVersion, long presetNum)
+void Transverb::settings_doChunkRestoreSetParameterStuff(long tag, float value, unsigned int dataVersion, std::optional<size_t> presetIndex)
 {
 	// prevent old speed mode 1 settings from applying to freeze
 	if ((dataVersion < 0x00010501) && (tag == kFreeze))
 	{
 		auto const defaultValue = getparameterdefault_b(tag);
-		if (presetisvalid(presetNum))
+		if (presetIndex)
 		{
-			setpresetparameter_b(presetNum, tag, defaultValue);
+			setpresetparameter_b(*presetIndex, tag, defaultValue);
 		}
 		else
 		{
@@ -595,9 +597,9 @@ void Transverb::settings_doChunkRestoreSetParameterStuff(long tag, float value, 
 		if ((tag == kDist1) || (tag == kDist2))
 		{
 			auto const valueNormalized = 1. - contractparametervalue(tag, value);
-			if (presetisvalid(presetNum))
+			if (presetIndex)
 			{
-				setpresetparameter_gen(presetNum, tag, valueNormalized);
+				setpresetparameter_gen(*presetIndex, tag, valueNormalized);
 			}
 			else
 			{
@@ -608,11 +610,11 @@ void Transverb::settings_doChunkRestoreSetParameterStuff(long tag, float value, 
 		// hi-fi mode used to behave the same as and ultra hi-fi mode in TOMSOUND
 		if (tag == kTomsound)  // assumes that TOMSOUND parameter is restored after quality
 		{
-			if (presetisvalid(presetNum))
+			if (presetIndex)
 			{
-				if (getpresetparameter_f(presetNum, kTomsound) && (getpresetparameter_i(presetNum, kQuality) == kQualityMode_HiFi))
+				if (getpresetparameter_f(*presetIndex, kTomsound) && (getpresetparameter_i(*presetIndex, kQuality) == kQualityMode_HiFi))
 				{
-					setpresetparameter_i(presetNum, kQuality, kQualityMode_UltraHiFi);
+					setpresetparameter_i(*presetIndex, kQuality, kQualityMode_UltraHiFi);
 				}
 			}
 			else
@@ -627,9 +629,9 @@ void Transverb::settings_doChunkRestoreSetParameterStuff(long tag, float value, 
 		// apply legacy feedback behavior
 		// https://github.com/sophiapoirier/destroyfx/issues/61
 		constexpr bool attenuate = true;
-		if (presetisvalid(presetNum))
+		if (presetIndex)
 		{
-			setpresetparameter_b(presetNum, kAttenuateFeedbackByMixLevel, attenuate);
+			setpresetparameter_b(*presetIndex, kAttenuateFeedbackByMixLevel, attenuate);
 		}
 		else
 		{

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -129,11 +129,11 @@ public:
 	void reset() override;
 
 	void processparameters() override;
-	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
+	void processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames) override;
 
 private:
 	static constexpr int64_t kMaxBands = 30;  // the maximum number of resonant bands
-	static constexpr long kNumPresets = 16;
+	static constexpr size_t kNumPresets = 16;
 
 	// these are the 3 states of the unaffected audio input between notes
 	enum class UnaffectedState
@@ -151,11 +151,11 @@ private:
 	double calculateAmpEvener(int currentNote) const;
 	[[nodiscard]] int calculateCoefficients(int currentNote);
 	void processFilterOuts(float const* const* inAudio, float* const* outAudio,
-						   unsigned long sampleFrameOffset, unsigned long sampleFrames,
+						   size_t sampleFrameOffset, size_t sampleFrames,
 						   int currentNote, int numBands);
-	void processUnaffected(float const* inAudio, float* outAudio, unsigned long sampleFrames);
+	void processUnaffected(float const* inAudio, float* outAudio, size_t sampleFrames);
 	double getBandwidthForFreq(double inFreq) const;
-	void checkForNewNote(long currentEvent);
+	void checkForNewNote(size_t currentEvent);
 
 	// parameters
 	double mBandwidthAmount_Hz = 1.0, mBandwidthAmount_Q = 1.0, mSepAmount_Octaval = 0.0, mSepAmount_Linear = 0.0;
@@ -175,7 +175,7 @@ private:
 	std::array<std::array<dfx::SmoothedValue<double>, kMaxBands>, DfxMidi::kNumNotesWithLegatoVoice> mBandCenterFreq;
 	std::array<std::array<dfx::SmoothedValue<double>, kMaxBands>, DfxMidi::kNumNotesWithLegatoVoice> mBandBandwidth;
 	std::array<bool, DfxMidi::kNumNotesWithLegatoVoice> mNoteActiveLastRender {};
-	unsigned long mFreqSmoothingStride = 1;
+	size_t mFreqSmoothingStride = 1;
 
 	std::array<double, kMaxBands> mInputAmp {};  // gains for the current sample input, for each band
 	std::array<double, kMaxBands> mPrevOutCoeff {};  // coefficients for the 1-sample delayed ouput, for each band
@@ -187,7 +187,7 @@ private:
 	double mPiDivSR = 0.0, mTwoPiDivSR = 0.0, mNyquist = 0.0;  // values that are needed when calculating coefficients
 
 	UnaffectedState mUnaffectedState = UnaffectedState::FadeIn;
-	long mUnaffectedFadeSamples = 0;
-	long mUnaffectedFadeDur = 0;
+	size_t mUnaffectedFadeSamples = 0;
+	size_t mUnaffectedFadeDur = 0;
 	float mUnaffectedFadeStep = 0.0f;
 };

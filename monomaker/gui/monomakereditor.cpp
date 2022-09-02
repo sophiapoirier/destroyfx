@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of Monomaker.
 
@@ -179,7 +179,7 @@ long MonomakerEditor::OpenEditor()
 }
 
 //-----------------------------------------------------------------------------
-void MonomakerEditor::inputChannelsChanged(unsigned long inChannelCount)
+void MonomakerEditor::inputChannelsChanged(size_t inChannelCount)
 {
 	float const alpha = (inChannelCount > 1) ? 1.f : kUnusedControlAlpha;
 	SetParameterAlpha(kInputSelection, alpha);

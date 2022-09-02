@@ -39,7 +39,7 @@ class TransverbDSP final : public DfxPluginCore {
 public:
   explicit TransverbDSP(DfxPlugin* inDfxPlugin);
 
-  void process(float const* inAudio, float* outAudio, unsigned long inNumFrames) override;
+  void process(float const* inAudio, float* outAudio, size_t inNumFrames) override;
   void reset() override;
   void processparameters() override;
 
@@ -106,7 +106,7 @@ public:
 
   void dfx_PostConstructor() override;
 
-  bool loadpreset(long index) override;  // overridden to support the random preset
+  bool loadpreset(size_t index) override;  // overridden to support the random preset
   void randomizeparameters() override;
 
   long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
@@ -121,10 +121,10 @@ protected:
   void settings_saveExtendedData(void* outData, bool isPreset) override;
   void settings_restoreExtendedData(void const* inData, size_t storedExtendedDataSize,
                                     unsigned int dataVersion, bool isPreset) override;
-  void settings_doChunkRestoreSetParameterStuff(long tag, float value, unsigned int dataVersion, long presetNum) override;
+  void settings_doChunkRestoreSetParameterStuff(long tag, float value, unsigned int dataVersion, std::optional<size_t> presetIndex) override;
 
 private:
-  static constexpr long kNumPresets = 16;
+  static constexpr size_t kNumPresets = 16;
 
   void initPresets();
   auto& speedModeStateFromPropertyID(dfx::PropertyID inPropertyID) {

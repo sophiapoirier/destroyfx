@@ -26,6 +26,7 @@ Sophia's Destroy FX MIDI stuff
 #include "dfxmidi.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 
 #include "dfxmath.h"
@@ -90,7 +91,7 @@ void DfxMidi::setSampleRate(double inSampleRate)
 }
 
 //------------------------------------------------------------------------
-void DfxMidi::setChannelCount(unsigned long inChannelCount)
+void DfxMidi::setChannelCount(size_t inChannelCount)
 {
 	for (auto& noteAudio : mNoteAudioTable)
 	{
@@ -136,14 +137,21 @@ void DfxMidi::setResumedAttackMode(bool inNewMode)
 }
 
 //------------------------------------------------------------------------
-void DfxMidi::preprocessEvents()
+void DfxMidi::preprocessEvents(size_t inNumFrames)
 {
+	assert(inNumFrames > 0);
+
 	// Sort the events in our queue so that they are in chronological order.
 	// The host is supposed to send them in order, but just in case...
 	std::stable_sort(mBlockEvents.begin(), std::next(mBlockEvents.begin(), mNumBlockEvents), [](auto const& a, auto const& b)
-					 {
-						 return a.mOffsetFrames < b.mOffsetFrames;
-					 });
+	{
+		return a.mOffsetFrames < b.mOffsetFrames;
+	});
+	std::for_each(mBlockEvents.begin(), mBlockEvents.end(), [inNumFrames](auto& event)
+	{
+		assert(event.mOffsetFrames < inNumFrames);
+		event.mOffsetFrames = std::min(event.mOffsetFrames, inNumFrames - 1);
+	});
 }
 
 //------------------------------------------------------------------------
@@ -229,7 +237,7 @@ void DfxMidi::removeAllNotes()
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames)
+void DfxMidi::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames)
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_NoteOn;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
@@ -240,7 +248,7 @@ void DfxMidi::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, 
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames)
+void DfxMidi::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames)
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_NoteOff;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
@@ -251,7 +259,7 @@ void DfxMidi::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity,
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleAllNotesOff(int inMidiChannel, unsigned long inOffsetFrames)
+void DfxMidi::handleAllNotesOff(int inMidiChannel, size_t inOffsetFrames)
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_CC;
 	mBlockEvents[mNumBlockEvents].mByte1 = kCC_AllNotesOff;
@@ -261,7 +269,7 @@ void DfxMidi::handleAllNotesOff(int inMidiChannel, unsigned long inOffsetFrames)
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleChannelAftertouch(int inMidiChannel, int inValue, unsigned long inOffsetFrames)
+void DfxMidi::handleChannelAftertouch(int inMidiChannel, int inValue, size_t inOffsetFrames)
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_ChannelAftertouch;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
@@ -272,7 +280,7 @@ void DfxMidi::handleChannelAftertouch(int inMidiChannel, int inValue, unsigned l
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames)
+void DfxMidi::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames)
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_PitchBend;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
@@ -283,7 +291,7 @@ void DfxMidi::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB,
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleCC(int inMidiChannel, int inControllerNumber, int inValue, unsigned long inOffsetFrames)
+void DfxMidi::handleCC(int inMidiChannel, int inControllerNumber, int inValue, size_t inOffsetFrames)
 {
 	// only handling sustain pedal for now...
 	if (inControllerNumber == kCC_SustainPedalOnOff)
@@ -298,7 +306,7 @@ void DfxMidi::handleCC(int inMidiChannel, int inControllerNumber, int inValue, u
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleProgramChange(int inMidiChannel, int inProgramNumber, unsigned long inOffsetFrames)
+void DfxMidi::handleProgramChange(int inMidiChannel, int inProgramNumber, size_t inOffsetFrames)
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_ProgramChange;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
@@ -310,18 +318,20 @@ void DfxMidi::handleProgramChange(int inMidiChannel, int inProgramNumber, unsign
 
 //-----------------------------------------------------------------------------------------
 // this function is called during process() when MIDI events need to be attended to
-void DfxMidi::heedEvents(long inEventNum, float inVelocityCurve, float inVelocityInfluence)
+void DfxMidi::heedEvents(size_t inEventIndex, float inVelocityCurve, float inVelocityInfluence)
 {
-	switch (mBlockEvents[inEventNum].mStatus)
-	{
+	assert(inEventIndex < getBlockEventCount());
+	auto const& event = mBlockEvents[inEventIndex];
 
+	switch (event.mStatus)
+	{
 // --- NOTE-ON RECEIVED ---
 		case kStatus_NoteOn:
 		{
-			auto const currentNote = mBlockEvents[inEventNum].mByte1;
+			auto const currentNote = event.mByte1;
 			insertNote(currentNote);
 
-			auto const setNoteAmp = [inVelocityCurve, inVelocityInfluence, velocity = mBlockEvents[inEventNum].mByte2](MusicNote& note)
+			auto const setNoteAmp = [inVelocityCurve, inVelocityInfluence, velocity = event.mByte2](MusicNote& note)
 			{
 				note.mVelocity = velocity;
 				auto const curvedAmp = std::pow(kValueScalar * static_cast<float>(velocity), inVelocityCurve);
@@ -359,7 +369,7 @@ void DfxMidi::heedEvents(long inEventNum, float inVelocityCurve, float inVelocit
 // --- NOTE-OFF RECEIVED ---
 		case kStatus_NoteOff:
 		{
-			auto const currentNote = mBlockEvents[inEventNum].mByte1;
+			auto const currentNote = event.mByte1;
 			removeNote(currentNote);
 			if (!isLegatoMode())
 			{
@@ -381,7 +391,7 @@ void DfxMidi::heedEvents(long inEventNum, float inVelocityCurve, float inVelocit
 // --- PITCHBEND RECEIVED ---
 		case kStatus_PitchBend:
 		{
-			mPitchBendNormalized = calculatePitchBendScalar(mBlockEvents[inEventNum].mByte1, mBlockEvents[inEventNum].mByte2);
+			mPitchBendNormalized = calculatePitchBendScalar(event.mByte1, event.mByte2);
 			// then scale it according to tonal steps and the user defined range
 			mPitchBend = dfx::math::FrequencyScalarBySemitones(mPitchBendNormalized * mPitchBendRange);
 			break;
@@ -392,11 +402,11 @@ void DfxMidi::heedEvents(long inEventNum, float inVelocityCurve, float inVelocit
 // --- CONTROLLER CHANGE RECEIVED ---
 		case kStatus_CC:
 		{
-			switch (mBlockEvents[inEventNum].mByte1)
+			switch (event.mByte1)
 			{
 	// --- SUSTAIN PEDAL RECEIVED ---
 				case kCC_SustainPedalOnOff:
-					if (mSustain && !isLegatoMode() && (mBlockEvents[inEventNum].mByte2 <= 63))
+					if (mSustain && !isLegatoMode() && (event.mByte2 <= 63))
 					{
 						for (size_t i = 0; i < mSustainQueue.size(); i++)
 						{
@@ -407,7 +417,7 @@ void DfxMidi::heedEvents(long inEventNum, float inVelocityCurve, float inVelocit
 							}
 						}
 					}
-					mSustain = (mBlockEvents[inEventNum].mByte2 >= kMidpointValue);
+					mSustain = (event.mByte2 >= kMidpointValue);
 					break;
 
 	// --- ALL-NOTES-OFF RECEIVED ---
@@ -536,7 +546,7 @@ void DfxMidi::postprocessEnvelope(MusicNote& inNote)
 // this function writes the audio output for smoothing the tips of cut-off notes
 // by sloping down from the last sample outputted by the note
 // TODO: should this accommodate the legato voice?
-void DfxMidi::processSmoothingOutputSample(float* const* outAudio, unsigned long inNumFrames, int inMidiNote)
+void DfxMidi::processSmoothingOutputSample(float* const* outAudio, size_t inNumFrames, int inMidiNote)
 {
 	auto& noteAudio = mNoteAudioTable[inMidiNote];
 	auto& smoothSamples = noteAudio.mSmoothSamples;
@@ -545,7 +555,7 @@ void DfxMidi::processSmoothingOutputSample(float* const* outAudio, unsigned long
 	{
 		smoothSamples = entrySmoothSamples;
 		auto const lastOutValue = noteAudio.mLastOutValue[channelIndex];
-		for (unsigned long sampleIndex = 0; (sampleIndex < inNumFrames) && (smoothSamples > 0); sampleIndex++)
+		for (size_t sampleIndex = 0; (sampleIndex < inNumFrames) && (smoothSamples > 0); sampleIndex++)
 		{
 			// add the latest sample to the output collection, scaled by the note envelope and user gain
 			auto outputFadeScalar = static_cast<float>(smoothSamples * mStolenNoteFadeStep);
@@ -560,7 +570,7 @@ void DfxMidi::processSmoothingOutputSample(float* const* outAudio, unsigned long
 // this function writes the audio output for smoothing the tips of cut-off notes
 // by fading out the samples stored in the tail buffers
 // TODO: should this accommodate the legato voice?
-void DfxMidi::processSmoothingOutputBuffer(float* const* outAudio, unsigned long inNumFrames, int inMidiNote)
+void DfxMidi::processSmoothingOutputBuffer(float* const* outAudio, size_t inNumFrames, int inMidiNote)
 {
 	auto& noteAudio = mNoteAudioTable[inMidiNote];
 	auto& smoothSamples = noteAudio.mSmoothSamples;
@@ -569,7 +579,7 @@ void DfxMidi::processSmoothingOutputBuffer(float* const* outAudio, unsigned long
 	{
 		smoothSamples = entrySmoothSamples;
 		auto const& tail = noteAudio.mTails[channelIndex];
-		for (unsigned long sampleIndex = 0; (sampleIndex < inNumFrames) && (smoothSamples > 0); sampleIndex++, smoothSamples--)
+		for (size_t sampleIndex = 0; (sampleIndex < inNumFrames) && (smoothSamples > 0); sampleIndex++, smoothSamples--)
 		{
 			outAudio[channelIndex][sampleIndex] += tail[mStolenNoteFadeDur - smoothSamples] * 
 			static_cast<float>(smoothSamples) * mStolenNoteFadeStep;
@@ -596,10 +606,10 @@ bool DfxMidi::incNumEvents()
 	mNumBlockEvents++;
 	// don't go past the allocated space for the events queue
 	// TODO: actually truncating capacity by one event because of the way that events are added, could be fixed
-	if (mNumBlockEvents >= static_cast<long>(mBlockEvents.size()))
+	if (mNumBlockEvents >= mBlockEvents.size())
 	{
 		// revert and bail
-		mNumBlockEvents = static_cast<long>(mBlockEvents.size()) - 1;
+		mNumBlockEvents = mBlockEvents.size() - 1;
 		return false;
 	}
 	return true;  // successful increment

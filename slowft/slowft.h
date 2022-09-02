@@ -1,30 +1,44 @@
+/*------------------------------------------------------------------------
+Copyright (C) 2005-2022  Tom Murphy 7
 
-/* Slowft, starring the Super Destroy FX Windowing System! */
+This file is part of Slowft.
 
-#ifndef _DFX_SLOWFT_H
-#define _DFX_SLOWFT_H
+Slowft is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+Slowft is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Slowft.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org
+
+Slowft, starring the Super Destroy FX Windowing System!
+------------------------------------------------------------------------*/
+
+#pragma once
+
+#include <iterator>
+#include <numbers>
 
 #include "dfxplugin.h"
 
 /* change these for your plugins */
 #define PLUGIN Slowft
-#define NUM_PRESETS 16
 
-#define BUFFERSIZESSIZE 14
-const long buffersizes[BUFFERSIZESSIZE] = { 
+static constexpr long buffersizes[] = {
   4, 8, 16, 32, 64, 128, 256, 512, 
   1024, 2048, 4096, 8192, 16384, 32768, 
 };
+static constexpr long BUFFERSIZESSIZE = std::size(buffersizes);
 
 
 #define PLUGINCORE SlowftDSP
-
-#define BASE_FREQ 27.5
-#define NUM_KEYS 88
-#define HALFSTEP_RATIO 1.05946309436
-
-#define SLOWFT_PI 3.1415926535897932384626433832795f
-#define SLOWFT_2PI 6.28318530718f
 
 
 /* the types of window shapes available for smoothity */
@@ -45,9 +59,10 @@ enum { P_BUFSIZE, P_SHAPE,
 class PLUGIN : public DfxPlugin {
 public:
   PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance);
-  virtual ~PLUGIN();
 
 private:
+  static constexpr size_t NUM_PRESETS = 16;
+
   /* set up the built-in presets */
   void makepresets();
 };
@@ -55,15 +70,19 @@ private:
 class PLUGINCORE : public DfxPluginCore {
 public:
   PLUGINCORE(DfxPlugin * inInstance);
-  virtual ~PLUGINCORE();
+  ~PLUGINCORE() override;
 
-  virtual void reset();
-  virtual void processparameters();
-  virtual void process(const float *in, float *out, unsigned long inNumFrames, bool replacing=true);
+  void reset() override;
+  void processparameters() override;
+  void process(const float *in, float *out, size_t inNumFrames) override;
 
   long getwindowsize() { return third; }
 
- private:
+private:
+  static constexpr float BASE_FREQ = 27.5f;
+  static constexpr size_t NUM_KEYS = 88;
+  static constexpr float HALFSTEP_RATIO = 1.05946309436f;
+  static constexpr float SLOWFT_2PI = std::numbers::pi_v<float> * 2.f;
 
   /* input and output buffers. out is framesize*2 samples long, in is framesize
      samples long. (for maximum framesize)
@@ -97,5 +116,3 @@ public:
   float cosines[NUM_KEYS];
 
 };
-
-#endif

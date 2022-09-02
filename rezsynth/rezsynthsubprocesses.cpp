@@ -170,7 +170,7 @@ int RezSynth::calculateCoefficients(int currentNote)
 //-----------------------------------------------------------------------------------------
 // This function writes the filtered audio output.
 void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outAudio,
-								 unsigned long sampleFrameOffset, unsigned long sampleFrames,
+								 size_t sampleFrameOffset, size_t sampleFrames,
 								 int currentNote, int numBands)
 {
 	auto const numChannels = getnumoutputs();
@@ -178,7 +178,7 @@ void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outA
 	auto& channelFilters = mLowpassGateFilters[currentNote];
 
 	// here we do the resonant filter equation using our filter coefficients, and related stuff
-	for (unsigned long sampleIndex = sampleFrameOffset; sampleIndex < sampleFrames + sampleFrameOffset; sampleIndex++)
+	for (size_t sampleIndex = sampleFrameOffset; sampleIndex < (sampleFrames + sampleFrameOffset); sampleIndex++)
 	{
 		auto const noteAmp = getmidistate().getNoteState(currentNote).mNoteAmp.getValue();
 		auto const ampEvener = mAmpEvener[currentNote].getValue();
@@ -205,7 +205,7 @@ void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outA
 		}
 		float const envedTotalAmp = noteAmp * envAmp * mWetGain.getValue() * mOutputGain.getValue();
 
-		for (unsigned long ch = 0; ch < numChannels; ch++)
+		for (size_t ch = 0; ch < numChannels; ch++)
 		{
 			auto const clampInfinities = [](double value)
 			{
@@ -259,9 +259,9 @@ void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outA
 
 //-----------------------------------------------------------------------------------------
 // this function outputs the unprocessed audio input between notes, if desired
-void RezSynth::processUnaffected(float const* inAudio, float* outAudio, unsigned long sampleFrames)
+void RezSynth::processUnaffected(float const* inAudio, float* outAudio, size_t sampleFrames)
 {
-	for (unsigned long sampleIndex = 0; sampleIndex < sampleFrames; sampleIndex++)
+	for (size_t sampleIndex = 0; sampleIndex < sampleFrames; sampleIndex++)
 	{
 		float unEnvAmp = 1.0f;
 
@@ -281,11 +281,14 @@ void RezSynth::processUnaffected(float const* inAudio, float* outAudio, unsigned
 		// a note has just begun, so we need to hasily fade out the clean input audio
 		else if (mUnaffectedState == UnaffectedState::FadeOut)
 		{
-			mUnaffectedFadeSamples--;
+			if (mUnaffectedFadeSamples > 0) [[likely]]
+			{
+				mUnaffectedFadeSamples--;
+			}
 			// linear fade-out
 			unEnvAmp = static_cast<float>(mUnaffectedFadeSamples) * mUnaffectedFadeStep;
 			// get ready for the next time and exit this function if the fade-out is done
-			if (mUnaffectedFadeSamples <= 0)
+			if (mUnaffectedFadeSamples == 0)
 			{
 				// ready for the next time
 				mUnaffectedState = UnaffectedState::FadeIn;
@@ -309,7 +312,7 @@ double RezSynth::getBandwidthForFreq(double inFreq) const
 //-----------------------------------------------------------------------------------------
 // This function checks if the latest note message is a note-on for a note that's currently off.
 // If it is, then that note's filter feedback buffers are cleared.
-void RezSynth::checkForNewNote(long currentEvent)
+void RezSynth::checkForNewNote(size_t currentEvent)
 {
 	// store the current note MIDI number
 	auto const currentNote = getmidistate().getBlockEvent(currentEvent).mByte1;

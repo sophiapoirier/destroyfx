@@ -164,7 +164,7 @@ void BufferOverride::reset()
 //-------------------------------------------------------------------------
 void BufferOverride::initPresets()
 {
-	long i = 1;
+	size_t i = 1;
 
 	setpresetname(i, "drum roll");
 	setpresetparameter_f(i, kDivisor, 4.0);

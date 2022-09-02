@@ -229,7 +229,7 @@ mSineCount = 0;
 //-------------------------------------------------------------------------
 void Scrubby::initPresets()
 {
-	long i = 1;
+	size_t i = 1;
 
 	setpresetname(i, "happy machine");
 	setpresetparameter_f(i, kSeekRange, 603.0);

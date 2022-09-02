@@ -148,12 +148,12 @@ public:
 #endif
 
 	// handlers for the types of MIDI events that we support
-	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames);
-	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames);
-	void handleAllNotesOff(int inMidiChannel, unsigned long inOffsetFrames);
-	void handleChannelAftertouch(int inMidiChannel, int inValue, unsigned long inOffsetFrames);
-	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames);
-	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, unsigned long inOffsetFrames);
+	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames);
+	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames);
+	void handleAllNotesOff(int inMidiChannel, size_t inOffsetFrames);
+	void handleChannelAftertouch(int inMidiChannel, int inValue, size_t inOffsetFrames);
+	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames);
+	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, size_t inOffsetFrames);
 
 
 	// - - - - - - - - - MIDI learn - - - - - - - - -
@@ -391,20 +391,20 @@ private:
 	// a simple but handy check to see if a parameter tag is valid
 	bool paramTagIsValid(long inParamTag) const noexcept
 	{
-		return (inParamTag >= 0) && (static_cast<unsigned long>(inParamTag) < mNumParameters);
+		return (inParamTag >= 0) && (static_cast<size_t>(inParamTag) < mNumParameters);
 	}
 
 	static long getParameterTagFromID(long inParamID, std::span<int32_t const> inSearchIDs);
 	long getParameterTagFromID(long inParamID) const;
 
 #if TARGET_PLUGIN_USES_MIDI
-	void handleMidi_assignParam(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, unsigned long inOffsetFrames);
-	void handleMidi_automateParams(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, int inByte2, unsigned long inOffsetFrames, bool inIsNoteOn = false);
+	void handleMidi_assignParam(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, size_t inOffsetFrames);
+	void handleMidi_automateParams(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, int inByte2, size_t inOffsetFrames, bool inIsNoteOn = false);
 #endif // TARGET_PLUGIN_USES_MIDI
 
 
 	DfxPlugin* const mPlugin;
-	unsigned long const mNumParameters, mNumPresets;
+	size_t const mNumParameters, mNumPresets;
 
 	// size of one preset (preset name + all parameter values)
 	size_t mSizeOfPreset = 0;

@@ -203,8 +203,8 @@ public:
 	void HandleStreamFormatChange();
 	void HandleParameterListChange();
 #endif
-	virtual void inputChannelsChanged(unsigned long inChannelCount) {}
-	virtual void outputChannelsChanged(unsigned long inChannelCount) {}
+	virtual void inputChannelsChanged(size_t inChannelCount) {}
+	virtual void outputChannelsChanged(size_t inChannelCount) {}
 
 	void automationgesture_begin(long inParameterID);
 	void automationgesture_end(long inParameterID);
@@ -246,7 +246,7 @@ public:
 	void drawControlHighlight(VSTGUI::CDrawContext* inContext, VSTGUI::CControl* inControl);
 #endif
 
-	long GetNumParameters();
+	size_t GetNumParameters();
 	std::vector<long> GetParameterList();
 	long GetNumAudioOutputs();
 	float dfxgui_ExpandParameterValue(long inParameterIndex, float inValue);
@@ -324,8 +324,8 @@ public:
 		return dfxgui_SetProperty<T>(inPropertyID, dfx::kScope_Global, 0, data);
 	}
 
-	unsigned long getNumInputChannels();
-	unsigned long getNumOutputChannels();
+	size_t getNumInputChannels();
+	size_t getNumOutputChannels();
 	std::optional<double> getSmoothedAudioValueTime();
 	void setSmoothedAudioValueTime(double inSmoothingTimeInSeconds);
 	void TextEntryForSmoothedAudioValueTime();
@@ -425,8 +425,8 @@ private:
 	bool mJustOpened = false;
 	long mEditorOpenErr = dfx::kStatus_NoError;
 	std::vector<long> mParameterList;
-	unsigned long mNumInputChannels = 0;
-	unsigned long mNumOutputChannels = 0;
+	size_t mNumInputChannels = 0;
+	size_t mNumOutputChannels = 0;
 
 	// Custom properties that have been registered for HandlePropertyChange calls.
 	std::vector<std::tuple<dfx::PropertyID, dfx::Scope, unsigned int>> mRegisteredProperties;

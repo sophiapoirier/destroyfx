@@ -41,7 +41,7 @@ void Skidder::processMidiNotes()
 {
 	auto noteWasOn = isAnyNoteOn();
 
-	for (long i = 0; i < getmidistate().getBlockEventCount(); i++)
+	for (size_t i = 0; i < getmidistate().getBlockEventCount(); i++)
 	{
 		auto const currentNote = getmidistate().getBlockEvent(i).mByte1;
 		auto const velocity = getmidistate().getBlockEvent(i).mByte2;
@@ -87,7 +87,7 @@ void Skidder::processMidiNotes()
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::noteOn(unsigned long offsetFrames)
+void Skidder::noteOn(size_t offsetFrames)
 {
 	switch (mMidiMode)
 	{
@@ -197,7 +197,7 @@ bool Skidder::isAnyNoteOn() const
 // this gets called when Skidder automates a parameter from CC messages.
 // this is where we can link parameter automation for rangeslider points.
 void Skidder::settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, int eventChannel, int eventNum,
-											 unsigned long /*offsetFrames*/, int eventNum2, dfx::MidiEventBehaviorFlags eventBehaviourFlags,
+											 size_t /*offsetFrames*/, int eventNum2, dfx::MidiEventBehaviorFlags eventBehaviourFlags,
 											 int data1, int data2, float fdata1, float fdata2)
 {
 	if (getsettings().getSteal())

@@ -231,14 +231,14 @@ private:
 class Crossover
 {
 public:
-	Crossover(unsigned long inChannelCount, double inSampleRate, double inFrequency);
+	Crossover(size_t inChannelCount, double inSampleRate, double inFrequency);
 
 	// the Linkwitz–Riley 4th-order filters are not stable with quickly changing cutoff frequency, 
 	// so if changes can be modulated, smooth the changes per-sample (no striding)
 	void setFrequency(double inFrequency);
 	void reset();
 	// result contains the low audio portion followed by the high
-	std::pair<float, float> process(unsigned long inChannel, float inSample);
+	std::pair<float, float> process(size_t inChannel, float inSample);
 
 private:
 	double const mSampleRate;

@@ -1,6 +1,27 @@
+/*------------------------------------------------------------------------
+Copyright (C) 2002-2022  Tom Murphy 7
 
-/* Windowingstub,
-   Featuring the Super Destroy FX Windowing System! */
+This file is part of Windowingstub.
+
+Windowingstub is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+Windowingstub is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Windowingstub.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org
+
+Windowingstub, featuring the Super Destroy FX Windowing System!
+------------------------------------------------------------------------*/
+
+/*  */
 
 #include "windowingstub.h"
 
@@ -60,7 +81,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 PLUGINCORE::PLUGINCORE(DfxPlugin * inInstance)
   : DfxPluginCore(inInstance) {
   /* determine the size of the largest window size */
-  auto const maxframe = *std::max_element(std::cbegin(buffersizes), std::cend(buffersizes));
+  constexpr auto maxframe = *std::max_element(std::cbegin(buffersizes), std::cend(buffersizes));
 
   /* add some leeway? */
   in0.assign(maxframe, 0.f);
@@ -146,9 +167,9 @@ void PLUGINCORE::processw(float const * in, float * out, long samples) {
 */
 
 
-void PLUGINCORE::process(float const *tin, float *tout, unsigned long samples) {
+void PLUGINCORE::process(float const *tin, float *tout, size_t samples) {
 
-  for (unsigned long i = 0; i < samples; i++) {
+  for (size_t i = 0; i < samples; i++) {
 
     /* copy sample in */
     in0[insize] = tin[i];

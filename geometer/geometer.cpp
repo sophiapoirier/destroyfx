@@ -1182,8 +1182,8 @@ XXX Sophia's ideas:
    - it would also be nice to make this windowing stuff into a reusable class so that we don't find ourselves maintaining the same code accross so many different plugins
 */
 
-void PLUGINCORE::process(float const* tin, float* tout, unsigned long samples) {
-  for (unsigned long ii = 0; ii < samples; ii++) {
+void PLUGINCORE::process(float const* tin, float* tout, size_t samples) {
+  for (size_t ii = 0; ii < samples; ii++) {
 
     /* copy sample in */
     in0[insize] = tin[ii];
@@ -1301,7 +1301,7 @@ void PLUGINCORE::updatewindowshape()
 
 
 void PLUGIN::makepresets() {
-  long i = 1;
+  size_t i = 1;
 
   setpresetname(i, "atonal singing");
   setpresetparameter_i(i, P_BUFSIZE, 9);	// XXX is that 2^11 ?

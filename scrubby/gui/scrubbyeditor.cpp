@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -717,7 +717,7 @@ void ScrubbyEditor::mouseovercontrolchanged(IDGControl* /*currentControlUnderMou
 }
 
 //-----------------------------------------------------------------------------
-void ScrubbyEditor::outputChannelsChanged(unsigned long inChannelCount)
+void ScrubbyEditor::outputChannelsChanged(size_t inChannelCount)
 {
 	float const alpha = (inChannelCount > 1) ? 1.f : kUnusedControlAlpha;
 	SetParameterAlpha(kSplitChannels, alpha);

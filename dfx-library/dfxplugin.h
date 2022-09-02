@@ -197,7 +197,7 @@ public:
 	struct TimeInfo
 	{
 		double mTempo = 0.0, mTempo_BPS = 0.0;
-		long mSamplesPerBeat = 0;
+		double mSamplesPerBeat = 0.;
 		bool mTempoIsValid = false;
 
 		double mBeatPos = 0.0;
@@ -209,7 +209,7 @@ public:
 		double mDenominator = 0.0, mNumerator = 0.0;
 		bool mTimeSignatureIsValid = false;
 
-		long mSamplesToNextBar = 0;
+		double mSamplesToNextBar = 0.;
 		bool mSamplesToNextBarIsValid = false;
 
 		bool mPlaybackChanged = false;  // whether or not the playback state or position just changed
@@ -217,7 +217,7 @@ public:
 	};
 
 	// ***
-	DfxPlugin(TARGET_API_BASE_INSTANCE_TYPE inInstance, long inNumParameters, long inNumPresets = 1);
+	DfxPlugin(TARGET_API_BASE_INSTANCE_TYPE inInstance, size_t inNumParameters, size_t inNumPresets = 1);
 
 	void do_PostConstructor();
 	// ***
@@ -247,26 +247,26 @@ public:
 	// processing audio and to react to parameter changes
 	virtual void processparameters() {}
 	// attend to things immediately before processing a block of audio
-	void preprocessaudio();
+	void preprocessaudio(size_t inNumFrames);
 	// attend to things immediately after processing a block of audio
 	void postprocessaudio();
 	// ***
 	// do the audio processing (override with real stuff)
 	// pass in arrays of float buffers for input and output ([channel][sample]), 
 	// 
-	virtual void processaudio(float const* const* inStreams, float* const* outStreams, unsigned long inNumFrames) {}
+	virtual void processaudio(float const* const* inStreams, float* const* outStreams, size_t inNumFrames) {}
 
 	auto getnumparameters() const noexcept
 	{
-		return static_cast<long>(mParameters.size());
+		return mParameters.size();
 	}
 	auto getnumpresets() const noexcept
 	{
-		return static_cast<long>(mPresets.size());
+		return mPresets.size();
 	}
 	bool parameterisvalid(long inParameterIndex) const noexcept
 	{
-		return (inParameterIndex >= 0) && (inParameterIndex < getnumparameters());
+		return (inParameterIndex >= 0) && (static_cast<size_t>(inParameterIndex) < getnumparameters());
 	}
 
 	// Initialize parameters of double, int64, bool, or list type. (See dfxparameter.h)
@@ -446,33 +446,33 @@ public:
 	double contractparametervalue(long inParameterIndex, double realValue) const;
 
 	// whether or not the index is a valid preset
-	bool presetisvalid(long inPresetIndex) const;
+	bool presetisvalid(size_t inPresetIndex) const noexcept;
 	// whether or not the index is a valid preset with a valid name
-	bool presetnameisvalid(long inPresetIndex) const;
+	bool presetnameisvalid(size_t inPresetIndex) const;
 	// load the settings of a preset
-	virtual bool loadpreset(long inPresetIndex);
+	virtual bool loadpreset(size_t inPresetIndex);
 	// set a parameter value in all of the empty (no name) presets 
 	// to the current value of that parameter
 	void initpresetsparameter(long inParameterIndex);
 	// set the text of a preset name
-	void setpresetname(long inPresetIndex, std::string_view inText);
+	void setpresetname(size_t inPresetIndex, std::string_view inText);
 	// get a copy of the text of a preset name
-	std::string getpresetname(long inPresetIndex) const;
+	std::string getpresetname(size_t inPresetIndex) const;
 #ifdef TARGET_API_AUDIOUNIT
-	CFStringRef getpresetcfname(long inPresetIndex) const;
+	CFStringRef getpresetcfname(size_t inPresetIndex) const;
 #endif
 	auto getcurrentpresetnum() const noexcept
 	{
 		return mCurrentPresetNum;
 	}
-	void setpresetparameter_f(long inPresetIndex, long inParameterIndex, double inValue);
-	void setpresetparameter_i(long inPresetIndex, long inParameterIndex, int64_t inValue);
-	void setpresetparameter_b(long inPresetIndex, long inParameterIndex, bool inValue);
-	void setpresetparameter_gen(long inPresetIndex, long inParameterIndex, double inValue);
+	void setpresetparameter_f(size_t inPresetIndex, long inParameterIndex, double inValue);
+	void setpresetparameter_i(size_t inPresetIndex, long inParameterIndex, int64_t inValue);
+	void setpresetparameter_b(size_t inPresetIndex, long inParameterIndex, bool inValue);
+	void setpresetparameter_gen(size_t inPresetIndex, long inParameterIndex, double inValue);
 	void postupdate_preset();
-	double getpresetparameter_f(long inPresetIndex, long inParameterIndex) const;
-	int64_t getpresetparameter_i(long inPresetIndex, long inParameterIndex) const;
-	bool getpresetparameter_b(long inPresetIndex, long inParameterIndex) const;
+	double getpresetparameter_f(size_t inPresetIndex, long inParameterIndex) const;
+	int64_t getpresetparameter_i(size_t inPresetIndex, long inParameterIndex) const;
+	bool getpresetparameter_b(size_t inPresetIndex, long inParameterIndex) const;
 
 	bool settingsMinimalValidate(void const* inData, size_t inBufferSize) const noexcept;
 
@@ -520,14 +520,14 @@ public:
 	// react to a change in the number of audio channels
 	void updatenumchannels();
 	// return the number of audio inputs
-	unsigned long getnuminputs();
+	size_t getnuminputs();
 	// return the number of audio outputs
-	unsigned long getnumoutputs();
+	size_t getnumoutputs();
 	// whether the input and output channel counts do not match
 	bool asymmetricalchannels();
 
 	// the maximum number of audio frames to render each cycle
-	unsigned long getmaxframes();
+	size_t getmaxframes();
 
 	// get the TimeInfo struct with the latest time info values
 	TimeInfo const& gettimeinfo() const noexcept
@@ -574,13 +574,13 @@ public:
 
 #if TARGET_PLUGIN_USES_MIDI
 	// handlers for the types of MIDI events that we support
-	virtual void handlemidi_noteon(int inChannel, int inNote, int inVelocity, unsigned long inOffsetFrames);
-	virtual void handlemidi_noteoff(int inChannel, int inNote, int inVelocity, unsigned long inOffsetFrames);
-	virtual void handlemidi_allnotesoff(int inChannel, unsigned long inOffsetFrames);
-	virtual void handlemidi_channelaftertouch(int inChannel, int inValue, unsigned long inOffsetFrames);
-	virtual void handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames);
-	virtual void handlemidi_cc(int inChannel, int inControllerNum, int inValue, unsigned long inOffsetFrames);
-	virtual void handlemidi_programchange(int inChannel, int inProgramNum, unsigned long inOffsetFrames);
+	virtual void handlemidi_noteon(int inChannel, int inNote, int inVelocity, size_t inOffsetFrames);
+	virtual void handlemidi_noteoff(int inChannel, int inNote, int inVelocity, size_t inOffsetFrames);
+	virtual void handlemidi_allnotesoff(int inChannel, size_t inOffsetFrames);
+	virtual void handlemidi_channelaftertouch(int inChannel, int inValue, size_t inOffsetFrames);
+	virtual void handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames);
+	virtual void handlemidi_cc(int inChannel, int inControllerNum, int inValue, size_t inOffsetFrames);
+	virtual void handlemidi_programchange(int inChannel, int inProgramNum, size_t inOffsetFrames);
 
 	void setmidilearner(long inParameterIndex);
 	long getmidilearner() const;
@@ -621,15 +621,15 @@ public:
 	// it's the version number of the plugin that created the data)
 	// (presetNum of -1 indicates that we're just working with the current 
 	// state of the plugin)
-	virtual void settings_doChunkRestoreSetParameterStuff(long tag, float value, unsigned int dataVersion, long presetNum = -1) {}
+	virtual void settings_doChunkRestoreSetParameterStuff(long tag, float value, unsigned int dataVersion, std::optional<size_t> presetIndex) {}
 	//
 	// these can be overridden to do something and extend the MIDI event processing
 	virtual void settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, int eventChannel, 
-												int eventNum, unsigned long offsetFrames, int eventNum2 = 0, 
+												int eventNum, size_t offsetFrames, int eventNum2 = 0, 
 												dfx::MidiEventBehaviorFlags eventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
 												int data1 = 0, int data2 = 0, 
 												float fdata1 = 0.0f, float fdata2 = 0.0f) {}
-	virtual void settings_doMidiAutomatedSetParameterStuff(long tag, float value, unsigned long offsetFrames) {}
+	virtual void settings_doMidiAutomatedSetParameterStuff(long tag, float value, size_t offsetFrames) {}
 	// HACK: the return type is overloaded for this purpose, contains more data than used in this context
 	virtual std::optional<dfx::ParameterAssignment> settings_getLearningAssignData(long inParameterIndex) const
 	{
@@ -729,7 +729,7 @@ protected:
 	T generateParameterRandomValue(T const& inRangeMinimum, T const& inRangeMaximum);
 
 #if TARGET_PLUGIN_USES_DSPCORE
-	DfxPluginCore* getplugincore(unsigned long inChannel) const;
+	DfxPluginCore* getplugincore(size_t inChannel) const;
 #endif
 
 #if TARGET_PLUGIN_USES_MIDI
@@ -761,10 +761,10 @@ private:
 	// synchronize the underlying API/preset/etc. parameter value representation to the current value in DfxPlugin
 	void update_parameter(long inParameterIndex);
 
-	void setpresetparameter(long inPresetIndex, long inParameterIndex, DfxParam::Value inValue);
-	DfxParam::Value getpresetparameter(long inPresetIndex, long inParameterIndex) const;
+	void setpresetparameter(size_t inPresetIndex, long inParameterIndex, DfxParam::Value inValue);
+	DfxParam::Value getpresetparameter(size_t inPresetIndex, long inParameterIndex) const;
 
-	bool ischannelcountsupported(unsigned long inNumInputs, unsigned long inNumOutputs) const;
+	bool ischannelcountsupported(size_t inNumInputs, size_t inNumOutputs) const;
 
 	std::vector<DfxParam> mParameters;
 	std::vector<bool> mParametersChangedAsOfPreProcess, mParametersTouchedAsOfPreProcess;
@@ -784,7 +784,7 @@ private:
 	double mSampleRate = 0.0;
 	bool mSampleRateChanged = false;
 
-	unsigned long mNumInputs = 0, mNumOutputs = 0;
+	size_t mNumInputs = 0, mNumOutputs = 0;
 
 #if TARGET_PLUGIN_USES_MIDI
 	DfxMidi mMidiState;
@@ -793,7 +793,7 @@ private:
 	std::atomic_flag mMidiLearnerChangedInProcessHasPosted;
 #endif
 
-	long mCurrentPresetNum = 0;
+	size_t mCurrentPresetNum = 0;
 
 #if TARGET_PLUGIN_USES_DSPCORE
 	template <class DSPCoreClass>
@@ -809,7 +809,7 @@ private:
 	#ifdef TARGET_API_AUDIOUNIT
 	ausdk::AUBufferList mAsymmetricalInputBufferList;
 	#else
-	[[nodiscard]] std::unique_ptr<DfxPluginCore> dspCoreFactory(unsigned long inChannel);
+	[[nodiscard]] std::unique_ptr<DfxPluginCore> dspCoreFactory(size_t inChannel);
 	std::vector<std::unique_ptr<DfxPluginCore>> mDSPCores;  // we have to manage this ourselves outside of the AU SDK
 	std::vector<float> mAsymmetricalInputAudioBuffer;
 	#endif
@@ -837,7 +837,7 @@ private:
 
 #ifdef TARGET_API_VST
 	bool mIsInitialized = false;
-	std::optional<unsigned long> mLastInputChannelCount, mLastOutputChannelCount, mLastMaxFrameCount;
+	std::optional<size_t> mLastInputChannelCount, mLastOutputChannelCount, mLastMaxFrameCount;
 	std::optional<double> mLastSampleRate;
 	// VST getChunk() requires that the plugin own the buffer; this contains
 	// the chunk data from the last call to getChunk.
@@ -1134,7 +1134,7 @@ public:
 		reset();
 	}
 
-	virtual void process(float const* inStream, float* outStream, unsigned long inNumFrames) = 0;
+	virtual void process(float const* inStream, float* outStream, size_t inNumFrames) = 0;
 	virtual void reset() {}
 	// NOTE: a weakness of the processparameters design, and then subsequent snapping of 
 	// all smoothed values if it is the first audio render since audio reset, is that you 
@@ -1236,8 +1236,8 @@ public:
 #else
 	// Mimic what AUKernelBase does here. The channel is just the index
 	// in the mDSPCores vector.
-	void SetChannelNum(unsigned long inChannel) noexcept { mChannelNumber = inChannel; }
-	[[nodiscard]] unsigned long GetChannelNum() const noexcept { return mChannelNumber; }
+	void SetChannelNum(size_t inChannel) noexcept { mChannelNumber = inChannel; }
+	[[nodiscard]] size_t GetChannelNum() const noexcept { return mChannelNumber; }
 #endif
 
 
@@ -1246,7 +1246,7 @@ private:
 	double const mSampleRate;  // fixed for the lifespan of a DSP core
 
 #ifndef TARGET_API_AUDIOUNIT
-	unsigned long mChannelNumber = 0;
+	size_t mChannelNumber = 0;
 #endif
 };
 static_assert(std::has_virtual_destructor_v<DfxPluginCore>);
@@ -1363,12 +1363,12 @@ public:
 	// call this in the plugin's constructor if it uses DSP cores for processing
 	#if TARGET_PLUGIN_USES_DSPCORE
 		// DFX_CORE_ENTRY is not useful for APIs other than AU, so it is defined as nothing
-		#define DFX_CORE_ENTRY(PluginCoreClass)																\
-			[[nodiscard]] std::unique_ptr<DfxPluginCore> DfxPlugin::dspCoreFactory(unsigned long inChannel)	\
-			{																								\
-				auto core = dspCoreFactory<PluginCoreClass>();												\
-				core->SetChannelNum(inChannel);																\
-				return core;																				\
+		#define DFX_CORE_ENTRY(PluginCoreClass)															\
+			[[nodiscard]] std::unique_ptr<DfxPluginCore> DfxPlugin::dspCoreFactory(size_t inChannel)	\
+			{																							\
+				auto core = dspCoreFactory<PluginCoreClass>();											\
+				core->SetChannelNum(inChannel);															\
+				return core;																			\
 			}
 	#endif
 

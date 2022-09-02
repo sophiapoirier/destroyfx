@@ -600,7 +600,7 @@ private:
 class DfxPreset
 {
 public:
-	explicit DfxPreset(long inNumParameters);
+	explicit DfxPreset(size_t inNumParameters);
 
 	void setvalue(long inParameterIndex, DfxParam::Value inValue);
 	DfxParam::Value getvalue(long inParameterIndex) const;

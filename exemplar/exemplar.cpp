@@ -1,9 +1,26 @@
+/*------------------------------------------------------------------------
+Copyright (C) 2006-2022  Tom Murphy 7
 
-/* DFX Exemplar! */
+This file is part of Exemplar.
+
+Exemplar is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+Exemplar is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Exemplar.  If not, see <http://www.gnu.org/licenses/>.
+------------------------------------------------------------------------*/
 
 #include "exemplar.h"
 
-#include <stdio.h>
+#include <algorithm>
+#include <cstdio>
 #include <fstream>
 
 
@@ -36,7 +53,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_f(P_ERRORAMOUNT, {"erroramt"}, 0.10, 0.10, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "error");
 
   initparameter_indexed(P_FFTRANGE, {"fft range"}, FFTR_AUDIBLE, FFTR_ALL, NUM_FFTRS);
-  
+
 
   /* fft ranges */
   setparametervaluestring(P_FFTRANGE, FFTR_AUDIBLE, "audible");
@@ -87,21 +104,10 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 #endif
 }
 
-PLUGIN::~PLUGIN() {
-
-#ifdef TARGET_API_VST
-  /* VST doesn't have initialize and cleanup methods like Audio Unit does, 
-    so we need to call this manually here */
-  do_cleanup();
-#endif
-}
-
 PLUGINCORE::PLUGINCORE(DfxPlugin * inInstance)
   : DfxPluginCore(inInstance) {
   /* determine the size of the largest window size */
-  long maxframe = 0;
-  for (int i = 0; i < BUFFERSIZESSIZE; i++)
-    maxframe = (buffersizes[i] > maxframe) ? buffersizes[i] : maxframe;
+  constexpr auto maxframe = *std::max_element(std::cbegin(buffersizes), std::cend(buffersizes));
 
   /* add some leeway? */
   in0 = (float*)malloc(maxframe * sizeof (float));
@@ -579,10 +585,10 @@ void PLUGINCORE::classify(float * in, float & scale,
 */
 
 
-void PLUGINCORE::process(const float *tin, float *tout, unsigned long samples, bool replacing) {
+void PLUGINCORE::process(const float *tin, float *tout, size_t samples) {
   int z = 0;
 
-  for (unsigned long ii = 0; ii < samples; ii++) {
+  for (size_t ii = 0; ii < samples; ii++) {
 
     /* copy sample in */
     in0[insize] = tin[ii];
@@ -646,13 +652,7 @@ void PLUGINCORE::process(const float *tin, float *tout, unsigned long samples, b
     }
 
     /* send sample out */
-  #ifdef TARGET_API_VST
-    if (replacing)
-  #endif
-      tout[ii] = out0[outstart];
-  #ifdef TARGET_API_VST
-    else tout[ii] += out0[outstart];
-  #endif
+    tout[ii] = out0[outstart];
 
     outstart ++;
     outsize --;

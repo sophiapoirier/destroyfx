@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2021  Sophia Poirier
+Copyright (C) 2009-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -46,6 +46,7 @@ This is where we connect the RTAS/AudioSuite API to our DfxPlugin system.
 #include "CPluginControl_LogTime.h"
 #include "CPluginControl_LogTimeS.h"
 #include "CPluginControl_OnOff.h"
+#include "dfxmath.h"
 #include "dfxmisc.h"
 //#include "FicPluginEnums.h"
 #include "PlugInUtils.h"
@@ -509,7 +510,7 @@ UInt32 DfxPlugin::ProcessAudio(bool inIsGlobalBypassed)
 //-----------------------------------------------------------------------------
 void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, long inNumFramesToProcess)
 {
-	preprocessaudio();
+	preprocessaudio(dfx::math::ToUnsigned(inNumFramesToProcess));
 
 	// RTAS clip monitoring
 	for (SInt32 channel = 0; (channel < GetNumInputs()) && !fClipped; channel++)
@@ -533,7 +534,7 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 		}
 		else
 		{
-			std::copy_n(inAudioStreams[channel], dfx::math::ToIndex(inNumFramesToProcess), mInputOutOfPlaceAudioBuffers[channel].data());
+			std::copy_n(inAudioStreams[channel], dfx::math::ToUnsigned(inNumFramesToProcess), mInputOutOfPlaceAudioBuffers[channel].data());
 		}
 	}
 
@@ -546,13 +547,13 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 		if (mGlobalBypass_rtas)
 		{
 			SInt32 const inputChannelIndex = (GetNumInputs() < GetNumOutputs()) ? (GetNumInputs() - 1) : channel;
-			std::copy_n(mInputAudioStreams[inputChannelIndex], dfx::math::ToIndex(inNumFramesToProcess), outAudioStreams[channel]);
+			std::copy_n(mInputAudioStreams[inputChannelIndex], dfx::math::ToUnsigned(inNumFramesToProcess), outAudioStreams[channel]);
 		}
 		else
 		{
 			if (!mInPlaceAudioProcessingAllowed)
 			{
-				std::fill_n(outAudioStreams[channel], dfx::math::ToIndex(inNumFramesToProcess), 0.0f);
+				std::fill_n(outAudioStreams[channel], dfx::math::ToUnsigned(inNumFramesToProcess), 0.0f);
 			}
 #if TARGET_PLUGIN_USES_DSPCORE
 			if (mDSPCores[channel])
@@ -566,7 +567,7 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 					}
 					inputAudio = mAsymmetricalInputAudioBuffer.data();
 				}
-				mDSPCores[channel]->process(inputAudio, outAudioStreams[channel], (unsigned)inNumFramesToProcess);
+				mDSPCores[channel]->process(inputAudio, outAudioStreams[channel], dfx::math::ToUnsigned(inNumFramesToProcess));
 			}
 #endif
 		}
@@ -574,7 +575,7 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 #if !TARGET_PLUGIN_USES_DSPCORE
 	if (!mGlobalBypass_rtas)
 	{
-		processaudio(const_cast<float const* const*>(mInputAudioStreams.data()), const_cast<float* const*>(outAudioStreams), (unsigned)inNumFramesToProcess);
+		processaudio(const_cast<float const* const*>(mInputAudioStreams.data()), const_cast<float* const*>(outAudioStreams), dfx::math::ToUnsigned(inNumFramesToProcess));
 	}
 #endif
 

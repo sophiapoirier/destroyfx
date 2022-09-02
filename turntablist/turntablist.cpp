@@ -27,6 +27,7 @@ To contact the developer, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <optional>
 
 #include "dfxmath.h"
 #include "dfxmisc.h"
@@ -900,37 +901,37 @@ void Turntablist::calculateSpinSpeeds()
 }
 
 //-----------------------------------------------------------------------------------------
-void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* outAudio, unsigned long inNumFrames)
+void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* outAudio, size_t inNumFrames)
 {
-	long eventFrame = -1; // -1 = no events
+	std::optional<size_t> eventFrame;
 	auto const numEvents = getmidistate().getBlockEventCount();
-	long currEvent = 0;
+	size_t currEvent = 0;
 
-	unsigned long numOutputs = getnumoutputs();
+	auto const numOutputs = getnumoutputs();
 //	float (*interpolateHermiteFunctionPtr)(float *, double, long) = m_bLoop ? dfx::math::InterpolateHermite : dfx::math::InterpolateHermite_NoWrap;
 
 
 	if (numEvents == 0)
 	{
-		eventFrame = -1;
+		eventFrame.reset();
 	}
 	else
 	{
 		eventFrame = getmidistate().getBlockEvent(currEvent).mOffsetFrames;
 	}
-	for (long currFrame = 0; currFrame < (signed)inNumFrames; currFrame++)
+	for (size_t currFrame = 0; currFrame < inNumFrames; currFrame++)
 	{
 		//
 		// process MIDI events if any
 		//
-		while (currFrame == eventFrame)
+		while (eventFrame && (currFrame == *eventFrame))
 		{
 			processMidiEvent(currEvent);
 			currEvent++;	// check next event
 
 			if (currEvent >= numEvents)
 			{
-				eventFrame = -1;	// no more events
+				eventFrame.reset();	// no more events
 			}
 		}
 
@@ -1074,7 +1075,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 #endif
 						if (m_fPlaySampleRate == 0.0)
 						{
-							for (unsigned long ch=0; ch < numOutputs; ch++)
+							for (size_t ch = 0; ch < numOutputs; ch++)
 							{
 								outAudio[ch][currFrame] = 0.0f;
 							}
@@ -1085,13 +1086,13 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 //#define LINEAR_INTERPOLATION
 #define CUBIC_INTERPOLATION
 
-							for (unsigned long ch=0; ch < numOutputs; ch++)
+							for (size_t ch = 0; ch < numOutputs; ch++)
 							{
 							#ifdef USE_LIBSNDFILE
 								auto const output = (ch == 0) ? m_fLeft : m_fRight;
 							#else
 								AudioBufferList& abl = m_auBufferList.GetBufferList();
-								unsigned long ablChannel = ch;
+								size_t ablChannel = ch;
 								if (ch >= abl.mNumberBuffers)
 								{
 									ablChannel = abl.mNumberBuffers - 1;
@@ -1144,7 +1145,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 					}  // if (!m_bMute)
 					else
 					{
-						for (unsigned long ch=0; ch < numOutputs; ch++)
+						for (size_t ch = 0; ch < numOutputs; ch++)
 						{
 							outAudio[ch][currFrame] = 0.0f;
 						}
@@ -1173,7 +1174,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 				}  // if (bNoteIsOn)
 				else
 				{
-					for (unsigned long ch=0; ch < numOutputs; ch++)
+					for (size_t ch = 0; ch < numOutputs; ch++)
 					{
 						outAudio[ch][currFrame] = 0.0f;
 					}
@@ -1181,7 +1182,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 			}  // if (owns_lock)
 			else
 			{
-				for (unsigned long ch=0; ch < numOutputs; ch++)
+				for (size_t ch = 0; ch < numOutputs; ch++)
 				{
 					outAudio[ch][currFrame] = 0.0f;
 				}
@@ -1189,7 +1190,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 		}  // if (bNoteIsOn)
 		else
 		{
-			for (unsigned long ch=0; ch < numOutputs; ch++)
+			for (size_t ch = 0; ch < numOutputs; ch++)
 			{
 				outAudio[ch][currFrame] = 0.0f;
 			}
@@ -1497,9 +1498,9 @@ void Turntablist::processDirection()
 #pragma mark MIDI processing
 
 //-----------------------------------------------------------------------------------------
-void Turntablist::processMidiEvent(long inCurrentEvent)
+void Turntablist::processMidiEvent(size_t inEventIndex)
 {
-	auto const& event = getmidistate().getBlockEvent(inCurrentEvent);
+	auto const& event = getmidistate().getBlockEvent(inEventIndex);
 
 	if (DfxMidi::isNote(event.mStatus))
 	{
@@ -1555,7 +1556,7 @@ void Turntablist::processMidiEvent(long inCurrentEvent)
 }
 
 //-----------------------------------------------------------------------------------------
-void Turntablist::noteOn(int inNote, int inVelocity, unsigned long /*inOffsetFrames*/)
+void Turntablist::noteOn(int inNote, int inVelocity, size_t /*inOffsetFrames*/)
 {
 	auto const power_old = m_bPower;
 

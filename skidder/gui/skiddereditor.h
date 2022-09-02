@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2021  Sophia Poirier
+Copyright (C) 2000-2022  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -36,7 +36,7 @@ public:
 	long OpenEditor() override;
 	void CloseEditor() override;
 	void parameterChanged(long inParameterID) override;
-	void outputChannelsChanged(unsigned long inChannelCount) override;
+	void outputChannelsChanged(size_t inChannelCount) override;
 	void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) override;
 
 private:

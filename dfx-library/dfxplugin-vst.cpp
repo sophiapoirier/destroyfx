@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -33,6 +33,7 @@ This is where we connect the VST API to our DfxPlugin system.
 #include <cinttypes>
 #include <cstdio>
 #include <limits>
+#include <optional>
 
 #include "dfxmath.h"
 
@@ -120,7 +121,7 @@ VstInt32 DfxPlugin::getGetTailSize()
 //------------------------------------------------------------------------
 bool DfxPlugin::getInputProperties(VstInt32 index, VstPinProperties* properties)
 {
-	if ((index >= 0) && (static_cast<unsigned long>(index) < getnuminputs()) && properties)
+	if ((index >= 0) && (dfx::math::ToIndex(index) < getnuminputs()) && properties)
 	{
 		snprintf(properties->label, kVstMaxLabelLen, "%s input %d", PLUGIN_NAME_STRING, index + 1);
 		snprintf(properties->shortLabel, kVstMaxShortLabelLen, "in %d", index + 1);
@@ -137,7 +138,7 @@ bool DfxPlugin::getInputProperties(VstInt32 index, VstPinProperties* properties)
 //------------------------------------------------------------------------
 bool DfxPlugin::getOutputProperties(VstInt32 index, VstPinProperties* properties)
 {
-	if ((index >= 0) && (static_cast<unsigned long>(index) < getnumoutputs()) && properties)
+	if ((index >= 0) && (dfx::math::ToIndex(index) < getnumoutputs()) && properties)
 	{
 		snprintf(properties->label, kVstMaxLabelLen, "%s output %d", PLUGIN_NAME_STRING, index + 1);
 		snprintf(properties->shortLabel, kVstMaxShortLabelLen, "out %d", index + 1);
@@ -264,7 +265,10 @@ VstInt32 DfxPlugin::canDo(char* text)
 //-----------------------------------------------------------------------------
 void DfxPlugin::setProgram(VstInt32 inProgramNum)
 {
-	loadpreset(inProgramNum);
+	if (inProgramNum >= 0)
+	{
+		loadpreset(dfx::math::ToIndex(inProgramNum));
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -273,7 +277,7 @@ void DfxPlugin::setProgramName(char* inName)
 	if (inName)
 	{
 		assert(inName[0] != '\0');
-		setpresetname(getProgram(), inName);
+		setpresetname(dfx::math::ToIndex(getProgram()), inName);
 	}
 }
 
@@ -291,11 +295,11 @@ bool DfxPlugin::getProgramNameIndexed(VstInt32 /*inCategory*/, VstInt32 inIndex,
 		return false;
 	}
 
-	if (presetisvalid(inIndex))
+	if ((inIndex >= 0) && presetisvalid(dfx::math::ToIndex(inIndex)))
 	{
-		if (presetnameisvalid(inIndex))
+		if (presetnameisvalid(dfx::math::ToIndex(inIndex)))
 		{
-			vst_strncpy(outText, getpresetname(inIndex).c_str(), kVstMaxProgNameLen);
+			vst_strncpy(outText, getpresetname(dfx::math::ToIndex(inIndex)).c_str(), kVstMaxProgNameLen);
 		}
 		else
 		{
@@ -450,7 +454,7 @@ bool DfxPlugin::getParameterProperties(VstInt32 index, VstParameterProperties* p
 	};
 	if (isVisible(index))
 	{
-		properties->displayIndex = [index, isVisible]()
+		properties->displayIndex = [index, isVisible]
 		{
 			VstInt16 result = 0;
 			for (VstInt16 parameterID = 0; parameterID <= index; parameterID++)
@@ -510,9 +514,9 @@ bool DfxPlugin::getParameterProperties(VstInt32 index, VstParameterProperties* p
 //-----------------------------------------------------------------------------------------
 void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampleFrames)
 {
-	preprocessaudio();
+	preprocessaudio(dfx::math::ToUnsigned(sampleFrames));
 
-	for (unsigned long ch = 0; ch < getnuminputs(); ch++)
+	for (size_t ch = 0; ch < getnuminputs(); ch++)
 	{
 		if (mInPlaceAudioProcessingAllowed)
 		{
@@ -521,19 +525,19 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 		else
 		{
 			assert(mInputOutOfPlaceAudioBuffers.front().size() >= static_cast<size_t>(sampleFrames));
-			std::copy_n(inputs[ch], dfx::math::ToIndex(sampleFrames), mInputOutOfPlaceAudioBuffers[ch].data());
+			std::copy_n(inputs[ch], dfx::math::ToUnsigned(sampleFrames), mInputOutOfPlaceAudioBuffers[ch].data());
 		}
 	}
 	if (!mInPlaceAudioProcessingAllowed)
 	{
-		for (unsigned long ch = 0; ch < getnumoutputs(); ch++)
+		for (size_t ch = 0; ch < getnumoutputs(); ch++)
 		{
-			std::fill_n(outputs[ch], dfx::math::ToIndex(sampleFrames), 0.0f);
+			std::fill_n(outputs[ch], dfx::math::ToUnsigned(sampleFrames), 0.f);
 		}
 	}
 
 #if TARGET_PLUGIN_USES_DSPCORE
-	for (unsigned long ch = 0; ch < getnumoutputs(); ch++)
+	for (size_t ch = 0; ch < getnumoutputs(); ch++)
 	{
 		if (mDSPCores[ch])
 		{
@@ -547,11 +551,11 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 				}
 				inputAudio = mAsymmetricalInputAudioBuffer.data();
 			}
-			mDSPCores[ch]->process(inputAudio, outputs[ch], static_cast<unsigned long>(sampleFrames));
+			mDSPCores[ch]->process(inputAudio, outputs[ch], dfx::math::ToUnsigned(sampleFrames));
 		}
 	}
 #else
-	processaudio(mInputAudioStreams.data(), outputs, dfx::math::ToIndex<unsigned long>(sampleFrames));
+	processaudio(mInputAudioStreams.data(), outputs, dfx::math::ToUnsigned(sampleFrames));
 #endif
 
 	postprocessaudio();
@@ -568,7 +572,8 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 // note:  it is possible and allowable for this method to be called more than once per audio processing block
 VstInt32 DfxPlugin::processEvents(VstEvents* events)
 {
-	long newProgramNum {}, newProgramOffset = -1;
+	size_t newProgramIndex {};
+	std::optional<int> newProgramOffset;
 
 	for (VstInt32 i = 0; i < events->numEvents; i++)
 	{
@@ -589,7 +594,7 @@ VstInt32 DfxPlugin::processEvents(VstEvents* events)
 		int const status = midiData[0] & 0xF0;
 		int const byte1 = midiData[1] & 0x7F;
 		int const byte2 = midiData[2] & 0x7F;
-		auto const offsetFrames = dfx::math::ToIndex<unsigned long>(midiEvent->deltaFrames);  // timing offset
+		auto const offsetFrames = dfx::math::ToIndex(midiEvent->deltaFrames);  // timing offset
 
 		// looking at notes   (0x9* is Note On status ~ 0x8* is Note Off status)
 		if ((status == DfxMidi::kStatus_NoteOn) || (status == DfxMidi::kStatus_NoteOff))
@@ -636,9 +641,9 @@ VstInt32 DfxPlugin::processEvents(VstEvents* events)
 		{
 //			handlemidi_programchange(channel, byte1, offsetFrames);
 			// XXX maybe this is really what we want to do with these?
-			if (midiEvent->deltaFrames >= newProgramOffset)
+			if (!newProgramOffset || (midiEvent->deltaFrames >= *newProgramOffset))
 			{
-				newProgramNum = byte1;
+				newProgramIndex = dfx::math::ToIndex(byte1);
 				newProgramOffset = midiEvent->deltaFrames;
 			}
 //			loadpreset(byte1);
@@ -646,9 +651,9 @@ VstInt32 DfxPlugin::processEvents(VstEvents* events)
 	}
 
 	// change the plugin's program if a program change message was received
-	if (newProgramOffset >= 0)
+	if (newProgramOffset)
 	{
-		loadpreset(newProgramNum);
+		loadpreset(newProgramIndex);
 	}
 
 

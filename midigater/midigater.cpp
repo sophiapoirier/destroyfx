@@ -115,7 +115,7 @@ void MIDIGater::processparameters()
 
 
 //-----------------------------------------------------------------------------------------
-void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
+void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames)
 {
 	auto const numChannels = getnumoutputs();
 	auto numFramesToProcess = inNumFrames;  // for dividing up the block according to events
@@ -125,11 +125,11 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 	// add the "floor" audio input
 	if (mFloor.isSmoothing() || (mFloor.getValue() > 0.0f))
 	{
-		for (unsigned long sampleCount = 0; sampleCount < inNumFrames; sampleCount++)
+		for (size_t sampleIndex = 0; sampleIndex < inNumFrames; sampleIndex++)
 		{
-			for (unsigned long ch = 0; ch < numChannels; ch++)
+			for (size_t ch = 0; ch < numChannels; ch++)
 			{
-				outAudio[ch][sampleCount] = inAudio[ch][sampleCount] * mFloor.getValue();
+				outAudio[ch][sampleIndex] = inAudio[ch][sampleIndex] * mFloor.getValue();
 			}
 			mFloor.inc();
 		}
@@ -143,7 +143,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 	// counter for the number of MIDI events this block
 	// start at -1 because the beginning stuff has to happen
 	long eventCount = -1;
-	unsigned long currentBlockPosition = 0;
+	size_t currentBlockPosition = 0;
 
 	// now we're ready to start looking at MIDI messages and processing sound and such
 	do
@@ -182,13 +182,13 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 				noteActive = true;  // we have a note
 				mFloor = entryFloor;
 				float postFilterAmp = 1.f;
-				for (unsigned long sampleCount = currentBlockPosition; sampleCount < (numFramesToProcess + currentBlockPosition); sampleCount++)
+				for (size_t sampleIndex = currentBlockPosition; sampleIndex < (numFramesToProcess + currentBlockPosition); sampleIndex++)
 				{
 					float noteAmp = getmidistate().getNoteState(noteCount).mNoteAmp.getValue();  // key velocity
 					noteAmp *= 1.0f - mFloor.getValue();  // maximum note amplitude is scaled by what is above the floor
 					if (mGateMode == kGateMode_Lowpass)
 					{
-						if (((sampleCount - currentBlockPosition) % filterSmoothingStride) == 0)
+						if (((sampleIndex - currentBlockPosition) % filterSmoothingStride) == 0)
 						{
 							dfx::IIRFilter::Coefficients filterCoef;
 							std::tie(filterCoef, postFilterAmp) = getmidistate().processEnvelopeLowpassGate(noteCount);
@@ -202,18 +202,18 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 							getmidistate().processEnvelope(noteCount);  // to temporally progress the envelope's state
 						}
 						noteAmp *= postFilterAmp;
-						for (unsigned long ch = 0; ch < numChannels; ch++)
+						for (size_t ch = 0; ch < numChannels; ch++)
 						{
-							outAudio[ch][sampleCount] += channelFilters[ch].process(inAudio[ch][sampleCount]) * noteAmp;
+							outAudio[ch][sampleIndex] += channelFilters[ch].process(inAudio[ch][sampleIndex]) * noteAmp;
 						}
 					}
 					else
 					{
 						// see whether attack or release are active and fetch the output scalar
 						noteAmp *= getmidistate().processEnvelope(noteCount);  // scale by the attack/release envelope
-						for (unsigned long ch = 0; ch < numChannels; ch++)
+						for (size_t ch = 0; ch < numChannels; ch++)
 						{
-							outAudio[ch][sampleCount] += inAudio[ch][sampleCount] * noteAmp;
+							outAudio[ch][sampleIndex] += inAudio[ch][sampleIndex] * noteAmp;
 						}
 					}
 					mFloor.inc();

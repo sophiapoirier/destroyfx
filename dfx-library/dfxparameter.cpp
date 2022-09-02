@@ -801,7 +801,7 @@ void DfxParam::setcustomunitstring(std::string_view inText)
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-DfxPreset::DfxPreset(long inNumParameters)
+DfxPreset::DfxPreset(size_t inNumParameters)
 :	mValues(inNumParameters)
 {
 }

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2021  Sophia Poirier
+Copyright (C) 2000-2022  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -296,6 +296,7 @@ long SkidderEditor::OpenEditor()
 
 	// help display
 	pos.set(kHelpX, kHelpY, kHelpWidth, kHelpHeight);
+	// TODO: C++20 bind_front
 	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind(&SkidderEditor::GetHelpForControl, this, std::placeholders::_1), nullptr, DGColor::kWhite);
 	mHelpBox->setTextMargin({8, 10});
 	mHelpBox->setLineSpacing(3);
@@ -425,7 +426,7 @@ void SkidderEditor::parameterChanged(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-void SkidderEditor::outputChannelsChanged(unsigned long inChannelCount)
+void SkidderEditor::outputChannelsChanged(size_t inChannelCount)
 {
 	float const alpha = (inChannelCount == 2) ? 1.f : kUnusedControlAlpha;
 	SetParameterAlpha(kPan, alpha);

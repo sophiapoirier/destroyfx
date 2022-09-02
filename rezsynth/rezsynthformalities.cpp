@@ -128,7 +128,7 @@ long RezSynth::initialize()
 	mNyquist = getsamplerate() / 2.0;
 
 	constexpr double unaffectedFadeDurInSeconds = 0.003;
-	mUnaffectedFadeDur = std::max(std::lround(unaffectedFadeDurInSeconds * getsamplerate()), 1L);
+	mUnaffectedFadeDur = static_cast<size_t>(std::max(std::lround(unaffectedFadeDurInSeconds * getsamplerate()), 1L));
 	mUnaffectedFadeStep = 1.0f / static_cast<float>(mUnaffectedFadeDur);
 
 	mFreqSmoothingStride = dfx::math::GetFrequencyBasedSmoothingStride(getsamplerate());

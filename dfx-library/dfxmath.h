@@ -227,9 +227,11 @@ static inline double LambertW(double inValue)
 //-----------------------------------------------------------------------------
 // provides a good enough parameter smoothing update sample interval for frequency-based parameters;
 // this is targeting an update granularity of every 4 sample frames at a 44.1 kHz sample rate
-static inline unsigned long GetFrequencyBasedSmoothingStride(double inSamplerate)
+static inline size_t GetFrequencyBasedSmoothingStride(double inSamplerate)
 {
-	return std::max(static_cast<unsigned long>(inSamplerate) / 11025ul, 1ul);
+	assert(inSamplerate > 0.);
+	// TODO C++23: integer literal suffix UZ
+	return std::max(static_cast<size_t>(inSamplerate) / size_t(11025), size_t(1));
 }
 
 
@@ -381,7 +383,7 @@ private:
 			case RandomSeed::Static:
 				return 1729;
 			case RandomSeed::Monotonic:
-				return std::chrono::steady_clock::now().time_since_epoch().count();
+				return static_cast<EngineType::result_type>(std::chrono::steady_clock::now().time_since_epoch().count());
 			case RandomSeed::Entropic:
 				return std::random_device()();
 			default:

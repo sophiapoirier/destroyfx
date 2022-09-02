@@ -1,10 +1,30 @@
+/*------------------------------------------------------------------------
+Copyright (C) 2005-2022  Tom Murphy 7
 
-/* Slowft,
-   Featuring the Super Destroy FX Windowing System! */
+This file is part of Slowft.
+
+Slowft is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+Slowft is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Slowft.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org
+
+Slowft, featuring the Super Destroy FX Windowing System!
+------------------------------------------------------------------------*/
 
 #include "slowft.h"
 
-#include <stdio.h>
+#include <algorithm>
+#include <cstdio>
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
   #ifndef _DFX_SLOWFTEDITOR_H
@@ -23,10 +43,9 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_indexed(P_BUFSIZE, {"wsize"}, 9, 9, BUFFERSIZESSIZE, kDfxParamUnit_samples);
   initparameter_indexed(P_SHAPE, {"wshape"}, WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
 
-  long i;
   /* set up values for windowing */
   char bufstr[64];
-  for (i=0; i < BUFFERSIZESSIZE; i++) {
+  for (long i = 0; i < BUFFERSIZESSIZE; i++) {
     if (buffersizes[i] > 1000)
       sprintf(bufstr, "%ld,%03ld", buffersizes[i]/1000, buffersizes[i]%1000);
     else
@@ -38,7 +57,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setparametervaluestring(P_SHAPE, WINDOW_ARROW, "arrow");
   setparametervaluestring(P_SHAPE, WINDOW_WEDGE, "wedge");
   setparametervaluestring(P_SHAPE, WINDOW_COS, "best");
-  for (i = NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
+  for (long i = NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
     setparametervaluestring(P_SHAPE, i, "???");
 
   long delay_samples = buffersizes[getparameter_i(P_BUFSIZE)];
@@ -53,7 +72,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   dfxsettings->setAllowNoteEvents(true);
 
 #if !TARGET_PLUGIN_USES_DSPCORE
-  addchannelconfig(1, 1);	/* mono */
+  addchannelconfig(1, 1);  /* mono */
 #endif
 
   #ifdef TARGET_API_VST
@@ -64,21 +83,10 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   #endif
 }
 
-PLUGIN::~PLUGIN() {
-
-#ifdef TARGET_API_VST
-  /* VST doesn't have initialize and cleanup methods like Audio Unit does, 
-    so we need to call this manually here */
-  do_cleanup();
-#endif
-}
-
 PLUGINCORE::PLUGINCORE(DfxPlugin * inInstance)
   : DfxPluginCore(inInstance) {
   /* determine the size of the largest window size */
-  long maxframe = 0;
-  for (int i = 0; i < BUFFERSIZESSIZE; i++)
-    maxframe = (buffersizes[i] > maxframe) ? buffersizes[i] : maxframe;
+  constexpr auto maxframe = *std::max_element(std::cbegin(buffersizes), std::cend(buffersizes));
 
   /* add some leeway? */
   in0 = (float*)malloc(maxframe * sizeof (float));
@@ -151,31 +159,31 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
   /* freq given in hz */
   {
     float freq = BASE_FREQ;
-    for(int key = 0; key < NUM_KEYS; key ++) {
+    for(size_t key = 0; key < NUM_KEYS; key ++) {
       
       /* compute dot product */
       sines[key] = 0.0f;
       cosines[key] = 0.0f;
       
       /* PERF this is probably really inefficient. pre-computing
-	 tables of sines first, at least, would probably help. */
-      for(int s = 0; s < samples; s ++) {	
+         tables of sines first, at least, would probably help. */
+      for(int s = 0; s < samples; s ++) {
 
-	// float frac = ((float)s / (float)samples);
-	
-	/* PERF This could be strength-reduced */
-	float seconds = ((float)s / (float)rate);
-	
-	/* argument to sin, cosine. */
-	float arg = freq * seconds * SLOWFT_2PI;
+        // float frac = ((float)s / (float)samples);
 
-	sines[key] += sin(arg) * in[s];
-	cosines[key] += cos(arg) * in[s];
+        /* PERF This could be strength-reduced */
+        float seconds = ((float)s / (float)rate);
+
+        /* argument to sin, cosine. */
+        float arg = freq * seconds * SLOWFT_2PI;
+
+        sines[key] += sin(arg) * in[s];
+        cosines[key] += cos(arg) * in[s];
       }
 
       /* XXX this normalization is wrong: it should be the
-	 maximum possible score, which is the area under
-	 the curve of abs(sin(..)) within the region. */
+         maximum possible score, which is the area under
+         the curve of abs(sin(..)) within the region. */
       sines[key] /= (float)samples;
       cosines[key] /= (float)samples;
       
@@ -186,14 +194,14 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
 
   /* XXX do ops... */
 
-  int maxkey = 0;
+  size_t maxkey = 0;
   {
     float maxval = 0.0;
-    for(int k = 12; k < NUM_KEYS; k ++) {
+    for(size_t k = 12; k < NUM_KEYS; k ++) {
       float tval = abs(sines[k]) + abs(cosines[k]);
       if (tval > maxval) {
-	maxkey = k;
-	maxval = tval;
+        maxkey = k;
+        maxval = tval;
       }
     }
   }
@@ -211,24 +219,22 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
     float freq = BASE_FREQ;
 
     /* now add back in sines and cosines */
-    for(int key = 0; key < NUM_KEYS; key ++) {
+    for(size_t key = 0; key < NUM_KEYS; key ++) {
       
       if (key == maxkey)
       for(int s = 0; s < samples; s ++) {
-	
-	float seconds = ((float)s / (float)rate);
-	
-	/* argument to sin, cosine. */
-	float arg = freq * seconds * SLOWFT_2PI;
 
-	out[s] += (sines[key] * sin(arg)) + (cosines[key] * cos(arg));
+        float seconds = ((float)s / (float)rate);
 
+        /* argument to sin, cosine. */
+        float arg = freq * seconds * SLOWFT_2PI;
+
+        out[s] += (sines[key] * sin(arg)) + (cosines[key] * cos(arg));
       }
 
       freq *= HALFSTEP_RATIO;
     }
   }
-
 }
 
 
@@ -265,10 +271,10 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
 */
 
 
-void PLUGINCORE::process(const float *tin, float *tout, unsigned long samples, bool replacing) {
+void PLUGINCORE::process(const float *tin, float *tout, size_t samples) {
   int z = 0;
 
-  for (unsigned long ii = 0; ii < samples; ii++) {
+  for (size_t ii = 0; ii < samples; ii++) {
 
     /* copy sample in */
     in0[insize] = tin[ii];
@@ -332,13 +338,7 @@ void PLUGINCORE::process(const float *tin, float *tout, unsigned long samples, b
     }
 
     /* send sample out */
-  #ifdef TARGET_API_VST
-    if (replacing)
-  #endif
-      tout[ii] = out0[outstart];
-  #ifdef TARGET_API_VST
-    else tout[ii] += out0[outstart];
-  #endif
+    tout[ii] = out0[outstart];
 
     outstart ++;
     outsize --;

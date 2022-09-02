@@ -62,15 +62,15 @@ void PolarizerDSP::processparameters()
 }
 
 //-----------------------------------------------------------------------------------------
-void PolarizerDSP::process(float const* inAudio, float* outAudio, unsigned long numSampleFrames)
+void PolarizerDSP::process(float const* inAudio, float* outAudio, size_t inNumFrames)
 {
 	// fetch the current parameter values
 	auto const leapSize = getparameter_i(kSkip);
 	auto const implode = getparameter_b(kImplode);
 
-	for (unsigned long sampleCount = 0; sampleCount < numSampleFrames; sampleCount++)
+	for (size_t sampleIndex = 0; sampleIndex < inNumFrames; sampleIndex++)
 	{
-		auto outputValue = inAudio[sampleCount];
+		auto outputValue = inAudio[sampleIndex];
 		mUnaffectedSamples--;
 		if (mUnaffectedSamples < 0)  // go to polarized when the leap is done
 		{
@@ -93,7 +93,7 @@ void PolarizerDSP::process(float const* inAudio, float* outAudio, unsigned long 
 			}
 		}
 
-		outAudio[sampleCount] = outputValue;
+		outAudio[sampleIndex] = outputValue;
 
 		incrementSmoothedAudioValues();
 	}

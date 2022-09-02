@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -26,7 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxmath.h"
 
 
-void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
+void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames)
 {
 	auto const numChannels = getnumoutputs();
 	auto numFramesToProcess = inNumFrames;  // for dividing up the block according to events
@@ -36,10 +36,10 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 	{
 		// mix very quiet noise (-300 dB) into the input signal to hopefully avoid any denormal values
 		float quietNoise = 1.0e-15f;
-		for (unsigned long ch = 0; ch < numChannels; ch++)
+		for (size_t ch = 0; ch < numChannels; ch++)
 		{
 			auto const volatileIn = const_cast<float*>(inAudio[ch]);
-			for (unsigned long samplecount = 0; samplecount < inNumFrames; samplecount++)
+			for (size_t samplecount = 0; samplecount < inNumFrames; samplecount++)
 			{
 				volatileIn[samplecount] += quietNoise;
 				quietNoise = -quietNoise;
@@ -51,7 +51,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 	// counter for the number of MIDI events this block
 	// start at -1 because the beginning stuff has to happen
 	long eventcount = -1;
-	unsigned long currentBlockPosition = 0;  // we are at sample 0
+	size_t currentBlockPosition = 0;  // we are at sample 0
 
 
 	// now we're ready to start looking at MIDI messages and processing sound and such
@@ -95,7 +95,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 
 				mAmpEvener[noteIndex] = calculateAmpEvener(noteIndex);  // a scalar for balancing outputs from the normalizing modes
 
-				for (unsigned long subSlicePosition = 0; subSlicePosition < numFramesToProcess; )
+				for (size_t subSlicePosition = 0; subSlicePosition < numFramesToProcess; )
 				{
 					// this is the resonator stuff
 					auto const activeNumBands = calculateCoefficients(noteIndex);
@@ -111,7 +111,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 									  [](auto& value){ value.snap(); });
 					}
 
-					auto const subSliceFrameCount = [this, numFramesToProcess, subSlicePosition, noteIndex, activeNumBands]()
+					auto const subSliceFrameCount = [this, numFramesToProcess, subSlicePosition, noteIndex, activeNumBands]
 					{
 						auto const valueIsSmoothing = [](auto const& value){ return value.isSmoothing(); };
 						auto const freqIsSmoothing = mBaseFreq[noteIndex].isSmoothing()
@@ -172,7 +172,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 			auto const entryUnaffectedFadeSamples = mUnaffectedFadeSamples;
 			auto const entryBetweenGain = mBetweenGain;
 			auto const entryUnaffectedWetGain = notesActive ? entryWetGain : mWetGain;
-			for (unsigned long ch = 0; ch < numChannels; ch++)
+			for (size_t ch = 0; ch < numChannels; ch++)
 			{
 				mUnaffectedState = entryUnaffectedState;
 				mUnaffectedFadeSamples = entryUnaffectedFadeSamples;
@@ -210,10 +210,10 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 	if ((mDryGain.getValue() > 0.0f) || mDryGain.isSmoothing())
 	{
 		auto const entryDryGain = mDryGain;
-		for (unsigned long ch = 0; ch < numChannels; ch++)
+		for (size_t ch = 0; ch < numChannels; ch++)
 		{
 			mDryGain = entryDryGain;
-			for (unsigned long samplecount = 0; samplecount < inNumFrames; samplecount++)
+			for (size_t samplecount = 0; samplecount < inNumFrames; samplecount++)
 			{
 				outAudio[ch][samplecount] += inAudio[ch][samplecount] * mDryGain.getValue();
 				mDryGain.inc();

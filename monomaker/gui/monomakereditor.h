@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of Monomaker.
 
@@ -30,5 +30,5 @@ class MonomakerEditor final : public DfxGuiEditor
 public:
 	explicit MonomakerEditor(DGEditorListenerInstance inInstance);
 	long OpenEditor() override;
-	void inputChannelsChanged(unsigned long inChannelCount) override;
+	void inputChannelsChanged(size_t inChannelCount) override;
 };

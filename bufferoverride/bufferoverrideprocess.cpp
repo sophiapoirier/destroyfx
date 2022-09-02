@@ -26,6 +26,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cmath>
 #include <numbers>
 
+#include "dfxmath.h"
+
 
 
 //-----------------------------------------------------------------------------
@@ -48,7 +50,7 @@ long BufferOverride::beat2samples(double inBeatScalar, double inTempoBPS) const
 }
 
 //-----------------------------------------------------------------------------
-void BufferOverride::updateBuffer(unsigned long samplePos, bool& ioViewDataChanged)
+void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 {
 	bool doSmoothing = true;  // but in some situations, we shouldn't
 	bool barSync = false;  // true if we need to sync up with the next bar start
@@ -152,12 +154,13 @@ void BufferOverride::updateBuffer(unsigned long samplePos, bool& ioViewDataChang
 	// this is a new forced buffer just beginning, act accordingly, do bar sync if necessary
 	else
 	{
-		auto const samplesPerBar = std::lround(static_cast<double>(gettimeinfo().mSamplesPerBeat) * gettimeinfo().mNumerator);
-		long samplesToBar = gettimeinfo().mSamplesToNextBar - samplePos;
+		auto const samplesPerBar = std::lround(gettimeinfo().mSamplesPerBeat * gettimeinfo().mNumerator);
+		long samplesToBar = std::lround(gettimeinfo().mSamplesToNextBar) - dfx::math::ToSigned(samplePos);
 		while ((samplesToBar < 0) && (samplesPerBar > 0))
 		{
 			samplesToBar += samplesPerBar;
 		}
+		samplesToBar = std::max(samplesToBar, 0L);
 		if (barSync)
 		{
 			// do beat sync for each LFO if it ought to be done
@@ -243,7 +246,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos, bool& ioViewDataChang
 
 //---------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------
-void BufferOverride::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
+void BufferOverride::processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames)
 {
 	auto const numChannels = getnumoutputs();
 	auto const entryDivisor = mDivisor;
@@ -281,7 +284,7 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 
 //-----------------------AUDIO STUFF---------------------------
 	// here we begin the audio output loop, which has two checkpoints at the beginning
-	for (unsigned long sampleIndex = 0; sampleIndex < inNumFrames; sampleIndex++)
+	for (size_t sampleIndex = 0; sampleIndex < inNumFrames; sampleIndex++)
 	{
 		// check if it's the end of this minibuffer
 		if (mReadPos >= mMinibufferSize)
@@ -290,13 +293,13 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 		}
 
 		// store the latest input samples into the buffers
-		for (unsigned long ch = 0; ch < numChannels; ch++)
+		for (size_t ch = 0; ch < numChannels; ch++)
 		{
 			mBuffers[ch][mWritePos] = inAudio[ch][sampleIndex];
 		}
 
 		// get the current output without any smoothing
-		for (unsigned long ch = 0; ch < numChannels; ch++)
+		for (size_t ch = 0; ch < numChannels; ch++)
 		{
 			mAudioOutputValues[ch] = mBuffers[ch][mReadPos];
 		}
@@ -304,7 +307,7 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 		// and if smoothing is taking place, get the smoothed audio output
 		if (mSmoothCount > 0)
 		{
-			for (unsigned long ch = 0; ch < numChannels; ch++)
+			for (size_t ch = 0; ch < numChannels; ch++)
 			{
 				// crossfade between the current input and its corresponding overlap sample
 //				mAudioOutputValues[ch] *= 1.0f - (mSmoothStep * static_cast<float>(mSmoothCount));  // current
@@ -325,7 +328,7 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 		}
 
 		// write the output samples into the output stream
-		for (unsigned long ch = 0; ch < numChannels; ch++)
+		for (size_t ch = 0; ch < numChannels; ch++)
 		{
 			outAudio[ch][sampleIndex] = (mAudioOutputValues[ch] * mOutputGain.getValue()) + (inAudio[ch][sampleIndex] * mInputGain.getValue());
 		}
@@ -343,7 +346,7 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 	auto& midiState = getmidistate();
 	if (midiState.getBlockEventCount() > 0)
 	{
-		for (long eventIndex = 0; eventIndex < midiState.getBlockEventCount(); eventIndex++)
+		for (size_t eventIndex = 0; eventIndex < midiState.getBlockEventCount(); eventIndex++)
 		{
 			if (DfxMidi::isNote(midiState.getBlockEvent(eventIndex).mStatus))
 			{
@@ -372,7 +375,7 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 				}
 			}
 		}
-		for (long eventIndex = midiState.getBlockEventCount() - 1; eventIndex >= 0; eventIndex--)
+		for (size_t eventIndex = midiState.getBlockEventCount() - 1; eventIndex >= 0; eventIndex--)
 		{
 			if (midiState.getBlockEvent(eventIndex).mStatus == DfxMidi::kStatus_PitchBend)
 			{

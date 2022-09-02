@@ -1,23 +1,41 @@
+/*------------------------------------------------------------------------
+Copyright (C) 2006-2022  Tom Murphy 7
 
-/* Windowingstub, starring the Super Destroy FX Windowing System! */
+This file is part of Exemplar.
 
-#ifndef _DFX_EXEMPLAR_H
-#define _DFX_EXEMPLAR_H
+Exemplar is free software:  you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
 
-#include <dfxplugin.h>
+Exemplar is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Exemplar.  If not, see <http://www.gnu.org/licenses/>.
+
+DFX Exemplar, starring the Super Destroy FX Windowing System!
+------------------------------------------------------------------------*/
+
+#pragma once
+
+#include <algorithm>
+#include <iterator>
+
+#include "dfxplugin.h"
 #include "ANN/ANN.h"
 #include "rfftw.h"
 
 /* change these for your plugins */
 #define PLUGIN Exemplar
-#define NUM_PRESETS 16
 
-#define BUFFERSIZESSIZE 14
-#define MAXBUFFERSIZE 32768
-const long buffersizes[BUFFERSIZESSIZE] = { 
+static constexpr long buffersizes[] = {
   4, 8, 16, 32, 64, 128, 256, 512, 
   1024, 2048, 4096, 8192, 16384, 32768, 
 };
+static constexpr long BUFFERSIZESSIZE = std::size(buffersizes);
 
 
 // PLUGIN ## DSP
@@ -50,27 +68,27 @@ enum { P_BUFSIZE, P_SHAPE,
 
 class PLUGIN : public DfxPlugin {
 public:
-  PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance);
-  virtual ~PLUGIN();
+  explicit PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
 private:
+  static constexpr size_t NUM_PRESETS = 16;
+
   /* set up the built-in presets */
   void makepresets();
 };
 
 class PLUGINCORE : public DfxPluginCore {
 public:
-  PLUGINCORE(DfxPlugin * inInstance);
-  virtual ~PLUGINCORE();
+  explicit PLUGINCORE(DfxPlugin * inInstance);
+  ~PLUGINCORE() override;
 
-  virtual void reset();
-  virtual void processparameters();
-  virtual void process(const float *in, float *out, unsigned long inNumFrames, bool replacing=true);
+  void reset() override;
+  void processparameters() override;
+  void process(const float *in, float *out, size_t inNumFrames) override;
 
-  long getwindowsize() { return third; }
+  long getwindowsize() const noexcept { return third; }
 
- private:
- 
+private:
 
   /* input and output buffers. out is framesize*2 samples long, in is framesize
      samples long. (for maximum framesize)
@@ -112,7 +130,7 @@ public:
   bool capturemode;
   float erroramount;
 
-#define CAPBUFFER 500000 /* 1000000 */
+  static constexpr size_t CAPBUFFER = 500000; /* 1000000 */
   float capsamples[CAPBUFFER];
   int ncapsamples; /* < CAPBUFFER */
   
@@ -139,8 +157,6 @@ public:
   rfftw_plan rplan;
 
   /* result of ffts ( */
-  float fftr[MAXBUFFERSIZE];
+  float fftr[*std::max_element(std::cbegin(buffersizes), std::cend(buffersizes))];
 
 };
-
-#endif

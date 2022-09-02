@@ -139,7 +139,7 @@ public:
 
 	long initialize() override;
 
-	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
+	void processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames) override;
 	void processparameters() override;
 
 	long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
@@ -163,7 +163,7 @@ private:
 	OSStatus createAudioFileAlias(AliasHandle* outAlias, Size* outDataSize = nullptr);
 	OSStatus resolveAudioFileAlias(AliasHandle const inAlias);
 
-	void processMidiEvent(long inCurrentEvent);
+	void processMidiEvent(size_t inEventIndex);
 	void processScratch(bool inSetParameter = false);
 	void processScratchStop();
 	void processPitch();
@@ -171,7 +171,7 @@ private:
 	void calculateSpinSpeeds();
 	void setPlay(bool inPlayState, bool inShouldSendNotification = true);
 
-	void noteOn(int inNote, int inVelocity, unsigned long inOffsetFrames);
+	void noteOn(int inNote, int inVelocity, size_t inOffsetFrames);
 	void stopNote(bool inStopPlay = false);
 	void playNote(bool inValue);
 	long fixMidiData(long inParameterID, char inValue);

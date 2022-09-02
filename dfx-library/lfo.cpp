@@ -125,12 +125,12 @@ void dfx::LFO::setStepSize(double inStepSize) noexcept
 
 //--------------------------------------------------------------------------------------
 // calculates the position within an LFO's cycle needed to sync to the song's beat
-void dfx::LFO::syncToTheBeat(long inSamplesToBar)
+void dfx::LFO::syncToTheBeat(double inSamplesToBar)
 {
 	// calculate how many samples long the LFO cycle is
 	double const cycleSize = 1. / mStepSize;
 	// calculate many more samples it will take for this cycle to coincide with the beat
-	double const countdown = std::fmod(static_cast<double>(inSamplesToBar), cycleSize);
+	double const countdown = std::fmod(inSamplesToBar, cycleSize);
 	// and convert that into the correct LFO position according to its step size
 	mPosition = (cycleSize - countdown) * mStepSize;
 	// wrap around the new position if it is beyond the end of the cycle
@@ -141,7 +141,7 @@ void dfx::LFO::syncToTheBeat(long inSamplesToBar)
 //-----------------------------------------------------------------------------------------
 // This function wraps around the LFO cycle position when it passes the cycle end.
 // It also sets up the smoothing counter if a discontiguous LFO waveform is being used.
-void dfx::LFO::updatePosition(long inNumSteps)
+void dfx::LFO::updatePosition(size_t inNumSteps)
 {
 	// increment the LFO position tracker
 	mPosition += mStepSize * static_cast<double>(inNumSteps);

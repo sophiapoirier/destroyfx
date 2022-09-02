@@ -127,7 +127,7 @@ void EQSync::processparameters()
 
 
 //-----------------------------------------------------------------------------
-void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
+void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames)
 {
 	auto const numChannels = getnumoutputs();
 	bool eqChanged = false;
@@ -152,7 +152,7 @@ void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, u
 	auto const latestCycleDur = std::lround((getsamplerate() / mCurrentTempoBPS) / mRate);
 
 
-	for (unsigned long sampleCount = 0; sampleCount < inNumFrames; sampleCount++)
+	for (size_t sampleIndex = 0; sampleIndex < inNumFrames; sampleIndex++)
 	{
 		mCycleSamples--;  // decrement our EQ cycle counter
 		if (mCycleSamples <= 0)
@@ -162,7 +162,7 @@ void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, u
 			// see if we need to adjust this cycle so that an EQ change syncs with the next measure
 			if (std::exchange(mNeedResync, false))
 			{
-				mCycleSamples = gettimeinfo().mSamplesToNextBar % mCycleSamples;
+				mCycleSamples = std::lround(gettimeinfo().mSamplesToNextBar) % mCycleSamples;
 			}
 
 			mSmoothSamples = std::lround(static_cast<double>(mCycleSamples) * mSmooth);
@@ -205,15 +205,15 @@ void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, u
 
 //.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 
-		for (unsigned long ch = 0; ch < numChannels; ch++)
+		for (size_t ch = 0; ch < numChannels; ch++)
 		{
 			// audio output section -- outputs the latest sample
-			auto const inputValue = inAudio[ch][sampleCount];  // because Cubase inserts are goofy
+			auto const inputValue = inAudio[ch][sampleIndex];  // because Cubase inserts are goofy
 			float outputValue = (inputValue * mA0) + (mPrevIn[ch] * mA1) + (mPrevPrevIn[ch] * mA2) - (mPrevOut[ch] * mB1) - (mPrevPrevOut[ch] * mB2);
 			outputValue = dfx::math::ClampDenormal(outputValue);
 
 			// ...doing the complex filter thing here
-			outAudio[ch][sampleCount] = outputValue;
+			outAudio[ch][sampleIndex] = outputValue;
 
 			// update the previous sample holders and increment the i/o streams
 			mPrevPrevIn[ch] = mPrevIn[ch];

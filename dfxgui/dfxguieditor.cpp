@@ -218,7 +218,7 @@ bool DfxGuiEditor::open(void* inWindow)
 		mParameterList = CreateParameterList();
 	}
 #else
-	mParameterList.assign(static_cast<size_t>(GetNumParameters()), dfx::kParameterID_Invalid);
+	mParameterList.assign(GetNumParameters(), dfx::kParameterID_Invalid);
 	std::iota(mParameterList.begin(), mParameterList.end(), 0);
 	std::erase_if(mParameterList, [this](auto parameterID)
 	{
@@ -717,18 +717,10 @@ bool DfxGuiEditor::dfxgui_IsValidParamID(long inParameterID)
 	}
 #ifdef TARGET_API_AUDIOUNIT
 	// TODO: actually search parameter ID list to ensure that this ID is present?
-	if (static_cast<AudioUnitParameterID>(inParameterID) > mAUMaxParameterID)
-	{
-		return false;
-	}
+	return (static_cast<AudioUnitParameterID>(inParameterID) <= mAUMaxParameterID);
 #else
-	if (inParameterID >= GetNumParameters())
-	{
-		return false;
-	}
+	return (inParameterID < GetNumParameters());
 #endif
-
-	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -1367,7 +1359,7 @@ std::optional<DfxGuiEditor::AUParameterInfo> DfxGuiEditor::dfxgui_GetParameterIn
 #endif
 
 //-----------------------------------------------------------------------------
-long DfxGuiEditor::GetNumParameters()
+size_t DfxGuiEditor::GetNumParameters()
 {
 #ifdef TARGET_API_AUDIOUNIT
 	// XXX questionable implementation; return max ID value +1 instead?
@@ -1381,7 +1373,7 @@ long DfxGuiEditor::GetNumParameters()
 	}
 #endif
 #ifdef TARGET_API_VST
-	return getEffect()->getAeffect()->numParams;
+	return dfx::math::ToUnsigned(getEffect()->getAeffect()->numParams);
 #endif
 #ifdef TARGET_API_RTAS
 	return dfxgui_GetEffectInstance()->getnumparameters();
@@ -1897,14 +1889,14 @@ void DfxGuiEditor::TextEntryForParameterMidiCC(long inParameterID)
 // TARGET_PLUGIN_USES_MIDI
 
 //-----------------------------------------------------------------------------
-unsigned long DfxGuiEditor::getNumInputChannels()
+size_t DfxGuiEditor::getNumInputChannels()
 {
 #ifdef TARGET_API_AUDIOUNIT
 	auto const streamDesc = dfxgui_GetProperty<AudioStreamBasicDescription>(kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input);
 	return streamDesc ? streamDesc->mChannelsPerFrame : 0;
 #endif
 #ifdef TARGET_API_VST
-	return static_cast<unsigned long>(getEffect()->getAeffect()->numInputs);
+	return dfx::math::ToUnsigned(getEffect()->getAeffect()->numInputs);
 #endif
 #ifdef TARGET_API_RTAS
 	return dfxgui_GetEffectInstance()->getnuminputs();
@@ -1912,14 +1904,14 @@ unsigned long DfxGuiEditor::getNumInputChannels()
 }
 
 //-----------------------------------------------------------------------------
-unsigned long DfxGuiEditor::getNumOutputChannels()
+size_t DfxGuiEditor::getNumOutputChannels()
 {
 #ifdef TARGET_API_AUDIOUNIT
 	auto const streamDesc = dfxgui_GetProperty<AudioStreamBasicDescription>(kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output);
 	return streamDesc ? streamDesc->mChannelsPerFrame : 0;
 #endif
 #ifdef TARGET_API_VST
-	return static_cast<unsigned long>(getEffect()->getAeffect()->numOutputs);
+	return dfx::math::ToUnsigned(getEffect()->getAeffect()->numOutputs);
 #endif
 #ifdef TARGET_API_RTAS
 	return dfxgui_GetEffectInstance()->getnumoutputs();

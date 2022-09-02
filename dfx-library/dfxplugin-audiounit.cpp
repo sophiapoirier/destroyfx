@@ -35,6 +35,7 @@ This is where we connect the Audio Unit API to our DfxPlugin system.
 #include <type_traits>
 
 #include "dfx-au-utilities.h"
+#include "dfxmath.h"
 #include "dfxmisc.h"
 
 #if TARGET_PLUGIN_HAS_GUI
@@ -1393,7 +1394,7 @@ OSStatus DfxPlugin::GetPresets(CFArrayRef* outData) const
 {
 	// figure out how many valid (loaded) presets we actually have...
 	long validNumPresets = 0;
-	for (long i = 0; i < getnumpresets(); i++)
+	for (size_t i = 0; i < getnumpresets(); i++)
 	{
 //		if (presetnameisvalid(i))
 		if (!mPresets[i].getname().empty())
@@ -1419,7 +1420,7 @@ OSStatus DfxPlugin::GetPresets(CFArrayRef* outData) const
 	}
 
 	// add the preset data (name and number) into the array
-	for (long i = 0; i < getnumpresets(); i++)
+	for (size_t i = 0; i < getnumpresets(); i++)
 	{
 		if (presetnameisvalid(i))
 		{
@@ -1441,15 +1442,16 @@ OSStatus DfxPlugin::GetPresets(CFArrayRef* outData) const
 // this is called as a request to load a preset
 OSStatus DfxPlugin::NewFactoryPresetSet(AUPreset const& inNewFactoryPreset)
 {
-	long const newNumber = inNewFactoryPreset.presetNumber;
+	AUSDK_Require(inNewFactoryPreset.presetNumber >= 0, kAudioUnitErr_InvalidPropertyValue);
+	auto const presetIndex = dfx::math::ToIndex(inNewFactoryPreset.presetNumber);
 
-	AUSDK_Require(presetisvalid(newNumber), kAudioUnitErr_InvalidPropertyValue);
+	AUSDK_Require(presetisvalid(presetIndex), kAudioUnitErr_InvalidPropertyValue);
 	// for AU, we are using invalid preset names as a way of saying "not a real preset," 
 	// even though it might be a valid (allocated) preset number
-	AUSDK_Require(presetnameisvalid(newNumber), kAudioUnitErr_InvalidPropertyValue);
+	AUSDK_Require(presetnameisvalid(presetIndex), kAudioUnitErr_InvalidPropertyValue);
 
 	// try to load the preset
-	AUSDK_Require(loadpreset(newNumber), kAudioUnitErr_InvalidPropertyValue);
+	AUSDK_Require(loadpreset(presetIndex), kAudioUnitErr_InvalidPropertyValue);
 
 	return noErr;
 }
@@ -1624,7 +1626,7 @@ OSStatus DfxPlugin::Render(AudioUnitRenderActionFlags& ioActionFlags,
 						   AudioTimeStamp const& inTimeStamp, UInt32 inFramesToProcess)
 {
 	// do any pre-DSP prep
-	preprocessaudio();
+	preprocessaudio(inFramesToProcess);
 
 	// get the output element
 	auto& theOutput = Output(0);  // throws if there's an error
@@ -1673,7 +1675,7 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags
 	OSStatus status = noErr;
 
 	// do any pre-DSP prep
-	preprocessaudio();
+	preprocessaudio(inFramesToProcess);
 
 	// clear the output buffer because we will accumulate output into it
 	if (!mInPlaceAudioProcessingAllowed)

@@ -196,7 +196,7 @@ void DfxStub::reset()
 // you have initialized the parameters with the initparameter routines
 void DfxStub::initPresets()
 {
-	long i = 1;
+	size_t i = 1;
 
 	setpresetname(i, "fancy preset 1");
 	setpresetparameter_f(i, kFloatParam, 3.0f);
@@ -248,10 +248,8 @@ void DfxStub::processparameters()
 #if TARGET_PLUGIN_USES_DSPCORE
 //-----------------------------------------------------------------------------
 // passes one stream of input audio, one stream of output audio, 
-// the number of sample frames in each stream, and whether to accumulate 
-// output into the output stream (replacing=false) or replace output (replacing=true)
-// (replacing is basically for VST)
-void DfxStubDSP::process(float const* inStream, float* outStream, unsigned long inNumFrames, bool replacing)
+// and the number of sample frames in each stream
+void DfxStubDSP::process(float const* inStream, float* outStream, size_t inNumFrames)
 {
 	// do your audio processing here
 }
@@ -259,10 +257,8 @@ void DfxStubDSP::process(float const* inStream, float* outStream, unsigned long 
 #else
 //-----------------------------------------------------------------------------
 // passes an array of input streams, an array of output streams, 
-// the number of sample frames in each stream, and whether to accumulate 
-// output into the output stream (replacing==false) or replace output (replacing==true)
-// (replacing is basically for VST)
-void DfxStub::processaudio(float const* const* in, float** out, unsigned long inNumFrames, bool replacing)
+// and the number of sample frames in each stream
+void DfxStub::processaudio(float const* const* in, float** out, size_t inNumFrames)
 {
 	// do your audio processing here
 

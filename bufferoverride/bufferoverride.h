@@ -41,7 +41,7 @@ public:
 	void cleanup() override;
 	void reset() override;
 
-	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
+	void processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames) override;
 	void processparameters() override;
 	void parameterChanged(long inParameterIndex) override;
 
@@ -49,7 +49,7 @@ public:
 	long dfx_GetProperty(dfx::PropertyID, dfx::Scope inScope, unsigned int inItemIndex, void* outData) override;
 
 private:
-	static constexpr long kNumPresets = 16;
+	static constexpr size_t kNumPresets = 16;
 	// the lowest parameter value before it behaves as one (no division)
 	static constexpr float kActiveDivisorMinimum = 2.f;
 	// We need this to get some maximum buffer size and allocate for that.
@@ -59,9 +59,9 @@ private:
 
 	long ms2samples(double inSizeMS) const;
 	long beat2samples(double inBeatScalar, double inTempoBPS) const;
-	void updateBuffer(unsigned long samplePos, bool& ioViewDataChanged);
+	void updateBuffer(size_t samplePos, bool& ioViewDataChanged);
 
-	void heedMidiEvents(unsigned long samplePos);
+	void heedMidiEvents(size_t samplePos);
 	float getDivisorParameterFromNote(int currentNote);
 	float getDivisorParameterFromPitchbend(int valueLSB, int valueMSB);
 

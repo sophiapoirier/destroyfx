@@ -201,7 +201,7 @@ void Monomaker::processparameters()
 }
 
 //-----------------------------------------------------------------------------------------
-void Monomaker::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
+void Monomaker::processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames)
 {
 	// point the input signal pointers to the correct input streams,
 	// according to the input selection (or dual-left if we only have 1 input)
@@ -220,7 +220,7 @@ void Monomaker::processaudio(float const* const* inAudio, float* const* outAudio
 	}
 
 	// process the audio streams
-	for (unsigned long i = 0; i < inNumFrames; i++)
+	for (size_t i = 0; i < inNumFrames; i++)
 	{
 		// apply input selection matrix
 		float const inL = (inAudioL[i] * mInputSelection_left2left.getValue()) + (inAudioR[i] * mInputSelection_right2left.getValue());

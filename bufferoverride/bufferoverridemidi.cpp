@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -76,7 +76,7 @@ float BufferOverride::getDivisorParameterFromPitchbend(int valueLSB, int valueMS
 
 //-----------------------------------------------------------------------------
 // this function implements the changes that new MIDI events demand
-void BufferOverride::heedMidiEvents(unsigned long samplePos)
+void BufferOverride::heedMidiEvents(size_t samplePos)
 {
 	auto& midiState = getmidistate();
 	// look at the events if we have any
@@ -87,7 +87,7 @@ void BufferOverride::heedMidiEvents(unsigned long samplePos)
 		bool foundNote = false;
 		int foundNoteOn = DfxMidi::kInvalidValue;
 		// search events from the beginning up until the current processing block position
-		for (long eventIndex = 0; eventIndex < midiState.getBlockEventCount(); eventIndex++)
+		for (size_t eventIndex = 0; eventIndex < midiState.getBlockEventCount(); eventIndex++)
 		{
 			// don't search past the current processing block position
 			if (midiState.getBlockEvent(eventIndex).mOffsetFrames > samplePos)
@@ -150,7 +150,7 @@ void BufferOverride::heedMidiEvents(unsigned long samplePos)
 
 // SEARCH FOR PITCHBEND
 		// search events backwards again looking for the most recent valid pitchbend
-		for (long eventIndex = midiState.getBlockEventCount() - 1; eventIndex >= 0; eventIndex--)
+		for (size_t eventIndex = midiState.getBlockEventCount() - 1; eventIndex >= 0; eventIndex--)
 		{
 			// once we're below the current block position, pitchbend messages can be considered
 			if ((midiState.getBlockEvent(eventIndex).mOffsetFrames <= samplePos)
@@ -169,12 +169,16 @@ void BufferOverride::heedMidiEvents(unsigned long samplePos)
 				mLastPitchbendLSB = mLastPitchbendMSB = DfxMidi::kInvalidValue;
 
 				// invalidate this and all earlier pitchbend messages so that they are not found in a future search
-				while (eventIndex >= 0)
+				while (true)
 				{
 					if (midiState.getBlockEvent(eventIndex).mStatus == DfxMidi::kStatus_PitchBend)
 					{
 						// the note shouldn't be considered anymore
 						midiState.invalidateBlockEvent(eventIndex);
+					}
+					if (eventIndex == 0)
+					{
+						break;
 					}
 					eventIndex--;
 				}

@@ -229,7 +229,7 @@ void Skidder::processValley()
 		if (barSync)  // we need to adjust this cycle so that a skid syncs with the next bar
 		{
 			// calculate how long this skid cycle needs to be
-			long const countdown = gettimeinfo().mSamplesToNextBar % mCycleSamples;
+			long const countdown = std::lround(gettimeinfo().mSamplesToNextBar) % mCycleSamples;
 			// skip straight to the valley and adjust its length
 			if (countdown <= (mValleySamples + (mSlopeSamples * 2)))
 			{
@@ -284,7 +284,7 @@ float Skidder::processOutput(float in1, float in2, float panGain)
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
+void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames)
 {
 	auto const numInputs = getnuminputs();
 	auto const numOutputs = getnumoutputs();
@@ -295,7 +295,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 
 	auto const entryCrossoverFrequency = mCrossoverFrequency_gen;
 	mCrossover->setFrequency(getCrossoverFrequency());
-	for (unsigned long ch = 0; ch < numOutputs; ch++)
+	for (size_t ch = 0; ch < numOutputs; ch++)
 	{
 		// cache and replace input with the crossover portion to be fed into the effect +
 		// render to output the crossover portion to be preserved (and add all subsequent output)
@@ -303,7 +303,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 		{
 			// TODO: it would be more efficient to not duplicate coefficient smoothing calculations for each channel
 			mCrossoverFrequency_gen = entryCrossoverFrequency;
-			for (unsigned long samp = 0; samp < inNumFrames; samp++)
+			for (size_t samp = 0; samp < inNumFrames; samp++)
 			{
 				auto const [persistent, effectual] = [this, inAudio, ch, samp]() -> std::pair<float, float>
 				{
@@ -359,7 +359,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 			// check mWaitSamples also because, if it's zero, we can just move ahead normally
 			if (noteIsOn && (mWaitSamples != 0))
 			{
-				for (unsigned long ch = 0; ch < numOutputs; ch++)
+				for (size_t ch = 0; ch < numOutputs; ch++)
 				{
 					// jump ahead accordingly in the I/O streams
 					mInputAudio[ch] += mWaitSamples;
@@ -416,7 +416,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 			if (noteIsOn && (mWaitSamples != 0))
 			{
 				// need to make sure that the skipped part is unprocessed audio
-				for (unsigned long ch = 0; ch < numOutputs; ch++)
+				for (size_t ch = 0; ch < numOutputs; ch++)
 				{
 					sumInPlace(mInputAudio[ch], mOutputAudio[ch], mWaitSamples);
 
@@ -441,7 +441,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 				}
 				else
 				{
-					for (unsigned long ch = 0; ch < numOutputs; ch++)
+					for (size_t ch = 0; ch < numOutputs; ch++)
 					{
 						sumInPlace(mInputAudio[ch] + mWaitSamples, mOutputAudio[ch] + mWaitSamples,
 								   inNumFrames - dfx::math::ToUnsigned(mWaitSamples));
@@ -509,7 +509,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 	if (numOutputs == 2)
 	{
 		// this is the per-sample audio processing loop
-		for (unsigned long samp = 0; samp < inNumFrames; samp++)
+		for (size_t samp = 0; samp < inNumFrames; samp++)
 		{
 			auto const inputValueL = mInputAudio[0][samp];
 			auto const inputValueR = mInputAudio[1][samp];
@@ -552,20 +552,20 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 	else
 	{
 		// this is the per-sample audio processing loop
-		for (unsigned long samp = 0; samp < inNumFrames; samp++)
+		for (size_t samp = 0; samp < inNumFrames; samp++)
 		{
 			// get the average sqare root of the current input samples
 			if ((mState == SkidState::SlopeIn) || (mState == SkidState::Plateau))
 			{
 #ifdef USE_BACKWARDS_RMS
 				float tempSum = 0.0f;
-				for (unsigned long ch = 0; ch < numOutputs; ch++)
+				for (size_t ch = 0; ch < numOutputs; ch++)
 				{
 					tempSum += std::fabs(mInputAudio[ch][samp]);
 				}
 				mRMS += std::sqrt(tempSum * channelScalar);
 #else
-				for (unsigned long ch = 0; ch < numOutputs; ch++)
+				for (size_t ch = 0; ch < numOutputs; ch++)
 				{
 					mRMS += mInputAudio[ch][samp] * mInputAudio[ch][samp] * channelScalar;
 				}
@@ -589,7 +589,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 					break;
 			}
 
-			for (unsigned long ch = 0; ch < numOutputs; ch++)
+			for (size_t ch = 0; ch < numOutputs; ch++)
 			{
 				mOutputAudio[ch][samp] += processOutput(mInputAudio[ch][samp], mInputAudio[ch][samp], 1.0f);
 			}

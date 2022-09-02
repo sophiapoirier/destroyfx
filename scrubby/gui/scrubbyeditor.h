@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -37,7 +37,7 @@ public:
 	void CloseEditor() override;
 	void parameterChanged(long inParameterID) override;
 	void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) override;
-	void outputChannelsChanged(unsigned long inChannelCount) override;
+	void outputChannelsChanged(size_t inChannelCount) override;
 
 private:
 	void HandleNotesButton(long inNotesButtonType);
