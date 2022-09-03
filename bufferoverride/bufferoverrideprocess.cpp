@@ -375,13 +375,17 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 				}
 			}
 		}
-		for (size_t eventIndex = midiState.getBlockEventCount() - 1; eventIndex >= 0; eventIndex--)
+		for (size_t eventIndex = midiState.getBlockEventCount() - 1; true; eventIndex--)
 		{
 			if (midiState.getBlockEvent(eventIndex).mStatus == DfxMidi::kStatus_PitchBend)
 			{
 				mLastPitchbendLSB = midiState.getBlockEvent(eventIndex).mByte1;
 				mLastPitchbendMSB = midiState.getBlockEvent(eventIndex).mByte2;
-				break;  // leave this for loop
+				break;  // leave this for-loop
+			}
+			if (eventIndex == 0)
+			{
+				break;
 			}
 		}
 	}

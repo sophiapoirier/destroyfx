@@ -150,7 +150,7 @@ void BufferOverride::heedMidiEvents(size_t samplePos)
 
 // SEARCH FOR PITCHBEND
 		// search events backwards again looking for the most recent valid pitchbend
-		for (size_t eventIndex = midiState.getBlockEventCount() - 1; eventIndex >= 0; eventIndex--)
+		for (size_t eventIndex = midiState.getBlockEventCount() - 1; true; eventIndex--)
 		{
 			// once we're below the current block position, pitchbend messages can be considered
 			if ((midiState.getBlockEvent(eventIndex).mOffsetFrames <= samplePos)
@@ -182,6 +182,10 @@ void BufferOverride::heedMidiEvents(size_t samplePos)
 					}
 					eventIndex--;
 				}
+			}
+			if (eventIndex == 0)
+			{
+				break;
 			}
 		}
 	}
