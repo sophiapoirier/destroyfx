@@ -40,7 +40,7 @@ public:
 	void outputChannelsChanged(size_t inChannelCount) override;
 
 private:
-	void HandleNotesButton(long inNotesButtonType);
+	void HandleNotesButton(size_t inNotesButtonType);
 	void HandlePitchConstraintChange();
 	void HandleTempoSyncChange();
 	void HandleTempoAutoChange();

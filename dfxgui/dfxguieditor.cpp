@@ -3024,8 +3024,7 @@ void DfxGuiEditor::HandleMidiLearnerChange()
 DGButton* DfxGuiEditor::CreateMidiLearnButton(VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, DGImage* inImage, bool inDrawMomentaryState)
 {
 	mMidiLearnButton = emplaceControl<DGToggleImageButton>(this, inXpos, inYpos, inImage, inDrawMomentaryState);
-	// TODO: C++20 bind_front
-	mMidiLearnButton->setUserProcedure(std::bind(&DfxGuiEditor::setmidilearning, this, std::placeholders::_1));
+	mMidiLearnButton->setUserProcedure(std::bind_front(&DfxGuiEditor::setmidilearning, this));
 	return mMidiLearnButton;
 }
 

@@ -296,8 +296,7 @@ long SkidderEditor::OpenEditor()
 
 	// help display
 	pos.set(kHelpX, kHelpY, kHelpWidth, kHelpHeight);
-	// TODO: C++20 bind_front
-	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind(&SkidderEditor::GetHelpForControl, this, std::placeholders::_1), nullptr, DGColor::kWhite);
+	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind_front(&SkidderEditor::GetHelpForControl, this), nullptr, DGColor::kWhite);
 	mHelpBox->setTextMargin({8, 10});
 	mHelpBox->setLineSpacing(3);
 

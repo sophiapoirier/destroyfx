@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -199,8 +199,7 @@ std::string dfx::SanitizeNumericalInput(std::string const& inText)
 	// remove digit separators
 	// XXX TODO: this doesn't support locale, assumes comma
 	auto resultText = inText;
-	// TODO: C++20 bind_front
-	std::erase_if(resultText, std::bind(std::equal_to<>{}, std::placeholders::_1, ','));
+	std::erase_if(resultText, std::bind_front(std::equal_to<>{}, ','));
 
 	// trim white space and any other noise (with respect to numerical parsing)
 	while (!resultText.empty())

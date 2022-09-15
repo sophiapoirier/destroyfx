@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -377,7 +377,7 @@ long RezSynthEditor::OpenEditor()
 
 	// help display
 	pos.set(kHelpX, kHelpY, kHelpWidth, kHelpHeight);
-	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind(&RezSynthEditor::GetHelpForControl, this, std::placeholders::_1), nullptr, DGColor::kWhite);
+	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind_front(&RezSynthEditor::GetHelpForControl, this), nullptr, DGColor::kWhite);
 	mHelpBox->setTextMargin({11, 6});
 
 

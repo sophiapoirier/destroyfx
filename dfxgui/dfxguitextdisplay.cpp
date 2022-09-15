@@ -206,15 +206,11 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor*							inOwnerEditor,
 {
 	DFXGUI_ConfigureTextDisplay(inOwnerEditor, this, inTextAlignment, inFontSize, inFontColor, inFontName);
 
-	// TODO: C++20 bind_front
-	setValueToStringFunction(std::bind(&DGTextDisplay::valueToTextProcBridge, this,
-									   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	setValueToStringFunction(std::bind_front(&DGTextDisplay::valueToTextProcBridge, this));
 	refreshText();	// trigger an initial value->text conversion
 
 	mTextToValueProc = textToValueProc_Generic;
-	// TODO: C++20 bind_front
-	setStringToValueFunction(std::bind(&DGTextDisplay::textToValueProcBridge, this,
-									   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	setStringToValueFunction(std::bind_front(&DGTextDisplay::textToValueProcBridge, this));
 }
 
 //-----------------------------------------------------------------------------

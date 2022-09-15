@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -313,7 +313,7 @@ long GeometerEditor::OpenEditor() {
 
   pos.set(pos_helpboxX, pos_helpboxY, g_helpbackground->getWidth(), g_helpbackground->getHeight());
   helpbox = emplaceControl<DGHelpBox>(this, pos,
-                                      std::bind(&GeometerEditor::changehelp, this, std::placeholders::_1),
+                                      std::bind_front(&GeometerEditor::changehelp, this),
                                       g_helpbackground, DGColor::kWhite);
   helpbox->setHeaderFontColor(DGColor::kBlack);
   helpbox->setTextMargin({4, 1});
@@ -353,7 +353,7 @@ void GeometerEditor::parameterChanged(long inParameterID) {
     if (inParameterID == baseparam) {
       auto const newParameterID = choose_multiparam(inParameterID);
 
-      float const alpha = [newParameterID]() {
+      float const alpha = [newParameterID] {
         if (newParameterID == (P_INTERPARAMS + INTERP_REVERSI)) {
           return unused_control_alpha;
         }

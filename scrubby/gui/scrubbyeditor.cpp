@@ -134,7 +134,7 @@ enum
 	kTitleAreaHeight = 37
 };
 
-enum
+enum : size_t
 {
 	kNotes_Down = 0,
 	kNotes_Up,
@@ -288,7 +288,6 @@ long ScrubbyEditor::OpenEditor()
 	DGRect pos;
 	long const seekRateParamID = getparameter_b(kTempoSync) ? kSeekRate_Sync : kSeekRate_Hz;
 	long const seekRateRandMinParamID = getparameter_b(kTempoSync) ? kSeekRateRandMin_Sync : kSeekRateRandMin_Hz;
-	using namespace std::placeholders;
 
 	//--create the sliders-----------------------------------------------
 
@@ -397,19 +396,19 @@ long ScrubbyEditor::OpenEditor()
 		long const paramID = kPitchStep0 + i;
 
 		// this visually syncs the top and bottom button images upon mouse clicks
-		auto const keyboardButtonProc = [](long value, DGButton* button)
+		auto const keyboardButtonProc = [](DGButton* button, long value)
 		{
 			auto const editor = button->getOwnerEditor();
 			editor->getFrame()->forEachChild([originalButton = button->asCControl()](VSTGUI::CView* child)
 			{
 				auto const paramID = originalButton->getTag();
-				auto const control = dynamic_cast<VSTGUI::CControl*>(child);
-				if (control && (control->getTag() == paramID) && (control != originalButton))
+				auto const childControl = dynamic_cast<VSTGUI::CControl*>(child);
+				if (childControl && (childControl->getTag() == paramID) && (childControl != originalButton))
 				{
-					control->setValue(originalButton->getValue());
-					if (control->isDirty())
+					childControl->setValue(originalButton->getValue());
+					if (childControl->isDirty())
 					{
-						control->invalid();
+						childControl->invalid();
 					}
 				}
 			});
@@ -421,11 +420,11 @@ long ScrubbyEditor::OpenEditor()
 
 		if (keyboardBottomKeyImages[i] != nullptr)
 		{
-			button->setUserProcedure(std::bind(keyboardButtonProc, _1, button));
+			button->setUserProcedure(std::bind_front(keyboardButtonProc, button));
 
 			keyboardBottomKeyPos.setWidth(keyboardBottomKeyImages[i]->getWidth());
 			button = emplaceControl<DGButton>(this, paramID, keyboardBottomKeyPos, keyboardBottomKeyImages[i], DGButton::Mode::Increment);
-			button->setUserProcedure(std::bind(keyboardButtonProc, _1, button));
+			button->setUserProcedure(std::bind_front(keyboardButtonProc, button));
 			keyboardBottomKeyPos.offset(keyboardBottomKeyPos.getWidth(), 0);
 		}
 	}
@@ -461,7 +460,7 @@ long ScrubbyEditor::OpenEditor()
 
 	// ...............PITCH CONSTRAINT....................
 
-	auto const keyboardMacroProc = [this](long controlValue, long notesButtonType)
+	auto const keyboardMacroProc = [this](size_t notesButtonType, long controlValue)
 	{
 		if (controlValue != 0)
 		{
@@ -473,32 +472,32 @@ long ScrubbyEditor::OpenEditor()
 	// transpose all of the pitch constraint notes down one semitone
 	pos.set(kTransposeDownButtonX, kTransposeDownButtonY, transposeDownButtonImage->getWidth(), transposeDownButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_Down] = emplaceControl<DGButton>(this, pos, transposeDownButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_Down]->setUserProcedure(std::bind(keyboardMacroProc, _1, kNotes_Down));
+	mNotesButtons[kNotes_Down]->setUserProcedure(std::bind_front(keyboardMacroProc, kNotes_Down));
 
 	// transpose all of the pitch constraint notes up one semitone
 	pos.set(kTransposeUpButtonX, kTransposeUpButtonY, transposeUpButtonImage->getWidth(), transposeUpButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_Up] = emplaceControl<DGButton>(this, pos, transposeUpButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_Up]->setUserProcedure(std::bind(keyboardMacroProc, _1, kNotes_Up));
+	mNotesButtons[kNotes_Up]->setUserProcedure(std::bind_front(keyboardMacroProc, kNotes_Up));
 
 	// turn on the pitch constraint notes that form a major chord
 	pos.set(kMajorChordButtonX, kMajorChordButtonY, majorChordButtonImage->getWidth(), majorChordButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_Major] = emplaceControl<DGButton>(this, pos, majorChordButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_Major]->setUserProcedure(std::bind(keyboardMacroProc, _1, kNotes_Major));
+	mNotesButtons[kNotes_Major]->setUserProcedure(std::bind_front(keyboardMacroProc, kNotes_Major));
 
 	// turn on the pitch constraint notes that form a minor chord
 	pos.set(kMinorChordButtonX, kMinorChordButtonY, minorChordButtonImage->getWidth(), minorChordButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_Minor] = emplaceControl<DGButton>(this, pos, minorChordButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_Minor]->setUserProcedure(std::bind(keyboardMacroProc, _1, kNotes_Minor));
+	mNotesButtons[kNotes_Minor]->setUserProcedure(std::bind_front(keyboardMacroProc, kNotes_Minor));
 
 	// turn on all pitch constraint notes
 	pos.set(kAllNotesButtonX, kAllNotesButtonY, allNotesButtonImage->getWidth(), allNotesButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_All] = emplaceControl<DGButton>(this, pos, allNotesButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_All]->setUserProcedure(std::bind(keyboardMacroProc, _1, kNotes_All));
+	mNotesButtons[kNotes_All]->setUserProcedure(std::bind_front(keyboardMacroProc, kNotes_All));
 
 	// turn off all pitch constraint notes
 	pos.set(kNoneNotesButtonX, kNoneNotesButtonY, noneNotesButtonImage->getWidth(), noneNotesButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_None] = emplaceControl<DGButton>(this, pos, noneNotesButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_None]->setUserProcedure(std::bind(keyboardMacroProc, _1, kNotes_None));
+	mNotesButtons[kNotes_None]->setUserProcedure(std::bind_front(keyboardMacroProc, kNotes_None));
 
 
 	// .....................MISC..........................
@@ -520,7 +519,7 @@ long ScrubbyEditor::OpenEditor()
 
 	//--create the help display-----------------------------------------
 	pos.set(kHelpX, kHelpY, helpBackgroundImage->getWidth(), helpBackgroundImage->getHeight());
-	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind(&ScrubbyEditor::GetHelpForControl, this, _1), helpBackgroundImage, DGColor::kWhite);
+	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind_front(&ScrubbyEditor::GetHelpForControl, this), helpBackgroundImage, DGColor::kWhite);
 	mHelpBox->setHeaderFontColor(DGColor::kBlack);
 	mHelpBox->setTextMargin({12, 2});
 
@@ -551,7 +550,7 @@ void ScrubbyEditor::CloseEditor()
 
 
 //-----------------------------------------------------------------------------
-void ScrubbyEditor::HandleNotesButton(long inNotesButtonType)
+void ScrubbyEditor::HandleNotesButton(size_t inNotesButtonType)
 {
 	switch (inNotesButtonType)
 	{
@@ -701,8 +700,6 @@ void ScrubbyEditor::parameterChanged(long inParameterID)
 			break;
 		case kTempoAuto:
 			HandleTempoAutoChange();
-			break;
-		default:
 			break;
 	}
 }

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -496,7 +496,7 @@ void BufferOverrideEditor::parameterChanged(long inParameterID)
 //-----------------------------------------------------------------------------
 void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnderMouse)
 {
-	if (std::any_of(mHelpDisplays.cbegin(), mHelpDisplays.cend(), std::bind(std::equal_to<>{}, std::placeholders::_1, nullptr)))
+	if (std::any_of(mHelpDisplays.cbegin(), mHelpDisplays.cend(), std::bind_front(std::equal_to<>{}, nullptr)))
 	{
 		return;
 	}

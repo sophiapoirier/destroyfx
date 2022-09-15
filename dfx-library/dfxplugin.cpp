@@ -835,8 +835,7 @@ void DfxPlugin::addparametergroup(std::string const& inName, std::vector<long> c
 	assert(!inParameterIndices.empty());
 	assert(std::none_of(mParameterGroups.cbegin(), mParameterGroups.cend(), [&inName](auto const& item){ return (item.first == inName); }));
 	assert(std::none_of(inParameterIndices.cbegin(), inParameterIndices.cend(), [this](auto index){ return getparametergroup(index).has_value(); }));
-	// TODO: C++20 bind_front
-	assert(std::all_of(inParameterIndices.cbegin(), inParameterIndices.cend(), std::bind(&DfxPlugin::parameterisvalid, this, std::placeholders::_1)));
+	assert(std::all_of(inParameterIndices.cbegin(), inParameterIndices.cend(), std::bind_front(&DfxPlugin::parameterisvalid, this)));
 	assert(std::unordered_set<long>(inParameterIndices.cbegin(), inParameterIndices.cend()).size() == inParameterIndices.size());
 
 	mParameterGroups.emplace_back(inName, std::set<long>(inParameterIndices.cbegin(), inParameterIndices.cend()));

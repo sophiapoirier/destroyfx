@@ -443,8 +443,7 @@ long TransverbEditor::OpenEditor()
 		pos.set(kSpeedModeButtonX, kSpeedModeButtonY + (((kWideFaderInc * 2) + kWideFaderMoreInc) * speedModeIndex),
 				speedModeButtonImage->getWidth() / 2, speedModeButtonImage->getHeight() / kSpeedMode_NumModes);
 		mSpeedModeButtons[speedModeIndex] = emplaceControl<DGButton>(this, pos, speedModeButtonImage, kSpeedMode_NumModes, DGButton::Mode::Increment, true);
-		// TODO: C++20 bind_front
-		mSpeedModeButtons[speedModeIndex]->setUserProcedure(std::bind(&TransverbEditor::HandleSpeedModeButton, this, speedModeIndex, std::placeholders::_1));
+		mSpeedModeButtons[speedModeIndex]->setUserProcedure(std::bind_front(&TransverbEditor::HandleSpeedModeButton, this, speedModeIndex));
 	}
 
 	// MIDI learn button
