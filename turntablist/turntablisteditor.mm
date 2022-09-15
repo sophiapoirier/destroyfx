@@ -461,7 +461,7 @@ long TurntablistEditor::OpenEditor()
 	class TurntablistButton final : public DGButton
 	{
 	public:
-		TurntablistButton(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inImage, long inNumStates, Mode inMode)
+		TurntablistButton(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inImage, size_t inNumStates, Mode inMode)
 		:	DGButton(inOwnerEditor, inRegion, inImage, inNumStates, inMode)
 		{
 		}

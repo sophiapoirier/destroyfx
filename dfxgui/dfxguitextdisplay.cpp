@@ -494,20 +494,21 @@ void DGStaticTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTG
 // Static Text Display
 //-----------------------------------------------------------------------------
 DGTextArrayDisplay::DGTextArrayDisplay(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion,
-									   long inNumStrings, dfx::TextAlignment inTextAlignment, DGImage* inBackground,
+									   size_t inNumStrings, dfx::TextAlignment inTextAlignment, DGImage* inBackground,
 									   float inFontSize, DGColor inFontColor, char const* inFontName)
 :	DGTextDisplay(inOwnerEditor, inParamID, inRegion, nullptr, nullptr, inBackground,
 				  inTextAlignment, inFontSize, inFontColor, inFontName),
-	mDisplayStrings(std::max(inNumStrings, 1L))
+	// TODO C++23: integer literal suffix UZ
+	mDisplayStrings(std::max(inNumStrings, size_t(1)))
 {
 	setMouseEnabled(false);
 }
 
 //-----------------------------------------------------------------------------
-void DGTextArrayDisplay::setText(long inStringNum, char const* inText)
+void DGTextArrayDisplay::setText(size_t inStringNum, char const* inText)
 {
 	assert(inText);
-	if ((inStringNum < 0) || (inStringNum >= static_cast<long>(mDisplayStrings.size())))
+	if (inStringNum >= mDisplayStrings.size())
 	{
 		return;
 	}
@@ -525,18 +526,18 @@ void DGTextArrayDisplay::draw(VSTGUI::CDrawContext* inContext)
 	}
 
 	// TODO: consolidate this logic and DGButton::getValue_i into DGControl?
-	long stringIndex = 0;
+	size_t stringIndex = 0;
 	if (isParameterAttached())
 	{
-		stringIndex = std::lround(getOwnerEditor()->dfxgui_ExpandParameterValue(getParameterID(), getValueNormalized()));
+		stringIndex = dfx::math::ToIndex(std::lround(getOwnerEditor()->dfxgui_ExpandParameterValue(getParameterID(), getValueNormalized())));
 	}
 	else
 	{
 		auto const maxValue_f = static_cast<float>(mDisplayStrings.size() - 1);
-		stringIndex = static_cast<long>((getValueNormalized() * maxValue_f) + DfxParam::kIntegerPadding);
+		stringIndex = static_cast<size_t>((getValueNormalized() * maxValue_f) + DfxParam::kIntegerPadding);
 	}
 
-	if ((stringIndex >= 0) && (static_cast<size_t>(stringIndex) < mDisplayStrings.size()))
+	if (stringIndex < mDisplayStrings.size())
 	{
 		drawPlatformText(inContext, VSTGUI::UTF8String(mDisplayStrings[stringIndex]).getPlatformString(), getViewSize());
 	}

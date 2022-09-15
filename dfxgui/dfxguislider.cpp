@@ -34,7 +34,7 @@ namespace
 
 //-----------------------------------------------------------------------------
 // TODO: migrate fully to VSTGUI::Modifiers
-static VSTGUI::CButtonState ConstrainButtons(VSTGUI::MouseEvent const& inEvent, long inNumStates)
+static VSTGUI::CButtonState ConstrainButtons(VSTGUI::MouseEvent const& inEvent, size_t inNumStates)
 {
 	auto const buttons = VSTGUI::buttonStateFromMouseEvent(inEvent);
 	if (inNumStates > 0)

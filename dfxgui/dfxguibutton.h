@@ -48,7 +48,7 @@ public:
 	DGButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage, 
 			 Mode inMode, bool inDrawMomentaryState = false);
 	DGButton(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inImage, 
-			 long inNumStates, Mode inMode, bool inDrawMomentaryState = false);
+			 size_t inNumStates, Mode inMode, bool inDrawMomentaryState = false);
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
 	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
@@ -90,6 +90,8 @@ protected:
 	dfx::Axis mOrientation = dfx::kAxis_Horizontal;
 
 private:
+	static constexpr long kMinValue = 0;
+	long getMaxValue() const;
 	long getRadioValue(VSTGUI::CPoint const& inPos) const;
 	long getRange() const;  // the salient view dimension per the orientation
 
@@ -113,7 +115,7 @@ public:
 	CLASS_METHODS(DGToggleImageButton, DGButton)
 
 private:
-	static constexpr long kNumStates = 2;
+	static constexpr size_t kNumStates = 2;
 
 	static DGRect makeRegion(VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, DGImage* inImage, bool inDrawMomentaryState);
 };

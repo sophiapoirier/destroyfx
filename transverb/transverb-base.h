@@ -62,7 +62,7 @@ static constexpr std::array<long, kNumDelays> kMixParameters { kMix1, kMix2 };
 enum { kQualityMode_DirtFi, kQualityMode_HiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes };
 
 // this stuff is for the speed parameter adjustment mode switch on the GUI
-enum { kSpeedMode_Fine, kSpeedMode_Semitone, kSpeedMode_Octave, kSpeedMode_NumModes };
+enum : unsigned int { kSpeedMode_Fine, kSpeedMode_Semitone, kSpeedMode_Octave, kSpeedMode_NumModes };
 static constexpr dfx::PropertyID kTransverbProperty_SpeedModeBase = dfx::kPluginProperty_EndOfList;
 
 

@@ -90,7 +90,7 @@ void DGControl<T>::setValue_i(long inValue)
 	}
 	else
 	{
-		auto const maxValue = getNumStates() - 1;
+		auto const maxValue = static_cast<long>(getNumStates()) - 1;
 		if (inValue >= maxValue)
 		{
 			newValue_f = 1.0f;
@@ -148,17 +148,10 @@ bool DGControl<T>::isParameterAttached() const
 
 //-----------------------------------------------------------------------------
 template <class T>
-void DGControl<T>::setNumStates(long inNumStates)
+void DGControl<T>::setNumStates(size_t inNumStates)
 {
-	if (inNumStates >= 0)
-	{
-		mNumStates = inNumStates;
-		T::setDirty();
-	}
-	else
-	{
-		assert(false);
-	}
+	mNumStates = inNumStates;
+	T::setDirty();
 }
 
 //-----------------------------------------------------------------------------
@@ -275,12 +268,12 @@ void DGControl<T>::pullNumStatesFromParameter()
 {
 	if (isParameterAttached() && mOwnerEditor)
 	{
-		long numStates = 0;
+		size_t numStates = 0;
 		auto const paramID = getParameterID();
 		if (mOwnerEditor->GetParameterValueType(paramID) != DfxParam::ValueType::Float)
 		{
 			auto const valueRange = mOwnerEditor->GetParameter_maxValue(paramID) - mOwnerEditor->GetParameter_minValue(paramID);
-			numStates = std::lround(valueRange) + 1;
+			numStates = static_cast<size_t>(std::max(std::lround(valueRange), 0L) + 1);
 		}
 		setNumStates(numStates);
 	}

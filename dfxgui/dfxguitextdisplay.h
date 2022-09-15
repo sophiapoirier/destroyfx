@@ -139,14 +139,14 @@ private:
 class DGTextArrayDisplay : public DGTextDisplay
 {
 public:
-	DGTextArrayDisplay(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, long inNumStrings, 
+	DGTextArrayDisplay(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, size_t inNumStrings, 
 					   dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, DGImage* inBackground = nullptr, 
 					   float inFontSize = 12.0f, DGColor inFontColor = VSTGUI::kBlackCColor, char const* inFontName = nullptr);
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
 
 	using VSTGUI::CTextEdit::setText;
-	void setText(long inStringNum, char const* inText);
+	void setText(size_t inStringNum, char const* inText);
 
 	CLASS_METHODS(DGTextArrayDisplay, DGTextDisplay)
 

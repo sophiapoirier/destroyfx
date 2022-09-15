@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2003-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2003-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -25,25 +25,25 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <array>
 
 
-enum { HELP_EMPTY = 0,
-       HELP_WINDOWSHAPE,
-       HELP_WINDOWSIZE,
-       HELP_LANDMARKS,
-       HELP_OPS,
-       HELP_RECREATE,
-       HELP_MIDILEARN,
-       HELP_MIDIRESET,
+enum : size_t { HELP_EMPTY = 0,
+                HELP_WINDOWSHAPE,
+                HELP_WINDOWSIZE,
+                HELP_LANDMARKS,
+                HELP_OPS,
+                HELP_RECREATE,
+                HELP_MIDILEARN,
+                HELP_MIDIRESET,
 
-       NUM_GEN_HELP_ITEMS
+                NUM_GEN_HELP_ITEMS
 };
 
-enum { HELP_CATEGORY_GENERAL = 0,
-       HELP_CATEGORY_WINDOWSHAPE,
-       HELP_CATEGORY_LANDMARKS,
-       HELP_CATEGORY_OPS,
-       HELP_CATEGORY_RECREATE,
+enum : size_t { HELP_CATEGORY_GENERAL = 0,
+                HELP_CATEGORY_WINDOWSHAPE,
+                HELP_CATEGORY_LANDMARKS,
+                HELP_CATEGORY_OPS,
+                HELP_CATEGORY_RECREATE,
 
-       NUM_HELP_CATEGORIES
+                NUM_HELP_CATEGORIES
 };
 
 

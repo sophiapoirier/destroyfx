@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2018-2021  Sophia Poirier
+Copyright (C) 2018-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -55,7 +55,7 @@ public:
 	virtual long getParameterID() const = 0;
 	virtual void setParameterID(long inParameterID) = 0;
 	virtual bool isParameterAttached() const = 0;
-	virtual long getNumStates() const = 0;
+	virtual size_t getNumStates() const = 0;
 	virtual float getFineTuneFactor() const = 0;
 	virtual bool notifyIfChanged() = 0;
 	virtual void onMouseWheelEditing() = 0;

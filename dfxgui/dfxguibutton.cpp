@@ -28,6 +28,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cmath>
 
 #include "dfxguieditor.h"
+#include "dfxmath.h"
 
 
 using namespace std::placeholders;
@@ -50,10 +51,10 @@ DGButton::DGButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& in
 
 //-----------------------------------------------------------------------------
 DGButton::DGButton(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inImage, 
-				   long inNumStates, Mode inMode, bool inDrawMomentaryState)
+				   size_t inNumStates, Mode inMode, bool inDrawMomentaryState)
 :	DGButton(inOwnerEditor, dfx::kParameterID_Invalid, inRegion, inImage, inMode, inDrawMomentaryState)
 {
-	constexpr long minNumStates = 2;
+	constexpr size_t minNumStates = 2;
 	assert(inNumStates >= minNumStates);
 	setNumStates(std::max(inNumStates, minNumStates));
 }
@@ -64,7 +65,7 @@ void DGButton::draw(VSTGUI::CDrawContext* inContext)
 	if (auto const image = getDrawBackground())
 	{
 		long const xoff = (mDrawMomentaryState && mMouseIsDown) ? (std::lround(image->getWidth()) / 2) : 0;
-		long const yoff = getValue_i() * (std::lround(image->getHeight()) / getNumStates());
+		long const yoff = getValue_i() * (std::lround(image->getHeight()) / dfx::math::ToSigned(getNumStates()));
 
 		image->draw(inContext, getViewSize(), VSTGUI::CPoint(xoff, yoff));
 	}
@@ -87,8 +88,6 @@ void DGButton::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 	beginEdit();
 
 	mEntryValue = mNewValue = getValue_i();
-	constexpr long min = 0;
-	long const max = getNumStates() - 1;
 	auto const isDirectionReversed = ioEvent.modifiers.has(VSTGUI::ModifierKey::Alt);
 
 	setMouseIsDown(true);
@@ -96,8 +95,8 @@ void DGButton::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 	switch (mMode)
 	{
 		case Mode::Momentary:
-			mNewValue = max;
-			mEntryValue = 0;  // just to make sure it's like that
+			mNewValue = getMaxValue();
+			mEntryValue = kMinValue;  // just to make sure it's like that
 			break;
 		case Mode::Increment:
 			mNewValue = mEntryValue + (isDirectionReversed ? -1 : 1);
@@ -106,7 +105,7 @@ void DGButton::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 			mNewValue = mEntryValue + (isDirectionReversed ? 1 : -1);
 			break;
 		case Mode::Radio:
-			mNewValue = getRadioValue(ioEvent.mousePosition) + min;
+			mNewValue = getRadioValue(ioEvent.mousePosition) + kMinValue;
 			break;
 		default:
 			break;
@@ -236,13 +235,13 @@ void DGButton::onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent)
 	long newValue {};
 	if (mMode == Mode::Momentary)
 	{
-		newValue = getNumStates() - 1;
+		newValue = getMaxValue();
 		setValue_i(newValue);
 		if (isDirty())
 		{
 			valueChanged();
 		}
-		setValue_i(0);
+		setValue_i(kMinValue);
 	}
 	else
 	{
@@ -326,33 +325,38 @@ void DGButton::setOrientation(dfx::Axis inOrientation) noexcept
 //-----------------------------------------------------------------------------
 long DGButton::constrainValue(long inValue) const
 {
-	constexpr long min = 0;
-	long const max = getNumStates() - 1;
+	auto const max = getMaxValue();
 
 	if (mWraparoundValues)
 	{
 		if (inValue > max)
 		{
-			return min;
+			return kMinValue;
 		}
-		else if (inValue < min)
+		else if (inValue < kMinValue)
 		{
 			return max;
 		}
 	}
 
-	return std::clamp(inValue, min, max);
+	return std::clamp(inValue, kMinValue, max);
 }
 
 //-----------------------------------------------------------------------------
 void DGButton::setRadioThresholds(std::vector<VSTGUI::CCoord> const& inThresholds)
 {
 	assert(mMode == Mode::Radio);
-	assert(static_cast<long>(inThresholds.size() + 1) == getNumStates());
+	assert((inThresholds.size() + 1) == getNumStates());
 	assert(std::all_of(inThresholds.cbegin(), inThresholds.cend(), std::bind(std::less<>{}, _1, getRange())));
 	assert(std::all_of(inThresholds.cbegin(), inThresholds.cend(), std::bind(std::greater<>{}, _1, 0)));
 
 	mRadioThresholds = inThresholds;
+}
+
+//-----------------------------------------------------------------------------
+long DGButton::getMaxValue() const
+{
+	return static_cast<long>(getNumStates()) - 1;
 }
 
 //-----------------------------------------------------------------------------
@@ -367,9 +371,9 @@ long DGButton::getRadioValue(VSTGUI::CPoint const& inPos) const
 		{
 			return std::count_if(mRadioThresholds.cbegin(), mRadioThresholds.cend(), std::bind(std::less_equal<>{}, _1, pos));
 		}
-		return std::lround(pos) / (getRange() / getNumStates());
+		return std::lround(pos) / (getRange() / dfx::math::ToSigned(getNumStates()));
 	}();
-	return std::clamp(result, 0L, getNumStates() - 1);
+	return std::clamp(result, kMinValue, getMaxValue());
 }
 
 //-----------------------------------------------------------------------------

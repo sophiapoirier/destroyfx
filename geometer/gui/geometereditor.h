@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -38,7 +38,7 @@ public:
 
 private:
   std::string changehelp(IDGControl * currentControlUnderMouse);
-  static std::string helptext(int inHelpCategory, int inItemNum);
+  static std::string helptext(size_t inHelpCategory, int inItemNum);
   long choose_multiparam(long baseParamID) {
     return getparameter_i(baseParamID) + baseParamID + 1;
   }

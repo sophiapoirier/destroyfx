@@ -275,7 +275,7 @@ long GeometerEditor::OpenEditor() {
                                                           dfx::TextAlignment::Center, nullptr,
                                                           dfx::kFontSize_Snooty10px, fontcolor_labels,
                                                           dfx::kFontName_Snooty10px);
-    long j = 0;
+    size_t j = 0;
     for (auto const& labelstring : *labelstrings) {
       label->setText(j, labelstring);
       j++;
@@ -397,7 +397,7 @@ void GeometerEditor::mouseovercontrolchanged(IDGControl * /*currentControlUnderM
 //-----------------------------------------------------------------------------
 std::string GeometerEditor::changehelp(IDGControl * currentControlUnderMouse) {
 
-  auto const updatehelp = [this](int category, int item, long numitems) {
+  auto const updatehelp = [this](size_t category, int item, size_t numitems) {
     if (helpicon) {
       helpicon->setNumStates(numitems);
       helpicon->setButtonImage(g_helpicons[category]);
@@ -440,7 +440,7 @@ std::string GeometerEditor::changehelp(IDGControl * currentControlUnderMouse) {
 }
 
 //--------------------------------------------------------------------------
-std::string GeometerEditor::helptext(int inHelpCategory, int inItemNum) {
+std::string GeometerEditor::helptext(size_t inHelpCategory, int inItemNum) {
 
   if (inItemNum < 0) {
     return {};

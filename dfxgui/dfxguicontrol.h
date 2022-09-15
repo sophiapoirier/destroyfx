@@ -76,11 +76,11 @@ public:
 	void setParameterID(long inParameterID) final;
 	bool isParameterAttached() const final;
 
-	long getNumStates() const final
+	size_t getNumStates() const final
 	{
 		return mNumStates;
 	}
-	void setNumStates(long inNumStates);
+	void setNumStates(size_t inNumStates);
 
 	float getFineTuneFactor() const override
 	{
@@ -178,7 +178,7 @@ private:
 
 	DfxGuiEditor* const mOwnerEditor;
 
-	long mNumStates = 0;
+	size_t mNumStates = 0;
 
 	class MouseWheelEditingSupport : protected VSTGUI::CMouseWheelEditingSupport
 	{
