@@ -365,19 +365,30 @@ void Scrubby::initPresets()
 void Scrubby::randomizeparameters()
 {
 	// store the current total mix gain sum
-	auto const mixSum = getparameter_f(kDryLevel) + getparameter_f(kWetLevel);
+	auto const entryDryLevel = getparameter_f(kDryLevel);
+	auto const entryWetLevel = getparameter_f(kWetLevel);
+	auto const entryMixSum = entryDryLevel + entryWetLevel;
 
 	DfxPlugin::randomizeparameters();
 
 	// randomize the mix parameters
 	auto newDryLevel = expandparametervalue(kDryLevel, generateParameterRandomValue<double>());
 	auto newWetLevel = expandparametervalue(kWetLevel, generateParameterRandomValue<double>());
-	// calculate a scalar to make up for total gain changes
-	auto const mixDiffScalar = mixSum / (newDryLevel + newWetLevel);
-
-	// apply the scalar to the new mix parameter values
-	newDryLevel = std::min(newDryLevel * mixDiffScalar, getparametermax_f(kDryLevel));
-	newWetLevel = std::min(newWetLevel * mixDiffScalar, getparametermax_f(kWetLevel));
+	auto const newMixSum = newDryLevel + newWetLevel;
+	if (newMixSum > 0.)
+	{
+		// calculate a scalar to make up for total gain changes
+		auto const mixDiffScalar = entryMixSum / newMixSum;
+		
+		// apply the scalar to the new mix parameter values
+		newDryLevel = std::min(newDryLevel * mixDiffScalar, getparametermax_f(kDryLevel));
+		newWetLevel = std::min(newWetLevel * mixDiffScalar, getparametermax_f(kWetLevel));
+	}
+	else
+	{
+		newDryLevel = entryDryLevel;
+		newWetLevel = entryWetLevel;
+	}
 
 	// set the new randomized mix parameter values as the new values
 	setparameter_f(kDryLevel, newDryLevel);
