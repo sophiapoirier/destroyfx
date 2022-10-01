@@ -198,7 +198,7 @@ RezSynthEditor::RezSynthEditor(DGEditorListenerInstance inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long RezSynthEditor::OpenEditor()
+void RezSynthEditor::OpenEditor()
 {
 	// create images
 
@@ -384,10 +384,6 @@ long RezSynthEditor::OpenEditor()
 
 	// this will initialize the translucency state of dependent controls
 	HandleLegatoChange();
-
-
-
-	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------

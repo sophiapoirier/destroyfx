@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Skidder.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "skidder.h"
@@ -102,7 +102,7 @@ void Skidder::dfx_PostConstructor()
 }
 
 //-----------------------------------------------------------------------------------------
-long Skidder::initialize()
+void Skidder::initialize()
 {
 	mInputAudio.assign(getnumoutputs(), nullptr);  // allocating output channel count is intentional, for mono fan-out
 	mOutputAudio.assign(getnumoutputs(), nullptr);
@@ -113,8 +113,6 @@ long Skidder::initialize()
 	}
 
 	mCrossover = std::make_unique<dfx::Crossover>(getnuminputs(), getsamplerate(), getparameter_f(kCrossoverFrequency));
-
-	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------------------

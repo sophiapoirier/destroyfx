@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with MIDI Gater.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -28,5 +28,5 @@ class MIDIGaterEditor final : public DfxGuiEditor
 {
 public:
 	explicit MIDIGaterEditor(DGEditorListenerInstance inInstance);
-	long OpenEditor() override;
+	void OpenEditor() override;
 };

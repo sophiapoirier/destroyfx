@@ -125,12 +125,19 @@ OSStatus DfxPlugin::Initialize()
 	cacheDSPCoreParameterValues();
 #endif
 
-	auto status = TARGET_API_BASE_CLASS::Initialize();
+	auto const status = TARGET_API_BASE_CLASS::Initialize();
 
 	if (status == noErr)
 	{
-		status = do_initialize();
-		UpdateInPlaceProcessingState();
+		try
+		{
+			do_initialize();
+			UpdateInPlaceProcessingState();
+		}
+		catch (...)
+		{
+			return kAudioUnitErr_FailedInitialization;
+		}
 	}
 
 	return status;

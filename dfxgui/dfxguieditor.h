@@ -151,7 +151,7 @@ public:
 	void idle() final;
 
 	// these are for the child class of DfxGuiEditor to override
-	virtual long OpenEditor() = 0;
+	virtual void OpenEditor() = 0;
 	virtual void CloseEditor() {}
 	virtual void PostOpenEditor() {}
 	virtual void dfxgui_EditorShown() {}
@@ -218,10 +218,6 @@ public:
 #if defined(TARGET_API_AUDIOUNIT) && DEBUG
 	class DfxPlugin* dfxgui_GetDfxPluginInstance();
 #endif
-	auto dfxgui_GetEditorOpenErrorCode() const noexcept
-	{
-		return mEditorOpenErr;
-	}
 
 	// get/set the control that is currently under the mouse pointer, if any (returns nullptr if none)
 	auto getCurrentControl_mouseover() const noexcept
@@ -295,10 +291,10 @@ public:
 	AudioUnitParameter dfxgui_MakeAudioUnitParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope = kAudioUnitScope_Global, AudioUnitElement inElement = 0);
 	std::vector<dfx::ParameterID> CreateParameterList(AudioUnitScope inScope = kAudioUnitScope_Global);
 #endif
-	long dfxgui_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
-								size_t& outDataSize, dfx::PropertyFlags& outFlags);
-	long dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
-							void* outData, size_t& ioDataSize);
+	dfx::StatusCode dfxgui_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
+										   size_t& outDataSize, dfx::PropertyFlags& outFlags);
+	dfx::StatusCode dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
+									   void* outData, size_t& ioDataSize);
 	template <typename T>
 	std::optional<T> dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned int inItemIndex = 0)
 	{
@@ -308,8 +304,8 @@ public:
 		auto const status = dfxgui_GetProperty(inPropertyID, inScope, inItemIndex, &value, dataSize);
 		return ((status == dfx::kStatus_NoError) && (dataSize == sizeof(value))) ? std::make_optional(value) : std::nullopt;
 	}
-	long dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
-							void const* inData, size_t inDataSize);
+	dfx::StatusCode dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
+									   void const* inData, size_t inDataSize);
 	// Assumes the data's size is sizeof(T). Returns true if successful.
 	template <typename T>
 	bool dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, T const &data)
@@ -380,9 +376,9 @@ private:
 	VSTGUI::COptionMenu createContextualMenu(IDGControl* inControl);
 	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParameterContextualMenu(dfx::ParameterID inParameterID);
 	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParametersContextualMenu();
-	long initClipboard();
-	long copySettings();
-	long pasteSettings(bool* inQueryPastabilityOnly);
+	dfx::StatusCode initClipboard();
+	dfx::StatusCode copySettings();
+	dfx::StatusCode pasteSettings(bool* inQueryPastabilityOnly);
 
 	void addMousedOverControl(IDGControl* inMousedOverControl);
 	void removeMousedOverControl(IDGControl* inMousedOverControl);
@@ -422,7 +418,6 @@ private:
 	VSTGUI::SharedPointer<DGImage> mBackgroundImage;
 
 	bool mJustOpened = false;
-	long mEditorOpenErr = dfx::kStatus_NoError;
 	std::vector<dfx::ParameterID> mParameterList;
 	size_t mNumInputChannels = 0;
 	size_t mNumOutputChannels = 0;

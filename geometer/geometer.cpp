@@ -188,8 +188,8 @@ void PLUGIN::dfx_PostConstructor()
   getsettings().setAllowNoteEvents(true);
 }
 
-long PLUGIN::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
-                                 size_t& outDataSize, dfx::PropertyFlags& outFlags)
+dfx::StatusCode PLUGIN::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
+                                            size_t& outDataSize, dfx::PropertyFlags& outFlags)
 {
   switch (inPropertyID)
   {
@@ -206,8 +206,8 @@ long PLUGIN::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScop
   }
 }
 
-long PLUGIN::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
-                             void* outData)
+dfx::StatusCode PLUGIN::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
+                                        void* outData)
 {
   switch (inPropertyID)
   {

@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monomaker.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "monomaker.h"
@@ -94,13 +94,12 @@ The -3 dB setting uses a constant power curve based on sin/cos, while other two 
 }
 
 //-----------------------------------------------------------------------------------------
-long Monomaker::initialize()
+void Monomaker::initialize()
 {
 	if (asymmetricalchannels())
 	{
 		mAsymmetricalInputAudioBuffer.assign(getmaxframes(), 0.0f);
 	}
-	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------------------

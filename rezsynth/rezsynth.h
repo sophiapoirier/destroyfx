@@ -124,7 +124,7 @@ public:
 
 	explicit RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
-	long initialize() override;
+	void initialize() override;
 	void cleanup() override;
 	void reset() override;
 

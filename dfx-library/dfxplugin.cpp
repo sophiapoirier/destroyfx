@@ -285,16 +285,12 @@ void DfxPlugin::do_PreDestructor()
 
 //-----------------------------------------------------------------------------
 // non-virtual function that calls initialize() and insures that some stuff happens
-long DfxPlugin::do_initialize()
+void DfxPlugin::do_initialize()
 {
 	updatesamplerate();
 	updatenumchannels();
 
-	auto const result = initialize();
-	if (result != dfx::kStatus_NoError)
-	{
-		return result;
-	}
+	initialize();
 
 #ifndef TARGET_API_AUDIOUNIT
 	mInputAudioStreams.assign(getnuminputs(), nullptr);
@@ -341,8 +337,6 @@ long DfxPlugin::do_initialize()
 				  [sr = getsamplerate()](auto& value){ value.first->setSampleRate(sr); });
 
 	do_reset();
-
-	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------

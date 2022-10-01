@@ -191,7 +191,7 @@ SkidderEditor::SkidderEditor(DGEditorListenerInstance inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long SkidderEditor::OpenEditor()
+void SkidderEditor::OpenEditor()
 {
 	// create images
 
@@ -361,9 +361,6 @@ long SkidderEditor::OpenEditor()
 	HandleCrossoverModeChange();
 	HandleMidiModeChange();
 	outputChannelsChanged(getNumOutputChannels());
-
-
-	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------

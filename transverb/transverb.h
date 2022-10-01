@@ -109,12 +109,12 @@ public:
   bool loadpreset(size_t index) override;  // overridden to support the random preset
   void randomizeparameters() override;
 
-  long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
-                           size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
-  long dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
-                       void* outData) override;
-  long dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
-                       void const* inData, size_t inDataSize) override;
+  dfx::StatusCode dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
+                                      size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
+  dfx::StatusCode dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
+                                  void* outData) override;
+  dfx::StatusCode dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
+                                  void const* inData, size_t inDataSize) override;
 
 protected:
   size_t settings_sizeOfExtendedData() const noexcept override;

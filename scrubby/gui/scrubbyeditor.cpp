@@ -230,7 +230,7 @@ ScrubbyEditor::ScrubbyEditor(DGEditorListenerInstance inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long ScrubbyEditor::OpenEditor()
+void ScrubbyEditor::OpenEditor()
 {
 	// create images
 
@@ -530,10 +530,6 @@ long ScrubbyEditor::OpenEditor()
 	HandleTempoAutoChange();
 	// and this will do the same for the channels mode control
 	outputChannelsChanged(getNumOutputChannels());
-
-
-
-	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------

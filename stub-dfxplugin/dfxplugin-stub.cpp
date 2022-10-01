@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 This is a template for making a DfxPlugin.
 ------------------------------------------------------------------------*/
@@ -114,7 +114,7 @@ void DfxStub::dfx_PostConstructor()
 //-------------------------------------------------------------------------
 // create stuff that is only necessary for audio processing here
 // return dfx::kStatus_NoError for success, otherwise return an error code
-long DfxStub::initialize()
+void DfxStub::initialize()
 {
 	// you can reliably access any of these audio format values upon "initialized" state
 	auto const bufferSize = std::lround(getsamplerate() * kBufferSize_Seconds);
@@ -128,8 +128,6 @@ long DfxStub::initialize()
 	{
 		buffer.assign(bufferSize, 0.f);
 	}
-
-	return dfx::kStatus_NoError;
 }
 
 //-------------------------------------------------------------------------

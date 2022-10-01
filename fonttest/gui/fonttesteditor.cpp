@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2021-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of FontTest.
 
@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with FontTest.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "fonttesteditor.h"
@@ -58,7 +58,7 @@ FontTestEditor::FontTestEditor(DGEditorListenerInstance inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long FontTestEditor::OpenEditor()
+void FontTestEditor::OpenEditor()
 {
   std::string text =
     (std::string)"Wey go 9%~ " +
@@ -139,7 +139,4 @@ long FontTestEditor::OpenEditor()
         kDisplayTextColor,
         dfx::kFontName_Pasement9px)->setText(text8);
   }
-
-
-  return dfx::kStatus_NoError;
 }

@@ -33,7 +33,7 @@ class BufferOverrideEditor final : public DfxGuiEditor
 public:
 	explicit BufferOverrideEditor(DGEditorListenerInstance inInstance);
 
-	long OpenEditor() override;
+	void OpenEditor() override;
 	void CloseEditor() override;
 	void parameterChanged(dfx::ParameterID inParameterID) override;
 	void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) override;

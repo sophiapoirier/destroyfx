@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with MIDI Gater.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "midigater.h"
@@ -58,12 +58,10 @@ MIDIGater::MIDIGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 }
 
 //-----------------------------------------------------------------------------------------
-long MIDIGater::initialize()
+void MIDIGater::initialize()
 {
 	std::fill(mLowpassGateFilters.begin(), mLowpassGateFilters.end(),
 			  decltype(mLowpassGateFilters)::value_type(getnumoutputs(), dfx::IIRFilter(getsamplerate())));
-
-	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------------------

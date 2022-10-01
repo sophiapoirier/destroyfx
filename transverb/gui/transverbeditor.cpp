@@ -316,7 +316,7 @@ TransverbEditor::TransverbEditor(DGEditorListenerInstance inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long TransverbEditor::OpenEditor()
+void TransverbEditor::OpenEditor()
 {
 	// slider handles
 	auto const horizontalSliderHandleImage = LoadImage("purple-wide-fader-handle.png");
@@ -484,9 +484,6 @@ long TransverbEditor::OpenEditor()
 	SetParameterHelpText(kQuality, "level of transposition quality of the delays' speed");
 	SetParameterHelpText(kTomsound, "megaharsh sound");
 	SetParameterHelpText(kFreeze, "pause recording new audio into the delay buffer");
-
-
-	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------

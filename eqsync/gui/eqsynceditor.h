@@ -29,7 +29,7 @@ class EQSyncEditor final : public DfxGuiEditor
 {
 public:
 	explicit EQSyncEditor(DGEditorListenerInstance inInstance);
-	long OpenEditor() override;
+	void OpenEditor() override;
 	void parameterChanged(dfx::ParameterID inParameterID) override;
 
 private:

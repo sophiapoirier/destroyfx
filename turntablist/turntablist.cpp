@@ -177,7 +177,7 @@ void Turntablist::dfx_PostConstructor()
 
 
 //-----------------------------------------------------------------------------------------
-long Turntablist::initialize()
+void Turntablist::initialize()
 {
 	if (sampleRateChanged())
 	{
@@ -187,8 +187,6 @@ long Turntablist::initialize()
 	}
 
 	stopNote();
-
-	return dfx::kStatus_NoError;
 }
 
 
@@ -465,9 +463,9 @@ OSStatus Turntablist::PostNotification_AudioFileNotFound(CFStringRef inFileName)
 }
 
 //-----------------------------------------------------------------------------
-long Turntablist::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID,
-									  dfx::Scope inScope, unsigned int inItemIndex,
-									  size_t& outDataSize, dfx::PropertyFlags& outFlags)
+dfx::StatusCode Turntablist::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID,
+												 dfx::Scope inScope, unsigned int inItemIndex,
+												 size_t& outDataSize, dfx::PropertyFlags& outFlags)
 {
 	switch (inPropertyID)
 	{
@@ -501,9 +499,9 @@ long Turntablist::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID,
 }
 
 //-----------------------------------------------------------------------------
-long Turntablist::dfx_GetProperty(dfx::PropertyID inPropertyID,
-								  dfx::Scope inScope, unsigned int inItemIndex,
-								  void* outData)
+dfx::StatusCode Turntablist::dfx_GetProperty(dfx::PropertyID inPropertyID,
+											 dfx::Scope inScope, unsigned int inItemIndex,
+											 void* outData)
 {
 	switch (inPropertyID)
 	{
@@ -535,9 +533,9 @@ long Turntablist::dfx_GetProperty(dfx::PropertyID inPropertyID,
 }
 
 //-----------------------------------------------------------------------------
-long Turntablist::dfx_SetProperty(dfx::PropertyID inPropertyID,
-								  dfx::Scope inScope, unsigned int inItemIndex,
-								  void const* inData, size_t inDataSize)
+dfx::StatusCode Turntablist::dfx_SetProperty(dfx::PropertyID inPropertyID,
+											 dfx::Scope inScope, unsigned int inItemIndex,
+											 void const* inData, size_t inDataSize)
 {
 	switch (inPropertyID)
 	{

@@ -53,7 +53,7 @@ public:
 	void dfx_PostConstructor() override;
 
 #if !TARGET_PLUGIN_USES_DSPCORE
-	long initialize() override;
+	void initialize() override;
 	void cleanup() override;
 	void reset() override;
 

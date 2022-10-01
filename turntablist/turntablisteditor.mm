@@ -136,7 +136,7 @@ class TurntablistEditor final : public DfxGuiEditor
 public:
 	explicit TurntablistEditor(DGEditorListenerInstance inInstance);
 
-	long OpenEditor() override;
+	void OpenEditor() override;
 	void PostOpenEditor() override;
 	void CloseEditor() override;
 
@@ -391,7 +391,7 @@ static bool DFX_IsSupportedAudioFileType(FSRef const& inFileRef)
 #endif
 
 //-----------------------------------------------------------------------------
-long TurntablistEditor::OpenEditor()
+void TurntablistEditor::OpenEditor()
 {
 	auto const sliderHandleImage = LoadImage("slider-handle.png");
 	auto const knobImage = LoadImage("knob.png");
@@ -618,10 +618,6 @@ buttonStat = CreateRoundButtonControl(GetCarbonWindow(), &buttonRect, kControlSi
 #endif
 
 	DFX_InitializeSupportedAudioFileTypesArrays();
-
-
-
-	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------
@@ -931,15 +927,15 @@ void TurntablistEditor::HandleAudioFileChange()
 	dfx::PropertyFlags propertyFlags {};
 	auto status = dfxgui_GetPropertyInfo(kTurntablistProperty_AudioFile, kAudioUnitScope_Global, 0, 
 										 dataSize, propertyFlags);
-	if ((status == noErr) && (dataSize > 0))
+	if ((status == dfx::kStatus_NoError) && (dataSize > 0))
 	{
 		auto const aliasHandle = reinterpret_cast<AliasHandle>(NewHandle(dataSize));
 		if (aliasHandle)
 		{
 			status = dfxgui_GetProperty(kTurntablistProperty_AudioFile, kAudioUnitScope_Global, 0, 
 										*aliasHandle, dataSize);
-			assert(status == noErr);
-			if (status == noErr)
+			assert(status == dfx::kStatus_NoError);
+			if (status == dfx::kStatus_NoError)
 			{
 				FSRef audioFileRef;
 				Boolean wasChanged {};
@@ -978,7 +974,7 @@ void TurntablistEditor::HandlePlayButton(bool inPlay)
 	[[maybe_unused]] auto const status = dfxgui_SetProperty(kTurntablistProperty_Play, 
 															kAudioUnitScope_Global, 0, 
 															&play_fixedSize, sizeof(play_fixedSize));
-	assert(status == noErr);
+	assert(status == dfx::kStatus_NoError);
 }
 
 //-----------------------------------------------------------------------------

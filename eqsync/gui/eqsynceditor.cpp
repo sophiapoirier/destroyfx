@@ -132,7 +132,7 @@ EQSyncEditor::EQSyncEditor(DGEditorListenerInstance inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long EQSyncEditor::OpenEditor()
+void EQSyncEditor::OpenEditor()
 {
 	auto wideFaderX = kWideFaderX_Panther;
 	auto wideFaderY = kWideFaderY_Panther;
@@ -266,9 +266,6 @@ long EQSyncEditor::OpenEditor()
 
 
 	HandleTempoAutoChange();
-
-
-	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------

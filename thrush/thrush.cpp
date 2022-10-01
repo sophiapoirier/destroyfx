@@ -117,15 +117,13 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 }
 
 //-------------------------------------------------------------------------
-long Thrush::initialize()
+void Thrush::initialize()
 {
 	mDelayBuffer.assign(kDelayBufferSize, 0.f);
 	mDelayBuffer2.assign(kDelayBufferSize, 0.f);
 
 	// this is a handy value to have during LFO calculations and wasteful to recalculate at every sample
 	mOneDivSR = 1. / getsamplerate();
-
-	return dfx::kStatus_NoError;
 }
 
 //-------------------------------------------------------------------------

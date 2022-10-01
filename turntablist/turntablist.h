@@ -137,17 +137,17 @@ public:
 
 	void dfx_PostConstructor() override;
 
-	long initialize() override;
+	void initialize() override;
 
 	void processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames) override;
 	void processparameters() override;
 
-	long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
-							 size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
-	long dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
-						 void* outData) override;
-	long dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
-						 void const* inData, size_t inDataSize) override;
+	dfx::StatusCode dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
+										size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
+	dfx::StatusCode dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
+									void* outData) override;
+	dfx::StatusCode dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
+									void const* inData, size_t inDataSize) override;
 
 	OSStatus SaveState(CFPropertyListRef* outData) override;
 	OSStatus RestoreState(CFPropertyListRef inData) override;

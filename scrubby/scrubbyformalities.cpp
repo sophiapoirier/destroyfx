@@ -138,7 +138,7 @@ void Scrubby::dfx_PostConstructor()
 }
 
 //-------------------------------------------------------------------------
-long Scrubby::initialize()
+void Scrubby::initialize()
 {
 	// the number of samples in the maximum seek range,
 	// dividing by the minimum seek rate for extra leeway while moving
@@ -166,8 +166,6 @@ long Scrubby::initialize()
 	});
 
 	setlatency_seconds((getparameter_f(kSeekRange) * 0.001) * getparameter_scalar(kPredelay));
-
-	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------

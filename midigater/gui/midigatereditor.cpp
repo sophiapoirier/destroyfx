@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with MIDI Gater.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "midigatereditor.h"
@@ -70,13 +70,13 @@ constexpr float kValueTextSize = 11.0f;
 
 static bool envelopeDisplayProc(float inValue, char* outText, void*)
 {
-	long const thousands = static_cast<long>(inValue) / 1000;
+	int const thousands = static_cast<int>(inValue) / 1000;
 	auto const remainder = std::fmod(inValue, 1000.0f);
 
 	bool success = false;
 	if (thousands > 0)
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld,%05.1f", thousands, remainder) > 0;
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%d,%05.1f", thousands, remainder) > 0;
 	}
 	else
 	{
@@ -99,7 +99,7 @@ MIDIGaterEditor::MIDIGaterEditor(DGEditorListenerInstance inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long MIDIGaterEditor::OpenEditor()
+void MIDIGaterEditor::OpenEditor()
 {
 	//--load the images-------------------------------------
 
@@ -192,8 +192,4 @@ long MIDIGaterEditor::OpenEditor()
 	// Destroy FX web page link
 	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkButtonImage->getWidth(), destroyFXLinkButtonImage->getHeight() / 2);
 	emplaceControl<DGWebLink>(this, pos, destroyFXLinkButtonImage, DESTROYFX_URL);
-
-
-
-	return dfx::kStatus_NoError;
 }

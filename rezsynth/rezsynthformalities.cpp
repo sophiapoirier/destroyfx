@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Rez Synth.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "rezsynth.h"
@@ -120,7 +120,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 }
 
 //-----------------------------------------------------------------------------------------
-long RezSynth::initialize()
+void RezSynth::initialize()
 {
 	// these are values that are always needed during calculateCoefficients
 	mPiDivSR = std::numbers::pi_v<double> / getsamplerate();
@@ -141,8 +141,6 @@ long RezSynth::initialize()
 
 	std::fill(mLowpassGateFilters.begin(), mLowpassGateFilters.end(),
 			  decltype(mLowpassGateFilters)::value_type(numChannels, dfx::IIRFilter(getsamplerate())));
-
-	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------------------

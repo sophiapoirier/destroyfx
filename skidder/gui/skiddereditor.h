@@ -33,7 +33,7 @@ class SkidderEditor final : public DfxGuiEditor
 public:
 	explicit SkidderEditor(DGEditorListenerInstance inInstance);
 
-	long OpenEditor() override;
+	void OpenEditor() override;
 	void CloseEditor() override;
 	void parameterChanged(dfx::ParameterID inParameterID) override;
 	void outputChannelsChanged(size_t inChannelCount) override;

@@ -103,7 +103,7 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 }
 
 //-------------------------------------------------------------------------
-long BufferOverride::initialize()
+void BufferOverride::initialize()
 {
 	auto const numChannels = getnumoutputs();
 
@@ -119,8 +119,6 @@ long BufferOverride::initialize()
 
 	// this is a handy value to have during LFO calculations and wasteful to recalculate at every sample
 	mOneDivSR = 1. / getsamplerate();
-
-	return dfx::kStatus_NoError;
 }
 
 //-------------------------------------------------------------------------
@@ -454,8 +452,8 @@ void BufferOverride::updateViewDataCache()
 }
 
 //-------------------------------------------------------------------------
-long BufferOverride::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
-										 size_t& outDataSize, dfx::PropertyFlags& outFlags)
+dfx::StatusCode BufferOverride::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
+													size_t& outDataSize, dfx::PropertyFlags& outFlags)
 {
 	switch (inPropertyID)
 	{
@@ -473,8 +471,8 @@ long BufferOverride::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scop
 }
 
 //-------------------------------------------------------------------------
-long BufferOverride::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
-									 void* outData)
+dfx::StatusCode BufferOverride::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
+												void* outData)
 {
 	switch (inPropertyID)
 	{

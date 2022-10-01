@@ -135,7 +135,7 @@ PolarizerEditor::PolarizerEditor(DGEditorListenerInstance inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long PolarizerEditor::OpenEditor()
+void PolarizerEditor::OpenEditor()
 {
 	// load some graphics
 
@@ -182,7 +182,4 @@ long PolarizerEditor::OpenEditor()
 	// Destroy FX web page link
 	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkButtonImage->getWidth(), destroyFXLinkButtonImage->getHeight() / 2);
 	emplaceControl<DGWebLink>(this, pos, destroyFXLinkButtonImage, DESTROYFX_URL);
-
-
-	return dfx::kStatus_NoError;
 }

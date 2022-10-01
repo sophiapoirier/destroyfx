@@ -54,7 +54,7 @@ class EQSync final : public DfxPlugin
 public:
 	explicit EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
-	long initialize() override;
+	void initialize() override;
 	void cleanup() override;
 	void reset() override;
 

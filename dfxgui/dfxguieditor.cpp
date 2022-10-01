@@ -180,6 +180,7 @@ DfxGuiEditor::~DfxGuiEditor()
 
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::open(void* inWindow)
+try
 {
 	// !!! always call this !!!
 	[[maybe_unused]] auto const baseSuccess = TARGET_API_EDITOR_BASE_CLASS::open(inWindow);
@@ -226,11 +227,7 @@ bool DfxGuiEditor::open(void* inWindow)
 	});
 #endif
 
-	mEditorOpenErr = OpenEditor();
-	if (mEditorOpenErr != dfx::kStatus_NoError)
-	{
-		return false;
-	}
+	OpenEditor();
 	mJustOpened = true;
 
 	// allow for anything that might need to happen after the above post-opening stuff is finished
@@ -247,6 +244,10 @@ bool DfxGuiEditor::open(void* inWindow)
 #endif
 
 	return true;
+}
+catch (...)
+{
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -916,7 +917,7 @@ double DfxGuiEditor::getparameter_f(dfx::ParameterID inParameterID)
 
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, 
 										   inParameterID, &request, dataSize);
-	if (status == noErr)
+	if (status == dfx::kStatus_NoError)
 	{
 		return request.value.f;
 	}
@@ -937,7 +938,7 @@ long DfxGuiEditor::getparameter_i(dfx::ParameterID inParameterID)
 
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, 
 										   inParameterID, &request, dataSize);
-	if (status == noErr)
+	if (status == dfx::kStatus_NoError)
 	{
 		return request.value.i;
 	}
@@ -958,7 +959,7 @@ bool DfxGuiEditor::getparameter_b(dfx::ParameterID inParameterID)
 
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, 
 										   inParameterID, &request, dataSize);
-	if (status == noErr)
+	if (status == dfx::kStatus_NoError)
 	{
 		return request.value.b;
 	}
@@ -1135,7 +1136,7 @@ std::optional<std::string> DfxGuiEditor::getparametervaluestring(dfx::ParameterI
 	request.inStringIndex = inStringIndex;
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValueString, dfx::kScope_Global, 
 										   inParameterID, &request, dataSize);
-	if (status == noErr)
+	if (status == dfx::kStatus_NoError)
 	{
 		return request.valueString;
 	}
@@ -1153,7 +1154,7 @@ std::string DfxGuiEditor::getparameterunitstring(dfx::ParameterID inParameterID)
 	size_t dataSize = unitLabel.size() * sizeof(unitLabel.front());
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterUnitLabel, dfx::kScope_Global, 
 										   inParameterID, unitLabel.data(), dataSize);
-	if (status == noErr)
+	if (status == dfx::kStatus_NoError)
 	{
 		return unitLabel.data();
 	}
@@ -1202,7 +1203,7 @@ std::string DfxGuiEditor::GetParameterGroupName(size_t inGroupIndex)
 	size_t dataSize = groupName.size() * sizeof(groupName.front());
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterGroupName, dfx::kScope_Global, 
 										   inGroupIndex, groupName.data(), dataSize);
-	if (status == noErr)
+	if (status == dfx::kStatus_NoError)
 	{
 		return groupName.data();
 	}
@@ -1243,7 +1244,7 @@ float DfxGuiEditor::dfxgui_ExpandParameterValue(dfx::ParameterID inParameterID, 
 	size_t dataSize = sizeof(request);
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValueConversion, dfx::kScope_Global, 
 										   inParameterID, &request, dataSize);
-	if (status == noErr)
+	if (status == dfx::kStatus_NoError)
 	{
 		return request.outValue;
 	}
@@ -1268,7 +1269,7 @@ float DfxGuiEditor::dfxgui_ContractParameterValue(dfx::ParameterID inParameterID
 	size_t dataSize = sizeof(request);
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValueConversion, dfx::kScope_Global, 
 										   inParameterID, &request, dataSize);
-	if (status == noErr)
+	if (status == dfx::kStatus_NoError)
 	{
 		return request.outValue;
 	}
@@ -1367,7 +1368,7 @@ size_t DfxGuiEditor::GetNumParameters()
 	size_t dataSize {};
 	dfx::PropertyFlags propFlags {};
 	auto const status = dfxgui_GetPropertyInfo(kAudioUnitProperty_ParameterList, dfx::kScope_Global, 0, dataSize, propFlags);
-	if (status == noErr)
+	if (status == dfx::kStatus_NoError)
 	{
 		assert((dataSize % sizeof(AudioUnitParameterID)) == 0);
 		return dataSize / sizeof(AudioUnitParameterID);
@@ -1409,7 +1410,7 @@ std::vector<dfx::ParameterID> DfxGuiEditor::CreateParameterList(AudioUnitScope i
 	size_t dataSize {};
 	dfx::PropertyFlags propFlags {};
 	auto status = dfxgui_GetPropertyInfo(kAudioUnitProperty_ParameterList, inScope, 0, dataSize, propFlags);
-	if (status != noErr)
+	if (status != dfx::kStatus_NoError)
 	{
 		return {};
 	}
@@ -1427,7 +1428,7 @@ std::vector<dfx::ParameterID> DfxGuiEditor::CreateParameterList(AudioUnitScope i
 
 	std::vector<AudioUnitParameterID> parameterList(numParameters);
 	status = dfxgui_GetProperty(kAudioUnitProperty_ParameterList, inScope, 0, parameterList.data(), dataSize);
-	if (status != noErr)
+	if (status != dfx::kStatus_NoError)
 	{
 		return {};
 	}
@@ -1440,8 +1441,8 @@ std::vector<dfx::ParameterID> DfxGuiEditor::CreateParameterList(AudioUnitScope i
 #endif
 
 //-----------------------------------------------------------------------------
-long DfxGuiEditor::dfxgui_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
-										  size_t& outDataSize, dfx::PropertyFlags& outFlags)
+dfx::StatusCode DfxGuiEditor::dfxgui_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
+													 size_t& outDataSize, dfx::PropertyFlags& outFlags)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	AUSDK_Require(dfxgui_GetEffectInstance(), kAudioUnitErr_Uninitialized);
@@ -1465,8 +1466,8 @@ long DfxGuiEditor::dfxgui_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Sco
 }
 
 //-----------------------------------------------------------------------------
-long DfxGuiEditor::dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
-									  void* outData, size_t& ioDataSize)
+dfx::StatusCode DfxGuiEditor::dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
+												 void* outData, size_t& ioDataSize)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	AUSDK_Require(dfxgui_GetEffectInstance(), kAudioUnitErr_Uninitialized);
@@ -1484,8 +1485,8 @@ long DfxGuiEditor::dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope i
 }
 
 //-----------------------------------------------------------------------------
-long DfxGuiEditor::dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
-									  void const* inData, size_t inDataSize)
+dfx::StatusCode DfxGuiEditor::dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
+												 void const* inData, size_t inDataSize)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	AUSDK_Require(dfxgui_GetEffectInstance(), kAudioUnitErr_Uninitialized);
@@ -1493,14 +1494,14 @@ long DfxGuiEditor::dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope i
 	return AudioUnitSetProperty(dfxgui_GetEffectInstance(), inPropertyID, inScope, inItemIndex, 
 								inData, static_cast<UInt32>(inDataSize));
 #else
-	long const res = dfxgui_GetEffectInstance()->dfx_SetProperty(inPropertyID, inScope, inItemIndex, inData, inDataSize);
+	auto const status = dfxgui_GetEffectInstance()->dfx_SetProperty(inPropertyID, inScope, inItemIndex, inData, inDataSize);
 	// AU system framework handles this notification in AU, but VST needs to manage it manually.
 	// Only propagate notification if the specific property has been registered.
-	if ((res == dfx::kStatus_NoError) && IsPropertyRegistered(inPropertyID, inScope, inItemIndex))
+	if ((status == dfx::kStatus_NoError) && IsPropertyRegistered(inPropertyID, inScope, inItemIndex))
 	{
 		HandlePropertyChange(inPropertyID, inScope, inItemIndex);
 	}
-	return res;
+	return status;
 #endif
 }
 
@@ -2269,13 +2270,13 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParametersContext
 }
 
 //-----------------------------------------------------------------------------
-long DfxGuiEditor::initClipboard()
+dfx::StatusCode DfxGuiEditor::initClipboard()
 {
 #if TARGET_OS_MAC
 	// already initialized (allow for lazy initialization)
 	if (mClipboardRef)
 	{
-		return noErr;
+		return dfx::kStatus_NoError;
 	}
 	PasteboardRef clipboardRef_temp = nullptr;
 	auto const status = PasteboardCreate(kPasteboardClipboard, &clipboardRef_temp);
@@ -2429,7 +2430,7 @@ private:
 #endif  // TARGET_API_VST
 
 //-----------------------------------------------------------------------------
-long DfxGuiEditor::copySettings()
+dfx::StatusCode DfxGuiEditor::copySettings()
 {
 	auto status = initClipboard();
 	if (status != dfx::kStatus_NoError)
@@ -2524,7 +2525,7 @@ long DfxGuiEditor::copySettings()
 }
 
 //-----------------------------------------------------------------------------
-long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
+dfx::StatusCode DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 {
 	if (inQueryPastabilityOnly)
 	{
@@ -2600,7 +2601,7 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 					{
 						auto const auSettingsPropertyList_temp = auSettingsPropertyList.get();
 						status = dfxgui_SetProperty(kAudioUnitProperty_ClassInfo, auSettingsPropertyList_temp);
-						if (status == noErr)
+						if (status == dfx::kStatus_NoError)
 						{
 							pastableItemFound = true;
 							AUParameterChange_TellListeners(dfxgui_GetEffectInstance(), kAUParameterListener_AnyParameter);

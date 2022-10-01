@@ -226,12 +226,9 @@ public:
 	// ***
 	virtual void dfx_PreDestructor() {}
 
-	long do_initialize();
+	void do_initialize();
 	// ***
-	virtual long initialize()
-	{
-		return dfx::kStatus_NoError;
-	}
+	virtual void initialize() {}
 	void do_cleanup();
 	// ***
 	virtual void cleanup() {}
@@ -478,18 +475,18 @@ public:
 
   	// Overrides to define custom properties. Note that calling these directly will not update listeners;
   	// only the DfxGuiEditor versions do that.
-	virtual long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
-									 size_t& outDataSize, dfx::PropertyFlags& outFlags)
+	virtual dfx::StatusCode dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
+												size_t& outDataSize, dfx::PropertyFlags& outFlags)
 	{
 		return dfx::kStatus_InvalidProperty;
 	}
-	virtual long dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
-								 void* outData)
+	virtual dfx::StatusCode dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
+											void* outData)
 	{
 		return dfx::kStatus_InvalidProperty;
 	}
-	virtual long dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
-								 void const* inData, size_t inDataSize)
+	virtual dfx::StatusCode dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
+											void const* inData, size_t inDataSize)
 	{
 		return dfx::kStatus_InvalidProperty;
 	}

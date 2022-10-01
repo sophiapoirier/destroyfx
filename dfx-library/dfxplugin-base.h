@@ -94,13 +94,6 @@ To contact the author, use the contact form at http://destroyfx.org
 		#error "you must either #define both VST_NUM_INPUTS and VST_NUM_OUTPUTS, or VST_NUM_CHANNELS"
 	#endif
 
-	#ifdef __MACH__
-		#include <TargetConditionals.h>
-	#endif
-	#if _WIN32
-		#include <windows.h>
-	#endif
-
 // using Digidesign's RTAS/AudioSuite API
 #elif defined(TARGET_API_RTAS)
 	#if TARGET_PLUGIN_HAS_GUI
@@ -114,8 +107,15 @@ To contact the author, use the contact form at http://destroyfx.org
 		#endif
 	#endif
 
+#endif  // end of target API check
+
+
+#ifdef __MACH__
+	#include <TargetConditionals.h>
 #endif
-// end of target API check
+#if _WIN32 && !defined(TARGET_API_RTAS)
+	#include <windows.h>
+#endif
 
 
 // Now, consistency check defines.
@@ -193,9 +193,10 @@ namespace dfx
 
 
 //-----------------------------------------------------------------------------
-#ifdef TARGET_API_AUDIOUNIT
-enum
+using StatusCode = int;
+enum : StatusCode
 {
+#ifdef TARGET_API_AUDIOUNIT
 	kStatus_NoError = noErr,
 	kStatus_ParamError = kAudio_ParamError,
 	kStatus_InitializationFailed = kAudioUnitErr_FailedInitialization,
@@ -204,10 +205,7 @@ enum
 	kStatus_InvalidProperty = kAudioUnitErr_InvalidProperty,
 	kStatus_InvalidPropertyValue = kAudioUnitErr_InvalidPropertyValue,
 	kStatus_CannotDoInCurrentContext = kAudioUnitErr_CannotDoInCurrentContext
-};
 #else
-enum
-{
 	kStatus_NoError = 0,
 	kStatus_ParamError = -50,
 	kStatus_InitializationFailed = -10875,
@@ -216,8 +214,8 @@ enum
 	kStatus_InvalidProperty = -10879,
 	kStatus_InvalidPropertyValue = -10851,
 	kStatus_CannotDoInCurrentContext = -10863
-};
 #endif
+};
 
 
 

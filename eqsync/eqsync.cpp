@@ -67,7 +67,7 @@ EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long EQSync::initialize()
+void EQSync::initialize()
 {
 	auto const numChannels = getnumoutputs();
 
@@ -75,8 +75,6 @@ long EQSync::initialize()
 	mPrevPrevIn.assign(numChannels, 0.0f);
 	mPrevOut.assign(numChannels, 0.0f);
 	mPrevPrevOut.assign(numChannels, 0.0f);
-
-	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------

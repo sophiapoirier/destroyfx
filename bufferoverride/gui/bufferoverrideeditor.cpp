@@ -262,7 +262,7 @@ BufferOverrideEditor::BufferOverrideEditor(DGEditorListenerInstance inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long BufferOverrideEditor::OpenEditor()
+void BufferOverrideEditor::OpenEditor()
 {
 	// create images
 
@@ -426,8 +426,6 @@ long BufferOverrideEditor::OpenEditor()
 
 	HandleTempoSyncChange();
 	HandleTempoAutoChange();
-
-	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------

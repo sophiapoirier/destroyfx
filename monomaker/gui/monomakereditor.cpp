@@ -86,7 +86,7 @@ MonomakerEditor::MonomakerEditor(DGEditorListenerInstance inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long MonomakerEditor::OpenEditor()
+void MonomakerEditor::OpenEditor()
 {
 	//--load the images-------------------------------------
 
@@ -172,10 +172,6 @@ long MonomakerEditor::OpenEditor()
 
 
 	inputChannelsChanged(getNumInputChannels());
-
-
-
-	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------

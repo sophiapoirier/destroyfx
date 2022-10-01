@@ -104,7 +104,7 @@ public:
 
 	void dfx_PostConstructor() override;
 
-	long initialize() override;
+	void initialize() override;
 	void cleanup() override;
 	void reset() override;
 

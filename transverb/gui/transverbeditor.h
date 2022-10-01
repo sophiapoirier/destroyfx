@@ -59,7 +59,7 @@ class TransverbEditor final : public DfxGuiEditor
 public:
 	explicit TransverbEditor(DGEditorListenerInstance inInstance);
 
-	long OpenEditor() override;
+	void OpenEditor() override;
 	void PostOpenEditor() override;
 	void CloseEditor() override;
 	void parameterChanged(dfx::ParameterID inParameterID) override;

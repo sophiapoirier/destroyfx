@@ -134,7 +134,7 @@ GeometerEditor::GeometerEditor(DGEditorListenerInstance inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long GeometerEditor::OpenEditor() {
+void GeometerEditor::OpenEditor() {
 
   /* ---load some images--- */
   // slider and fine tune controls
@@ -325,9 +325,6 @@ long GeometerEditor::OpenEditor() {
   for (size_t i = 0; i < NUM_SLIDERS; i++) {
     parameterChanged(get_base_param_for_slider(i));
   }
-
-
-  return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------

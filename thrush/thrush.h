@@ -79,7 +79,7 @@ class Thrush final : public DfxPlugin
 public:
 	Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
-	long initialize() override;
+	void initialize() override;
 	void cleanup() override;
 	void reset() override;
 
