@@ -16,13 +16,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "bufferoverride-base.h"
 #include "bufferoverride.h"
 
 #include <algorithm>
+#include <optional>
 
 #include "dfxmath.h"
 
@@ -85,7 +86,7 @@ void BufferOverride::heedMidiEvents(size_t samplePos)
 // SEARCH FOR NOTE
 		// initialize these to invalid values so that we can tell later what we really found
 		bool foundNote = false;
-		int foundNoteOn = DfxMidi::kInvalidValue;
+		std::optional<int> foundNoteOn;
 		// search events from the beginning up until the current processing block position
 		for (size_t eventIndex = 0; eventIndex < midiState.getBlockEventCount(); eventIndex++)
 		{
@@ -126,25 +127,25 @@ void BufferOverride::heedMidiEvents(size_t samplePos)
 		// we found a valid new note, so update the divisor value if that note is still active
 		if (foundNote)
 		{
-			if (midiState.isAnyNoteActive() &&
+			if (auto const latestNote = midiState.getLatestNote(); latestNote &&
 // the || !mDivisorWasChangedByHand part has to do with the fact that the note event may have been a note off
 // which pushed an older still-playing note to be first in the queue, and so we want to use that older note
 // XXX however, it is possible that the removed note wasn't first, and so in that case maybe we shouldn't do this?
-				((foundNoteOn >= 0) || !mDivisorWasChangedByHand))
+				(foundNoteOn || !mDivisorWasChangedByHand))
 			{
 				// update the divisor parameter value
-				mDivisor = getDivisorParameterFromNote(midiState.getLatestNote());
+				mDivisor = getDivisorParameterFromNote(*latestNote);
 				// false mOldNote so it will be ignored until a new valid value is put into it
 				mOldNote = false;
-				mLastNoteOn = DfxMidi::kInvalidValue;
+				mLastNoteOn.reset();
 			}
 			// if we're in MIDI nudge mode, allow the last note-on to update divisor even if the note is not still active
-			else if ((mMidiMode == kMidiMode_Nudge) && (foundNoteOn >= 0))
+			else if ((mMidiMode == kMidiMode_Nudge) && foundNoteOn)
 			{
-				mDivisor = getDivisorParameterFromNote(foundNoteOn);
+				mDivisor = getDivisorParameterFromNote(*foundNoteOn);
 				// false mOldNote so it will be ignored until a new valid value is put into it
 				mOldNote = false;
-				mLastNoteOn = DfxMidi::kInvalidValue;
+				mLastNoteOn.reset();
 			}
 		}
 
@@ -166,7 +167,8 @@ void BufferOverride::heedMidiEvents(size_t samplePos)
 				}
 
 				// invalidate mLastPitchbend* so they will be ignored until new valid values are put into them
-				mLastPitchbendLSB = mLastPitchbendMSB = DfxMidi::kInvalidValue;
+				mLastPitchbendLSB.reset();
+				mLastPitchbendMSB.reset();
 
 				// invalidate this and all earlier pitchbend messages so that they are not found in a future search
 				while (true)
@@ -194,25 +196,25 @@ void BufferOverride::heedMidiEvents(size_t samplePos)
 	if (mOldNote && !mDivisorWasChangedByHand)
 	{
 		// only if a note is currently active for MIDI trigger mode
-		if (midiState.isAnyNoteActive())
+		if (auto const latestNote = midiState.getLatestNote())
 		{
-			mDivisor = getDivisorParameterFromNote(midiState.getLatestNote());
+			mDivisor = getDivisorParameterFromNote(*latestNote);
 		}
 		// but we are more permissive if we're in MIDI nudge mode
-		else if ((mMidiMode == kMidiMode_Nudge) && (mLastNoteOn >= 0))
+		else if ((mMidiMode == kMidiMode_Nudge) && mLastNoteOn)
 		{
-			mDivisor = getDivisorParameterFromNote(mLastNoteOn);
+			mDivisor = getDivisorParameterFromNote(*mLastNoteOn);
 		}
 	}
 	// invalidate the old note stuff so it will be ignored until a new valid value is put into it
 	mOldNote = false;
-	mLastNoteOn = DfxMidi::kInvalidValue;
+	mLastNoteOn.reset();
 
 	// check for an unused pitchbend message leftover from a previous block
-	if ((mLastPitchbendLSB >= 0) && (mLastPitchbendMSB >= 0))
+	if (mLastPitchbendLSB && mLastPitchbendMSB)
 	{
 		// update the divisor parameter value
-		auto const tempDivisor = getDivisorParameterFromPitchbend(mLastPitchbendLSB, mLastPitchbendMSB);
+		auto const tempDivisor = getDivisorParameterFromPitchbend(*mLastPitchbendLSB, *mLastPitchbendMSB);
 		// make sure that we ought to be updating divisor
 		// the function will return -3 if we're in MIDI trigger mode and no notes are active
 		if (tempDivisor > 0.0f)
@@ -220,7 +222,8 @@ void BufferOverride::heedMidiEvents(size_t samplePos)
 			mDivisor = tempDivisor;
 		}
 		// invalidate mLastPitchbend* so they will be ignored until new valid values are put into them
-		mLastPitchbendLSB = mLastPitchbendMSB = DfxMidi::kInvalidValue;
+		mLastPitchbendLSB.reset();
+		mLastPitchbendMSB.reset();
 	}
 
 	// if we're in MIDI trigger mode and no notes are active and the divisor hasn't been updated

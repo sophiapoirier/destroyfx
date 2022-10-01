@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #pragma once
 
 #include <atomic>
+#include <optional>
 #include <vector>
 
 #include "bufferoverride-base.h"
@@ -104,7 +105,7 @@ private:
 
 	double mPitchBend = 0.0, mOldPitchBend = 0.0;  // pitchbending scalar values
 	bool mOldNote = false;  // says if there was an old, unattended note-on or note-off from a previous block
-	int mLastNoteOn = 0, mLastPitchbendLSB = 0, mLastPitchbendMSB = 0;  // these carry over the last events from a previous processing block
+	std::optional<int> mLastNoteOn, mLastPitchbendLSB, mLastPitchbendMSB;  // these carry over the last events from a previous processing block
 	bool mDivisorWasChangedByHand = false;  // for MIDI trigger mode - tells us to respect the mDivisor value
 	bool mDivisorWasChangedByMIDI = false;  // tells the GUI that the divisor displays need updating
 

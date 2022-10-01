@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Sophia's Destroy FX MIDI stuff
 ---------------------------------------------------------------*/
@@ -27,6 +27,7 @@ Sophia's Destroy FX MIDI stuff
 
 
 #include <array>
+#include <optional>
 #include <vector>
 
 #include "dfxenvelope.h"
@@ -43,7 +44,6 @@ public:
 	static constexpr int kMaxValue = 0x7F;
 	static constexpr int kMidpointValue = 64;
 	static constexpr float kValueScalar = 1.0f / static_cast<float>(kMaxValue);
-	static constexpr int kInvalidValue = -3;  // for whatever
 	static constexpr int kPitchBendMidpointValue = 0x2000;
 	static constexpr int kPitchBendMaxValue = 0x3FFF;
 	static constexpr double kPitchBendSemitonesMax = 36.0;
@@ -225,7 +225,8 @@ public:
 	}
 	auto getLatestNote() const noexcept
 	{
-		return mNoteQueue.front();
+		auto const note = mNoteQueue.front();
+		return (note >= 0) ? std::make_optional(note) : std::nullopt;
 	}
 
 	static constexpr bool isNote(int inMidiStatus) noexcept
@@ -266,6 +267,7 @@ public:
 
 private:
 	static constexpr size_t kEventQueueSize = 12000;
+	static constexpr int kInvalidValue = -1;  // sentinel for any MIDI value type
 
 	void fillFrequencyTable();
 

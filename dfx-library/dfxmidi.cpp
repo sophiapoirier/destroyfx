@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Sophia's Destroy FX MIDI stuff
 ---------------------------------------------------------------*/
@@ -223,9 +223,9 @@ void DfxMidi::removeNote(int inMidiNote)
 													   });
 	std::fill(nonMatchPortion, mNoteQueue.end(), kInvalidValue);
 
-	if (isAnyNoteActive())
+	if (auto const latestNote = getLatestNote())
 	{
-		mActiveLegatoMidiNote = getLatestNote();
+		mActiveLegatoMidiNote = *latestNote;
 	}
 }
 
@@ -454,7 +454,7 @@ double DfxMidi::getNoteFrequency(int inNote) const
 	}
 	if (inNote >= 0)
 	{
-		return mNoteFrequencyTable.at(inNote);
+		return mNoteFrequencyTable.at(dfx::math::ToIndex(inNote));
 	}
 	return 0.0;
 }

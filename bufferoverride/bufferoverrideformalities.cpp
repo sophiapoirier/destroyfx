@@ -145,8 +145,9 @@ void BufferOverride::reset()
 	mBufferLFO.reset();
 
 	mOldNote = false;
-	mLastNoteOn = DfxMidi::kInvalidValue;
-	mLastPitchbendLSB = mLastPitchbendMSB = DfxMidi::kInvalidValue;
+	mLastNoteOn.reset();
+	mLastPitchbendLSB.reset();
+	mLastPitchbendMSB.reset();
 	mPitchBend = 1.0;
 	mOldPitchBend = 1.0;
 	mDivisorWasChangedByMIDI = mDivisorWasChangedByHand = false;
