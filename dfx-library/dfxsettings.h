@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 This is our Destroy FX plugin data storage stuff
@@ -95,8 +95,6 @@ class DfxPlugin;
 class DfxSettings
 {
 public:
-	static constexpr long kNoLearner = -3;  // for when no parameter is activated for learning
-
 	enum class CrisisBehavior
 	{
 		// crisis behaviors (what to do when restore sends an unexpected buffer size)
@@ -161,23 +159,22 @@ public:
 	// remove MIDI event assignments from all parameters
 	void clearAssignments();
 	// assign a MIDI event to a parameter
-	void assignParam(long inParamTag, dfx::MidiEventType inEventType, long inEventChannel, 
-					 long inEventNum, long inEventNum2 = 0, 
-					 dfx::MidiEventBehaviorFlags inEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
-					 int inDataInt1 = 0, int inDataInt2 = 0, 
-					 float inDataFloat1 = 0.0f, float inDataFloat2 = 0.0f);
+	void assignParameter(dfx::ParameterID inParameterID, dfx::MidiEventType inEventType, int inEventChannel, 
+						 int inEventNum, int inEventNum2 = 0, 
+						 dfx::MidiEventBehaviorFlags inEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
+						 int inDataInt1 = 0, int inDataInt2 = 0, 
+						 float inDataFloat1 = 0.0f, float inDataFloat2 = 0.0f);
 	// remove a parameter's MIDI event assignment
-	void unassignParam(long inParamTag);
+	void unassignParameter(dfx::ParameterID inParameterID);
 
 	// define or report the actively learning parameter during MIDI learn mode
-	void setLearner(long inParamTag, dfx::MidiEventBehaviorFlags inEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
+	void setLearner(dfx::ParameterID inParameterID, dfx::MidiEventBehaviorFlags inEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
 					int inDataInt1 = 0, int inDataInt2 = 0, 
 					float inDataFloat1 = 0.0f, float inDataFloat2 = 0.0f);
 	auto getLearner() const noexcept
 	{
 		return mLearner.load();
 	}
-	bool isLearner(long inParamTag) const noexcept;
 
 	// turn MIDI learning on or off
 	void setLearning(bool inLearnMode);
@@ -192,8 +189,8 @@ public:
 	void setParameterMidiReset();
 
 	// potentially useful accessors
-	dfx::ParameterAssignment getParameterAssignment(long inParamTag) const;
-	dfx::MidiEventType getParameterAssignmentType(long inParamTag) const;
+	dfx::ParameterAssignment getParameterAssignment(dfx::ParameterID inParameterID) const;
+	dfx::MidiEventType getParameterAssignmentType(dfx::ParameterID inParameterID) const;
 #endif // TARGET_PLUGIN_USES_MIDI
 
 
@@ -225,16 +222,16 @@ public:
 	// creating the DfxSettings object, or at least before your plugin's 
 	// constructor returns, because you don't want any set or save calls 
 	// made before you have your parameter ID map finalized.
-	void setParameterID(long inParamTag, long inNewID)
+	void setMappedParameterID(dfx::ParameterID inParameterIndex, dfx::ParameterID inMappedParameterID)
 	{
-		if (paramTagIsValid(inParamTag))
+		if (isValidParameterID(inParameterIndex))
 		{
-			mParameterIDs[inParamTag] = inNewID;
+			mParameterIDMap[inParameterIndex] = inMappedParameterID;
 		}
 	}
-	long getParameterID(long inParamTag) const
+	dfx::ParameterID getMappedParameterID(dfx::ParameterID inParameterIndex) const
 	{
-		return (paramTagIsValid(inParamTag)) ? mParameterIDs[inParamTag] : dfx::kParameterID_Invalid;
+		return (isValidParameterID(inParameterIndex)) ? mParameterIDMap[inParameterIndex] : dfx::kParameterID_Invalid;
 	}
 
 
@@ -389,17 +386,17 @@ private:
 	void debugAlertCorruptData(char const* inDataItemName, size_t inDataItemSize, size_t inDataTotalSize) const;
 
 	// a simple but handy check to see if a parameter tag is valid
-	bool paramTagIsValid(long inParamTag) const noexcept
+	bool isValidParameterID(dfx::ParameterID inParameterID) const noexcept
 	{
-		return (inParamTag >= 0) && (static_cast<size_t>(inParamTag) < mNumParameters);
+		return (inParameterID < mNumParameters);
 	}
 
-	static long getParameterTagFromID(long inParamID, std::span<int32_t const> inSearchIDs);
-	long getParameterTagFromID(long inParamID) const;
+	static dfx::ParameterID getParameterIndexFromMap(dfx::ParameterID inParameterID, std::span<int32_t const> inSearchIDs);
+	dfx::ParameterID getParameterIndexFromMap(dfx::ParameterID inParameterID) const;
 
 #if TARGET_PLUGIN_USES_MIDI
-	void handleMidi_assignParam(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, size_t inOffsetFrames);
-	void handleMidi_automateParams(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, int inByte2, size_t inOffsetFrames, bool inIsNoteOn = false);
+	void handleMidi_assignParameter(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, size_t inOffsetFrames);
+	void handleMidi_automateParameters(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, int inByte2, size_t inOffsetFrames, bool inIsNoteOn = false);
 #endif // TARGET_PLUGIN_USES_MIDI
 
 
@@ -425,14 +422,14 @@ private:
 	// an ordered table of IDs for each parameter stored in each preset
 	// (this is so that non-parameter-compatible plugin versions can load 
 	// settings and know which stored parameters correspond to theirs)
-	std::vector<int32_t> mParameterIDs;
+	std::vector<int32_t> mParameterIDMap;
 
 	// what to do if restore() sends data with a mismatched byte size
 	CrisisBehavior mCrisisBehavior = CrisisBehavior::LoadWhatYouCan;
 
 #if TARGET_PLUGIN_USES_MIDI
 	std::atomic<bool> mMidiLearn {false};  // switch value for MIDI learn mode
-	std::atomic<long> mLearner {kNoLearner};  // the parameter currently selected for MIDI learning
+	std::atomic<dfx::ParameterID> mLearner {dfx::kParameterID_Invalid};  // the parameter currently selected for MIDI learning
 
 	// the array of which MIDI event, if any, is assigned to each parameter
 	std::vector<dfx::ParameterAssignment> mParameterAssignments;

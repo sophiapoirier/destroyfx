@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Scrubby.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "scrubbyeditor.h"
@@ -33,13 +33,14 @@ constexpr auto kValueDisplayFont = dfx::kFontName_Snooty10px;
 constexpr auto kValueDisplayFontSize = dfx::kFontSize_Snooty10px;
 constexpr DGColor kValueDisplayFontColor(187, 173, 131);
 constexpr float kUnusedControlAlpha = 0.234f;
-constexpr long kRangeSliderOvershoot = 3;
+constexpr int kRangeSliderOvershoot = 3;
 
-constexpr long kOctavesSliderWidth = 118 - 2;
-static long const kOctaveMaxSliderWidth = static_cast<long>((static_cast<float>(kOctave_MaxValue) / static_cast<float>((std::abs(kOctave_MinValue) + kOctave_MaxValue))) * static_cast<float>(kOctavesSliderWidth));
-static long const kOctaveMinSliderWidth = kOctavesSliderWidth - kOctaveMaxSliderWidth;
-constexpr long kOctaveMinSliderX = 251 + 1;
-static long const kOctaveMaxSliderX = kOctaveMinSliderX + kOctaveMinSliderWidth;
+constexpr int kOctavesSliderWidth = 118 - 2;
+// TODO C++23: constexpr
+static int const kOctaveMaxSliderWidth = static_cast<int>((static_cast<float>(kOctave_MaxValue) / static_cast<float>((std::abs(kOctave_MinValue) + kOctave_MaxValue))) * static_cast<float>(kOctavesSliderWidth));
+static int const kOctaveMinSliderWidth = kOctavesSliderWidth - kOctaveMaxSliderWidth;
+constexpr int kOctaveMinSliderX = 251 + 1;
+static int const kOctaveMaxSliderX = kOctaveMinSliderX + kOctaveMinSliderWidth;
 
 //-----------------------------------------------------------------------------
 enum
@@ -155,7 +156,7 @@ static bool seekRangeDisplayProc(float inValue, char* outText, void*)
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f ms", inValue) > 0;
 }
 
-static bool seekRateGenDisplayProc(float inValue, long inParameterID, char* outText, DfxGuiEditor* inEditor)
+static bool seekRateGenDisplayProc(float inValue, dfx::ParameterID inParameterID, char* outText, DfxGuiEditor* inEditor)
 {
 	if (inEditor->getparameter_b(kTempoSync))
 	{
@@ -286,14 +287,14 @@ long ScrubbyEditor::OpenEditor()
 
 
 	DGRect pos;
-	long const seekRateParamID = getparameter_b(kTempoSync) ? kSeekRate_Sync : kSeekRate_Hz;
-	long const seekRateRandMinParamID = getparameter_b(kTempoSync) ? kSeekRateRandMin_Sync : kSeekRateRandMin_Hz;
+	auto const seekRateParameterID = getparameter_b(kTempoSync) ? kSeekRate_Sync : kSeekRate_Hz;
+	auto const seekRateRandMinParameterID = getparameter_b(kTempoSync) ? kSeekRateRandMin_Sync : kSeekRateRandMin_Hz;
 
 	//--create the sliders-----------------------------------------------
 
 	// seek rate
 	pos.set(kSeekRateSliderX, kSeekRateSliderY, kSeekRateSliderWidth, kSliderHeight);
-	mSeekRateSlider = emplaceControl<DGRangeSlider>(this, seekRateRandMinParamID, seekRateParamID, pos,
+	mSeekRateSlider = emplaceControl<DGRangeSlider>(this, seekRateRandMinParameterID, seekRateParameterID, pos,
 													rangeSliderHandleLeftImage, rangeSliderHandleRightImage, nullptr,
 													DGRangeSlider::PushStyle::Upper, kRangeSliderOvershoot);
 	mSeekRateSlider->setAlternateHandles(rangeSliderHandleLeftImage_glowing, rangeSliderHandleRightImage_glowing);
@@ -340,11 +341,11 @@ long ScrubbyEditor::OpenEditor()
 
 	// seek rate random minimum
 	pos.set(kSeekRateSliderX + kDisplayInsetX_leftAlign, kSeekRateSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth_big, kDisplayHeight);
-	mSeekRateRandMinDisplay = emplaceControl<DGTextDisplay>(this, seekRateRandMinParamID, pos, seekRateRandMinDisplayProc, this, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mSeekRateRandMinDisplay = emplaceControl<DGTextDisplay>(this, seekRateRandMinParameterID, pos, seekRateRandMinDisplayProc, this, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// seek rate
 	pos.set(kSeekRateSliderX + kSeekRateSliderWidth - kDisplayWidth_big - kDisplayInsetX, kSeekRateSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth_big, kDisplayHeight);
-	mSeekRateDisplay = emplaceControl<DGTextDisplay>(this, seekRateParamID, pos, seekRateDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mSeekRateDisplay = emplaceControl<DGTextDisplay>(this, seekRateParameterID, pos, seekRateDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// seek range
 	pos.set(kSeekRangeSliderX + kSeekRangeSliderWidth - kDisplayWidth - kDisplayInsetX, kSeekRangeSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
@@ -393,7 +394,7 @@ long ScrubbyEditor::OpenEditor()
 	DGRect keyboardBottomKeyPos(kKeyboardX, kKeyboardY + pos.getHeight(), keyboardBottomKeyImages[0]->getWidth(), keyboardBottomKeyImages[0]->getHeight() / 2);
 	for (size_t i = 0; i < kNumPitchSteps; i++)
 	{
-		long const paramID = kPitchStep0 + i;
+		dfx::ParameterID const parameterID = kPitchStep0 + i;
 
 		// this visually syncs the top and bottom button images upon mouse clicks
 		auto const keyboardButtonProc = [](DGButton* button, long value)
@@ -401,9 +402,9 @@ long ScrubbyEditor::OpenEditor()
 			auto const editor = button->getOwnerEditor();
 			editor->getFrame()->forEachChild([originalButton = button->asCControl()](VSTGUI::CView* child)
 			{
-				auto const paramID = originalButton->getTag();
+				auto const parameterIndex = originalButton->getTag();
 				auto const childControl = dynamic_cast<VSTGUI::CControl*>(child);
-				if (childControl && (childControl->getTag() == paramID) && (childControl != originalButton))
+				if (childControl && (childControl->getTag() == parameterIndex) && (childControl != originalButton))
 				{
 					childControl->setValue(originalButton->getValue());
 					if (childControl->isDirty())
@@ -415,7 +416,7 @@ long ScrubbyEditor::OpenEditor()
 		};
 
 		pos.setWidth(keyboardTopKeyImages[i]->getWidth());
-		auto button = emplaceControl<DGButton>(this, paramID, pos, keyboardTopKeyImages[i], DGButton::Mode::Increment);
+		auto button = emplaceControl<DGButton>(this, parameterID, pos, keyboardTopKeyImages[i], DGButton::Mode::Increment);
 		pos.offset(pos.getWidth(), 0);
 
 		if (keyboardBottomKeyImages[i] != nullptr)
@@ -423,7 +424,7 @@ long ScrubbyEditor::OpenEditor()
 			button->setUserProcedure(std::bind_front(keyboardButtonProc, button));
 
 			keyboardBottomKeyPos.setWidth(keyboardBottomKeyImages[i]->getWidth());
-			button = emplaceControl<DGButton>(this, paramID, keyboardBottomKeyPos, keyboardBottomKeyImages[i], DGButton::Mode::Increment);
+			button = emplaceControl<DGButton>(this, parameterID, keyboardBottomKeyPos, keyboardBottomKeyImages[i], DGButton::Mode::Increment);
 			button->setUserProcedure(std::bind_front(keyboardButtonProc, button));
 			keyboardBottomKeyPos.offset(keyboardBottomKeyPos.getWidth(), 0);
 		}
@@ -447,12 +448,10 @@ long ScrubbyEditor::OpenEditor()
 
 	// choose the seek rate type ("free" or synced)
 	emplaceControl<DGToggleImageButton>(this, kTempoSync, kTempoSyncButtonX, kTempoSyncButtonY, tempoSyncButtonImage, true);
+	emplaceControl<DGToggleImageButton>(this, kTempoSync, kLittleTempoSyncButtonX, kLittleTempoSyncButtonY, tempoSyncButtonImage_little, false);
 
 	// toggle pitch constraint
 	emplaceControl<DGToggleImageButton>(this, kPitchConstraint, kPitchConstraintButtonX, kPitchConstraintButtonY, pitchConstraintButtonImage, true);
-
-	// choose the seek rate type ("free" or synced)
-	emplaceControl<DGToggleImageButton>(this, kTempoSync, kLittleTempoSyncButtonX, kLittleTempoSyncButtonY, tempoSyncButtonImage_little, false);
 
 	// enable sync to host tempo
 	emplaceControl<DGToggleImageButton>(this, kTempoAuto, kTempoAutoButtonX, kTempoAutoButtonY, hostTempoButtonImage, false);
@@ -556,22 +555,22 @@ void ScrubbyEditor::HandleNotesButton(size_t inNotesButtonType)
 	{
 		case kNotes_Down:
 		{
-			auto const tempValue = getparameter_b(kPitchStep0);
-			for (long i = kPitchStep0; i < kPitchStep11; i++)
+			auto const bottomValue = getparameter_b(kPitchStep0);
+			for (dfx::ParameterID i = kPitchStep0; i < kPitchStep11; i++)
 			{
 				setparameter_b(i, getparameter_b(i + 1));
 			}
-			setparameter_b(kPitchStep11, tempValue);
+			setparameter_b(kPitchStep11, bottomValue);
 			break;
 		}
 		case kNotes_Up:
 		{
-			auto const tempValue = getparameter_b(kPitchStep11);
-			for (long i = kPitchStep11; i > kPitchStep0; i--)
+			auto const topValue = getparameter_b(kPitchStep11);
+			for (dfx::ParameterID i = kPitchStep11; i > kPitchStep0; i--)
 			{
 				setparameter_b(i, getparameter_b(i - 1));
 			}
-			setparameter_b(kPitchStep0, tempValue);
+			setparameter_b(kPitchStep0, topValue);
 			break;
 		}
 		case kNotes_Major:
@@ -603,13 +602,13 @@ void ScrubbyEditor::HandleNotesButton(size_t inNotesButtonType)
 			setparameter_b(kPitchStep11, false);
 			break;
 		case kNotes_All:
-			for (long i = kPitchStep0; i <= kPitchStep11; i++)
+			for (dfx::ParameterID i = kPitchStep0; i <= kPitchStep11; i++)
 			{
 				setparameter_b(i, true);
 			}
 			break;
 		case kNotes_None:
-			for (long i = kPitchStep0; i <= kPitchStep11; i++)
+			for (dfx::ParameterID i = kPitchStep0; i <= kPitchStep11; i++)
 			{
 				setparameter_b(i, false);
 			}
@@ -630,12 +629,12 @@ void ScrubbyEditor::HandlePitchConstraintChange()
 
 	for (auto& control : mControlsList)
 	{
-		auto const paramID = control->getParameterID();
-		if ((paramID >= kPitchStep0) && (paramID <= kPitchStep11))
+		auto const parameterID = control->getParameterID();
+		if ((parameterID >= kPitchStep0) && (parameterID <= kPitchStep11))
 		{
 			control->setDrawAlpha(alpha);
 		}
-		else if (paramID == kPitchConstraint)
+		else if (parameterID == kPitchConstraint)
 		{
 			control->setDrawAlpha(pitchConstraintAlpha);
 		}
@@ -666,7 +665,7 @@ void ScrubbyEditor::HandleTempoAutoChange()
 }
 
 //-----------------------------------------------------------------------------
-void ScrubbyEditor::parameterChanged(long inParameterID)
+void ScrubbyEditor::parameterChanged(dfx::ParameterID inParameterID)
 {
 	switch (inParameterID)
 	{

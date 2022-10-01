@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Skidder.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "skiddereditor.h"
@@ -100,7 +100,7 @@ enum
 //-----------------------------------------------------------------------------
 // parameter value string display conversion functions
 
-static bool rateGenDisplayProc(float inValue, long inSyncParameterID, char* outText, DfxGuiEditor* inEditor, bool inShowUnits)
+static bool rateGenDisplayProc(float inValue, dfx::ParameterID inSyncParameterID, char* outText, DfxGuiEditor* inEditor, bool inShowUnits)
 {
 	if (inEditor->getparameter_b(kTempoSync))
 	{
@@ -379,7 +379,7 @@ void SkidderEditor::CloseEditor()
 }
 
 //-----------------------------------------------------------------------------
-void SkidderEditor::parameterChanged(long inParameterID)
+void SkidderEditor::parameterChanged(dfx::ParameterID inParameterID)
 {
 	switch (inParameterID)
 	{
@@ -441,7 +441,7 @@ void SkidderEditor::mouseovercontrolchanged(IDGControl* currentControlUnderMouse
 }
 
 //-----------------------------------------------------------------------------
-std::pair<long, long> SkidderEditor::GetActiveRateParameterIDs()
+std::pair<dfx::ParameterID, dfx::ParameterID> SkidderEditor::GetActiveRateParameterIDs()
 {
 	if (getparameter_b(kTempoSync))
 	{
@@ -453,7 +453,7 @@ std::pair<long, long> SkidderEditor::GetActiveRateParameterIDs()
 //-----------------------------------------------------------------------------
 void SkidderEditor::UpdateRandomMinimumDisplays()
 {
-	auto const updateRandomMinimumVisibility = [this](long mainParameterID, long randMinParameterID, VSTGUI::CControl* control)
+	auto const updateRandomMinimumVisibility = [this](dfx::ParameterID mainParameterID, dfx::ParameterID randMinParameterID, VSTGUI::CControl* control)
 	{
 		bool const visible = getparameter_f(mainParameterID) > getparameter_f(randMinParameterID);
 		control->setVisible(visible);

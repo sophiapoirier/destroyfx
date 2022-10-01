@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with EQ Sync.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -30,7 +30,7 @@ class EQSyncEditor final : public DfxGuiEditor
 public:
 	explicit EQSyncEditor(DGEditorListenerInstance inInstance);
 	long OpenEditor() override;
-	void parameterChanged(long inParameterID) override;
+	void parameterChanged(dfx::ParameterID inParameterID) override;
 
 private:
 	void HandleTempoAutoChange();

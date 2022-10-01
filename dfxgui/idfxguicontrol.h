@@ -18,13 +18,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
 
 
 #include <vector>
+
+#include "dfxdefines.h"
 
 
 
@@ -52,8 +54,8 @@ public:
 	virtual long getValue_i() = 0;
 	virtual void setValue_i(long inValue) = 0;
 	virtual void redraw() = 0;
-	virtual long getParameterID() const = 0;
-	virtual void setParameterID(long inParameterID) = 0;
+	virtual dfx::ParameterID getParameterID() const = 0;
+	virtual void setParameterID(dfx::ParameterID inParameterID) = 0;
 	virtual bool isParameterAttached() const = 0;
 	virtual size_t getNumStates() const = 0;
 	virtual float getFineTuneFactor() const = 0;

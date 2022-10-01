@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for E-Z plugin-making and E-Z multiple-API support.
@@ -427,15 +427,15 @@ void DfxPlugin::do_reset()
 #pragma mark parameters
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_f(long inParameterIndex, std::vector<std::string_view> const& initNames, 
+void DfxPlugin::initparameter_f(dfx::ParameterID inParameterID, std::vector<std::string_view> const& initNames, 
 								double initValue, double initDefaultValue, 
 								double initMin, double initMax, 
 								DfxParam::Unit initUnit, DfxParam::Curve initCurve, 
 								std::string_view initCustomUnitString)
 {
-	auto& parameter = getparameterobject(inParameterIndex);
+	auto& parameter = getparameterobject(inParameterID);
 	parameter.init_f(initNames, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
-	initpresetsparameter(inParameterIndex);  // default empty presets with this value
+	initpresetsparameter(inParameterID);  // default empty presets with this value
 	if (!initCustomUnitString.empty())
 	{
 		parameter.setcustomunitstring(initCustomUnitString);
@@ -443,15 +443,15 @@ void DfxPlugin::initparameter_f(long inParameterIndex, std::vector<std::string_v
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_i(long inParameterIndex, std::vector<std::string_view> const& initNames, 
+void DfxPlugin::initparameter_i(dfx::ParameterID inParameterID, std::vector<std::string_view> const& initNames, 
 								int64_t initValue, int64_t initDefaultValue, 
 								int64_t initMin, int64_t initMax, 
 								DfxParam::Unit initUnit, DfxParam::Curve initCurve, 
 								std::string_view initCustomUnitString)
 {
-	auto& parameter = getparameterobject(inParameterIndex);
+	auto& parameter = getparameterobject(inParameterID);
 	parameter.init_i(initNames, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
-	initpresetsparameter(inParameterIndex);  // default empty presets with this value
+	initpresetsparameter(inParameterID);  // default empty presets with this value
 	if (!initCustomUnitString.empty())
 	{
 		parameter.setcustomunitstring(initCustomUnitString);
@@ -459,33 +459,33 @@ void DfxPlugin::initparameter_i(long inParameterIndex, std::vector<std::string_v
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_b(long inParameterIndex, std::vector<std::string_view> const& initNames, 
+void DfxPlugin::initparameter_b(dfx::ParameterID inParameterID, std::vector<std::string_view> const& initNames, 
 								bool initValue, bool initDefaultValue, 
 								DfxParam::Unit initUnit)
 {
-	getparameterobject(inParameterIndex).init_b(initNames, initValue, initDefaultValue, initUnit);
-	initpresetsparameter(inParameterIndex);  // default empty presets with this value
+	getparameterobject(inParameterID).init_b(initNames, initValue, initDefaultValue, initUnit);
+	initpresetsparameter(inParameterID);  // default empty presets with this value
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_b(long inParameterIndex, std::vector<std::string_view> const& initNames, 
+void DfxPlugin::initparameter_b(dfx::ParameterID inParameterID, std::vector<std::string_view> const& initNames, 
 								bool initDefaultValue, DfxParam::Unit initUnit)
 {
-	initparameter_b(inParameterIndex, initNames, initDefaultValue, initDefaultValue, initUnit);
+	initparameter_b(inParameterID, initNames, initDefaultValue, initDefaultValue, initUnit);
 }
 
 //-----------------------------------------------------------------------------
 // this is a shorcut for initializing a parameter that uses integer indexes 
 // into an array, with an array of strings representing its values
-void DfxPlugin::initparameter_list(long inParameterIndex, std::vector<std::string_view> const& initNames, 
+void DfxPlugin::initparameter_list(dfx::ParameterID inParameterID, std::vector<std::string_view> const& initNames, 
 								   int64_t initValue, int64_t initDefaultValue, 
 								   int64_t initNumItems, DfxParam::Unit initUnit, 
 								   std::string_view initCustomUnitString)
 {
-	auto& parameter = getparameterobject(inParameterIndex);
+	auto& parameter = getparameterobject(inParameterID);
 	parameter.init_i(initNames, initValue, initDefaultValue, 0, initNumItems - 1, initUnit, DfxParam::Curve::Stepped);
 	parameter.setusevaluestrings(true);  // indicate that we will use custom value display strings
-	initpresetsparameter(inParameterIndex);  // default empty presets with this value
+	initpresetsparameter(inParameterID);  // default empty presets with this value
 	if (!initCustomUnitString.empty())
 	{
 		parameter.setcustomunitstring(initCustomUnitString);
@@ -493,94 +493,94 @@ void DfxPlugin::initparameter_list(long inParameterIndex, std::vector<std::strin
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameter(long inParameterIndex, DfxParam::Value inValue)
+void DfxPlugin::setparameter(dfx::ParameterID inParameterID, DfxParam::Value inValue)
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		mParameters[inParameterIndex].set(inValue);
-		update_parameter(inParameterIndex);  // make the host aware of the parameter change
+		mParameters[inParameterID].set(inValue);
+		update_parameter(inParameterID);  // make the host aware of the parameter change
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameter_f(long inParameterIndex, double inValue)
+void DfxPlugin::setparameter_f(dfx::ParameterID inParameterID, double inValue)
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		mParameters[inParameterIndex].set_f(inValue);
-		update_parameter(inParameterIndex);  // make the host aware of the parameter change
+		mParameters[inParameterID].set_f(inValue);
+		update_parameter(inParameterID);  // make the host aware of the parameter change
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameter_i(long inParameterIndex, int64_t inValue)
+void DfxPlugin::setparameter_i(dfx::ParameterID inParameterID, int64_t inValue)
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		mParameters[inParameterIndex].set_i(inValue);
-		update_parameter(inParameterIndex);  // make the host aware of the parameter change
+		mParameters[inParameterID].set_i(inValue);
+		update_parameter(inParameterID);  // make the host aware of the parameter change
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameter_b(long inParameterIndex, bool inValue)
+void DfxPlugin::setparameter_b(dfx::ParameterID inParameterID, bool inValue)
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		mParameters[inParameterIndex].set_b(inValue);
-		update_parameter(inParameterIndex);  // make the host aware of the parameter change
+		mParameters[inParameterID].set_b(inValue);
+		update_parameter(inParameterID);  // make the host aware of the parameter change
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameter_gen(long inParameterIndex, double inValue)
+void DfxPlugin::setparameter_gen(dfx::ParameterID inParameterID, double inValue)
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		mParameters[inParameterIndex].set_gen(inValue);
-		update_parameter(inParameterIndex);  // make the host aware of the parameter change
+		mParameters[inParameterID].set_gen(inValue);
+		update_parameter(inParameterID);  // make the host aware of the parameter change
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameterquietly_f(long inParameterIndex, double inValue)
+void DfxPlugin::setparameterquietly_f(dfx::ParameterID inParameterID, double inValue)
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		mParameters[inParameterIndex].setquietly_f(inValue);
-		update_parameter(inParameterIndex);  // make the host aware of the parameter change
+		mParameters[inParameterID].setquietly_f(inValue);
+		update_parameter(inParameterID);  // make the host aware of the parameter change
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameterquietly_i(long inParameterIndex, int64_t inValue)
+void DfxPlugin::setparameterquietly_i(dfx::ParameterID inParameterID, int64_t inValue)
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		mParameters[inParameterIndex].setquietly_i(inValue);
-		update_parameter(inParameterIndex);  // make the host aware of the parameter change
+		mParameters[inParameterID].setquietly_i(inValue);
+		update_parameter(inParameterID);  // make the host aware of the parameter change
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameterquietly_b(long inParameterIndex, bool inValue)
+void DfxPlugin::setparameterquietly_b(dfx::ParameterID inParameterID, bool inValue)
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		mParameters[inParameterIndex].setquietly_b(inValue);
-		update_parameter(inParameterIndex);  // make the host aware of the parameter change
+		mParameters[inParameterID].setquietly_b(inValue);
+		update_parameter(inParameterID);  // make the host aware of the parameter change
 	}
 }
 
 //-----------------------------------------------------------------------------
 // randomize the current parameter value
 // this takes into account the parameter curve
-void DfxPlugin::randomizeparameter(long inParameterIndex)
+void DfxPlugin::randomizeparameter(dfx::ParameterID inParameterID)
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		auto& parameter = mParameters[inParameterIndex];
-		switch (getparametervaluetype(inParameterIndex))
+		auto& parameter = mParameters[inParameterID];
+		switch (getparametervaluetype(inParameterID))
 		{
 			case DfxParam::ValueType::Float:
 				parameter.set_gen(generateParameterRandomValue<double>());
@@ -597,8 +597,8 @@ void DfxPlugin::randomizeparameter(long inParameterIndex)
 				break;
 		}
 
-		update_parameter(inParameterIndex);  // make the host aware of the parameter change
-		postupdate_parameter(inParameterIndex);  // inform any parameter listeners of the changes
+		update_parameter(inParameterID);  // make the host aware of the parameter change
+		postupdate_parameter(inParameterID);  // inform any parameter listeners of the changes
 	}
 }
 
@@ -606,7 +606,7 @@ void DfxPlugin::randomizeparameter(long inParameterIndex)
 // randomize all of the parameters at once
 void DfxPlugin::randomizeparameters()
 {
-	for (long i = 0; i < getnumparameters(); i++)
+	for (dfx::ParameterID i = 0; i < getnumparameters(); i++)
 	{
 		if (!hasparameterattribute(i, DfxParam::kAttribute_OmitFromRandomizeAll) && !hasparameterattribute(i, DfxParam::kAttribute_Unused))
 		{
@@ -617,44 +617,44 @@ void DfxPlugin::randomizeparameters()
 
 //-----------------------------------------------------------------------------
 // do stuff necessary to inform the host of changes, etc.
-void DfxPlugin::update_parameter(long inParameterIndex)
+void DfxPlugin::update_parameter(dfx::ParameterID inParameterID)
 {
-	if (!parameterisvalid(inParameterIndex) || hasparameterattribute(inParameterIndex, DfxParam::kAttribute_Unused))
+	if (!parameterisvalid(inParameterID) || hasparameterattribute(inParameterID, DfxParam::kAttribute_Unused))
 	{
 		return;
 	}
 
 #ifdef TARGET_API_AUDIOUNIT
 	// make the global-scope element aware of the parameter's value
-	TARGET_API_BASE_CLASS::SetParameter(inParameterIndex, kAudioUnitScope_Global, AudioUnitElement(0), getparameter_f(inParameterIndex), 0);
+	TARGET_API_BASE_CLASS::SetParameter(inParameterID, kAudioUnitScope_Global, AudioUnitElement(0), getparameter_f(inParameterID), 0);
 #endif
 
 #ifdef TARGET_API_VST
 	auto const vstPresetIndex = getProgram();
 	if ((vstPresetIndex >= 0) && presetisvalid(dfx::math::ToIndex(vstPresetIndex)))
 	{
-		setpresetparameter(dfx::math::ToIndex(vstPresetIndex), inParameterIndex, getparameter(inParameterIndex));
+		setpresetparameter(dfx::math::ToIndex(vstPresetIndex), inParameterID, getparameter(inParameterID));
 	}
 	#if TARGET_PLUGIN_HAS_GUI
 	// the VST2 editor interface has no real listener mechanism for parameters and therefore 
 	// always needs notification pushed in any circumstance where a parameter value changes
-	postupdate_parameter(inParameterIndex);
+	postupdate_parameter(inParameterID);
 	#endif
 #endif
 
 #ifdef TARGET_API_RTAS
-	SetControlValue(dfx::ParameterID_ToRTAS(inParameterIndex), ConvertToDigiValue(getparameter_gen(inParameterIndex)));  // XXX yeah do this?
+	SetControlValue(dfx::ParameterID_ToRTAS(inParameterID), ConvertToDigiValue(getparameter_gen(inParameterID)));  // XXX yeah do this?
 #endif
 
-	parameterChanged(inParameterIndex);
+	parameterChanged(inParameterID);
 }
 
 //-----------------------------------------------------------------------------
 // this will broadcast a notification to anyone interested (host, GUI, etc.) 
 // about a parameter change
-void DfxPlugin::postupdate_parameter(long inParameterIndex)
+void DfxPlugin::postupdate_parameter(dfx::ParameterID inParameterID)
 {
-	if (!parameterisvalid(inParameterIndex) || hasparameterattribute(inParameterIndex, DfxParam::kAttribute_Unused))
+	if (!parameterisvalid(inParameterID) || hasparameterattribute(inParameterID, DfxParam::kAttribute_Unused))
 	{
 		return;
 	}
@@ -663,19 +663,19 @@ void DfxPlugin::postupdate_parameter(long inParameterIndex)
 	if (std::this_thread::get_id() == mAudioRenderThreadID)
 	{
 		// defer listener notification to later, off the realtime thread
-		mParametersChangedInProcessHavePosted[inParameterIndex].clear(std::memory_order_relaxed);
+		mParametersChangedInProcessHavePosted[inParameterID].clear(std::memory_order_relaxed);
 		return;
 	}
 
 #ifdef TARGET_API_AUDIOUNIT
-	AUParameterChange_TellListeners(GetComponentInstance(), inParameterIndex);
+	AUParameterChange_TellListeners(GetComponentInstance(), inParameterID);
 #endif
 
 #ifdef TARGET_API_VST
 	#if TARGET_PLUGIN_HAS_GUI
 	if (auto const guiEditor = dynamic_cast<VSTGUI::AEffGUIEditor*>(getEditor()))
 	{
-		guiEditor->setParameter(inParameterIndex, getparameter_gen(inParameterIndex));
+		guiEditor->setParameter(dfx::ParameterID_ToVST(inParameterID), getparameter_gen(inParameterID));
 	}
 	#endif
 #endif
@@ -686,28 +686,28 @@ void DfxPlugin::postupdate_parameter(long inParameterIndex)
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value DfxPlugin::getparameter(long inParameterIndex) const
+DfxParam::Value DfxPlugin::getparameter(dfx::ParameterID inParameterID) const
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		return mParameters[inParameterIndex].get();
+		return mParameters[inParameterID].get();
 	}
 	return {};
 }
 
 //-----------------------------------------------------------------------------
 // return a (hopefully) 0 to 1 scalar version of the parameter's current value
-double DfxPlugin::getparameter_scalar(long inParameterIndex) const
+double DfxPlugin::getparameter_scalar(dfx::ParameterID inParameterID) const
 {
-	return getparameter_scalar(inParameterIndex, getparameter_f(inParameterIndex));
+	return getparameter_scalar(inParameterID, getparameter_f(inParameterID));
 }
 
 //-----------------------------------------------------------------------------
-double DfxPlugin::getparameter_scalar(long inParameterIndex, double inValue) const
+double DfxPlugin::getparameter_scalar(dfx::ParameterID inParameterID, double inValue) const
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		switch (getparameterunit(inParameterIndex))
+		switch (getparameterunit(inParameterID))
 		{
 			case DfxParam::Unit::Percent:
 			case DfxParam::Unit::DryWetMix:
@@ -716,138 +716,138 @@ double DfxPlugin::getparameter_scalar(long inParameterIndex, double inValue) con
 				return inValue;
 			// XXX should we not just use contractparametervalue() here?
 			default:
-				return inValue / mParameters[inParameterIndex].getmax_f();
+				return inValue / mParameters[inParameterID].getmax_f();
 		}
 	}
 	return 0.0;
 }
 
 //-----------------------------------------------------------------------------
-std::optional<double> DfxPlugin::getparameterifchanged_f(long inParameterIndex) const
+std::optional<double> DfxPlugin::getparameterifchanged_f(dfx::ParameterID inParameterID) const
 {
-	if (getparameterchanged(inParameterIndex))
+	if (getparameterchanged(inParameterID))
 	{
-		return getparameter_f(inParameterIndex);
+		return getparameter_f(inParameterID);
 	}
 	return {};
 }
 
 //-----------------------------------------------------------------------------
-std::optional<int64_t> DfxPlugin::getparameterifchanged_i(long inParameterIndex) const
+std::optional<int64_t> DfxPlugin::getparameterifchanged_i(dfx::ParameterID inParameterID) const
 {
-	if (getparameterchanged(inParameterIndex))
+	if (getparameterchanged(inParameterID))
 	{
-		return getparameter_i(inParameterIndex);
+		return getparameter_i(inParameterID);
 	}
 	return {};
 }
 
 //-----------------------------------------------------------------------------
-std::optional<bool> DfxPlugin::getparameterifchanged_b(long inParameterIndex) const
+std::optional<bool> DfxPlugin::getparameterifchanged_b(dfx::ParameterID inParameterID) const
 {
-	if (getparameterchanged(inParameterIndex))
+	if (getparameterchanged(inParameterID))
 	{
-		return getparameter_b(inParameterIndex);
+		return getparameter_b(inParameterID);
 	}
 	return {};
 }
 
 //-----------------------------------------------------------------------------
-std::optional<double> DfxPlugin::getparameterifchanged_scalar(long inParameterIndex) const
+std::optional<double> DfxPlugin::getparameterifchanged_scalar(dfx::ParameterID inParameterID) const
 {
-	if (getparameterchanged(inParameterIndex))
+	if (getparameterchanged(inParameterID))
 	{
-		return getparameter_scalar(inParameterIndex);
+		return getparameter_scalar(inParameterID);
 	}
 	return {};
 }
 
 //-----------------------------------------------------------------------------
-std::optional<double> DfxPlugin::getparameterifchanged_gen(long inParameterIndex) const
+std::optional<double> DfxPlugin::getparameterifchanged_gen(dfx::ParameterID inParameterID) const
 {
-	if (getparameterchanged(inParameterIndex))
+	if (getparameterchanged(inParameterID))
 	{
-		return getparameter_gen(inParameterIndex);
+		return getparameter_gen(inParameterID);
 	}
 	return {};
 }
 
 //-----------------------------------------------------------------------------
-std::string DfxPlugin::getparametername(long inParameterIndex) const
+std::string DfxPlugin::getparametername(dfx::ParameterID inParameterID) const
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		return mParameters[inParameterIndex].getname();
+		return mParameters[inParameterID].getname();
 	}
 	return {};
 }
 
 //-----------------------------------------------------------------------------
-std::string DfxPlugin::getparametername(long inParameterIndex, size_t inMaxLength) const
+std::string DfxPlugin::getparametername(dfx::ParameterID inParameterID, size_t inMaxLength) const
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		return mParameters[inParameterIndex].getname(inMaxLength);
+		return mParameters[inParameterID].getname(inMaxLength);
 	}
 	return {};
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::ValueType DfxPlugin::getparametervaluetype(long inParameterIndex) const
+DfxParam::ValueType DfxPlugin::getparametervaluetype(dfx::ParameterID inParameterID) const
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		return mParameters[inParameterIndex].getvaluetype();
+		return mParameters[inParameterID].getvaluetype();
 	}
 	return DfxParam::ValueType::Float;
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Unit DfxPlugin::getparameterunit(long inParameterIndex) const
+DfxParam::Unit DfxPlugin::getparameterunit(dfx::ParameterID inParameterID) const
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		return mParameters[inParameterIndex].getunit();
+		return mParameters[inParameterID].getunit();
 	}
 	return DfxParam::Unit::Generic;
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::setparametervaluestring(long inParameterIndex, int64_t inStringIndex, std::string_view inText)
+bool DfxPlugin::setparametervaluestring(dfx::ParameterID inParameterID, int64_t inStringIndex, std::string_view inText)
 {
-	return getparameterobject(inParameterIndex).setvaluestring(inStringIndex, inText);
+	return getparameterobject(inParameterID).setvaluestring(inStringIndex, inText);
 }
 
 //-----------------------------------------------------------------------------
-std::optional<std::string> DfxPlugin::getparametervaluestring(long inParameterIndex, int64_t inStringIndex) const
+std::optional<std::string> DfxPlugin::getparametervaluestring(dfx::ParameterID inParameterID, int64_t inStringIndex) const
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		return mParameters[inParameterIndex].getvaluestring(inStringIndex);
+		return mParameters[inParameterID].getvaluestring(inStringIndex);
 	}
 	return {};
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::addparametergroup(std::string const& inName, std::vector<long> const& inParameterIndices)
+void DfxPlugin::addparametergroup(std::string const& inName, std::vector<dfx::ParameterID> const& inParameterIndices)
 {
 	assert(!inName.empty());
 	assert(!inParameterIndices.empty());
 	assert(std::none_of(mParameterGroups.cbegin(), mParameterGroups.cend(), [&inName](auto const& item){ return (item.first == inName); }));
 	assert(std::none_of(inParameterIndices.cbegin(), inParameterIndices.cend(), [this](auto index){ return getparametergroup(index).has_value(); }));
 	assert(std::all_of(inParameterIndices.cbegin(), inParameterIndices.cend(), std::bind_front(&DfxPlugin::parameterisvalid, this)));
-	assert(std::unordered_set<long>(inParameterIndices.cbegin(), inParameterIndices.cend()).size() == inParameterIndices.size());
+	assert(std::unordered_set(inParameterIndices.cbegin(), inParameterIndices.cend()).size() == inParameterIndices.size());
 
-	mParameterGroups.emplace_back(inName, std::set<long>(inParameterIndices.cbegin(), inParameterIndices.cend()));
+	mParameterGroups.emplace_back(inName, std::set(inParameterIndices.cbegin(), inParameterIndices.cend()));
 }
 
 //-----------------------------------------------------------------------------
-std::optional<size_t> DfxPlugin::getparametergroup(long inParameterIndex) const
+std::optional<size_t> DfxPlugin::getparametergroup(dfx::ParameterID inParameterID) const
 {
-	auto const foundGroup = std::find_if(mParameterGroups.cbegin(), mParameterGroups.cend(), [inParameterIndex](auto const& group)
+	auto const foundGroup = std::find_if(mParameterGroups.cbegin(), mParameterGroups.cend(), [inParameterID](auto const& group)
 	{
 		auto const& indices = group.second;
-		return (indices.find(inParameterIndex) != indices.cend());
+		return (indices.find(inParameterID) != indices.cend());
 	});
 	if (foundGroup != mParameterGroups.cend())
 	{
@@ -867,67 +867,67 @@ std::string DfxPlugin::getparametergroupname(size_t inGroupIndex) const
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::getparameterchanged(long inParameterIndex) const
+bool DfxPlugin::getparameterchanged(dfx::ParameterID inParameterID) const
 {
 	assert(std::this_thread::get_id() == mAudioRenderThreadID);  // only valid during audio rendering
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		return mParametersChangedAsOfPreProcess[inParameterIndex];
+		return mParametersChangedAsOfPreProcess[inParameterID];
 	}
 	return false;
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::getparametertouched(long inParameterIndex) const
+bool DfxPlugin::getparametertouched(dfx::ParameterID inParameterID) const
 {
 	assert(std::this_thread::get_id() == mAudioRenderThreadID);  // only valid during audio rendering
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		return mParametersTouchedAsOfPreProcess[inParameterIndex];
+		return mParametersTouchedAsOfPreProcess[inParameterID];
 	}
 	return false;
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::hasparameterattribute(long inParameterIndex, DfxParam::Attribute inFlag) const
+bool DfxPlugin::hasparameterattribute(dfx::ParameterID inParameterID, DfxParam::Attribute inFlag) const
 {
 	assert(std::bitset<sizeof(inFlag) * CHAR_BIT>(inFlag).count() == 1);
-	return getparameterattributes(inParameterIndex) & inFlag;
+	return getparameterattributes(inParameterID) & inFlag;
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::addparameterattributes(long inParameterIndex, DfxParam::Attribute inFlags)
+void DfxPlugin::addparameterattributes(dfx::ParameterID inParameterID, DfxParam::Attribute inFlags)
 {
-	auto& parameter = getparameterobject(inParameterIndex);
+	auto& parameter = getparameterobject(inParameterID);
 	parameter.setattributes(parameter.getattributes() | inFlags);
 }
 
 //-----------------------------------------------------------------------------
 // convenience methods for expanding and contracting parameter values 
 // using the min/max/curvetype/curvespec/etc. settings of a given parameter
-double DfxPlugin::expandparametervalue(long inParameterIndex, double genValue) const
+double DfxPlugin::expandparametervalue(dfx::ParameterID inParameterID, double genValue) const
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		return mParameters[inParameterIndex].expand(genValue);
+		return mParameters[inParameterID].expand(genValue);
 	}
 	return 0.0;
 }
 //-----------------------------------------------------------------------------
-double DfxPlugin::contractparametervalue(long inParameterIndex, double realValue) const
+double DfxPlugin::contractparametervalue(dfx::ParameterID inParameterID, double realValue) const
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		return mParameters[inParameterIndex].contract(realValue);
+		return mParameters[inParameterID].contract(realValue);
 	}
 	return 0.0;
 }
 
 //-----------------------------------------------------------------------------
-DfxParam& DfxPlugin::getparameterobject(long inParameterIndex)
+DfxParam& DfxPlugin::getparameterobject(dfx::ParameterID inParameterID)
 {
-	assert(parameterisvalid(inParameterIndex));
-	return mParameters.at(inParameterIndex);
+	assert(parameterisvalid(inParameterID));
+	return mParameters.at(inParameterID);
 }
 
 
@@ -977,7 +977,7 @@ bool DfxPlugin::loadpreset(size_t inPresetIndex)
 	TARGET_API_BASE_CLASS::setProgram(dfx::math::ToSigned(inPresetIndex));
 #endif
 
-	for (long i = 0; i < getnumparameters(); i++)
+	for (dfx::ParameterID i = 0; i < getnumparameters(); i++)
 	{
 		setparameter(i, getpresetparameter(inPresetIndex, i));
 		postupdate_parameter(i);  // inform any parameter listeners of the changes
@@ -1028,7 +1028,7 @@ void DfxPlugin::postupdate_preset()
 
 //-----------------------------------------------------------------------------
 // default all empty (no name) presets with the current value of a parameter
-void DfxPlugin::initpresetsparameter(long inParameterIndex)
+void DfxPlugin::initpresetsparameter(dfx::ParameterID inParameterID)
 {
 	// first fill in the presets with the init settings 
 	// so that there are no "stale" unset values
@@ -1036,97 +1036,97 @@ void DfxPlugin::initpresetsparameter(long inParameterIndex)
 	{
 		if (!presetnameisvalid(i))  // only if it's an "empty" preset
 		{
-			setpresetparameter(i, inParameterIndex, getparameter(inParameterIndex));
+			setpresetparameter(i, inParameterID, getparameter(inParameterID));
 		}
 	}
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value DfxPlugin::getpresetparameter(size_t inPresetIndex, long inParameterIndex) const
+DfxParam::Value DfxPlugin::getpresetparameter(size_t inPresetIndex, dfx::ParameterID inParameterID) const
 {
-	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
+	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
-		return mPresets[inPresetIndex].getvalue(inParameterIndex);
+		return mPresets[inPresetIndex].getvalue(inParameterID);
 	}
 	return {};
 }
 
 //-----------------------------------------------------------------------------
-double DfxPlugin::getpresetparameter_f(size_t inPresetIndex, long inParameterIndex) const
+double DfxPlugin::getpresetparameter_f(size_t inPresetIndex, dfx::ParameterID inParameterID) const
 {
-	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
+	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
-		return mParameters[inParameterIndex].derive_f(mPresets[inPresetIndex].getvalue(inParameterIndex));
+		return mParameters[inParameterID].derive_f(mPresets[inPresetIndex].getvalue(inParameterID));
 	}
 	return 0.0;
 }
 
 //-----------------------------------------------------------------------------
-int64_t DfxPlugin::getpresetparameter_i(size_t inPresetIndex, long inParameterIndex) const
+int64_t DfxPlugin::getpresetparameter_i(size_t inPresetIndex, dfx::ParameterID inParameterID) const
 {
-	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
+	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
-		return mParameters[inParameterIndex].derive_i(mPresets[inPresetIndex].getvalue(inParameterIndex));
+		return mParameters[inParameterID].derive_i(mPresets[inPresetIndex].getvalue(inParameterID));
 	}
 	return 0;
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::getpresetparameter_b(size_t inPresetIndex, long inParameterIndex) const
+bool DfxPlugin::getpresetparameter_b(size_t inPresetIndex, dfx::ParameterID inParameterID) const
 {
-	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
+	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
-		return mParameters[inParameterIndex].derive_b(mPresets[inPresetIndex].getvalue(inParameterIndex));
+		return mParameters[inParameterID].derive_b(mPresets[inPresetIndex].getvalue(inParameterID));
 	}
 	return false;
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter(size_t inPresetIndex, long inParameterIndex, DfxParam::Value inValue)
+void DfxPlugin::setpresetparameter(size_t inPresetIndex, dfx::ParameterID inParameterID, DfxParam::Value inValue)
 {
-	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
+	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
-		mPresets[inPresetIndex].setvalue(inParameterIndex, inValue);
+		mPresets[inPresetIndex].setvalue(inParameterID, inValue);
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_f(size_t inPresetIndex, long inParameterIndex, double inValue)
+void DfxPlugin::setpresetparameter_f(size_t inPresetIndex, dfx::ParameterID inParameterID, double inValue)
 {
-	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
+	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
-		auto const paramValue = mParameters[inParameterIndex].pack_f(inValue);
-		mPresets[inPresetIndex].setvalue(inParameterIndex, paramValue);
+		auto const paramValue = mParameters[inParameterID].pack_f(inValue);
+		mPresets[inPresetIndex].setvalue(inParameterID, paramValue);
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_i(size_t inPresetIndex, long inParameterIndex, int64_t inValue)
+void DfxPlugin::setpresetparameter_i(size_t inPresetIndex, dfx::ParameterID inParameterID, int64_t inValue)
 {
-	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
+	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
-		auto const paramValue = mParameters[inParameterIndex].pack_i(inValue);
-		mPresets[inPresetIndex].setvalue(inParameterIndex, paramValue);
+		auto const paramValue = mParameters[inParameterID].pack_i(inValue);
+		mPresets[inPresetIndex].setvalue(inParameterID, paramValue);
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_b(size_t inPresetIndex, long inParameterIndex, bool inValue)
+void DfxPlugin::setpresetparameter_b(size_t inPresetIndex, dfx::ParameterID inParameterID, bool inValue)
 {
-	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
+	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
-		auto const paramValue = mParameters[inParameterIndex].pack_b(inValue);
-		mPresets[inPresetIndex].setvalue(inParameterIndex, paramValue);
+		auto const paramValue = mParameters[inParameterID].pack_b(inValue);
+		mPresets[inPresetIndex].setvalue(inParameterID, paramValue);
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_gen(size_t inPresetIndex, long inParameterIndex, double inValue)
+void DfxPlugin::setpresetparameter_gen(size_t inPresetIndex, dfx::ParameterID inParameterID, double inValue)
 {
-	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
+	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
-		auto const paramValue = mParameters[inParameterIndex].pack_f(expandparametervalue(inParameterIndex, inValue));
-		mPresets[inPresetIndex].setvalue(inParameterIndex, paramValue);
+		auto const paramValue = mParameters[inParameterID].pack_f(expandparametervalue(inParameterID, inValue));
+		mPresets[inPresetIndex].setvalue(inParameterID, paramValue);
 	}
 }
 
@@ -1988,21 +1988,21 @@ void DfxPlugin::do_processparameters()
 
 #if TARGET_PLUGIN_USES_DSPCORE
 //-----------------------------------------------------------------------------
-double DfxPlugin::getdspcoreparameter_gen(long inParameterIndex) const
+double DfxPlugin::getdspcoreparameter_gen(dfx::ParameterID inParameterID) const
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		return contractparametervalue(inParameterIndex, mParameters[inParameterIndex].derive_f(mDSPCoreParameterValuesCache[inParameterIndex]));
+		return contractparametervalue(inParameterID, mParameters[inParameterID].derive_f(mDSPCoreParameterValuesCache[inParameterID]));
 	}
 	return 0.;
 }
 
 //-----------------------------------------------------------------------------
-double DfxPlugin::getdspcoreparameter_scalar(long inParameterIndex) const
+double DfxPlugin::getdspcoreparameter_scalar(dfx::ParameterID inParameterID) const
 {
-	if (parameterisvalid(inParameterIndex))
+	if (parameterisvalid(inParameterID))
 	{
-		getparameter_scalar(inParameterIndex, mParameters[inParameterIndex].derive_f(mDSPCoreParameterValuesCache[inParameterIndex]));
+		getparameter_scalar(inParameterID, mParameters[inParameterID].derive_f(mDSPCoreParameterValuesCache[inParameterID]));
 	}
 	return 0.;
 }
@@ -2108,27 +2108,27 @@ fprintf(stderr, "program change:  program num = %d, channel = %d, sample offset 
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setmidilearner(long inParameterIndex)
+void DfxPlugin::setmidilearner(dfx::ParameterID inParameterID)
 {
-	if (auto const assignmentData = settings_getLearningAssignData(inParameterIndex))
+	if (auto const assignmentData = settings_getLearningAssignData(inParameterID))
 	{
-		mDfxSettings->setLearner(inParameterIndex, assignmentData->mEventBehaviorFlags, 
+		mDfxSettings->setLearner(inParameterID, assignmentData->mEventBehaviorFlags, 
 								 assignmentData->mDataInt1, assignmentData->mDataInt2, 
 								 assignmentData->mDataFloat1, assignmentData->mDataFloat2);
 	}
-	else if (getparametervaluetype(inParameterIndex) == DfxParam::ValueType::Float)
+	else if (getparametervaluetype(inParameterID) == DfxParam::ValueType::Float)
 	{
-		mDfxSettings->setLearner(inParameterIndex);
+		mDfxSettings->setLearner(inParameterID);
 	}
 	else
 	{
-		auto const numStates = getparametermax_i(inParameterIndex) - getparametermin_i(inParameterIndex) + 1;
-		mDfxSettings->setLearner(inParameterIndex, dfx::kMidiEventBehaviorFlag_Toggle, numStates);
+		auto const numStates = getparametermax_i(inParameterID) - getparametermin_i(inParameterID) + 1;
+		mDfxSettings->setLearner(inParameterID, dfx::kMidiEventBehaviorFlag_Toggle, numStates);
 	}
 }
 
 //-----------------------------------------------------------------------------
-long DfxPlugin::getmidilearner() const
+dfx::ParameterID DfxPlugin::getmidilearner() const
 {
 	return mDfxSettings->getLearner();
 }
@@ -2152,26 +2152,26 @@ void DfxPlugin::resetmidilearn()
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparametermidiassignment(long inParameterIndex, dfx::ParameterAssignment const& inAssignment)
+void DfxPlugin::setparametermidiassignment(dfx::ParameterID inParameterID, dfx::ParameterAssignment const& inAssignment)
 {
 	if (inAssignment.mEventType == dfx::MidiEventType::None)
 	{
-		mDfxSettings->unassignParam(inParameterIndex);
+		mDfxSettings->unassignParameter(inParameterID);
 	}
 	else
 	{
-		mDfxSettings->assignParam(inParameterIndex, inAssignment.mEventType, inAssignment.mEventChannel,
-								  inAssignment.mEventNum, inAssignment.mEventNum2, 
-								  inAssignment.mEventBehaviorFlags, 
-								  inAssignment.mDataInt1, inAssignment.mDataInt2, 
-								  inAssignment.mDataFloat1, inAssignment.mDataFloat2);
+		mDfxSettings->assignParameter(inParameterID, inAssignment.mEventType, inAssignment.mEventChannel,
+									  inAssignment.mEventNum, inAssignment.mEventNum2, 
+									  inAssignment.mEventBehaviorFlags, 
+									  inAssignment.mDataInt1, inAssignment.mDataInt2, 
+									  inAssignment.mDataFloat1, inAssignment.mDataFloat2);
 	}
 }
 
 //-----------------------------------------------------------------------------
-dfx::ParameterAssignment DfxPlugin::getparametermidiassignment(long inParameterIndex) const
+dfx::ParameterAssignment DfxPlugin::getparametermidiassignment(dfx::ParameterID inParameterID) const
 {
-	return mDfxSettings->getParameterAssignment(inParameterIndex);
+	return mDfxSettings->getParameterAssignment(inParameterID);
 }
 
 //-----------------------------------------------------------------------------

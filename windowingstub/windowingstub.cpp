@@ -30,10 +30,6 @@ Windowingstub, featuring the Super Destroy FX Windowing System!
 #include <cmath>
 #include <cstdio>
 
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-  #include "windowingstubeditor.hpp"
-#endif
-
 /* this macro does boring entry point stuff for us */
 DFX_ENTRY(Windowingstub);
 DFX_CORE_ENTRY(WindowingstubDSP);
@@ -59,7 +55,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setparametervaluestring(P_SHAPE, WINDOW_ARROW, "arrow");
   setparametervaluestring(P_SHAPE, WINDOW_WEDGE, "wedge");
   setparametervaluestring(P_SHAPE, WINDOW_COS, "best");
-  for (long i = NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
+  for (int i = NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
     setparametervaluestring(P_SHAPE, i, "???");
 
   long delay_samples = buffersizes[getparameter_i(P_BUFSIZE)];

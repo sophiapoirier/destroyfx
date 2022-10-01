@@ -18,10 +18,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
+
+
+#include "dfxdefines.h"
 
 
 // should be pretty much implied:  
@@ -218,6 +221,19 @@ enum
 
 
 
+//-----------------------------------------------------------------------------
+constexpr int32_t ParameterID_ToVST(ParameterID inParameterID) noexcept
+{
+	return (inParameterID == kParameterID_Invalid) ? -1 : static_cast<int32_t>(inParameterID);
+}
+//-----------------------------------------------------------------------------
+constexpr ParameterID ParameterID_FromVST(int32_t inParameterIndexVST) noexcept
+{
+	return (inParameterIndexVST < 0) ? kParameterID_Invalid : static_cast<ParameterID>(inParameterIndexVST);
+}
+
+
+
 #ifdef TARGET_API_RTAS
 
 //-----------------------------------------------------------------------------
@@ -227,21 +243,23 @@ constexpr long kParameterValueShortNameMax_RTAS = 6;  // XXX hack
 constexpr long kParameterID_RTASGlobalBypass = 1;
 constexpr long kParameterID_RTASOffset = kParameterID_RTASGlobalBypass + 1;
 //-----------------------------------------------------------------------------
-constexpr long ParameterID_ToRTAS(long inParameterID)
+constexpr long ParameterID_ToRTAS(ParameterID inParameterID) noexcept
 {
-	return inParameterID + kParameterID_RTASOffset;
+	auto const offsetIndex = static_cast<long>(inParameterID) + kParameterID_RTASOffset;
+	return (inParameterID == kParameterID_Invalid) ? -1 : offsetIndex;
 }
 //-----------------------------------------------------------------------------
-constexpr long ParameterID_FromRTAS(long inParameterIndex_RTAS)
+constexpr ParameterID ParameterID_FromRTAS(long inParameterIndexRTAS) noexcept
 {
-	return inParameterIndex_RTAS - kParameterID_RTASOffset;
+	auto const offsetIndex = inParameterIndexRTAS - kParameterID_RTASOffset;
+	return (offsetIndex < 0) ? kParameterID_Invalid : static_cast<ParameterID>(offsetIndex);
 }
 
 // XXX a hack to handle the fact that CPluginControl_Percent (annoyingly) 
 // automatically converts to and from internal 0-1 values and external 0-100 values
 constexpr double kRTASPercentScalar = 0.01;
 
-#endif
+#endif  // TARGET_API_RTAS
 
 
 }  // namespace dfx

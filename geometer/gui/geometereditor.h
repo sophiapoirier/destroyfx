@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -33,16 +33,14 @@ public:
 
   long OpenEditor() override;
   void CloseEditor() override;
-  void parameterChanged(long inParameterID) override;
+  void parameterChanged(dfx::ParameterID inParameterID) override;
   void mouseovercontrolchanged(IDGControl * currentControlUnderMouse) override;
 
 private:
   std::string changehelp(IDGControl * currentControlUnderMouse);
   static std::string helptext(size_t inHelpCategory, int inItemNum);
-  long choose_multiparam(long baseParamID) {
-    return getparameter_i(baseParamID) + baseParamID + 1;
-  }
-  static long get_base_param_for_slider(size_t sliderIndex) noexcept;
+  dfx::ParameterID choose_multiparam(dfx::ParameterID baseParamID);
+  static dfx::ParameterID get_base_param_for_slider(size_t sliderIndex) noexcept;
 
   std::vector<DGSlider *> sliders;
   std::vector<DGTextDisplay *> displays;

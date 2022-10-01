@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2021-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of FontTest.
 
@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with FontTest.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -30,7 +30,7 @@ public:
   explicit FontTest(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
 private:
-  enum
+  enum : dfx::ParameterID
   {
     kPlaceholder,
     kNumParameters

@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -31,8 +31,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 class DGSlider : public DGControl<VSTGUI::CSlider>
 {
 public:
-	DGSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
-			 dfx::Axis inOrientation, DGImage* inHandleImage, DGImage* inBackgroundImage = nullptr, long inRangeMargin = 0);
+	DGSlider(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion, 
+			 dfx::Axis inOrientation, DGImage* inHandleImage, DGImage* inBackgroundImage = nullptr, int inRangeMargin = 0);
 
 #ifdef TARGET_API_RTAS
 	void draw(VSTGUI::CDrawContext* inContext) override;
@@ -71,11 +71,12 @@ public:
 		Upper
 	};
 
-	DGRangeSlider(DfxGuiEditor* inOwnerEditor, long inLowerParamID, long inUpperParamID, DGRect const& inRegion, 
+	DGRangeSlider(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inLowerParameterID, dfx::ParameterID inUpperParameterID, 
+				  DGRect const& inRegion, 
 				  DGImage* inLowerHandleImage, DGImage* inUpperHandleImage, 
 				  DGImage* inBackgroundImage = nullptr, 
 				  PushStyle inPushStyle = PushStyle::Neither, 
-				  long inOvershoot = 0);
+				  int inOvershoot = 0);
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
 	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
@@ -102,7 +103,7 @@ private:
 	VSTGUI::CCoord const mMaxXPos;	// max X position in pixel
 	float const mEffectiveRange;
 	PushStyle const mPushStyle;
-	long const mOvershoot;	// how far (in pixel) you can click outside of being in between the points and still be close enough to be considered in between
+	int const mOvershoot;	// how far (in pixel) you can click outside of being in between the points and still be close enough to be considered in between
 
 	// mouse-down state
 	bool mClickBetween = false;
@@ -125,8 +126,8 @@ private:
 class DGXYBox : public DGMultiControl<VSTGUI::CControl>
 {
 public:
-	DGXYBox(DfxGuiEditor* inOwnerEditor, long inParamIDX, long inParamIDY, DGRect const& inRegion, 
-			DGImage* inHandleImage, DGImage* inBackgroundImage = nullptr, 
+	DGXYBox(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterIDX, dfx::ParameterID inParameterIDY, 
+			DGRect const& inRegion, DGImage* inHandleImage, DGImage* inBackgroundImage = nullptr, 
 			int inStyle = VSTGUI::CSliderBase::kLeft | VSTGUI::CSliderBase::kBottom);
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
@@ -182,8 +183,8 @@ private:
 class DGAnimation : public DGControl<VSTGUI::CAnimKnob>
 {
 public:
-	DGAnimation(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
-				DGImage* inAnimationImage, long inNumAnimationFrames);
+	DGAnimation(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion, 
+				DGImage* inAnimationImage, size_t inNumAnimationFrames);
 
 #ifdef TARGET_API_RTAS
 	void draw(VSTGUI::CDrawContext* inContext) override;

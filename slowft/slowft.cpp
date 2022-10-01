@@ -24,13 +24,8 @@ Slowft, featuring the Super Destroy FX Windowing System!
 #include "slowft.h"
 
 #include <algorithm>
+#include <array>
 #include <cstdio>
-
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-  #ifndef _DFX_SLOWFTEDITOR_H
-  #include "slowfteditor.hpp"
-  #endif
-#endif
 
 /* this macro does boring entry point stuff for us */
 DFX_ENTRY(Slowft);
@@ -44,20 +39,20 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_indexed(P_SHAPE, {"wshape"}, WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
 
   /* set up values for windowing */
-  char bufstr[64];
+  std::array<char, 64> bufstr {};
   for (long i = 0; i < BUFFERSIZESSIZE; i++) {
     if (buffersizes[i] > 1000)
-      sprintf(bufstr, "%ld,%03ld", buffersizes[i]/1000, buffersizes[i]%1000);
+      snprintf(bufstr.data(), bufstr.size(), "%ld,%03ld", buffersizes[i]/1000, buffersizes[i]%1000);
     else
-      sprintf(bufstr, "%ld", buffersizes[i]);
-    setparametervaluestring(P_BUFSIZE, i, bufstr);
+      snprintf(bufstr.data(), bufstr.size(), "%ld", buffersizes[i]);
+    setparametervaluestring(P_BUFSIZE, i, bufstr.data());
   }
 
   setparametervaluestring(P_SHAPE, WINDOW_TRIANGLE, "linear");
   setparametervaluestring(P_SHAPE, WINDOW_ARROW, "arrow");
   setparametervaluestring(P_SHAPE, WINDOW_WEDGE, "wedge");
   setparametervaluestring(P_SHAPE, WINDOW_COS, "best");
-  for (long i = NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
+  for (int i = NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
     setparametervaluestring(P_SHAPE, i, "???");
 
   long delay_samples = buffersizes[getparameter_i(P_BUFSIZE)];
@@ -74,13 +69,6 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 #if !TARGET_PLUGIN_USES_DSPCORE
   addchannelconfig(1, 1);  /* mono */
 #endif
-
-  #ifdef TARGET_API_VST
-    /* if you have a GUI, need an Editor class... */
-    #if TARGET_PLUGIN_HAS_GUI
-      editor = new SlowftEditor(this);
-    #endif
-  #endif
 }
 
 PLUGINCORE::PLUGINCORE(DfxPlugin * inInstance)
@@ -89,21 +77,13 @@ PLUGINCORE::PLUGINCORE(DfxPlugin * inInstance)
   constexpr auto maxframe = *std::max_element(std::cbegin(buffersizes), std::cend(buffersizes));
 
   /* add some leeway? */
-  in0 = (float*)malloc(maxframe * sizeof (float));
-  out0 = (float*)malloc(maxframe * 2 * sizeof (float));
+  in0.assign(maxframe, 0.f);
+  out0.assign(maxframe * 2, 0.f);
 
   /* prevmix is only a single third long */
-  prevmix = (float*)malloc((maxframe / 2) * sizeof (float));
+  prevmix.assign(maxframe / 2, 0.f);
 }
 
-
-PLUGINCORE::~PLUGINCORE() {
-  /* windowing buffers */
-  free (in0);
-  free (out0);
-
-  free (prevmix);
-}
 
 void PLUGINCORE::reset() {
 
@@ -114,14 +94,9 @@ void PLUGINCORE::reset() {
   /* set up buffers. Prevmix and first frame of output are always 
      filled with zeros. XXX memset */
 
-  for (int i = 0; i < third; i ++) {
-    prevmix[i] = 0.0f;
-  }
+  std::fill_n(prevmix.begin(), third, 0.f);
+  std::fill_n(out0.begin(), framesize, 0.f);
 
-  for (int j = 0; j < framesize; j ++) {
-    out0[j] = 0.0f;
-  }
-  
   /* start input at beginning. Output has a frame of silence. */
   insize = 0;
   outstart = 0;
@@ -148,7 +123,7 @@ void PLUGINCORE::processparameters() {
    write your DSP, and it will be always called with the same sample
    size (as long as the block size parameter stays the same) and
    automatically overlapped. */
-void PLUGINCORE::processw(float * in, float * out, long samples) {
+void PLUGINCORE::processw(float const * in, float * out, long samples) {
 
   /* compute the 'slow fourier transform' */
 
@@ -284,7 +259,7 @@ void PLUGINCORE::process(const float *tin, float *tout, size_t samples) {
       /* frame is full! */
 
       /* in0 -> process -> out0(first free space) */
-      processw(in0, out0+outstart+outsize, framesize);
+      processw(in0.data(), out0.data()+outstart+outsize, framesize);
 
       float oneDivThird = 1.0f / (float)third;
       /* apply envelope */
@@ -326,11 +301,11 @@ void PLUGINCORE::process(const float *tin, float *tout, size_t samples) {
         out0[u+outstart+outsize] += prevmix[u];
 
       /* prevmix becomes out1 */
-      memcpy(prevmix, out0 + outstart + outsize + third, third * sizeof (float));
+      std::copy_n(std::next(out0.cbegin(), outstart + outsize + third), third, prevmix.begin());
 
       /* copy 2nd third of input over in0 (need to re-use it for next frame), 
          now insize = third */
-      memcpy(in0, in0 + third, third * sizeof (float));
+      std::copy_n(std::next(in0.cbegin(), third), third, in0.begin());
 
       insize = third;
       
@@ -345,7 +320,7 @@ void PLUGINCORE::process(const float *tin, float *tout, size_t samples) {
 
     /* make sure there is always enough room for a frame in out buffer */
     if (outstart == third) {
-      memmove(out0, out0 + outstart, outsize * sizeof (float));
+      memmove(out0.data(), out0.data() + outstart, outsize * sizeof (float));
       outstart = 0;
     }
   }

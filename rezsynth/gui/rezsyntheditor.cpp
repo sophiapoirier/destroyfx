@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Rez Synth.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "rezsyntheditor.h"
@@ -112,7 +112,7 @@ constexpr float kUnusedControlAlpha = 0.39f;
 static bool bandwidthAmountDisplayProc(float inValue, char* outText, void* inEditor)
 {
 	const auto success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
-	if (static_cast<DfxGuiEditor*>(inEditor)->getparameter_i(kBandwidthMode) == kBandwidthAmount_Hz)
+	if (static_cast<DfxGuiEditor*>(inEditor)->getparameter_i(kBandwidthMode) == kBandwidthMode_Hz)
 	{
 		dfx::StrlCat(outText, " Hz", DGTextDisplay::kTextMaxLength);
 	}
@@ -142,13 +142,13 @@ static bool sepAmountDisplayProc(float inValue, char* outText, void* inEditor)
 
 static bool attackDecayReleaseDisplayProc(float inValue, char* outText, void*)
 {
-	long const thousands = static_cast<long>(inValue) / 1000;
+	int const thousands = static_cast<int>(inValue) / 1000;
 	float const remainder = std::fmod(inValue, 1000.0f);
 
 	bool success = false;
 	if (thousands > 0)
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld,%05.1f", thousands, remainder) > 0;
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%d,%05.1f", thousands, remainder) > 0;
 	}
 	else
 	{
@@ -235,28 +235,28 @@ long RezSynthEditor::OpenEditor()
 	pos.set(kHorizontalSliderX, kHorizontalSliderY, kHorizontalSliderWidth, kHorizontalSliderHeight);
 	valueDisplayPos.set(kHorizontalDisplayX, kHorizontalDisplayY, kHorizontalDisplayWidth, kHorizontalDisplayHeight);
 
-	auto const addSliderComponents = [&](long const inParamID, auto const& inDisplayProc)
+	auto const addSliderComponents = [&](dfx::ParameterID const inParameterID, auto const& inDisplayProc)
 	{
 		auto const horizontalSliderHandleImage = std::map<Section, DGImage*>{
 			{Section::Bands, horizontalSliderHandleImage_bands},
 			{Section::Envelope, horizontalSliderHandleImage_envelope},
 			{Section::MidiNotes, horizontalSliderHandleImage_midiNotes},
 			{Section::MidiBends, horizontalSliderHandleImage_midiBends}
-		}.at(ParameterToSection(inParamID));
+		}.at(ParameterToSection(inParameterID));
 
 		// slider control
-		auto const slider = emplaceControl<DGSlider>(this, inParamID, pos, dfx::kAxis_Horizontal, horizontalSliderHandleImage);
+		auto const slider = emplaceControl<DGSlider>(this, inParameterID, pos, dfx::kAxis_Horizontal, horizontalSliderHandleImage);
 		slider->setAlternateHandle(horizontalSliderHandleImage_learning);
 
 		// value display
-		auto const display = emplaceControl<DGTextDisplay>(this, inParamID, valueDisplayPos, inDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueTextFontSize, kValueTextFontColor, kValueTextFont);
+		auto const display = emplaceControl<DGTextDisplay>(this, inParameterID, valueDisplayPos, inDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueTextFontSize, kValueTextFontColor, kValueTextFont);
 
-		if ((inParamID == kBandwidthAmount_Hz) || (inParamID == kBandwidthAmount_Q))
+		if ((inParameterID == kBandwidthAmount_Hz) || (inParameterID == kBandwidthAmount_Q))
 		{
 			mBandwidthAmountSlider = slider;
 			mBandwidthAmountDisplay = display;
 		}
-		else if ((inParamID == kSepAmount_Octaval) || (inParamID == kSepAmount_Linear))
+		else if ((inParameterID == kSepAmount_Octaval) || (inParameterID == kSepAmount_Linear))
 		{
 			mSepAmountSlider = slider;
 			mSepAmountDisplay = display;
@@ -266,7 +266,7 @@ long RezSynthEditor::OpenEditor()
 		auto parameterNamePos = valueDisplayPos;
 		parameterNamePos.left = pos.left;
 		parameterNamePos.right = valueDisplayPos.left;
-		emplaceControl<DGNullControl>(this, parameterNamePos)->setParameterID(inParamID);
+		emplaceControl<DGNullControl>(this, parameterNamePos)->setParameterID(inParameterID);
 
 		pos.offset(0, kHorizontalSliderInc);
 		valueDisplayPos.offset(0, kHorizontalSliderInc);
@@ -286,17 +286,17 @@ long RezSynthEditor::OpenEditor()
 	//--create the vertical gain sliders---------------------------------
 	pos.set(kVerticalSliderX, kVerticalSliderY, kVerticalSliderWidth, kVerticalSliderHeight);
 	valueDisplayPos.set(kVerticalDisplayX, kVerticalDisplayY, kVerticalDisplayWidth, kVerticalDisplayHeight);
-	for (long paramID = kFilterOutputGain; paramID <= kDryWetMix; paramID++)
+	for (dfx::ParameterID parameterID = kFilterOutputGain; parameterID <= kDryWetMix; parameterID++)
 	{
-		auto const displayProc = (paramID == kDryWetMix) ? percentDisplayProc : DGTextDisplay::valueToTextProc_LinearToDb;
+		auto const displayProc = (parameterID == kDryWetMix) ? percentDisplayProc : DGTextDisplay::valueToTextProc_LinearToDb;
 		constexpr intptr_t decibelPrecisionOffset = -1;
-		auto const displayProcUserData = (paramID == kDryWetMix) ? nullptr : reinterpret_cast<void*>(decibelPrecisionOffset);
-		auto const textToValueProc = (paramID == kDryWetMix) ? nullptr : DGTextDisplay::textToValueProc_DbToLinear;
+		auto const displayProcUserData = (parameterID == kDryWetMix) ? nullptr : reinterpret_cast<void*>(decibelPrecisionOffset);
+		auto const textToValueProc = (parameterID == kDryWetMix) ? nullptr : DGTextDisplay::textToValueProc_DbToLinear;
 		// slider control
-		emplaceControl<DGSlider>(this, paramID, pos, dfx::kAxis_Vertical, verticalSliderHandleImage)->setAlternateHandle(verticalSliderHandleImage_learning);
+		emplaceControl<DGSlider>(this, parameterID, pos, dfx::kAxis_Vertical, verticalSliderHandleImage)->setAlternateHandle(verticalSliderHandleImage_learning);
 
 		// value display
-		auto const textDisplay = emplaceControl<DGTextDisplay>(this, paramID, valueDisplayPos, displayProc, displayProcUserData, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kValueTextFontColor, kValueTextFont);
+		auto const textDisplay = emplaceControl<DGTextDisplay>(this, parameterID, valueDisplayPos, displayProc, displayProcUserData, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kValueTextFontColor, kValueTextFont);
 		if (textToValueProc)
 		{
 			textDisplay->setTextToValueProc(textToValueProc);
@@ -306,7 +306,7 @@ long RezSynthEditor::OpenEditor()
 		auto parameterNamePos = pos;
 		parameterNamePos.left = pos.left - kVerticalSliderNameWidth;
 		parameterNamePos.right = pos.left;
-		emplaceControl<DGNullControl>(this, parameterNamePos)->setParameterID(paramID);
+		emplaceControl<DGNullControl>(this, parameterNamePos)->setParameterID(parameterID);
 
 		pos.offset(kVerticalSliderInc, 0);
 		valueDisplayPos.offset(kVerticalSliderInc, 0);
@@ -316,14 +316,14 @@ long RezSynthEditor::OpenEditor()
 
 	//--create the buttons----------------------------------------------
 
-	auto const addButtonWithNameRegion = [this](long paramID, DGRect const& pos, DGImage* image)
+	auto const addButtonWithNameRegion = [this](dfx::ParameterID const parameterID, DGRect const& pos, DGImage* const image)
 	{
 		auto parameterNamePos = pos;
 		parameterNamePos.top = pos.top - kButtonNameHeight;
 		parameterNamePos.bottom = pos.top;
-		emplaceControl<DGNullControl>(this, parameterNamePos)->setParameterID(paramID);
+		emplaceControl<DGNullControl>(this, parameterNamePos)->setParameterID(parameterID);
 
-		return emplaceControl<DGButton>(this, paramID, pos, image, DGButton::Mode::Radio);
+		return emplaceControl<DGButton>(this, parameterID, pos, image, DGButton::Mode::Radio);
 	};
 
 	// filter response scaling
@@ -402,22 +402,22 @@ void RezSynthEditor::CloseEditor()
 }
 
 //-----------------------------------------------------------------------------
-void RezSynthEditor::parameterChanged(long inParameterID)
+void RezSynthEditor::parameterChanged(dfx::ParameterID inParameterID)
 {
 	auto const value_i = getparameter_i(inParameterID);
-	auto newParamID = dfx::kParameterID_Invalid;
+	auto newParameterID = dfx::kParameterID_Invalid;
 	DGSlider* slider = nullptr;
 	DGTextDisplay* display = nullptr;
 
 	switch (inParameterID)
 	{
 		case kSepMode:
-			newParamID = (value_i == kSeparationMode_Octaval) ? kSepAmount_Octaval : kSepAmount_Linear;
+			newParameterID = (value_i == kSeparationMode_Octaval) ? kSepAmount_Octaval : kSepAmount_Linear;
 			slider = mSepAmountSlider;
 			display = mSepAmountDisplay;
 			break;
 		case kBandwidthMode:
-			newParamID = (value_i == kBandwidthMode_Hz) ? kBandwidthAmount_Hz : kBandwidthAmount_Q;
+			newParameterID = (value_i == kBandwidthMode_Hz) ? kBandwidthAmount_Hz : kBandwidthAmount_Q;
 			slider = mBandwidthAmountSlider;
 			display = mBandwidthAmountDisplay;
 			break;
@@ -428,15 +428,15 @@ void RezSynthEditor::parameterChanged(long inParameterID)
 			return;
 	}
 
-	if (newParamID != dfx::kParameterID_Invalid)
+	if (newParameterID != dfx::kParameterID_Invalid)
 	{
 		if (slider)
 		{
-			slider->setParameterID(newParamID);
+			slider->setParameterID(newParameterID);
 		}
 		if (display)
 		{
-			display->setParameterID(newParamID);
+			display->setParameterID(newParameterID);
 		}
 	}
 }
@@ -633,7 +633,7 @@ dry and wet audio. You can choose linear mixing or equal power mixing.)DELIM";
 	}
 }
 
-RezSynthEditor::Section RezSynthEditor::ParameterToSection(long inParameterID)
+RezSynthEditor::Section RezSynthEditor::ParameterToSection(dfx::ParameterID inParameterID) noexcept
 {
 	switch (inParameterID)
 	{

@@ -48,8 +48,8 @@ enum { WINDOW_TRIANGLE,
 };
 
 /* the names of the parameters */
-enum { P_BUFSIZE, P_SHAPE, 
-       NUM_PARAMS,
+enum : dfx::ParameterID { P_BUFSIZE, P_SHAPE, 
+                          NUM_PARAMS
 };
 
 

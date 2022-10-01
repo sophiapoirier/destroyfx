@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 This is a template for making a DfxPlugin.
 ------------------------------------------------------------------------*/
@@ -33,7 +33,7 @@ This is a template for making a DfxPlugin.
 
 //----------------------------------------------------------------------------- 
 // these are the plugin parameters:
-enum
+enum : dfx::ParameterID
 {
 	kFloatParam,
 	kIntParam,

@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "bufferoverride-base.h"
@@ -398,9 +398,9 @@ void BufferOverride::processparameters()
 }
 
 //-------------------------------------------------------------------------
-void BufferOverride::parameterChanged(long inParameterIndex)
+void BufferOverride::parameterChanged(dfx::ParameterID inParameterID)
 {
-	switch (inParameterIndex)
+	switch (inParameterID)
 	{
 		case kDivisor:
 		case kBufferSize_MS:

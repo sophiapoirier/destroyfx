@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -115,7 +115,7 @@ private:
 class DGTextEntryDialog : public DGDialog
 {
 public:
-	DGTextEntryDialog(long inParamID, std::string const& inMessage, 
+	DGTextEntryDialog(dfx::ParameterID inParameterID, std::string const& inMessage, 
 					  char const* inTextEntryLabel = nullptr, Buttons inButtons = kButtons_OKCancel, 
 					  char const* inOkButtonTitle = nullptr, char const* inCancelButtonTitle = nullptr, char const* inOtherButtonTitle = nullptr);
 	explicit DGTextEntryDialog(std::string const& inMessage, 
@@ -128,12 +128,12 @@ public:
 	void setText(std::string const& inText);
 	std::string getText() const;
 
-	long getParameterID() const noexcept;
+	dfx::ParameterID getParameterID() const noexcept;
 
 	CLASS_METHODS(DGTextEntryDialog, DGDialog)
 
 private:
-	long const mParameterID;
+	dfx::ParameterID const mParameterID;
 	VSTGUI::CTextEdit* mTextEdit = nullptr;
 };
 

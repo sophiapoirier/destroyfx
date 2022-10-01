@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -43,7 +43,7 @@ public:
 
 	void processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames) override;
 	void processparameters() override;
-	void parameterChanged(long inParameterIndex) override;
+	void parameterChanged(dfx::ParameterID inParameterID) override;
 
 	long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
 	long dfx_GetProperty(dfx::PropertyID, dfx::Scope inScope, unsigned int inItemIndex, void* outData) override;

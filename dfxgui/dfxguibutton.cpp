@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "dfxguibutton.h"
@@ -39,9 +39,9 @@ using namespace std::placeholders;
 //-----------------------------------------------------------------------------
 // DGButton
 //-----------------------------------------------------------------------------
-DGButton::DGButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage, 
+DGButton::DGButton(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion, DGImage* inImage, 
 				   Mode inMode, bool inDrawMomentaryState)
-:	DGControl<VSTGUI::CControl>(inRegion, inOwnerEditor, inParamID, inImage), 
+:	DGControl<VSTGUI::CControl>(inRegion, inOwnerEditor, dfx::ParameterID_ToVST(inParameterID), inImage), 
 	mMode(inMode), 
 	mDrawMomentaryState(inDrawMomentaryState),
 	mWraparoundValues((mMode == Mode::Increment) || (mMode == Mode::Decrement))
@@ -395,7 +395,7 @@ long DGButton::getRange() const
 // Toggle Button
 //-----------------------------------------------------------------------------
 DGToggleImageButton::DGToggleImageButton(DfxGuiEditor* inOwnerEditor, 
-										 long inParameterID, 
+										 dfx::ParameterID inParameterID, 
 										 VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, 
 										 DGImage* inImage, 
 										 bool inDrawMomentaryState)
@@ -435,11 +435,11 @@ DGRect DGToggleImageButton::makeRegion(VSTGUI::CCoord inXpos, VSTGUI::CCoord inY
 // Fine-tune Button
 //-----------------------------------------------------------------------------
 DGFineTuneButton::DGFineTuneButton(DfxGuiEditor*	inOwnerEditor,
-									long			inParameterID, 
-									DGRect const&	inRegion,
-									DGImage*		inImage, 
-									float			inValueChangeAmount)
-:	DGControl<VSTGUI::CControl>(inRegion, inOwnerEditor, inParameterID, inImage), 
+								   dfx::ParameterID	inParameterID, 
+								   DGRect const&	inRegion,
+								   DGImage*			inImage, 
+								   float			inValueChangeAmount)
+:	DGControl<VSTGUI::CControl>(inRegion, inOwnerEditor, dfx::ParameterID_ToVST(inParameterID), inImage), 
 	mValueChangeAmount(inValueChangeAmount)
 {
 }
@@ -554,13 +554,13 @@ void DGFineTuneButton::onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent)
 //-----------------------------------------------------------------------------
 // DGValueSpot
 //-----------------------------------------------------------------------------
-DGValueSpot::DGValueSpot(DfxGuiEditor*	inOwnerEditor, 
-						 long			inParamID, 
-						 DGRect const&	inRegion, 
-						 DGImage*		inImage, 
-						 double			inValue)
-:	DGControl<VSTGUI::CControl>(inRegion, inOwnerEditor, inParamID, inImage), 
-	mValueToSet(inOwnerEditor->dfxgui_ContractParameterValue(inParamID, inValue))
+DGValueSpot::DGValueSpot(DfxGuiEditor*		inOwnerEditor, 
+						 dfx::ParameterID	inParameterID, 
+						 DGRect const&		inRegion, 
+						 DGImage*			inImage, 
+						 double				inValue)
+:	DGControl<VSTGUI::CControl>(inRegion, inOwnerEditor, dfx::ParameterID_ToVST(inParameterID), inImage), 
+	mValueToSet(inOwnerEditor->dfxgui_ContractParameterValue(inParameterID, inValue))
 {
 	setTransparency(true);
 }
@@ -763,7 +763,7 @@ void DGWebLink::onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent)
 DGSplashScreen::DGSplashScreen(DfxGuiEditor*	inOwnerEditor,
 							   DGRect const&	inClickRegion, 
 							   DGImage*			inSplashImage)
-:	DGControl<VSTGUI::CSplashScreen>(inClickRegion, inOwnerEditor, dfx::kParameterID_Invalid, inSplashImage, inClickRegion)
+:	DGControl<VSTGUI::CSplashScreen>(inClickRegion, inOwnerEditor, dfx::ParameterID_ToVST(dfx::kParameterID_Invalid), inSplashImage, inClickRegion)
 {
 	setTransparency(true);
 

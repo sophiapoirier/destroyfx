@@ -16,13 +16,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
 
 #include <array>
 
+#include "dfxdefines.h"
 #include "dfxpluginproperties.h"
 
 
@@ -31,7 +32,7 @@ namespace dfx::TV
 
 //-----------------------------------------------------------------------------
 // these are the plugin parameters:
-enum
+enum : dfx::ParameterID
 {
 	kBsize,
 	kSpeed1,
@@ -54,10 +55,10 @@ enum
 
 static constexpr size_t kNumDelays = 2;
 
-static constexpr std::array<long, kNumDelays> kSpeedParameters { kSpeed1, kSpeed2 };
-static constexpr std::array<long, kNumDelays> kFeedParameters { kFeed1, kFeed2 };
-static constexpr std::array<long, kNumDelays> kDistParameters { kDist1, kDist2 };
-static constexpr std::array<long, kNumDelays> kMixParameters { kMix1, kMix2 };
+static constexpr std::array<dfx::ParameterID, kNumDelays> kSpeedParameters { kSpeed1, kSpeed2 };
+static constexpr std::array<dfx::ParameterID, kNumDelays> kFeedParameters { kFeed1, kFeed2 };
+static constexpr std::array<dfx::ParameterID, kNumDelays> kDistParameters { kDist1, kDist2 };
+static constexpr std::array<dfx::ParameterID, kNumDelays> kMixParameters { kMix1, kMix2 };
 
 enum { kQualityMode_DirtFi, kQualityMode_HiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes };
 

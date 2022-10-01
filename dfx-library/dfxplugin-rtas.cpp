@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for E-Z plugin-making and E-Z multiple-API support.
@@ -91,9 +91,9 @@ void DfxPlugin::EffectInit()
 /*
 long bypassControlIndex = 0;
 ComponentResult bypassResult = GetMasterBypassControl(&bypassControlIndex);
-CPluginControl_Discrete * bypassControl = dynamic_cast<CPluginControl_Discrete*>( GetControl(bypassControlIndex) );
-char bypassName[32];
-bypassControl->GetNameOfLength(bypassName, sizeof(bypassName)-1, 0);
+CPluginControl_Discrete* bypassControl = dynamic_cast<CPluginControl_Discrete*>( GetControl(bypassControlIndex) );
+char bypassName[32] {};
+bypassControl->GetNameOfLength(bypassName, std::size(bypassName) - 1, 0);
 fprintf(stderr, "%s IsAutomatable() = %s (error = %ld)\n", bypassName, bypassControl->IsAutomatable() ? "true" : "false", bypassResult);
 */
 }
@@ -151,7 +151,7 @@ void DfxPlugin::AddParametersToList()
 	DefineMasterBypassControlIndex(dfx::kParameterID_RTASGlobalBypass);
 
 	OSType paramFourCharID = 0;
-	for (long i = 0; i < getnumparameters(); i++)
+	for (dfx::ParameterID i = 0; i < getnumparameters(); i++)
 	{
 		if (!parameterisvalid(i))
 		{
@@ -168,7 +168,7 @@ void DfxPlugin::AddParametersToList()
 		{
 			paramFourCharID = DFX_IterateAlphaNumericFourCharCode(paramFourCharID);
 		}
-		bool const paramAutomatable = (getparameterattributes(i) & (DfxParam::kAttribute_Hidden | DfxParam::kAttribute_Unused)) ? false : true;
+		bool const paramAutomatable = !(hasparameterattribute(i, DfxParam::kAttribute_Hidden) || hasparameterattribute(i, DfxParam::kAttribute_Unused));
 		constexpr int numCurvedSteps = 1000;
 		double const stepSize_default = (paramMax_f - paramMin_f) / (double)numCurvedSteps;
 		auto const paramCurve = getparametercurve(i);
@@ -256,25 +256,33 @@ void DfxPlugin::AddParametersToList()
 
 //-----------------------------------------------------------------------------
 // XXX implement
-ComponentResult DfxPlugin::GetControlNameOfLength(long inParameterIndex, char * outName, long inNameLength, OSType inControllerType, FicBoolean * outReverseHighlight)
+ComponentResult DfxPlugin::GetControlNameOfLength(long inParameterIndex, char* outName, long inNameLength, OSType inControllerType, FicBoolean* outReverseHighlight)
 {
-	if (outName == NULL)
+	if (outName == nullptr)
+	{
 		return paramErr;
+	}
 
 /*
 	if (inNameLength <= dfx::kParameterShortNameMax_RTAS)
 	{
-		char * shortNameString = NULL;
+		char* shortNameString = nullptr;
 		if (inParameterIndex == dfx::kParameterID_RTASGlobalBypass)
+		{
 			shortNameString = "Bypass";	// any shortened version of this is fine
+		}
 		else
+		{
 			shortNameString = GetParameterShortName( dfx::ParameterID_FromRTAS(inParameterIndex) );
-		if (shortNameString != NULL)
+		}
+		if (shortNameString != nullptr)
 		{
 			strlcpy(outName, shortNameString, inNameLength + 1);
 			outName[inNameLength] = 0;
-			if (outReverseHighlight != NULL)
+			if (outReverseHighlight != nullptr)
+			{
 				*outReverseHighlight = false;	// XXX assume control is not to be highlighted
+			}
 			return noErr;
 		}
 	}
@@ -287,14 +295,16 @@ ComponentResult DfxPlugin::GetControlNameOfLength(long inParameterIndex, char * 
 // XXX implement
 ComponentResult DfxPlugin::GetValueString(long inParameterIndex, long inValue, StringPtr outValueString, long inMaxLength)
 {
-	if (outValueString == NULL)
+	if (outValueString == nullptr)
+	{
 		return paramErr;
+	}
 
 /*
 	if (inMaxLength <= dfx::kParameterValueShortNameMax_rtas)
 	{
 		auto const shortValueString = GetParameterValueShortString(dfx::ParameterID_FromRTAS(inParameterIndex), inValue);
-		if (shortValueString != NULL)
+		if (shortValueString != nullptr)
 		{
 			strlcpy((char*)(outValueString + 1), shortValueString, inMaxLength + 1);
 			outValueString[0] = ((signed)strlen(shortValueString) > inMaxLength) ? inMaxLength : strlen(shortValueString);
@@ -315,20 +325,22 @@ void DfxPlugin::UpdateControlValueInAlgorithm(long inParameterIndex)
 		return;
 	}
 
-	inParameterIndex = dfx::ParameterID_FromRTAS(inParameterIndex);
-	if (! parameterisvalid(inParameterIndex) )
+	auto const parameterID = dfx::ParameterID_FromRTAS(inParameterIndex);
+	if (!parameterisvalid(parameterID))
+	{
 		return;
+	}
 
-	switch ( getparametervaluetype(inParameterIndex) )
+	switch (getparametervaluetype(parameterID))
 	{
 		case DfxParam::ValueType::Float:
-			parameters[inParameterIndex].set_f( GetParameter_f_FromRTAS(inParameterIndex) );
+			parameters[parameterID].set_f(GetParameter_f_FromRTAS(parameterID));
 			break;
 		case DfxParam::ValueType::Int:
-			parameters[inParameterIndex].set_i( GetParameter_i_FromRTAS(inParameterIndex) );
+			parameters[parameterID].set_i(GetParameter_i_FromRTAS(parameterID));
 			break;
 		case DfxParam::ValueType::Boolean:
-			parameters[inParameterIndex].set_b( GetParameter_b_FromRTAS(inParameterIndex) );
+			parameters[parameterID].set_b(GetParameter_b_FromRTAS(parameterID));
 			break;
 		default:
 			break;
@@ -336,7 +348,7 @@ void DfxPlugin::UpdateControlValueInAlgorithm(long inParameterIndex)
 }
 
 //-----------------------------------------------------------------------------
-double DfxPlugin::GetParameter_f_FromRTAS(long inParameterID)
+double DfxPlugin::GetParameter_f_FromRTAS(dfx::ParameterID inParameterID)
 {
 	double resultValue = dynamic_cast<CPluginControl_Continuous*>(GetControl(dfx::ParameterID_ToRTAS(inParameterID)))->GetContinuous();
 	if ( (getparameterunit(inParameterID) == DfxParam::Unit::Percent) || (getparameterunit(inParameterID) == DfxParam::Unit::DryWetMix) )
@@ -345,7 +357,7 @@ double DfxPlugin::GetParameter_f_FromRTAS(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-int64_t DfxPlugin::GetParameter_i_FromRTAS(long inParameterID)
+int64_t DfxPlugin::GetParameter_i_FromRTAS(dfx::ParameterID inParameterID)
 {
 	int64_t resultValue = dynamic_cast<CPluginControl_Discrete*>(GetControl(dfx::ParameterID_ToRTAS(inParameterID)))->GetDiscrete();
 	if ( getparameterusevaluestrings(inParameterID) )
@@ -354,16 +366,18 @@ int64_t DfxPlugin::GetParameter_i_FromRTAS(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::GetParameter_b_FromRTAS(long inParameterID)
+bool DfxPlugin::GetParameter_b_FromRTAS(dfx::ParameterID inParameterID)
 {
 	return (GetParameter_i_FromRTAS(inParameterID) != 0);
 }
 
 //-----------------------------------------------------------------------------
-ComponentResult DfxPlugin::IsControlAutomatable(long inControlIndex, short * outItIs)
+ComponentResult DfxPlugin::IsControlAutomatable(long inControlIndex, short* outItIs)
 {
-	if (outItIs == NULL)
+	if (outItIs == nullptr)
+	{
 		return paramErr;
+	}
 
 	// XXX test this first, since dfx::ParameterID_FromRTAS() makes it an invalid ID
 	if (inControlIndex == dfx::kParameterID_RTASGlobalBypass)
@@ -372,14 +386,20 @@ ComponentResult DfxPlugin::IsControlAutomatable(long inControlIndex, short * out
 		return noErr;
 	}
 
-	inControlIndex = dfx::ParameterID_FromRTAS(inControlIndex);
-	if (! parameterisvalid(inControlIndex) )
+	auto const parameterID = dfx::ParameterID_FromRTAS(inControlIndex);
+	if (!parameterisvalid(parameterID))
+	{
 		return paramErr;
+	}
 
-	if ( getparameterattributes(inControlIndex) & (DfxParam::kAttribute_Unused | DfxParam::kAttribute_Hidden) )
+	if (hasparameterattribute(parameterID, DfxParam::kAttribute_Unused) || hasparameterattribute(parameterID, DfxParam::kAttribute_Hidden))
+	{
 		*outItIs = 0;
+	}
 	else
+	{
 		*outItIs = 1;
+	}
 	return noErr;
 }
 
@@ -429,7 +449,7 @@ double CPluginControl_DfxCurved::ConvertControlToContinuous(long control) const
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-ComponentResult DfxPlugin::SetChunk(OSType inChunkID, SFicPlugInChunk * chunk)
+ComponentResult DfxPlugin::SetChunk(OSType inChunkID, SFicPlugInChunk* chunk)
 {
 	return TARGET_API_BASE_CLASS::SetChunk(inChunkID, chunk);
 }
@@ -452,7 +472,7 @@ UInt32 DfxPlugin::ProcessAudio(bool inIsGlobalBypassed)
 	long totalInputSamples = 0;  // total number of input samples in one input buffer
 
 	// use the mono channel input sample number (guaranteed to be connected)
-	if (GetInputConnection(0) != NULL)
+	if (GetInputConnection(0) != nullptr)
 	{
 		totalInputSamples = GetInputConnection(0)->mNumSamplesInBuf;
 	}
@@ -460,17 +480,19 @@ UInt32 DfxPlugin::ProcessAudio(bool inIsGlobalBypassed)
 	for (SInt32 ch = 0; ch < GetNumOutputs(); ch++)
 	{
 		// XXX what to do if there are no valid connections for the channel?
-		mInputAudioStreams_as[ch] = NULL;
-		mOutputAudioStreams_as[ch] = NULL;
+		mInputAudioStreams_as[ch] = nullptr;
+		mOutputAudioStreams_as[ch] = nullptr;
 
 		DAEConnectionPtr outputConnection = GetOutputConnection(ch);
-		if (outputConnection != NULL)	// if no valid connection, don't do anything
+		if (outputConnection != nullptr)	// if no valid connection, don't do anything
 		{
 			mOutputAudioStreams_as[ch] = (float*)(outputConnection->mBuffer);
 
 			DAEConnectionPtr inputConnection = GetInputConnection(ch);
-			if (inputConnection != NULL)	// have a valid input connection
+			if (inputConnection != nullptr)	// have a valid input connection
+			{
 				mInputAudioStreams_as[ch] = (float*)(inputConnection->mBuffer);
+			}
 			else	// no input connection; use default value of zero
 			{
 				// (re)allocate the zero audio buffer if it is not currently large enough for this rendering slice
@@ -484,12 +506,16 @@ UInt32 DfxPlugin::ProcessAudio(bool inIsGlobalBypassed)
 			if (inIsGlobalBypassed)
 			{
 				for (long i = 0; i < totalInputSamples; i++)
+				{
 					mOutputAudioStreams_as[ch][i] = mInputAudioStreams_as[ch][i];
+				}
 			}
 			// do the sample number adjustment
 			outputConnection->mNumSamplesInBuf = totalInputSamples;
-			if (inputConnection != NULL)
+			if (inputConnection != nullptr)
+			{
 				inputConnection->mNumSamplesInBuf = 0;
+			}
 		}
 	}
 
@@ -508,7 +534,7 @@ UInt32 DfxPlugin::ProcessAudio(bool inIsGlobalBypassed)
 #endif
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, long inNumFramesToProcess)
+void DfxPlugin::RenderAudio(float** inAudioStreams, float** outAudioStreams, long inNumFramesToProcess)
 {
 	preprocessaudio(dfx::math::ToUnsigned(inNumFramesToProcess));
 
@@ -582,7 +608,7 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 	// RTAS clip monitoring
 	for (SInt32 channel = 0; (channel < GetNumOutputs()) && !fClipped; channel++)
 	{
-		if (outAudioStreams[channel] == NULL)  // XXX possible in AudioSuite
+		if (outAudioStreams[channel] == nullptr)  // XXX possible in AudioSuite
 		{
 			continue;
 		}
@@ -618,10 +644,10 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-CPlugInView * DfxPlugin::CreateCPlugInView()
+CPlugInView* DfxPlugin::CreateCPlugInView()
 {
 #if TARGET_PLUGIN_HAS_GUI
-	CNoResourceView * ui = NULL;
+	std::unique_ptr<CNoResourceView> ui;
 	try
 	{
 		if (!mCustomUI_p)
@@ -630,7 +656,7 @@ CPlugInView * DfxPlugin::CreateCPlugInView()
 			mCustomUI_p->GetRect( &(mPIWinRect.left), &(mPIWinRect.top), &(mPIWinRect.right), &(mPIWinRect.bottom) );
 		}
 
-		ui = new CNoResourceView;
+		ui = std::make_unique<CNoResourceView>();
 #if PT_SDK_VERSION < 0x08000000
 		constexpr long viewSizeOffset = 1;	// XXX +1 because of a bug where CNoResourceView::SetSize() subtracts 1 from width and height
 #else
@@ -638,20 +664,20 @@ CPlugInView * DfxPlugin::CreateCPlugInView()
 #endif
 		ui->SetSize(mPIWinRect.right+viewSizeOffset, mPIWinRect.bottom+viewSizeOffset);
 
-		mNoUIView_p = (CTemplateNoUIView *) ui->AddView2("!NoUIView[('NoID')]", 0, 0, mPIWinRect.right, mPIWinRect.bottom, false);
+		mNoUIView_p = (CTemplateNoUIView*) ui->AddView2("!NoUIView[('NoID')]", 0, 0, mPIWinRect.right, mPIWinRect.bottom, false);
 
-		if (mNoUIView_p != NULL)
+		if (mNoUIView_p != nullptr)
+		{
 			mNoUIView_p->SetCustomUI(mCustomUI_p.get());
+		}
 	}
 	catch (...)
 	{
 		mCustomUI_p.reset();
-		if (ui != NULL)
-			delete ui;
-		ui = NULL;
+		ui.reset();
 	}
 
-	return ui;
+	return ui.release();
 
 #else
 	OSType meterFourCharID = 0;
@@ -676,12 +702,16 @@ CPlugInView * DfxPlugin::CreateCPlugInView()
 #if TARGET_PLUGIN_HAS_GUI
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::GetViewRect(Rect * outViewRect)
+void DfxPlugin::GetViewRect(Rect* outViewRect)
 {
 	if (!mCustomUI_p)
+	{
 		mCustomUI_p.reset(CreateCTemplateCustomUI(this));
-	if (outViewRect == NULL)
+	}
+	if (outViewRect == nullptr)
+	{
 		return;
+	}
 
 	mCustomUI_p->GetRect( &(mPIWinRect.left), &(mPIWinRect.top), &(mPIWinRect.right), &(mPIWinRect.bottom) );
 	outViewRect->left = mPIWinRect.left;
@@ -696,7 +726,7 @@ void DfxPlugin::SetViewPort(GrafPtr inPort)
 	mMainPort = inPort;
 	CEffectProcess::SetViewPort(mMainPort);
 
-	if (mMainPort != NULL)
+	if (mMainPort != nullptr)
 	{
 		if (mCustomUI_p)
 		{
@@ -710,16 +740,18 @@ void DfxPlugin::SetViewPort(GrafPtr inPort)
 			}
 #endif
 
-			void * windowPtr = NULL;
-			#if TARGET_OS_WIN32
-				windowPtr = (void*) ASI_GethWnd((WindowPtr)mMainPort);
-			#elif TARGET_OS_MAC
-				windowPtr = (void*) GetWindowFromPort(mMainPort);
-			#endif
+			void* windowPtr = nullptr;
+		#if TARGET_OS_WIN32
+			windowPtr = (void*) ASI_GethWnd((WindowPtr)mMainPort);
+		#elif TARGET_OS_MAC
+			windowPtr = (void*) GetWindowFromPort(mMainPort);
+		#endif
 			mCustomUI_p->Open(windowPtr, mLeftOffset, mTopOffset);
 
-			if (mNoUIView_p != NULL)
+			if (mNoUIView_p != nullptr)
+			{
 				mNoUIView_p->SetEnable(true);
+			}
 
 #if TARGET_OS_WIN32
 			mCustomUI_p->Draw(mPIWinRect.left, mPIWinRect.top, mPIWinRect.right, mPIWinRect.bottom);
@@ -729,9 +761,13 @@ void DfxPlugin::SetViewPort(GrafPtr inPort)
 	else
 	{
 		if (mCustomUI_p)
+		{
 			mCustomUI_p->Close();
-		if (mNoUIView_p != NULL)
+		}
+		if (mNoUIView_p != nullptr)
+		{
 			mNoUIView_p->SetEnable(false);
+		}
 	}
 	return;
 }
@@ -743,13 +779,13 @@ long DfxPlugin::SetControlValue(long inControlIndex, long inValue)
 }
 
 //-----------------------------------------------------------------------------
-long DfxPlugin::GetControlValue(long inControlIndex, long * outValue)
+long DfxPlugin::GetControlValue(long inControlIndex, long* outValue)
 {
 	return static_cast<long>(CProcess::GetControlValue(inControlIndex, outValue));
 }
 
 //-----------------------------------------------------------------------------
-long DfxPlugin::GetControlDefaultValue(long inControlIndex, long * outValue)
+long DfxPlugin::GetControlDefaultValue(long inControlIndex, long* outValue)
 {
 	return static_cast<long>(CProcess::GetControlDefaultValue(inControlIndex, outValue));
 }
@@ -778,7 +814,7 @@ int DfxPlugin::ProcessReleaseControl(long inControlIndex)
 //-----------------------------------------------------------------------------
 void DfxPlugin::ProcessDoIdle()
 {
-	this->DoIdle(NULL);
+	this->DoIdle(nullptr);
 
 	gProcessGroup->YieldCriticalSection();
 }
@@ -800,17 +836,19 @@ ComponentResult DfxPlugin::SetControlHighliteInfo(long inControlIndex, short inI
 }
 
 //-----------------------------------------------------------------------------
-ComponentResult DfxPlugin::ChooseControl(Point inLocalCoord, long * outControlIndex)
+ComponentResult DfxPlugin::ChooseControl(Point inLocalCoord, long* outControlIndex)
 {
-	if (outControlIndex != NULL)
+	if (outControlIndex == nullptr)
 	{
-		*outControlIndex = 0;
-		if (mCustomUI_p)
-			mCustomUI_p->GetControlIndexFromPoint(inLocalCoord.h, inLocalCoord.v, outControlIndex);
-		return noErr;
-	}
-	else
 		return paramErr;
+	}
+
+	*outControlIndex = 0;
+	if (mCustomUI_p)
+	{
+		mCustomUI_p->GetControlIndexFromPoint(inLocalCoord.h, inLocalCoord.v, outControlIndex);
+	}
+	return noErr;
 }
 
 #ifdef TARGET_API_AUDIOSUITE
@@ -853,7 +891,7 @@ enum
 #endif
 
 //-----------------------------------------------------------------------------
-CProcessGroupInterface * CProcessGroup::CreateProcessGroup()
+CProcessGroupInterface* CProcessGroup::CreateProcessGroup()
 {
 	return new DfxEffectGroup;
 }
@@ -881,7 +919,7 @@ void DfxEffectGroup::CreateEffectTypes()
 	for (int i = static_cast<int>(ePlugIn_StemFormat_FirstExplicitChoice) - 1; i <= static_cast<int>(ePlugIn_StemFormat_LastExplicitChoice); i++)
 	{
 		effectTypeFourCharID = DFX_IterateAlphaNumericFourCharCode(effectTypeFourCharID);
-		CEffectType * effectType;
+		CEffectType* effectType {};
 		if (i < static_cast<int>(ePlugIn_StemFormat_FirstExplicitChoice))
 		{
 			effectType = new CEffectTypeAS(effectTypeFourCharID, PLUGIN_ID, PLUGIN_CATEGORY_RTAS);
@@ -923,7 +961,7 @@ void DfxEffectGroup::Initialize()
 }
 
 //-----------------------------------------------------------------------------
-void DfxEffectGroup::dfx_AddEffectType(CEffectType * inEffectType)
+void DfxEffectGroup::dfx_AddEffectType(CEffectType* inEffectType)
 {
 	inEffectType->DefineTypeNames(PLUGIN_NAME_STRING);
 	inEffectType->DefineSampleRateSupport(eSupports48kAnd96kAnd192k);

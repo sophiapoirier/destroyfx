@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 These are our general global defines and constants, to be included 
@@ -100,11 +100,14 @@ somewhere in the include tree for every file for a DfxPlugin.
 #ifdef __cplusplus
 
 #include <cstddef>
+#include <limits>
 
 namespace dfx
 {
+	using ParameterID = unsigned int;
+
 	// to indicate "not a real parameter" or something like that
-	static constexpr long kParameterID_Invalid = -1;
+	static constexpr ParameterID kParameterID_Invalid = std::numeric_limits<ParameterID>::max();
 
 	static constexpr size_t kParameterNameMaxLength = 64;
 	static constexpr size_t kPresetNameMaxLength = 64;

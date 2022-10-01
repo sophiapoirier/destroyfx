@@ -18,10 +18,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "dfxguicontrol.h"
+
+#include "dfxplugin-base.h"
 
 
 
@@ -55,7 +57,7 @@ void detail::onMouseWheelEvent(IDGControl* inControl, VSTGUI::MouseWheelEvent& i
 
 //-----------------------------------------------------------------------------
 DGNullControl::DGNullControl(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage)
-:	DGControl<VSTGUI::CControl>(inRegion, inOwnerEditor, dfx::kParameterID_Invalid, inBackgroundImage)
+:	DGControl<VSTGUI::CControl>(inRegion, inOwnerEditor, dfx::ParameterID_ToVST(dfx::kParameterID_Invalid), inBackgroundImage)
 {
 	setMouseEnabled(false);
 }

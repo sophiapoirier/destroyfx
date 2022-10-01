@@ -19,7 +19,7 @@ the Free Software Foundation, either version 2 of the License, or
 You should have received a copy of the GNU General Public License 
 along with Turntablist.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the developer, use the contact form at http://destroyfx.org/
+To contact the developer, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "turntablist.h"
@@ -788,25 +788,22 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 
 // libsndfile
 #else
-	UInt8 file[2048];
-	memset(file, 0, sizeof(file));
-	OSStatus status = FSRefMakePath(&inFileRef, file, sizeof(file));
+	UInt8 file[2048] {};
+	OSStatus status = FSRefMakePath(&inFileRef, file, std::size(file));
 	if (status != noErr)
 	{
 		return status;
 	}
 //fprintf(stderr, PLUGIN_NAME_STRING " audio file:  %s\n", file);
 
-	SF_INFO sfInfo;
-	memset(&sfInfo, 0, sizeof(SF_INFO));
-	SNDFILE* const sndFile = sf_open((const char*)file, SFM_READ, &sfInfo);
+	SF_INFO sfInfo {};
+	SNDFILE* const sndFile = sf_open(reinterpret_cast<char const*>(file), SFM_READ, &sfInfo);
 
 	if (!sndFile)
 	{
 		// print error
-		char buffer[256];
-		memset(buffer, 0, sizeof(buffer));
-		sf_error_str(sndFile, buffer, sizeof(buffer) - 1);
+		char buffer[256] {};
+		sf_error_str(sndFile, buffer, std::size(buffer) - 1);
 		fprintf(stderr, "\n" PLUGIN_NAME_STRING " could not open the audio file:  %s\nlibsndfile error message:  %s\n", file, buffer);
 		return sf_error(sndFile);
 	}
@@ -908,7 +905,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 	size_t currEvent = 0;
 
 	auto const numOutputs = getnumoutputs();
-//	float (*interpolateHermiteFunctionPtr)(float *, double, long) = m_bLoop ? dfx::math::InterpolateHermite : dfx::math::InterpolateHermite_NoWrap;
+	//auto const interpolateHermiteFunctionPtr = m_bLoop ? dfx::math::InterpolateHermite : dfx::math::InterpolateHermite_NoWrap;
 
 
 	if (numEvents == 0)
@@ -1520,13 +1517,14 @@ void Turntablist::processMidiEvent(size_t inEventIndex)
 		}
 
 #ifdef USE_MIDI_CC
-		if ((event.mByte1 >= 64) && (event.mByte1 <= (64 + kNumParameters - 1)))
+		constexpr int dataMidpoint = 64;
+		if ((event.mByte1 >= dataMidpoint) && (event.mByte1 <= (dataMidpoint + kNumParameters - 1)))
 		{
-			long const param = event.mByte1 - 64;
-			long const new_data = fixMidiData(param, event.mByte2);
-			float const value = static_cast<float>(new_data) * DfxMidi::kValueScalar;
-			setparameter_f(param, value);
-			postupdate_parameter(param);
+			dfx::ParameterID const parameterID = event.mByte1 - dataMidpoint;
+			auto const correctedData = fixMidiData(parameterID, event.mByte2);
+			float const value = static_cast<float>(correctedData) * DfxMidi::kValueScalar;
+			setparameter_f(parameterID, value);
+			postupdate_parameter(parameterID);
 		}
 #endif
 	}
@@ -1645,7 +1643,7 @@ void Turntablist::playNote(bool inValue)
 }
 
 //-----------------------------------------------------------------------------------------
-long Turntablist::fixMidiData(long inParameterID, char inValue)
+int Turntablist::fixMidiData(dfx::ParameterID inParameterID, int inValue) noexcept
 {
 	switch (inParameterID)
 	{

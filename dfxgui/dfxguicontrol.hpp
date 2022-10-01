@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include <algorithm>
@@ -29,6 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxguieditor.h"
 #include "dfxmisc.h"
+#include "dfxplugin-base.h"
 
 
 
@@ -122,18 +123,18 @@ void DGControl<T>::redraw()
 
 //-----------------------------------------------------------------------------
 template <class T>
-long DGControl<T>::getParameterID() const
+dfx::ParameterID DGControl<T>::getParameterID() const
 {
-	return T::getTag();
+	return dfx::ParameterID_FromVST(T::getTag());
 }
 
 //-----------------------------------------------------------------------------
 template <class T>
-void DGControl<T>::setParameterID(long inParameterID)
+void DGControl<T>::setParameterID(dfx::ParameterID inParameterID)
 {
 	if (inParameterID != getParameterID())
 	{
-		T::setTag(inParameterID);
+		T::setTag(dfx::ParameterID_ToVST(inParameterID));
 		initValues();
 		T::invalidRect(T::getViewSize());
 	}
@@ -143,7 +144,7 @@ void DGControl<T>::setParameterID(long inParameterID)
 template <class T>
 bool DGControl<T>::isParameterAttached() const
 {
-	return (getParameterID() >= 0);
+	return (getParameterID() != dfx::kParameterID_Invalid);
 }
 
 //-----------------------------------------------------------------------------
@@ -269,10 +270,10 @@ void DGControl<T>::pullNumStatesFromParameter()
 	if (isParameterAttached() && mOwnerEditor)
 	{
 		size_t numStates = 0;
-		auto const paramID = getParameterID();
-		if (mOwnerEditor->GetParameterValueType(paramID) != DfxParam::ValueType::Float)
+		auto const parameterID = getParameterID();
+		if (mOwnerEditor->GetParameterValueType(parameterID) != DfxParam::ValueType::Float)
 		{
-			auto const valueRange = mOwnerEditor->GetParameter_maxValue(paramID) - mOwnerEditor->GetParameter_minValue(paramID);
+			auto const valueRange = mOwnerEditor->GetParameter_maxValue(parameterID) - mOwnerEditor->GetParameter_minValue(parameterID);
 			numStates = static_cast<size_t>(std::max(std::lround(valueRange), 0L) + 1);
 		}
 		setNumStates(numStates);
@@ -346,7 +347,7 @@ bool DGMultiControl<T>::isEditing_any() const
 
 //-----------------------------------------------------------------------------
 template <class T>
-IDGControl* DGMultiControl<T>::getControlByParameterID(long inParameterID)
+IDGControl* DGMultiControl<T>::getControlByParameterID(dfx::ParameterID inParameterID)
 {
 	if (DGControl<T>::getParameterID() == inParameterID)
 	{
@@ -359,9 +360,9 @@ IDGControl* DGMultiControl<T>::getControlByParameterID(long inParameterID)
 
 //-----------------------------------------------------------------------------
 template <class T>
-IDGControl* DGMultiControl<T>::addChild(long inParameterID)
+IDGControl* DGMultiControl<T>::addChild(dfx::ParameterID inParameterID)
 {
-	assert(inParameterID >= 0);
+	assert(inParameterID != dfx::kParameterID_Invalid);
 	assert(inParameterID != this->getParameterID());
 	auto child = std::make_unique<DGMultiControlChild>(DGControl<T>::getOwnerEditor(), DGControl<T>::getViewSize(), inParameterID);
 	[[maybe_unused]] auto const [element, inserted] = mChildren.insert(child.get());
@@ -376,9 +377,9 @@ IDGControl* DGMultiControl<T>::addChild(long inParameterID)
 
 //-----------------------------------------------------------------------------
 template <class T>
-void DGMultiControl<T>::addChildren(std::vector<long> const& inParameterIDs)
+void DGMultiControl<T>::addChildren(std::vector<dfx::ParameterID> const& inParameterIDs)
 {
-	assert(std::unordered_set<long>(inParameterIDs.cbegin(), inParameterIDs.cend()).size() == inParameterIDs.size());
+	assert(std::unordered_set(inParameterIDs.cbegin(), inParameterIDs.cend()).size() == inParameterIDs.size());
 	std::for_each(inParameterIDs.cbegin(), inParameterIDs.cend(), [this](auto parameterID){ addChild(parameterID); });
 }
 
@@ -417,7 +418,7 @@ void DGMultiControl<T>::notifyIfChanged_all()
 template <class T>
 DGMultiControl<T>::DGMultiControlChild::DGMultiControlChild(DfxGuiEditor* inOwnerEditor,
 															DGRect const& inRegion,
-															long inParameterID)
-:	DGControl<VSTGUI::CControl>(inRegion, inOwnerEditor, inParameterID)
+															dfx::ParameterID inParameterID)
+:	DGControl<VSTGUI::CControl>(inRegion, inOwnerEditor, dfx::ParameterID_ToVST(inParameterID))
 {
 }

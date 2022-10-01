@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Skidder.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -35,7 +35,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 //-----------------------------------------------------------------------------
 // these are the plugin parameters:
-enum
+enum : dfx::ParameterID
 {
 	kRate_Hz,
 	kRate_Sync,
@@ -96,7 +96,7 @@ public:
 	void processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames) override;
 
 	// stuff for extending DfxSettings
-	void settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, int eventChannel,
+	void settings_doLearningAssignStuff(dfx::ParameterID parameterID, dfx::MidiEventType eventType, int eventChannel,
 										int eventNum, size_t offsetFrames, int eventNum2 = 0,
 										dfx::MidiEventBehaviorFlags eventBehaviourFlags = dfx::kMidiEventBehaviorFlag_None,
 										int data1 = 0, int data2 = 0, float fdata1 = 0.0f, float fdata2 = 0.0f) override;

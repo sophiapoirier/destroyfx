@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "dfxguieditor.h"
@@ -293,40 +293,40 @@ void DfxGuiEditor::setParameter(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex, f
 		return;
 	}
 
-	updateParameterControls(inParameterIndex, inValue);
+	updateParameterControls(dfx::ParameterID_FromVST(inParameterIndex), inValue);
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::updateParameterControls(long inParameterIndex, float inValue, VSTGUI::CControl* inSendingControl)
+void DfxGuiEditor::updateParameterControls(dfx::ParameterID inParameterID, float inValue, VSTGUI::CControl* inSendingControl)
 {
 	for (auto& control : mControlsList)
 	{
-		if ((control->getParameterID() == inParameterIndex) && (control->asCControl() != inSendingControl))
+		if ((control->getParameterID() == inParameterID) && (control->asCControl() != inSendingControl))
 		{
 			control->setValue_gen(inValue);
 			control->redraw();  // TODO: why is this also necessary? redraws are sometimes dropped without it
 		}
 	}
 
-	parameterChanged(inParameterIndex);
+	parameterChanged(inParameterID);
 }
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::valueChanged(VSTGUI::CControl* inControl)
 {
-	auto const paramIndex = inControl->getTag();
-	auto const paramValue_norm = inControl->getValueNormalized();
+	auto const parameterID = dfx::ParameterID_FromVST(inControl->getTag());
+	auto const parameterValue_norm = inControl->getValueNormalized();
 
-	if (dfxgui_IsValidParamID(paramIndex))
+	if (dfxgui_IsValidParameterID(parameterID))
 	{
 #ifdef TARGET_API_AUDIOUNIT
-		auto const paramValue_literal = dfxgui_ExpandParameterValue(paramIndex, paramValue_norm);
+		auto const parameterValue_literal = dfxgui_ExpandParameterValue(parameterID, parameterValue_norm);
 		// XXX or should I call setparameter_f()?
-		auto const auParam = dfxgui_MakeAudioUnitParameter(paramIndex);
-		AUParameterSet(mAUEventListener.get(), inControl, &auParam, paramValue_literal, 0);
+		auto const auParam = dfxgui_MakeAudioUnitParameter(parameterID);
+		AUParameterSet(mAUEventListener.get(), inControl, &auParam, parameterValue_literal, 0);
 #endif
 #ifdef TARGET_API_VST
-		getEffect()->setParameterAutomated(paramIndex, paramValue_norm);
+		getEffect()->setParameterAutomated(dfx::ParameterID_ToVST(parameterID), parameterValue_norm);
 #endif
 #ifdef TARGET_API_RTAS
 		// XXX though the model of calling SetControlValue might make more seem like 
@@ -335,8 +335,8 @@ void DfxGuiEditor::valueChanged(VSTGUI::CControl* inControl)
 		// the next call to UpdateControlInAlgorithm which be deferred until the start of 
 		// the next audio render call, which means that in the meantime getparameter_* 
 		// methods will return the previous rather than current value
-//		dfxgui_GetEffectInstance()->SetControlValue(dfx::ParameterID_ToRTAS(paramIndex), ConvertToDigiValue(paramValue_norm));
-		dfxgui_GetEffectInstance()->setparameter_gen(paramIndex, paramValue_norm);
+//		dfxgui_GetEffectInstance()->SetControlValue(dfx::ParameterID_ToRTAS(parameterID), ConvertToDigiValue(parameterValue_norm));
+		dfxgui_GetEffectInstance()->setparameter_gen(parameterID, parameterValue_norm);
 #endif
 	}
 }
@@ -345,18 +345,18 @@ void DfxGuiEditor::valueChanged(VSTGUI::CControl* inControl)
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::beginEdit(int32_t inParameterIndex)
 {
-	if (dfxgui_IsValidParamID(inParameterIndex))
+	if (auto const parameterID = dfx::ParameterID_FromVST(inParameterIndex); dfxgui_IsValidParameterID(parameterID))
 	{
-		automationgesture_begin(inParameterIndex);
+		automationgesture_begin(parameterID);
 	}
 }
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::endEdit(int32_t inParameterIndex)
 {
-	if (dfxgui_IsValidParamID(inParameterIndex))
+	if (auto const parameterID = dfx::ParameterID_FromVST(inParameterIndex); dfxgui_IsValidParameterID(parameterID))
 	{
-		automationgesture_end(inParameterIndex);
+		automationgesture_end(parameterID);
 	}
 }
 #endif	// !TARGET_API_VST
@@ -420,7 +420,7 @@ IDGControl* DfxGuiEditor::addControl(IDGControl* inControl)
 	assert(inControl);
 
 	// XXX only add it to our controls list if it is attached to a parameter (?)
-	if (dfxgui_IsValidParamID(inControl->getParameterID()))
+	if (dfxgui_IsValidParameterID(inControl->getParameterID()))
 	{
 		assert(std::find(mControlsList.cbegin(), mControlsList.cend(), inControl) == mControlsList.cend());
 		mControlsList.push_back(inControl);
@@ -451,7 +451,7 @@ void DfxGuiEditor::removeControl(IDGControl* inControl)
 }
 
 //-----------------------------------------------------------------------------
-long DfxGuiEditor::GetWidth()
+int DfxGuiEditor::GetWidth()
 {
 	ERect* editorRect = nullptr;
 	if (getRect(&editorRect) && editorRect)
@@ -462,7 +462,7 @@ long DfxGuiEditor::GetWidth()
 }
 
 //-----------------------------------------------------------------------------
-long DfxGuiEditor::GetHeight()
+int DfxGuiEditor::GetHeight()
 {
 	ERect* editorRect = nullptr;
 	if (getRect(&editorRect) && editorRect)
@@ -505,14 +505,14 @@ OSStatus DfxGuiEditor::SendAUParameterEvent(AudioUnitParameterID inParameterID, 
 #endif
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::automationgesture_begin(long inParameterID)
+void DfxGuiEditor::automationgesture_begin(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	SendAUParameterEvent(static_cast<AudioUnitParameterID>(inParameterID), kAudioUnitEvent_BeginParameterChangeGesture);
+	SendAUParameterEvent(inParameterID, kAudioUnitEvent_BeginParameterChangeGesture);
 #endif
 
 #ifdef TARGET_API_VST
-	TARGET_API_EDITOR_BASE_CLASS::beginEdit(inParameterID);
+	TARGET_API_EDITOR_BASE_CLASS::beginEdit(dfx::ParameterID_ToVST(inParameterID));
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -523,14 +523,14 @@ void DfxGuiEditor::automationgesture_begin(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::automationgesture_end(long inParameterID)
+void DfxGuiEditor::automationgesture_end(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	SendAUParameterEvent(static_cast<AudioUnitParameterID>(inParameterID), kAudioUnitEvent_EndParameterChangeGesture);
+	SendAUParameterEvent(inParameterID, kAudioUnitEvent_EndParameterChangeGesture);
 #endif
 
 #ifdef TARGET_API_VST
-	TARGET_API_EDITOR_BASE_CLASS::endEdit(inParameterID);
+	TARGET_API_EDITOR_BASE_CLASS::endEdit(dfx::ParameterID_ToVST(inParameterID));
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -540,7 +540,7 @@ void DfxGuiEditor::automationgesture_end(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::randomizeparameter(long inParameterID, bool inWriteAutomation)
+void DfxGuiEditor::randomizeparameter(dfx::ParameterID inParameterID, bool inWriteAutomation)
 {
 	if (inWriteAutomation)
 	{
@@ -556,7 +556,7 @@ void DfxGuiEditor::randomizeparameter(long inParameterID, bool inWriteAutomation
 	dfxgui_GetEffectInstance()->randomizeparameter(inParameterID);
 	if (inWriteAutomation)
 	{
-		getEffect()->setParameterAutomated(inParameterID, getparameter_gen(inParameterID));
+		getEffect()->setParameterAutomated(dfx::ParameterID_ToVST(inParameterID), getparameter_gen(inParameterID));
 	}
 #endif
 
@@ -609,7 +609,7 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 		for (auto const parameterID : parameterList)
 		{
 #ifdef TARGET_API_VST
-			getEffect()->setParameterAutomated(parameterID, getparameter_gen(parameterID));
+			getEffect()->setParameterAutomated(dfx::ParameterID_ToVST(parameterID), getparameter_gen(parameterID));
 #endif
 			automationgesture_end(parameterID);
 		}
@@ -617,7 +617,7 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::GenerateParameterAutomationSnapshot(long inParameterID)
+void DfxGuiEditor::GenerateParameterAutomationSnapshot(dfx::ParameterID inParameterID)
 {
 	setparameter_f(inParameterID, getparameter_f(inParameterID), true);
 }
@@ -632,7 +632,7 @@ void DfxGuiEditor::GenerateParametersAutomationSnapshot()
 }
 
 //-----------------------------------------------------------------------------
-std::optional<double> DfxGuiEditor::dfxgui_GetParameterValueFromString_f(long inParameterID, std::string const& inText)
+std::optional<double> DfxGuiEditor::dfxgui_GetParameterValueFromString_f(dfx::ParameterID inParameterID, std::string const& inText)
 {
 	if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
 	{
@@ -655,17 +655,17 @@ std::optional<double> DfxGuiEditor::dfxgui_GetParameterValueFromString_f(long in
 }
 
 //-----------------------------------------------------------------------------
-std::optional<long> DfxGuiEditor::dfxgui_GetParameterValueFromString_i(long inParameterID, std::string const& inText)
+std::optional<long> DfxGuiEditor::dfxgui_GetParameterValueFromString_i(dfx::ParameterID inParameterID, std::string const& inText)
 {
 	if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
 	{
 		if (auto const newValue_f = dfxgui_GetParameterValueFromString_f(inParameterID, inText))
 		{
-			DfxParam param;
-			param.init_f({""}, 0.0, 0.0, -1.0, 1.0);
-			DfxParam::Value paramValue {};
-			paramValue.f = *newValue_f;
-			return param.derive_i(paramValue);
+			DfxParam parameter;
+			parameter.init_f({""}, 0.0, 0.0, -1.0, 1.0);
+			DfxParam::Value parameterValue {};
+			parameterValue.f = *newValue_f;
+			return parameter.derive_i(parameterValue);
 		}
 	}
 	else
@@ -682,9 +682,9 @@ std::optional<long> DfxGuiEditor::dfxgui_GetParameterValueFromString_i(long inPa
 }
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::dfxgui_SetParameterValueWithString(long inParameterID, std::string const& inText)
+bool DfxGuiEditor::dfxgui_SetParameterValueWithString(dfx::ParameterID inParameterID, std::string const& inText)
 {
-	if (dfxgui_IsValidParamID(inParameterID))
+	if (dfxgui_IsValidParameterID(inParameterID))
 	{
 		constexpr bool automationGesture = true;
 		if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
@@ -709,7 +709,7 @@ bool DfxGuiEditor::dfxgui_SetParameterValueWithString(long inParameterID, std::s
 }
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::dfxgui_IsValidParamID(long inParameterID)
+bool DfxGuiEditor::dfxgui_IsValidParameterID(dfx::ParameterID inParameterID)
 {
 	if ((inParameterID == dfx::kParameterID_Invalid) || (inParameterID < 0))
 	{
@@ -717,14 +717,14 @@ bool DfxGuiEditor::dfxgui_IsValidParamID(long inParameterID)
 	}
 #ifdef TARGET_API_AUDIOUNIT
 	// TODO: actually search parameter ID list to ensure that this ID is present?
-	return (static_cast<AudioUnitParameterID>(inParameterID) <= mAUMaxParameterID);
+	return (inParameterID <= mAUMaxParameterID);
 #else
 	return (inParameterID < GetNumParameters());
 #endif
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::TextEntryForParameterValue(long inParameterID)
+void DfxGuiEditor::TextEntryForParameterValue(dfx::ParameterID inParameterID)
 {
 	if (!getFrame())
 	{
@@ -764,7 +764,7 @@ void DfxGuiEditor::TextEntryForParameterValue(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::SetParameterHelpText(long inParameterID, char const* inText)
+void DfxGuiEditor::SetParameterHelpText(dfx::ParameterID inParameterID, char const* inText)
 {
 	for (auto& control : mControlsList)
 	{
@@ -776,7 +776,7 @@ void DfxGuiEditor::SetParameterHelpText(long inParameterID, char const* inText)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::SetParameterAlpha(long inParameterID, float inAlpha)
+void DfxGuiEditor::SetParameterAlpha(dfx::ParameterID inParameterID, float inAlpha)
 {
 	for (auto& control : mControlsList)
 	{
@@ -906,7 +906,7 @@ void DfxGuiEditor::viewOnEvent(VSTGUI::CView* inView, VSTGUI::Event& ioEvent)
 }
 
 //-----------------------------------------------------------------------------
-double DfxGuiEditor::getparameter_f(long inParameterID)
+double DfxGuiEditor::getparameter_f(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	dfx::ParameterValueRequest request;
@@ -927,7 +927,7 @@ double DfxGuiEditor::getparameter_f(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-long DfxGuiEditor::getparameter_i(long inParameterID)
+long DfxGuiEditor::getparameter_i(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	dfx::ParameterValueRequest request;
@@ -948,7 +948,7 @@ long DfxGuiEditor::getparameter_i(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::getparameter_b(long inParameterID)
+bool DfxGuiEditor::getparameter_b(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	dfx::ParameterValueRequest request;
@@ -969,18 +969,18 @@ bool DfxGuiEditor::getparameter_b(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-double DfxGuiEditor::getparameter_gen(long inParameterIndex)
+double DfxGuiEditor::getparameter_gen(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_VST
-	return getEffect()->getParameter(inParameterIndex);
+	return getEffect()->getParameter(dfx::ParameterID_ToVST(inParameterID));
 #else
-	double currentValue = getparameter_f(inParameterIndex);
-	return dfxgui_ContractParameterValue(inParameterIndex, currentValue);
+	double currentValue = getparameter_f(inParameterID);
+	return dfxgui_ContractParameterValue(inParameterID, currentValue);
 #endif
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::setparameter_f(long inParameterID, double inValue, bool inWrapWithAutomationGesture)
+void DfxGuiEditor::setparameter_f(dfx::ParameterID inParameterID, double inValue, bool inWrapWithAutomationGesture)
 {
 	if (inWrapWithAutomationGesture)
 	{
@@ -998,7 +998,7 @@ void DfxGuiEditor::setparameter_f(long inParameterID, double inValue, bool inWra
 
 #ifdef TARGET_API_VST
 	auto const value_norm = dfxgui_ContractParameterValue(inParameterID, inValue);
-	getEffect()->setParameterAutomated(inParameterID, value_norm);
+	getEffect()->setParameterAutomated(dfx::ParameterID_ToVST(inParameterID), value_norm);
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -1013,7 +1013,7 @@ void DfxGuiEditor::setparameter_f(long inParameterID, double inValue, bool inWra
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::setparameter_i(long inParameterID, long inValue, bool inWrapWithAutomationGesture)
+void DfxGuiEditor::setparameter_i(dfx::ParameterID inParameterID, long inValue, bool inWrapWithAutomationGesture)
 {
 	if (inWrapWithAutomationGesture)
 	{
@@ -1031,7 +1031,7 @@ void DfxGuiEditor::setparameter_i(long inParameterID, long inValue, bool inWrapW
 
 #ifdef TARGET_API_VST
 	auto const value_norm = dfxgui_ContractParameterValue(inParameterID, inValue);
-	getEffect()->setParameterAutomated(inParameterID, value_norm);
+	getEffect()->setParameterAutomated(dfx::ParameterID_ToVST(inParameterID), value_norm);
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -1046,7 +1046,7 @@ void DfxGuiEditor::setparameter_i(long inParameterID, long inValue, bool inWrapW
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue, bool inWrapWithAutomationGesture)
+void DfxGuiEditor::setparameter_b(dfx::ParameterID inParameterID, bool inValue, bool inWrapWithAutomationGesture)
 {
 	if (inWrapWithAutomationGesture)
 	{
@@ -1063,7 +1063,7 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue, bool inWrapW
 #endif
 
 #ifdef TARGET_API_VST
-	getEffect()->setParameterAutomated(inParameterID, inValue ? 1.0f : 0.0f);
+	getEffect()->setParameterAutomated(dfx::ParameterID_ToVST(inParameterID), inValue ? 1.f : 0.f);
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -1078,7 +1078,7 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue, bool inWrapW
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::setparameter_default(long inParameterID, bool inWrapWithAutomationGesture)
+void DfxGuiEditor::setparameter_default(dfx::ParameterID inParameterID, bool inWrapWithAutomationGesture)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	if (auto const parameterInfo = dfxgui_GetParameterInfo(inParameterID))
@@ -1102,7 +1102,7 @@ void DfxGuiEditor::setparameter_default(long inParameterID, bool inWrapWithAutom
 #ifdef TARGET_API_VST
 	auto const defaultValue = GetParameter_defaultValue(inParameterID);
 	auto const defaultValue_norm = dfxgui_ContractParameterValue(inParameterID, defaultValue);
-	getEffect()->setParameterAutomated(inParameterID, defaultValue_norm);
+	getEffect()->setParameterAutomated(dfx::ParameterID_ToVST(inParameterID), defaultValue_norm);
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -1121,13 +1121,13 @@ void DfxGuiEditor::setparameters_default(bool inWrapWithAutomationGesture)
 }
 
 //-----------------------------------------------------------------------------
-std::optional<std::string> DfxGuiEditor::getparametervaluestring(long inParameterID)
+std::optional<std::string> DfxGuiEditor::getparametervaluestring(dfx::ParameterID inParameterID)
 {
 	return getparametervaluestring(inParameterID, getparameter_i(inParameterID));
 }
 
 //-----------------------------------------------------------------------------
-std::optional<std::string> DfxGuiEditor::getparametervaluestring(long inParameterID, int64_t inStringIndex)
+std::optional<std::string> DfxGuiEditor::getparametervaluestring(dfx::ParameterID inParameterID, int64_t inStringIndex)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	dfx::ParameterValueStringRequest request;
@@ -1146,51 +1146,51 @@ std::optional<std::string> DfxGuiEditor::getparametervaluestring(long inParamete
 }
 
 //-----------------------------------------------------------------------------
-std::string DfxGuiEditor::getparameterunitstring(long inParameterIndex)
+std::string DfxGuiEditor::getparameterunitstring(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	std::array<char, dfx::kParameterUnitStringMaxLength> unitLabel {};
 	size_t dataSize = unitLabel.size() * sizeof(unitLabel.front());
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterUnitLabel, dfx::kScope_Global, 
-										   inParameterIndex, unitLabel.data(), dataSize);
+										   inParameterID, unitLabel.data(), dataSize);
 	if (status == noErr)
 	{
 		return unitLabel.data();
 	}
 	return {};
 #else
-	return dfxgui_GetEffectInstance()->getparameterunitstring(inParameterIndex);
+	return dfxgui_GetEffectInstance()->getparameterunitstring(inParameterID);
 #endif
 }
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::GetParameterUseValueStrings(long inParameterIndex)
+bool DfxGuiEditor::GetParameterUseValueStrings(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	return dfxgui_GetProperty<Boolean>(dfx::kPluginProperty_ParameterUseValueStrings, dfx::kScope_Global, inParameterIndex).value_or(false);
+	return dfxgui_GetProperty<Boolean>(dfx::kPluginProperty_ParameterUseValueStrings, dfx::kScope_Global, inParameterID).value_or(false);
 #else
-	return dfxgui_GetEffectInstance()->getparameterusevaluestrings(inParameterIndex);
+	return dfxgui_GetEffectInstance()->getparameterusevaluestrings(inParameterID);
 #endif
 }
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::HasParameterAttribute(long inParameterIndex, DfxParam::Attribute inFlag)
+bool DfxGuiEditor::HasParameterAttribute(dfx::ParameterID inParameterID, DfxParam::Attribute inFlag)
 {
 	assert(inFlag);
 #ifdef TARGET_API_AUDIOUNIT
-	return dfxgui_GetProperty<DfxParam::Attribute>(dfx::kPluginProperty_ParameterAttributes, dfx::kScope_Global, inParameterIndex).value_or(0) & inFlag;
+	return dfxgui_GetProperty<DfxParam::Attribute>(dfx::kPluginProperty_ParameterAttributes, dfx::kScope_Global, inParameterID).value_or(0) & inFlag;
 #else
-	return dfxgui_GetEffectInstance()->hasparameterattribute(inParameterIndex, inFlag);
+	return dfxgui_GetEffectInstance()->hasparameterattribute(inParameterID, inFlag);
 #endif
 }
 
 //-----------------------------------------------------------------------------
-std::optional<size_t> DfxGuiEditor::GetParameterGroup(long inParameterIndex)
+std::optional<size_t> DfxGuiEditor::GetParameterGroup(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	return dfxgui_GetProperty<size_t>(dfx::kPluginProperty_ParameterGroup, dfx::kScope_Global, inParameterIndex);
+	return dfxgui_GetProperty<size_t>(dfx::kPluginProperty_ParameterGroup, dfx::kScope_Global, inParameterID);
 #else
-	return dfxgui_GetEffectInstance()->getparametergroup(inParameterIndex);
+	return dfxgui_GetEffectInstance()->getparametergroup(inParameterID);
 #endif
 }
 
@@ -1213,7 +1213,7 @@ std::string DfxGuiEditor::GetParameterGroupName(size_t inGroupIndex)
 }
 
 //-----------------------------------------------------------------------------
-std::string DfxGuiEditor::getparametername(long inParameterID)
+std::string DfxGuiEditor::getparametername(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	if (auto const parameterInfo = dfxgui_GetParameterInfo(inParameterID))
@@ -1234,7 +1234,7 @@ std::string DfxGuiEditor::getparametername(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-float DfxGuiEditor::dfxgui_ExpandParameterValue(long inParameterIndex, float inValue)
+float DfxGuiEditor::dfxgui_ExpandParameterValue(dfx::ParameterID inParameterID, float inValue)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	dfx::ParameterValueConversionRequest request;
@@ -1242,31 +1242,7 @@ float DfxGuiEditor::dfxgui_ExpandParameterValue(long inParameterIndex, float inV
 	request.inValue = inValue;
 	size_t dataSize = sizeof(request);
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValueConversion, dfx::kScope_Global, 
-										   inParameterIndex, &request, dataSize);
-	if (status == noErr)
-	{
-		return request.outValue;
-	}
-	else
-	{
-		auto const auParam = dfxgui_MakeAudioUnitParameter(inParameterIndex);
-		return AUParameterValueFromLinear(inValue, &auParam);
-	}
-#else
-	return dfxgui_GetEffectInstance()->expandparametervalue(inParameterIndex, inValue);
-#endif
-}
-
-//-----------------------------------------------------------------------------
-float DfxGuiEditor::dfxgui_ContractParameterValue(long inParameterIndex, float inValue)
-{
-#ifdef TARGET_API_AUDIOUNIT
-	dfx::ParameterValueConversionRequest request;
-	request.inConversionType = dfx::ParameterValueConversionType::Contract;
-	request.inValue = inValue;
-	size_t dataSize = sizeof(request);
-	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValueConversion, dfx::kScope_Global, 
-										   inParameterIndex, &request, dataSize);
+										   inParameterID, &request, dataSize);
 	if (status == noErr)
 	{
 		return request.outValue;
@@ -1274,77 +1250,102 @@ float DfxGuiEditor::dfxgui_ContractParameterValue(long inParameterIndex, float i
 	else
 	{
 		assert(false);  // really the above should not be failing
-		auto const auParam = dfxgui_MakeAudioUnitParameter(inParameterIndex);
+		auto const auParam = dfxgui_MakeAudioUnitParameter(inParameterID);
+		return AUParameterValueFromLinear(inValue, &auParam);
+	}
+#else
+	return dfxgui_GetEffectInstance()->expandparametervalue(inParameterID, inValue);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+float DfxGuiEditor::dfxgui_ContractParameterValue(dfx::ParameterID inParameterID, float inValue)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	dfx::ParameterValueConversionRequest request;
+	request.inConversionType = dfx::ParameterValueConversionType::Contract;
+	request.inValue = inValue;
+	size_t dataSize = sizeof(request);
+	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValueConversion, dfx::kScope_Global, 
+										   inParameterID, &request, dataSize);
+	if (status == noErr)
+	{
+		return request.outValue;
+	}
+	else
+	{
+		assert(false);  // really the above should not be failing
+		auto const auParam = dfxgui_MakeAudioUnitParameter(inParameterID);
 		return AUParameterValueToLinear(inValue, &auParam);
 	}
 #else
-	return dfxgui_GetEffectInstance()->contractparametervalue(inParameterIndex, inValue);
+	return dfxgui_GetEffectInstance()->contractparametervalue(inParameterID, inValue);
 #endif
 }
 
 //-----------------------------------------------------------------------------
-float DfxGuiEditor::GetParameter_minValue(long inParameterIndex)
+float DfxGuiEditor::GetParameter_minValue(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	if (auto const parameterInfo = dfxgui_GetParameterInfo(inParameterIndex))
+	if (auto const parameterInfo = dfxgui_GetParameterInfo(inParameterID))
 	{
 		return parameterInfo->minValue;
 	}
+	return 0.f;
 #else
-	return dfxgui_GetEffectInstance()->getparametermin_f(inParameterIndex);
+	return dfxgui_GetEffectInstance()->getparametermin_f(inParameterID);
 #endif
-	return 0.0f;
 }
 
 //-----------------------------------------------------------------------------
-float DfxGuiEditor::GetParameter_maxValue(long inParameterIndex)
+float DfxGuiEditor::GetParameter_maxValue(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	if (auto const parameterInfo = dfxgui_GetParameterInfo(inParameterIndex))
+	if (auto const parameterInfo = dfxgui_GetParameterInfo(inParameterID))
 	{
 		return parameterInfo->maxValue;
 	}
+	return 0.f;
 #else
-	return dfxgui_GetEffectInstance()->getparametermax_f(inParameterIndex);
+	return dfxgui_GetEffectInstance()->getparametermax_f(inParameterID);
 #endif
-	return 0.0f;
 }
 
 //-----------------------------------------------------------------------------
-float DfxGuiEditor::GetParameter_defaultValue(long inParameterIndex)
+float DfxGuiEditor::GetParameter_defaultValue(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	if (auto const parameterInfo = dfxgui_GetParameterInfo(inParameterIndex))
+	if (auto const parameterInfo = dfxgui_GetParameterInfo(inParameterID))
 	{
 		return parameterInfo->defaultValue;
 	}
+	return 0.f;
 #else
-	return dfxgui_GetEffectInstance()->getparameterdefault_f(inParameterIndex);
+	return dfxgui_GetEffectInstance()->getparameterdefault_f(inParameterID);
 #endif
-	return 0.0f;
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::ValueType DfxGuiEditor::GetParameterValueType(long inParameterIndex)
+DfxParam::ValueType DfxGuiEditor::GetParameterValueType(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	return dfxgui_GetProperty<DfxParam::ValueType>(dfx::kPluginProperty_ParameterValueType, 
 												   dfx::kScope_Global, 
-												   inParameterIndex).value_or(DfxParam::ValueType::Float);
+												   inParameterID).value_or(DfxParam::ValueType::Float);
 #else
-	return dfxgui_GetEffectInstance()->getparametervaluetype(inParameterIndex);
+	return dfxgui_GetEffectInstance()->getparametervaluetype(inParameterID);
 #endif
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Unit DfxGuiEditor::GetParameterUnit(long inParameterIndex)
+DfxParam::Unit DfxGuiEditor::GetParameterUnit(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	return dfxgui_GetProperty<DfxParam::Unit>(dfx::kPluginProperty_ParameterUnit, 
 											  dfx::kScope_Global, 
-											  inParameterIndex).value_or(DfxParam::Unit::Generic);
+											  inParameterID).value_or(DfxParam::Unit::Generic);
 #else
-	return dfxgui_GetEffectInstance()->getparameterunit(inParameterIndex);
+	return dfxgui_GetEffectInstance()->getparameterunit(inParameterID);
 #endif
 }
 
@@ -1382,7 +1383,7 @@ size_t DfxGuiEditor::GetNumParameters()
 }
 
 //-----------------------------------------------------------------------------
-std::vector<long> DfxGuiEditor::GetParameterList()
+std::vector<dfx::ParameterID> DfxGuiEditor::GetParameterList() const
 {
 #ifdef TARGET_API_AUDIOUNIT
 	std::lock_guard const guard(mParameterListLock);
@@ -1403,7 +1404,7 @@ AudioUnitParameter DfxGuiEditor::dfxgui_MakeAudioUnitParameter(AudioUnitParamete
 }
 
 //-----------------------------------------------------------------------------
-std::vector<long> DfxGuiEditor::CreateParameterList(AudioUnitScope inScope)
+std::vector<dfx::ParameterID> DfxGuiEditor::CreateParameterList(AudioUnitScope inScope)
 {
 	size_t dataSize {};
 	dfx::PropertyFlags propFlags {};
@@ -1434,7 +1435,7 @@ std::vector<long> DfxGuiEditor::CreateParameterList(AudioUnitScope inScope)
 
 	mAUMaxParameterID = *std::max_element(parameterList.cbegin(), parameterList.cend());
 
-	return std::vector<long>(parameterList.cbegin(), parameterList.cend());
+	return std::vector<dfx::ParameterID>(parameterList.cbegin(), parameterList.cend());
 }
 #endif
 
@@ -1729,71 +1730,66 @@ void DfxGuiEditor::resetmidilearn()
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::setmidilearner(long inParameterIndex)
+void DfxGuiEditor::setmidilearner(dfx::ParameterID inParameterID)
 {
-	if (dfxgui_IsValidParamID(inParameterIndex) && !getmidilearning())
+	if (dfxgui_IsValidParameterID(inParameterID) && !getmidilearning())
 	{
 		setmidilearning(true);
 	}
 #ifdef TARGET_API_AUDIOUNIT
-	dfxgui_SetProperty(dfx::kPluginProperty_MidiLearner, static_cast<int32_t>(inParameterIndex));
+	dfxgui_SetProperty(dfx::kPluginProperty_MidiLearner, static_cast<uint32_t>(inParameterID));
 #else
-	dfxgui_GetEffectInstance()->setmidilearner(inParameterIndex);
+	dfxgui_GetEffectInstance()->setmidilearner(inParameterID);
 #endif
 }
 
 //-----------------------------------------------------------------------------
-long DfxGuiEditor::getmidilearner()
+dfx::ParameterID DfxGuiEditor::getmidilearner()
 {
 #ifdef TARGET_API_AUDIOUNIT
-	return dfxgui_GetProperty<int32_t>(dfx::kPluginProperty_MidiLearner).value_or(dfx::kParameterID_Invalid);
+	return dfxgui_GetProperty<uint32_t>(dfx::kPluginProperty_MidiLearner).value_or(dfx::kParameterID_Invalid);
 #else
 	return dfxgui_GetEffectInstance()->getmidilearner();
 #endif
 }
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::ismidilearner(long inParameterIndex)
+bool DfxGuiEditor::ismidilearner(dfx::ParameterID inParameterID)
 {
-	return (getmidilearner() == inParameterIndex);
+	return (getmidilearner() == inParameterID);
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::setparametermidiassignment(long inParameterIndex, dfx::ParameterAssignment const& inAssignment)
+void DfxGuiEditor::setparametermidiassignment(dfx::ParameterID inParameterID, dfx::ParameterAssignment const& inAssignment)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	dfxgui_SetProperty(dfx::kPluginProperty_ParameterMidiAssignment, dfx::kScope_Global, inParameterIndex, inAssignment);
+	dfxgui_SetProperty(dfx::kPluginProperty_ParameterMidiAssignment, dfx::kScope_Global, inParameterID, inAssignment);
 #else
-	dfxgui_GetEffectInstance()->setparametermidiassignment(inParameterIndex, inAssignment);
+	dfxgui_GetEffectInstance()->setparametermidiassignment(inParameterID, inAssignment);
 #endif
 }
 
 //-----------------------------------------------------------------------------
-dfx::ParameterAssignment DfxGuiEditor::getparametermidiassignment(long inParameterIndex)
+dfx::ParameterAssignment DfxGuiEditor::getparametermidiassignment(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	auto const opt = dfxgui_GetProperty<dfx::ParameterAssignment>(dfx::kPluginProperty_ParameterMidiAssignment,
-																  dfx::kScope_Global,
-																  inParameterIndex);
-	if (opt.has_value())
-	{
-		return *opt;
-	}
-
+	auto const parameterAssignment = dfxgui_GetProperty<dfx::ParameterAssignment>(dfx::kPluginProperty_ParameterMidiAssignment,
+																				  dfx::kScope_Global,
+																				  inParameterID);
 	dfx::ParameterAssignment none;
 	none.mEventType = dfx::MidiEventType::None;
-	return none;
+	return parameterAssignment.value_or(none);
 #else
-	return dfxgui_GetEffectInstance()->getparametermidiassignment(inParameterIndex);
+	return dfxgui_GetEffectInstance()->getparametermidiassignment(inParameterID);
 #endif
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::parametermidiunassign(long inParameterIndex)
+void DfxGuiEditor::parametermidiunassign(dfx::ParameterID inParameterID)
 {
 	dfx::ParameterAssignment parameterAssignment;
 	parameterAssignment.mEventType = dfx::MidiEventType::None;
-	setparametermidiassignment(inParameterIndex, parameterAssignment);
+	setparametermidiassignment(inParameterID, parameterAssignment);
 }
 
 //-----------------------------------------------------------------------------
@@ -1837,7 +1833,7 @@ bool DfxGuiEditor::getMidiAssignmentsSteal()
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::TextEntryForParameterMidiCC(long inParameterID)
+void DfxGuiEditor::TextEntryForParameterMidiCC(dfx::ParameterID inParameterID)
 {
 	if (!getFrame())
 	{
@@ -2035,10 +2031,10 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 	{
 		auto const addParameterSubMenu = [this, &resultMenu](IDGControl const* control)
 		{
-			auto const paramID = control->getParameterID();
-			if (auto const parameterSubMenu = createParameterContextualMenu(paramID))
+			auto const parameterID = control->getParameterID();
+			if (auto const parameterSubMenu = createParameterContextualMenu(parameterID))
 			{
-				resultMenu.addEntry(parameterSubMenu, getparametername(paramID));
+				resultMenu.addEntry(parameterSubMenu, getparametername(parameterID));
 			}
 		};
 		addParameterSubMenu(inControl);
@@ -2124,9 +2120,9 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextualMenu(long inParameterID)
+VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextualMenu(dfx::ParameterID inParameterID)
 {
-	assert(dfxgui_IsValidParamID(inParameterID));
+	assert(dfxgui_IsValidParameterID(inParameterID));
 
 	auto resultMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
 	assert(resultMenu.get());
@@ -2179,7 +2175,7 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 	resultMenu->addSeparator();
 	DFX_AppendCommandItemToMenu(*resultMenu, "MIDI learner", 
 								std::bind(&DfxGuiEditor::setmidilearner, this, 
-										  ismidilearner(inParameterID) ? DfxSettings::kNoLearner : inParameterID), 
+										  ismidilearner(inParameterID) ? dfx::kParameterID_Invalid : inParameterID), 
 								true, ismidilearner(inParameterID));
 	{
 		VSTGUI::UTF8String menuItemText = "Unassign MIDI control";
@@ -3247,15 +3243,15 @@ void DfxGuiEditor::GetControlIndexFromPoint(long inXpos, long inYpos, long* outC
 // Called by process when a control's highlight has changed
 void DfxGuiEditor::SetControlHighlight(long inControlIndex, short inIsHighlighted, short inColor)
 {
-	inControlIndex = dfx::ParameterID_FromRTAS(inControlIndex);
+	auto const parameterID = dfx::ParameterID_FromRTAS(inControlIndex);
 	if (!inIsHighlighted)
 	{
 		inColor = eHighlight_None;
 	}
 
-	if (dfxgui_IsValidParamID(inControlIndex))
+	if (dfxgui_IsValidParameterID(parameterID))
 	{
-		mParameterHighlightColors.at(inControlIndex) = inColor;
+		mParameterHighlightColors.at(parameterID) = inColor;
 	}
 
 	if (IsOpen())
@@ -3271,14 +3267,14 @@ void DfxGuiEditor::drawControlHighlight(VSTGUI::CDrawContext* inContext, VSTGUI:
 	assert(inContext);
 	assert(inControl);
 
-	auto const parameterIndex = inControl->getTag();
-	if (!dfxgui_IsValidParamID(parameterIndex))
+	auto const parameterID = dfx::ParameterID_FromVST(inControl->getTag());
+	if (!dfxgui_IsValidParameterID(parameterID))
 	{
 		return;
 	}
 
 	VSTGUI::CColor highlightColor;
-	switch (mParameterHighlightColors.at(parameterIndex))
+	switch (mParameterHighlightColors.at(parameterID))
 	{
 		case eHighlight_Red:
 			highlightColor = VSTGUI::MakeCColor(255, 0, 0);

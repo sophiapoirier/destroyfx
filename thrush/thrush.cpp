@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Thrush.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "thrush.h"
@@ -43,26 +43,26 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true);
 	initparameter_f(kLFO1Rate_Hz, {"LFO1 rate (free)", "seven", "six", "four"}, 3., 3., kLFORateMin, kLFORateMax, DfxParam::Unit::Hz, DfxParam::Curve::Squared);
 	initparameter_list(kLFO1Rate_Sync, {"LFO1 rate (sync)", "seven", "six", "four"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
-	initparameter_b(kLFO1tempoSync, {"LFO1 tempo sync", "seven", "six", "four"}, false);
-	initparameter_f(kLFO1depth, {"LFO1 depth", "seven", "six", "four"}, 81., 0., 0., 100., DfxParam::Unit::Percent);
-	initparameter_list(kLFO1shape, {"LFO1 shape", "seven", "six", "four"}, dfx::LFO::kShape_Thorn, dfx::LFO::kShape_Thorn, dfx::LFO::kNumShapes);
+	initparameter_b(kLFO1TempoSync, {"LFO1 tempo sync", "seven", "six", "four"}, false);
+	initparameter_f(kLFO1Depth, {"LFO1 depth", "seven", "six", "four"}, 81., 0., 0., 100., DfxParam::Unit::Percent);
+	initparameter_list(kLFO1Shape, {"LFO1 shape", "seven", "six", "four"}, dfx::LFO::kShape_Thorn, dfx::LFO::kShape_Thorn, dfx::LFO::kNumShapes);
 	initparameter_f(kLFO2Rate_Hz, {"LFO2 rate (free)", "seven", "six", "four"}, 6., 6., kLFORateMin, kLFORateMax, DfxParam::Unit::Hz, DfxParam::Curve::Squared);
 	initparameter_list(kLFO2Rate_Sync, {"LFO2 rate (sync)", "seven", "six", "four"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
-	initparameter_b(kLFO2tempoSync, {"LFO2 tempo sync", "seven", "six", "four"}, false);
-	initparameter_f(kLFO2depth, {"LFO2 depth", "seven", "six", "four"}, 0., 0., kLFO2DepthMin, kLFO2DepthMax, DfxParam::Unit::Scalar);
-	initparameter_list(kLFO2shape, {"LFO2 shape", "seven", "six", "four"}, dfx::LFO::kShape_Triangle, dfx::LFO::kShape_Triangle, dfx::LFO::kNumShapes);
+	initparameter_b(kLFO2TempoSync, {"LFO2 tempo sync", "seven", "six", "four"}, false);
+	initparameter_f(kLFO2Depth, {"LFO2 depth", "seven", "six", "four"}, 0., 0., kLFO2DepthMin, kLFO2DepthMax, DfxParam::Unit::Scalar);
+	initparameter_list(kLFO2Shape, {"LFO2 shape", "seven", "six", "four"}, dfx::LFO::kShape_Triangle, dfx::LFO::kShape_Triangle, dfx::LFO::kNumShapes);
 	initparameter_b(kStereoLink, {"stereo link", "seven", "six", "four"}, true);
 	initparameter_i(kDelay2, {"inverse delay R", "seven", "six", "four"}, 3, 3, kDelaySamplesMin, kDelaySamplesMax, DfxParam::Unit::Samples);
 	initparameter_f(kLFO1Rate2_Hz, {"LFO1 rate R (free)", "seven", "six", "four"}, 9., 9., kLFORateMin, kLFORateMax, DfxParam::Unit::Hz, DfxParam::Curve::Squared);
 	initparameter_list(kLFO1Rate2_Sync, {"LFO1 rate R (sync)", "seven", "six", "four"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
-	initparameter_b(kLFO1tempoSync2, {"LFO1 tempo sync R", "seven", "six", "four"}, false);
-	initparameter_f(kLFO1depth2, {"LFO1 depth R", "seven", "six", "four"}, 30., 0., 0., 100., DfxParam::Unit::Percent);
-	initparameter_list(kLFO1shape2, {"LFO1 shape R", "seven", "six", "four"}, dfx::LFO::kShape_Square, dfx::LFO::kShape_Square, dfx::LFO::kNumShapes);
+	initparameter_b(kLFO1TempoSync2, {"LFO1 tempo sync R", "seven", "six", "four"}, false);
+	initparameter_f(kLFO1Depth2, {"LFO1 depth R", "seven", "six", "four"}, 30., 0., 0., 100., DfxParam::Unit::Percent);
+	initparameter_list(kLFO1Shape2, {"LFO1 shape R", "seven", "six", "four"}, dfx::LFO::kShape_Square, dfx::LFO::kShape_Square, dfx::LFO::kNumShapes);
 	initparameter_f(kLFO2Rate2_Hz, {"LFO2 rate R (free)", "seven", "six", "four"}, 12., 12., kLFORateMin, kLFORateMax, DfxParam::Unit::Hz, DfxParam::Curve::Squared);
 	initparameter_list(kLFO2Rate2_Sync, {"LFO2 rate R (sync)", "seven", "six", "four"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
-	initparameter_b(kLFO2tempoSync2, {"LFO2 tempo sync R", "seven", "six", "four"}, false);
-	initparameter_f(kLFO2depth2, {"LFO2 depth R", "seven", "six", "four"}, 0., 0., kLFO2DepthMin, kLFO2DepthMax, DfxParam::Unit::Scalar);
-	initparameter_list(kLFO2shape2, {"LFO2 shape R", "seven", "six", "four"}, dfx::LFO::kShape_Saw, dfx::LFO::kShape_Saw, dfx::LFO::kNumShapes);
+	initparameter_b(kLFO2TempoSync2, {"LFO2 tempo sync R", "seven", "six", "four"}, false);
+	initparameter_f(kLFO2Depth2, {"LFO2 depth R", "seven", "six", "four"}, 0., 0., kLFO2DepthMin, kLFO2DepthMax, DfxParam::Unit::Scalar);
+	initparameter_list(kLFO2Shape2, {"LFO2 shape R", "seven", "six", "four"}, dfx::LFO::kShape_Saw, dfx::LFO::kShape_Saw, dfx::LFO::kNumShapes);
 	initparameter_f(kDryWetMix, dfx::MakeParameterNames(dfx::kParameterNames_DryWetMix), 100., 50., 0.0, 100.0, DfxParam::Unit::DryWetMix);
 
 	setparameterenforcevaluelimits(kDelay, true);
@@ -72,10 +72,10 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	for (dfx::LFO::Shape i = 0; i < dfx::LFO::kNumShapes; i++)
 	{
 		auto const shapeName = dfx::LFO::getShapeName(i);
-		setparametervaluestring(kLFO1shape, i, shapeName);
-		setparametervaluestring(kLFO2shape, i, shapeName);
-		setparametervaluestring(kLFO1shape2, i, shapeName);
-		setparametervaluestring(kLFO2shape2, i, shapeName);
+		setparametervaluestring(kLFO1Shape, i, shapeName);
+		setparametervaluestring(kLFO2Shape, i, shapeName);
+		setparametervaluestring(kLFO1Shape2, i, shapeName);
+		setparametervaluestring(kLFO2Shape2, i, shapeName);
 	}
 	// set the value strings for the sync rate parameters
 	for (long i = 0; i < mTempoRateTable.getNumRates(); i++)
@@ -90,14 +90,14 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	addparametergroup("global/left",
 	{
 		kDelay,
-		kLFO1Rate_Hz, kLFO1Rate_Sync, kLFO1tempoSync, kLFO1depth, kLFO1shape,
-		kLFO2Rate_Hz, kLFO2Rate_Sync, kLFO2tempoSync, kLFO2depth, kLFO2shape
+		kLFO1Rate_Hz, kLFO1Rate_Sync, kLFO1TempoSync, kLFO1Depth, kLFO1Shape,
+		kLFO2Rate_Hz, kLFO2Rate_Sync, kLFO2TempoSync, kLFO2Depth, kLFO2Shape
 	});
 	addparametergroup("right",
 	{
 		kStereoLink, kDelay2,
-		kLFO1Rate2_Hz, kLFO1Rate2_Sync, kLFO1tempoSync2, kLFO1depth2, kLFO1shape2,
-		kLFO2Rate2_Hz, kLFO2Rate2_Sync, kLFO2tempoSync2, kLFO2depth2, kLFO2shape2
+		kLFO1Rate2_Hz, kLFO1Rate2_Sync, kLFO1TempoSync2, kLFO1Depth2, kLFO1Shape2,
+		kLFO2Rate2_Hz, kLFO2Rate2_Sync, kLFO2TempoSync2, kLFO2Depth2, kLFO2Shape2
 	});
 
 	addchannelconfig(2, 2);  // stereo in / stereo out
@@ -162,16 +162,16 @@ void Thrush::initPresets()
 
 	setpresetname(i, "vibber");
 //	setpresetparameter_i(i, kDelay, );
-	setpresetparameter_b(i, kLFO1tempoSync, false);
+	setpresetparameter_b(i, kLFO1TempoSync, false);
 //	setpresetparameter_f(i, kLFO1Rate_Hz, );
-//	setpresetparameter_f(i, kLFO1depth, );
-	setpresetparameter_i(i, kLFO1shape, dfx::LFO::kShape_Saw);
+//	setpresetparameter_f(i, kLFO1Depth, );
+	setpresetparameter_i(i, kLFO1Shape, dfx::LFO::kShape_Saw);
 	setpresetparameter_b(i, kStereoLink, false);
 //	setpresetparameter_i(i, kDelay2, );
-	setpresetparameter_b(i, kLFO1tempoSync2, false);
+	setpresetparameter_b(i, kLFO1TempoSync2, false);
 //	setpresetparameter_f(i, kLFO1Rate2_Hz, );
-//	setpresetparameter_f(i, kLFO1depth2, );
-	setpresetparameter_i(i, kLFO1shape2, dfx::LFO::kShape_Saw);
+//	setpresetparameter_f(i, kLFO1Depth2, );
+	setpresetparameter_i(i, kLFO1Shape2, dfx::LFO::kShape_Saw);
 	setpresetparameter_f(i, kDryWetMix, 100.);
 	i++;
 };
@@ -254,15 +254,15 @@ void Thrush::processparameters()
 		mNeedResync = true;
 	}
 
-	if (auto const value = getparameterifchanged_b(kLFO1tempoSync))
+	if (auto const value = getparameterifchanged_b(kLFO1TempoSync))
 	{
 		mLFO1.mTempoSync = *value;
 		// need to resync if tempo sync mode has just been switched on
 		mNeedResync |= *value;
 	}
 
-	mLFO1.setDepth(getparameter_scalar(kLFO1depth));
-	mLFO1.setShape(getparameter_i(kLFO1shape));
+	mLFO1.setDepth(getparameter_scalar(kLFO1Depth));
+	mLFO1.setShape(getparameter_i(kLFO1Shape));
 
 	mLFO2.mRateHz = getparameter_f(kLFO2Rate_Hz);
 	// make sure the cycles match up if the tempo rate has changed
@@ -272,15 +272,15 @@ void Thrush::processparameters()
 		mNeedResync = true;
 	}
 
-	if (auto const value = getparameterifchanged_b(kLFO2tempoSync))
+	if (auto const value = getparameterifchanged_b(kLFO2TempoSync))
 	{
 		mLFO2.mTempoSync = *value;
 		// need to resync if tempo sync mode has just been switched on
 		mNeedResync |= *value;
 	}
 
-	mLFO2.setDepth(getparameter_gen(kLFO2depth));
-	mLFO2.setShape(getparameter_i(kLFO2shape));
+	mLFO2.setDepth(getparameter_gen(kLFO2Depth));
+	mLFO2.setShape(getparameter_i(kLFO2Shape));
 
 	mStereoLink = getparameter_b(kStereoLink);
 
@@ -288,27 +288,27 @@ void Thrush::processparameters()
 	mLFO1_2.mRateHz = getparameter_f(kLFO1Rate2_Hz);
 	mLFO1_2.mTempoRateScalar = mTempoRateTable.getScalar(getparameter_i(kLFO1Rate2_Sync));
 
-	if (auto const value = getparameterifchanged_b(kLFO1tempoSync2))
+	if (auto const value = getparameterifchanged_b(kLFO1TempoSync2))
 	{
 		mLFO1_2.mTempoSync = *value;
 		// need to resync if tempo sync mode has just been switched on
 		mNeedResync |= (!mStereoLink && *value);
 	}
 
-	mLFO1_2.setDepth(getparameter_scalar(kLFO1depth2));
-	mLFO1_2.setShape(getparameter_i(kLFO1shape2));
+	mLFO1_2.setDepth(getparameter_scalar(kLFO1Depth2));
+	mLFO1_2.setShape(getparameter_i(kLFO1Shape2));
 	mLFO2_2.mRateHz = getparameter_f(kLFO2Rate2_Hz);
 	mLFO2_2.mTempoRateScalar = mTempoRateTable.getScalar(getparameter_i(kLFO2Rate2_Sync));
 
-	if (auto const value = getparameterifchanged_b(kLFO2tempoSync2))
+	if (auto const value = getparameterifchanged_b(kLFO2TempoSync2))
 	{
 		mLFO2_2.mTempoSync = *value;
 		// need to resync if tempo sync mode has just been switched on
 		mNeedResync |= (!mStereoLink && *value);
 	}
 
-	mLFO2_2.setDepth(getparameter_gen(kLFO2depth2));
-	mLFO2_2.setShape(getparameter_i(kLFO2shape2));
+	mLFO2_2.setDepth(getparameter_gen(kLFO2Depth2));
+	mLFO2_2.setShape(getparameter_i(kLFO2Shape2));
 
 	if (auto const value = getparameterifchanged_scalar(kDryWetMix))
 	{
@@ -331,7 +331,7 @@ void Thrush::processaudio(float const* const* inAudio, float* const* outAudio, s
 	for (size_t sampleIndex = 0; sampleIndex < inNumFrames; sampleIndex++)
 	{
 		// evaluate the sample-by-sample output of the LFOs
-		auto const normalizedOffset = [this](long parameterID, double normalizedValue, ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2)
+		auto const normalizedOffset = [this](dfx::ParameterID parameterID, double normalizedValue, ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2)
 		{
 			auto const delayOffset = processLFOs(lfoLayer1, lfoLayer2);
 			return expandparametervalue(parameterID, normalizedValue * delayOffset);

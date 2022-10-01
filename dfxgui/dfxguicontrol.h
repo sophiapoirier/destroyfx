@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -72,8 +72,8 @@ public:
 
 	void redraw() final;
 
-	long getParameterID() const final;
-	void setParameterID(long inParameterID) final;
+	dfx::ParameterID getParameterID() const final;
+	void setParameterID(dfx::ParameterID inParameterID) final;
 	bool isParameterAttached() const final;
 
 	size_t getNumStates() const final
@@ -230,12 +230,12 @@ public:
 	void endEdit_all();
 	bool isEditing_any() const;
 
-	IDGControl* getControlByParameterID(long inParameterID);
+	IDGControl* getControlByParameterID(dfx::ParameterID inParameterID);
 
 protected:
-	IDGControl* addChild(long inParameterID);
+	IDGControl* addChild(dfx::ParameterID inParameterID);
 	// TODO: C++23 use std::span?
-	void addChildren(std::vector<long> const& inParameterID);
+	void addChildren(std::vector<dfx::ParameterID> const& inParameterID);
 
 	template <typename Proc>
 	void forEachChild(Proc inProc);
@@ -246,7 +246,7 @@ private:
 	class DGMultiControlChild final : public DGControl<VSTGUI::CControl>
 	{
 	public:
-		DGMultiControlChild(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, long inParameterID);
+		DGMultiControlChild(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, dfx::ParameterID inParameterID);
 		void draw(VSTGUI::CDrawContext*) override {}
 		CLASS_METHODS(DGMultiControlChild, VSTGUI::CControl)
 	};

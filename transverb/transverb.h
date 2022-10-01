@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -121,7 +121,7 @@ protected:
   void settings_saveExtendedData(void* outData, bool isPreset) override;
   void settings_restoreExtendedData(void const* inData, size_t storedExtendedDataSize,
                                     unsigned int dataVersion, bool isPreset) override;
-  void settings_doChunkRestoreSetParameterStuff(long tag, float value, unsigned int dataVersion, std::optional<size_t> presetIndex) override;
+  void settings_doChunkRestoreSetParameterStuff(dfx::ParameterID parameterID, float value, unsigned int dataVersion, std::optional<size_t> presetIndex) override;
 
 private:
   static constexpr size_t kNumPresets = 16;

@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "dfxguislider.h"
@@ -108,11 +108,11 @@ static void CancelControl(IDGControl* inControl, float inStartValue)
 #pragma mark DGSlider
 
 //-----------------------------------------------------------------------------
-DGSlider::DGSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
-				   dfx::Axis inOrientation, DGImage* inHandleImage, DGImage* inBackgroundImage, long inRangeMargin)
+DGSlider::DGSlider(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion, 
+				   dfx::Axis inOrientation, DGImage* inHandleImage, DGImage* inBackgroundImage, int inRangeMargin)
 :	DGControl<VSTGUI::CSlider>(inRegion, 
 							   inOwnerEditor, 
-							   inParamID, 
+							   dfx::ParameterID_ToVST(inParameterID), 
 							   VSTGUI::CPoint((inOrientation & dfx::kAxis_Horizontal) ? inRangeMargin : 0, 
 											  (inOrientation & dfx::kAxis_Vertical) ? inRangeMargin : 0), 
 							   (inOrientation & dfx::kAxis_Horizontal) ? (inRegion.getWidth() - (inRangeMargin * 2)) : (inRegion.getHeight() - (inRangeMargin * 2)), 
@@ -216,14 +216,15 @@ void DGSlider::setMidiLearner(bool inEnable)
 #pragma mark DGRangeSlider
 
 //-----------------------------------------------------------------------------
-DGRangeSlider::DGRangeSlider(DfxGuiEditor* inOwnerEditor, long inLowerParamID, long inUpperParamID, DGRect const& inRegion, 
+DGRangeSlider::DGRangeSlider(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inLowerParameterID, dfx::ParameterID inUpperParameterID, 
+							 DGRect const& inRegion, 
 							 DGImage* inLowerHandleImage, DGImage* inUpperHandleImage, 
-							 DGImage* inBackgroundImage, PushStyle inPushStyle, long inOvershoot)
+							 DGImage* inBackgroundImage, PushStyle inPushStyle, int inOvershoot)
 :	DGMultiControl<VSTGUI::CControl>(inRegion, 
 									 inOwnerEditor, 
-									 inUpperParamID,
+									 dfx::ParameterID_ToVST(inUpperParameterID),
 									 inBackgroundImage),
-	mLowerControl(addChild(inLowerParamID)),
+	mLowerControl(addChild(inLowerParameterID)),
 	mUpperControl(this),
 	mLowerMainHandleImage(inLowerHandleImage),
 	mUpperMainHandleImage(inUpperHandleImage),
@@ -543,14 +544,14 @@ void DGRangeSlider::setMidiLearner(bool /*inEnable*/)
 #pragma mark DGXYBox
 
 //-----------------------------------------------------------------------------
-DGXYBox::DGXYBox(DfxGuiEditor* inOwnerEditor, long inParamIDX, long inParamIDY, DGRect const& inRegion, 
-				 DGImage* inHandleImage, DGImage* inBackgroundImage, int inStyle)
+DGXYBox::DGXYBox(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterIDX, dfx::ParameterID inParameterIDY, 
+				 DGRect const& inRegion, DGImage* inHandleImage, DGImage* inBackgroundImage, int inStyle)
 :	DGMultiControl<VSTGUI::CControl>(inRegion, 
 									 inOwnerEditor, 
-									 inParamIDX, 
+									 dfx::ParameterID_ToVST(inParameterIDX), 
 									 inBackgroundImage),
 	mControlX(this), 
-	mControlY(addChild(inParamIDY)), 
+	mControlY(addChild(inParameterIDY)), 
 	mMainHandleImage(inHandleImage),
 	mStyle(inStyle),
 	mHandleWidth(inHandleImage ? inHandleImage->getWidth() : 1), 
@@ -820,14 +821,16 @@ float DGXYBox::mapValueY(float inValue) const
 //-----------------------------------------------------------------------------
 // DGAnimation
 //-----------------------------------------------------------------------------
-DGAnimation::DGAnimation(DfxGuiEditor*	inOwnerEditor, 
-						 long			inParamID, 
-						 DGRect const&	inRegion, 
-						 DGImage*		inAnimationImage, 
-						 long			inNumAnimationFrames)
-:	DGControl<VSTGUI::CAnimKnob>(inRegion, inOwnerEditor, inParamID, 
+DGAnimation::DGAnimation(DfxGuiEditor*		inOwnerEditor, 
+						 dfx::ParameterID	inParameterID, 
+						 DGRect const&		inRegion, 
+						 DGImage*			inAnimationImage, 
+						 size_t				inNumAnimationFrames)
+:	DGControl<VSTGUI::CAnimKnob>(inRegion, inOwnerEditor, dfx::ParameterID_ToVST(inParameterID), 
 								 inNumAnimationFrames, inRegion.getHeight(), inAnimationImage)
 {
+	assert(inNumAnimationFrames > 0);
+
 	setTransparency(true);
 
 	setZoomFactor(getFineTuneFactor());

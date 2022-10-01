@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Geometer,
 Featuring the Super Destroy FX Windowing System!
@@ -57,7 +57,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_f(P_POINTPARAMS + POINT_DYDX, {"point:dydx", "PntDyDx", "PDyDx", "PDyx"}, 0.50, 0.50, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "gap");
   initparameter_f(P_POINTPARAMS + POINT_LEVEL, {"point:level", "PntLevl", "PLevel" "PLvl"}, 0.50, 0.50, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "level");
 
-  for(int pp = NUM_POINTSTYLES; pp < MAX_POINTSTYLES; pp++) {
+  for(dfx::ParameterID pp = NUM_POINTSTYLES; pp < MAX_POINTSTYLES; pp++) {
     initparameter_f(P_POINTPARAMS + pp, {"pointparam:unused", "PUnused", "Pxxx"}, 0.04, 0.04, 0.0, 1.0, DfxParam::Unit::Generic);
     setparameterattributes(P_POINTPARAMS + pp, DfxParam::kAttribute_Unused);  /* don't display as an available parameter */
   }
@@ -73,7 +73,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_f(P_INTERPARAMS + INTERP_SING, {"interp:sing", "IntSing", "ISing", "ISng"}, 0.8, 0.8, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "mod");
   initparameter_f(P_INTERPARAMS + INTERP_SHUFFLE, {"interp:shuffle", "IShuffl", "IShufl", "IShf"}, 0.3, 0.3, 0.0, 1.0, DfxParam::Unit::Generic);
 
-  for(int ip = NUM_INTERPSTYLES; ip < MAX_INTERPSTYLES; ip++) {
+  for(dfx::ParameterID ip = NUM_INTERPSTYLES; ip < MAX_INTERPSTYLES; ip++) {
     initparameter_f(P_INTERPARAMS + ip, {"inter:unused", "IUnused", "Ixxx"}, 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Generic);
     setparameterattributes(P_INTERPARAMS + ip, DfxParam::kAttribute_Unused);  /* don't display as an available parameter */
   }
@@ -98,7 +98,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   allop(OP_FAST, "fast", "fast", 0.5, DfxParam::Unit::Scalar, {});	// "factor"
   allop(OP_NONE, "none", "none", 0.0, DfxParam::Unit::Generic, {});
 
-  for(int op = NUM_OPS; op < MAX_OPS; op++) {
+  for(dfx::ParameterID op = NUM_OPS; op < MAX_OPS; op++) {
     allop(op, "unused", "xxx", 0.5, DfxParam::Unit::Generic, {});
     setparameterattributes(P_OPPAR1S + op, DfxParam::kAttribute_Unused);  /* don't display as an available parameter */
     setparameterattributes(P_OPPAR2S + op, DfxParam::kAttribute_Unused);  /* don't display as an available parameter */
@@ -121,7 +121,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setparametervaluestring(P_SHAPE, WINDOW_ARROW, "arrow");
   setparametervaluestring(P_SHAPE, WINDOW_WEDGE, "wedge");
   setparametervaluestring(P_SHAPE, WINDOW_COS, "best");
-  for (long i=NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
+  for (int i=NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
     setparametervaluestring(P_SHAPE, i, "???");
   /* geometer */
   setparametervaluestring(P_POINTSTYLE, POINT_EXTNCROSS, "ext 'n cross");
@@ -130,7 +130,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setparametervaluestring(P_POINTSTYLE, POINT_RANDOM, "randomly");
   setparametervaluestring(P_POINTSTYLE, POINT_SPAN, "span");
   setparametervaluestring(P_POINTSTYLE, POINT_DYDX, "dy/dx");
-  for (long i=NUM_POINTSTYLES; i < MAX_POINTSTYLES; i++)
+  for (int i=NUM_POINTSTYLES; i < MAX_POINTSTYLES; i++)
     setparametervaluestring(P_POINTSTYLE, i, "unsup");
   setparametervaluestring(P_INTERPSTYLE, INTERP_POLYGON, "polygon");
   setparametervaluestring(P_INTERPSTYLE, INTERP_WRONGYGON, "wrongygon");
@@ -140,7 +140,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setparametervaluestring(P_INTERPSTYLE, INTERP_FRIENDS, "friends");
   setparametervaluestring(P_INTERPSTYLE, INTERP_SING, "sing");
   setparametervaluestring(P_INTERPSTYLE, INTERP_SHUFFLE, "shuffle");
-  for (long i=NUM_INTERPSTYLES; i < MAX_INTERPSTYLES; i++)
+  for (int i=NUM_INTERPSTYLES; i < MAX_INTERPSTYLES; i++)
     setparametervaluestring(P_INTERPSTYLE, i, "unsup");
   auto const allopstr = [this](auto n, auto str) {
     setparametervaluestring(P_POINTOP1, n, str);
@@ -155,13 +155,13 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   allopstr(OP_SLOW, "slow");
   allopstr(OP_FAST, "fast");
   allopstr(OP_NONE, "none");
-  for (long i=NUM_OPS; i < MAX_OPS; i++)
+  for (int i=NUM_OPS; i < MAX_OPS; i++)
     allopstr(i, "unsup");
 
   addparametergroup("windowing", {P_BUFSIZE, P_SHAPE});
-  auto const addparameterrangegroup = [this](auto name, long parameterIndexBegin, long parameterIndexEnd) {
+  auto const addparameterrangegroup = [this](auto name, dfx::ParameterID parameterIndexBegin, dfx::ParameterID parameterIndexEnd) {
     assert(parameterIndexBegin < parameterIndexEnd);
-    std::vector<long> parameters(parameterIndexEnd - parameterIndexBegin, dfx::kParameterID_Invalid);
+    std::vector<dfx::ParameterID> parameters(parameterIndexEnd - parameterIndexBegin, dfx::kParameterID_Invalid);
     std::iota(parameters.begin(), parameters.end(), parameterIndexBegin);
     addparametergroup(name, parameters);
   };
@@ -224,11 +224,11 @@ long PLUGIN::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, u
   }
 }
 
-void PLUGIN::randomizeparameter(long inParameterIndex)
+void PLUGIN::randomizeparameter(dfx::ParameterID inParameterID)
 {
   // we need to constrain the range of values of the parameters that have extra (currently unused) room for future expansion
   int64_t maxValue = 0;
-  switch (inParameterIndex)
+  switch (inParameterID)
   {
     case P_SHAPE:
       maxValue = NUM_WINDOWSHAPES;
@@ -245,14 +245,14 @@ void PLUGIN::randomizeparameter(long inParameterIndex)
       maxValue = NUM_OPS;
       break;
     default:
-      DfxPlugin::randomizeparameter(inParameterIndex);
+      DfxPlugin::randomizeparameter(inParameterID);
       return;
   }
 
   auto const newValue = generateParameterRandomValue<int64_t>(0, maxValue - 1);
-  setparameter_i(inParameterIndex, newValue);
+  setparameter_i(inParameterID, newValue);
 
-  postupdate_parameter(inParameterIndex);	// inform any parameter listeners of the changes
+  postupdate_parameter(inParameterID);	// inform any parameter listeners of the changes
 }
 
 void PLUGIN::clearwindowcache()
@@ -312,10 +312,13 @@ void PLUGINCORE::updatewindowcache()
   }
 }
 
-std::optional<dfx::ParameterAssignment> PLUGIN::settings_getLearningAssignData(long inParameterIndex) const
+std::optional<dfx::ParameterAssignment> PLUGIN::settings_getLearningAssignData(dfx::ParameterID inParameterID) const
 {
-  auto const getConstrainedToggleAssignment = [](long inNumStates, long inNumUsableStates)
+  auto const getConstrainedToggleAssignment = [](int inNumStates, int inNumUsableStates)
   {
+    assert(inNumStates > 0);
+    assert(inNumUsableStates > 0);
+    assert(inNumUsableStates <= inNumStates);
     dfx::ParameterAssignment result;
     result.mEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_Toggle;
     result.mDataInt1 = inNumStates;
@@ -323,7 +326,7 @@ std::optional<dfx::ParameterAssignment> PLUGIN::settings_getLearningAssignData(l
     return result;
   };
 
-  switch (inParameterIndex)
+  switch (inParameterID)
   {
     case P_SHAPE:
       return getConstrainedToggleAssignment(MAX_WINDOWSHAPES, NUM_WINDOWSHAPES);

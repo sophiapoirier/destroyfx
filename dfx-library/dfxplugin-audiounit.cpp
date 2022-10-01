@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for E-Z plugin-making and E-Z multiple-API support.
@@ -68,7 +68,7 @@ void DfxPlugin::PostConstructor()
 
 	// make the global-scope element aware of the parameters' values
 	// this must happen after AUBase::PostConstructor because the elements are created there
-	for (long i = 0; i < getnumparameters(); i++)
+	for (dfx::ParameterID i = 0; i < getnumparameters(); i++)
 	{
 		if (!hasparameterattribute(i, DfxParam::kAttribute_Unused))  // XXX should we do it like this, or override GetParameterList?
 		{
@@ -298,7 +298,7 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			break;
 		// get/set the current MIDI learner parameter
 		case dfx::kPluginProperty_MidiLearner:
-			outDataSize = sizeof(int32_t);
+			outDataSize = sizeof(uint32_t);
 			outWritable = true;
 			break;
 		// get/set the MIDI assignment for a parameter
@@ -467,7 +467,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			if ((pvt->otherDesc.format == kOtherPluginFormat_kVST) && (pvt->otherDesc.plugin.mSubType == PLUGIN_ID))
 			{
 				pvt->auParamID = pvt->otherParamID;
-				pvt->auValue = expandparametervalue(static_cast<long>(pvt->otherParamID), pvt->otherValue);
+				pvt->auValue = expandparametervalue(pvt->otherParamID, pvt->otherValue);
 			}
 			else
 			{
@@ -488,7 +488,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			}
 		#endif
 			auto& value = request->value;
-			auto const paramID = static_cast<long>(inElement);
+			dfx::ParameterID const parameterID = inElement;
 			switch (request->inValueItem)
 			{
 				case dfx::ParameterValueItem::Current:
@@ -496,13 +496,13 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					switch (request->inValueType)
 					{
 						case DfxParam::ValueType::Float:
-							value.f = getparameter_f(paramID);
+							value.f = getparameter_f(parameterID);
 							break;
 						case DfxParam::ValueType::Int:
-							value.i = getparameter_i(paramID);
+							value.i = getparameter_i(parameterID);
 							break;
 						case DfxParam::ValueType::Boolean:
-							value.b = getparameter_b(paramID);
+							value.b = getparameter_b(parameterID);
 							break;
 						default:
 							assert(false);
@@ -516,13 +516,13 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					switch (request->inValueType)
 					{
 						case DfxParam::ValueType::Float:
-							value.f = getparameterdefault_f(paramID);
+							value.f = getparameterdefault_f(parameterID);
 							break;
 						case DfxParam::ValueType::Int:
-//							value.i = getparameterdefault_i(paramID);
+//							value.i = getparameterdefault_i(parameterID);
 							break;
 						case DfxParam::ValueType::Boolean:
-//							value.b = getparameterdefault_b(paramID);
+//							value.b = getparameterdefault_b(parameterID);
 							break;
 						default:
 							assert(false);
@@ -536,13 +536,13 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					switch (request->inValueType)
 					{
 						case DfxParam::ValueType::Float:
-							value.f = getparametermin_f(paramID);
+							value.f = getparametermin_f(parameterID);
 							break;
 						case DfxParam::ValueType::Int:
-							value.i = getparametermin_i(paramID);
+							value.i = getparametermin_i(parameterID);
 							break;
 						case DfxParam::ValueType::Boolean:
-//							value.b = getparametermin_b(paramID);
+//							value.b = getparametermin_b(parameterID);
 							value.b = false;
 							break;
 						default:
@@ -557,13 +557,13 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					switch (request->inValueType)
 					{
 						case DfxParam::ValueType::Float:
-							value.f = getparametermax_f(paramID);
+							value.f = getparametermax_f(parameterID);
 							break;
 						case DfxParam::ValueType::Int:
-							value.i = getparametermax_i(paramID);
+							value.i = getparametermax_i(parameterID);
 							break;
 						case DfxParam::ValueType::Boolean:
-//							value.b = getparametermax_b(paramID);
+//							value.b = getparametermax_b(parameterID);
 							value.b = true;
 							break;
 						default:
@@ -752,7 +752,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 		// get the current MIDI learner parameter
 		case dfx::kPluginProperty_MidiLearner:
-			*static_cast<int32_t*>(outData) = getmidilearner();
+			*static_cast<uint32_t*>(outData) = getmidilearner();
 			break;
 		// get the MIDI assignment for a parameter
 		case dfx::kPluginProperty_ParameterMidiAssignment:
@@ -910,7 +910,7 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			}
 		#endif
 			auto const& value = request->value;
-			long paramID = inElement;
+			dfx::ParameterID const parameterID = inElement;
 			switch (request->inValueItem)
 			{
 				case dfx::ParameterValueItem::Current:
@@ -918,16 +918,16 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 					switch (request->inValueType)
 					{
 						case DfxParam::ValueType::Float:
-							setparameter_f(paramID, value.f);
-							postupdate_parameter(paramID);
+							setparameter_f(parameterID, value.f);
+							postupdate_parameter(parameterID);
 							break;
 						case DfxParam::ValueType::Int:
-							setparameter_i(paramID, value.i);
-							postupdate_parameter(paramID);
+							setparameter_i(parameterID, value.i);
+							postupdate_parameter(parameterID);
 							break;
 						case DfxParam::ValueType::Boolean:
-							setparameter_b(paramID, value.b);
-							postupdate_parameter(paramID);
+							setparameter_b(parameterID, value.b);
+							postupdate_parameter(parameterID);
 							break;
 						default:
 							assert(false);
@@ -1004,7 +1004,7 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 		// set the current MIDI learner parameter
 		case dfx::kPluginProperty_MidiLearner:
-			setmidilearner(*static_cast<int32_t const*>(inData));
+			setmidilearner(*static_cast<uint32_t const*>(inData));
 			break;
 		// set the MIDI assignment for a parameter
 		case dfx::kPluginProperty_ParameterMidiAssignment:
@@ -1394,7 +1394,7 @@ OSStatus DfxPlugin::SetParameter(AudioUnitParameterID inParameterID,
 OSStatus DfxPlugin::GetPresets(CFArrayRef* outData) const
 {
 	// figure out how many valid (loaded) presets we actually have...
-	long validNumPresets = 0;
+	CFIndex validNumPresets = 0;
 	for (size_t i = 0; i < getnumpresets(); i++)
 	{
 //		if (presetnameisvalid(i))
@@ -1404,7 +1404,7 @@ OSStatus DfxPlugin::GetPresets(CFArrayRef* outData) const
 		}
 	}
 	// whoops, looks like we don't actually have any presets
-	AUSDK_Require(validNumPresets > 0, kAudioUnitErr_InvalidProperty);//kAudioUnitErr_PropertyNotInUse?
+	AUSDK_Require(validNumPresets > 0, kAudioUnitErr_PropertyNotInUse);
 
 	// this is just to say that the property is supported (GetPropertyInfo needs this)
 	if (!outData)
@@ -1522,7 +1522,7 @@ OSStatus DfxPlugin::RestoreState(CFPropertyListRef inData)
 // XXX should we rethink this and load parameter settings always before mDfxSettings->restore()?
 	// load the parameter settings that were restored 
 	// by the inherited base class implementation of RestoreState
-	for (long i = 0; i < getnumparameters(); i++)
+	for (dfx::ParameterID i = 0; i < getnumparameters(); i++)
 	{
 		setparameter_f(i, Globals()->GetParameter(i));
 	}
@@ -1532,7 +1532,7 @@ OSStatus DfxPlugin::RestoreState(CFPropertyListRef inData)
 #endif
 
 	// make any listeners aware of the changes in the parameter values
-	for (long i = 0; i < getnumparameters(); i++)
+	for (dfx::ParameterID i = 0; i < getnumparameters(); i++)
 	{
 		postupdate_parameter(i);
 	}

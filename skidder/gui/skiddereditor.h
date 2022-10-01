@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Skidder.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -35,12 +35,12 @@ public:
 
 	long OpenEditor() override;
 	void CloseEditor() override;
-	void parameterChanged(long inParameterID) override;
+	void parameterChanged(dfx::ParameterID inParameterID) override;
 	void outputChannelsChanged(size_t inChannelCount) override;
 	void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) override;
 
 private:
-	std::pair<long, long> GetActiveRateParameterIDs();
+	std::pair<dfx::ParameterID, dfx::ParameterID> GetActiveRateParameterIDs();
 	void UpdateRandomMinimumDisplays();
 	void HandleTempoSyncChange();
 	void HandleTempoAutoChange();

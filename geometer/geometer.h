@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Geometer, starring the Super Destroy FX Windowing System!
 ------------------------------------------------------------------------*/
@@ -55,13 +55,13 @@ public:
   long dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
                        void* outData) override;
 
-  void randomizeparameter(long inParameterIndex) override;
+  void randomizeparameter(dfx::ParameterID inParameterID) override;
 
   void clearwindowcache();
   void updatewindowcache(class PLUGINCORE * geometercore);
 
 protected:
-  std::optional<dfx::ParameterAssignment> settings_getLearningAssignData(long inParameterIndex) const override;
+  std::optional<dfx::ParameterAssignment> settings_getLearningAssignData(dfx::ParameterID inParameterID) const override;
 
 private:
   static constexpr size_t NUM_PRESETS = 16;

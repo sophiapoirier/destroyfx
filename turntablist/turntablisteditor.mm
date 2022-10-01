@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Turntablist.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #import <AppKit/NSAlert.h>
@@ -39,6 +39,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 constexpr float kTurntablistFontSize = 10.0f;
+constexpr size_t kKnobFrames = 61;
 
 //-----------------------------------------------------------------------------
 enum
@@ -120,9 +121,7 @@ enum
 	kAboutSplashX = 13,
 	kAboutSplashY = 64,
 	kAboutSplashWidth = 137,
-	kAboutSplashHeight = 28,
-
-	kKnobFrames = 61
+	kAboutSplashHeight = 28
 };
 
 
@@ -141,7 +140,7 @@ public:
 	void PostOpenEditor() override;
 	void CloseEditor() override;
 
-	void parameterChanged(long inParameterID) override;
+	void parameterChanged(dfx::ParameterID inParameterID) override;
 	void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex) override;
 
 	void dfxgui_Idle() override;
@@ -158,7 +157,7 @@ private:
 	void HandlePlayChange();
 	void HandleMidiLearnButton(bool inLearn);
 	void HandleMidiResetButton();
-	void HandleParameterChange(long inParameterID, float inValue);
+	void HandleParameterChange(dfx::ParameterID inParameterID, float inValue);
 
 	void SetFileNameDisplay(CFStringRef inText);
 	OSStatus NotifyAudioFileLoadError(OSStatus inErrorCode, FSRef const& inAudioFileRef) const;
@@ -180,9 +179,9 @@ private:
 class TurntablistScratchSlider final : public DGSlider
 {
 public:
-	TurntablistScratchSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
+	TurntablistScratchSlider(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion, 
 							 dfx::Axis inOrientation, DGImage* inHandleImage)
-	:   DGSlider(inOwnerEditor, inParamID, inRegion, inOrientation, inHandleImage)
+	:   DGSlider(inOwnerEditor, inParameterID, inRegion, inOrientation, inHandleImage)
 	{
 	}
 
@@ -473,6 +472,7 @@ long TurntablistEditor::OpenEditor()
 		{
 			return true;
 		}*/
+		CLASS_METHODS(TurntablistButton, DGButton)
 	};
 	pos.set(kLoadButtonX, kLoadButtonY, onOffButtonImage->getWidth(), onOffButtonImage->getHeight() / 2);
 	button = emplaceControl<TurntablistButton>(this, pos, onOffButtonImage, 2, DGButton::Mode::Momentary);
@@ -641,7 +641,7 @@ void TurntablistEditor::CloseEditor()
 }
 
 //-----------------------------------------------------------------------------
-void TurntablistEditor::parameterChanged(long inParameterID)
+void TurntablistEditor::parameterChanged(dfx::ParameterID inParameterID)
 {
 	HandleParameterChange(inParameterID, getparameter_f(inParameterID));
 }
@@ -1284,14 +1284,13 @@ fprintf(stderr, "flavor = '%.4s', size = %ld\n", (char*)(&dragFlavorType_bigEndi
 #pragma mark parameter -> string conversions
 
 //-----------------------------------------------------------------------------
-static dfx::UniqueCFType<CFStringRef> DFX_CopyAUParameterName(AudioUnit inAUInstance, long inParameterID)
+static dfx::UniqueCFType<CFStringRef> DFX_CopyAUParameterName(AudioUnit inAUInstance, dfx::ParameterID inParameterID)
 {
 	assert(inAUInstance);
 
-	AudioUnitParameterInfo parameterInfo;
-	memset(&parameterInfo, 0, sizeof(parameterInfo));
+	AudioUnitParameterInfo parameterInfo {};
 	UInt32 dataSize = sizeof(parameterInfo);
-	auto const status = AudioUnitGetProperty(inAUInstance, kAudioUnitProperty_ParameterInfo, kAudioUnitScope_Global, static_cast<AudioUnitElement>(inParameterID), &parameterInfo, &dataSize);
+	auto const status = AudioUnitGetProperty(inAUInstance, kAudioUnitProperty_ParameterInfo, kAudioUnitScope_Global, inParameterID, &parameterInfo, &dataSize);
 	if (status == noErr)
 	{
 		auto const parameterName = parameterInfo.cfNameString;
@@ -1311,24 +1310,24 @@ static dfx::UniqueCFType<CFStringRef> DFX_CopyAUParameterName(AudioUnit inAUInst
 }
 
 //-----------------------------------------------------------------------------
-static dfx::UniqueCFType<CFArrayRef> DFX_CopyAUParameterValueStrings(AudioUnit inAUInstance, long inParameterID)
+static dfx::UniqueCFType<CFArrayRef> DFX_CopyAUParameterValueStrings(AudioUnit inAUInstance, dfx::ParameterID inParameterID)
 {
 	assert(inAUInstance);
 	CFArrayRef strings = nullptr;
 	UInt32 dataSize = sizeof(strings);
-	auto const status = AudioUnitGetProperty(inAUInstance, kAudioUnitProperty_ParameterValueStrings, kAudioUnitScope_Global, static_cast<AudioUnitElement>(inParameterID), &strings, &dataSize);
+	auto const status = AudioUnitGetProperty(inAUInstance, kAudioUnitProperty_ParameterValueStrings, kAudioUnitScope_Global, inParameterID, &strings, &dataSize);
 	return (status == noErr) ? dfx::MakeUniqueCFType(strings) : nullptr;
 }
 
 //-----------------------------------------------------------------------------
-void TurntablistEditor::HandleParameterChange(long inParameterID, float inValue)
+void TurntablistEditor::HandleParameterChange(dfx::ParameterID inParameterID, float inValue)
 {
 	auto const value_i = (inValue >= 0.0f) ? static_cast<long>(inValue + 0.001f) : static_cast<long>(inValue - 0.001f);
 
 	if ((inParameterID == kParam_ScratchMode) && mScratchSpeedKnob)
 	{
-		auto const newParamID = (value_i == kScratchMode_Scrub) ? kParam_ScratchSpeed_scrub : kParam_ScratchSpeed_spin;
-		mScratchSpeedKnob->setParameterID(newParamID);
+		auto const newParameterID = (value_i == kScratchMode_Scrub) ? kParam_ScratchSpeed_scrub : kParam_ScratchSpeed_spin;
+		mScratchSpeedKnob->setParameterID(newParameterID);
 	}
 
 	if (!mAllParametersTextDisplay)

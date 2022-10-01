@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monomaker.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "monomakereditor.h"
@@ -108,7 +108,7 @@ long MonomakerEditor::OpenEditor()
 
 
 	// --- sliders ---
-	constexpr long numAnimationFrames = 19;
+	constexpr size_t numAnimationFrames = 19;
 
 	// monomerge slider
 	pos.set(kSliderX, kSliderY, kSliderWidth, sliderHandleImage->getHeight());

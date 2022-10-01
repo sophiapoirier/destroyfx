@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -189,8 +189,8 @@ public:
 		return control;
 	}
 	void removeControl(IDGControl* inControl);
-	long GetWidth();
-	long GetHeight();
+	int GetWidth();
+	int GetHeight();
 	auto GetBackgroundImage() const noexcept
 	{
 		return mBackgroundImage.get();
@@ -206,12 +206,12 @@ public:
 	virtual void inputChannelsChanged(size_t inChannelCount) {}
 	virtual void outputChannelsChanged(size_t inChannelCount) {}
 
-	void automationgesture_begin(long inParameterID);
-	void automationgesture_end(long inParameterID);
+	void automationgesture_begin(dfx::ParameterID inParameterID);
+	void automationgesture_end(dfx::ParameterID inParameterID);
 #ifdef TARGET_API_AUDIOUNIT
 	OSStatus SendAUParameterEvent(AudioUnitParameterID inParameterID, AudioUnitEventType inEventType);
 #endif
-	virtual void parameterChanged(long inParameterID) {}
+	virtual void parameterChanged(dfx::ParameterID inParameterID) {}
 
 	bool IsOpen();
 	DGEditorListenerInstance dfxgui_GetEffectInstance();
@@ -247,54 +247,53 @@ public:
 #endif
 
 	size_t GetNumParameters();
-	std::vector<long> GetParameterList();
-	long GetNumAudioOutputs();
-	float dfxgui_ExpandParameterValue(long inParameterIndex, float inValue);
-	float dfxgui_ContractParameterValue(long inParameterIndex, float inValue);
-	float GetParameter_minValue(long inParameterIndex);
-	float GetParameter_maxValue(long inParameterIndex);
-	float GetParameter_defaultValue(long inParameterIndex);
-	DfxParam::ValueType GetParameterValueType(long inParameterIndex);
-	DfxParam::Unit GetParameterUnit(long inParameterIndex);
-	bool GetParameterUseValueStrings(long inParameterIndex);
-	bool HasParameterAttribute(long inParameterIndex, DfxParam::Attribute inFlag);
-	std::optional<size_t> GetParameterGroup(long inParameterIndex);
+	std::vector<dfx::ParameterID> GetParameterList() const;
+	float dfxgui_ExpandParameterValue(dfx::ParameterID inParameterID, float inValue);
+	float dfxgui_ContractParameterValue(dfx::ParameterID inParameterID, float inValue);
+	float GetParameter_minValue(dfx::ParameterID inParameterID);
+	float GetParameter_maxValue(dfx::ParameterID inParameterID);
+	float GetParameter_defaultValue(dfx::ParameterID inParameterID);
+	DfxParam::ValueType GetParameterValueType(dfx::ParameterID inParameterID);
+	DfxParam::Unit GetParameterUnit(dfx::ParameterID inParameterID);
+	bool GetParameterUseValueStrings(dfx::ParameterID inParameterID);
+	bool HasParameterAttribute(dfx::ParameterID inParameterID, DfxParam::Attribute inFlag);
+	std::optional<size_t> GetParameterGroup(dfx::ParameterID inParameterID);
 	std::string GetParameterGroupName(size_t inGroupIndex);
 
 	// the below methods all handle communication between the GUI component and the audio component
-	double getparameter_f(long inParameterID);
-	long getparameter_i(long inParameterID);
-	bool getparameter_b(long inParameterID);
-	double getparameter_gen(long inParameterIndex);
-	void setparameter_f(long inParameterID, double inValue, bool inWrapWithAutomationGesture = false);
-	void setparameter_i(long inParameterID, long inValue, bool inWrapWithAutomationGesture = false);
-	void setparameter_b(long inParameterID, bool inValue, bool inWrapWithAutomationGesture = false);
-	void setparameter_default(long inParameterID, bool inWrapWithAutomationGesture = false);
+	double getparameter_f(dfx::ParameterID inParameterID);
+	long getparameter_i(dfx::ParameterID inParameterID);
+	bool getparameter_b(dfx::ParameterID inParameterID);
+	double getparameter_gen(dfx::ParameterID inParameterID);
+	void setparameter_f(dfx::ParameterID inParameterID, double inValue, bool inWrapWithAutomationGesture = false);
+	void setparameter_i(dfx::ParameterID inParameterID, long inValue, bool inWrapWithAutomationGesture = false);
+	void setparameter_b(dfx::ParameterID inParameterID, bool inValue, bool inWrapWithAutomationGesture = false);
+	void setparameter_default(dfx::ParameterID inParameterID, bool inWrapWithAutomationGesture = false);
 	void setparameters_default(bool inWrapWithAutomationGesture = false);
-	std::optional<std::string> getparametervaluestring(long inParameterID);
-	std::optional<std::string> getparametervaluestring(long inParameterID, int64_t inStringIndex);
-	std::string getparameterunitstring(long inParameterIndex);
-	std::string getparametername(long inParameterID);
+	std::optional<std::string> getparametervaluestring(dfx::ParameterID inParameterID);
+	std::optional<std::string> getparametervaluestring(dfx::ParameterID inParameterID, int64_t inStringIndex);
+	std::string getparameterunitstring(dfx::ParameterID inParameterID);
+	std::string getparametername(dfx::ParameterID inParameterID);
 
 	// Randomize the value of the parameter. If inWriteAutomation is true, then
 	// this saves automation inside a simulated automation gesture.
-	void randomizeparameter(long inParameterID, bool inWriteAutomation);
+	void randomizeparameter(dfx::ParameterID inParameterID, bool inWriteAutomation);
 	// Randomize all parameters at the same time. Note that this calls the plugin's
 	// randomizeparameters() function, which may not be the same as just looping over
 	// all the parameters and randomizing them alone.
 	void randomizeparameters(bool inWriteAutomation);
-	void GenerateParameterAutomationSnapshot(long inParameterID);
+	void GenerateParameterAutomationSnapshot(dfx::ParameterID inParameterID);
 	void GenerateParametersAutomationSnapshot();
-	virtual std::optional<double> dfxgui_GetParameterValueFromString_f(long inParameterID, std::string const& inText);
-	virtual std::optional<long> dfxgui_GetParameterValueFromString_i(long inParameterID, std::string const& inText);
-	bool dfxgui_SetParameterValueWithString(long inParameterID, std::string const& inText);
-	bool dfxgui_IsValidParamID(long inParameterID);
-	void TextEntryForParameterValue(long inParameterID);
-	void SetParameterHelpText(long inParameterID, char const* inText);
-	void SetParameterAlpha(long inParameterID, float inAlpha);
+	virtual std::optional<double> dfxgui_GetParameterValueFromString_f(dfx::ParameterID inParameterID, std::string const& inText);
+	virtual std::optional<long> dfxgui_GetParameterValueFromString_i(dfx::ParameterID inParameterID, std::string const& inText);
+	bool dfxgui_SetParameterValueWithString(dfx::ParameterID inParameterID, std::string const& inText);
+	bool dfxgui_IsValidParameterID(dfx::ParameterID inParameterID);
+	void TextEntryForParameterValue(dfx::ParameterID inParameterID);
+	void SetParameterHelpText(dfx::ParameterID inParameterID, char const* inText);
+	void SetParameterAlpha(dfx::ParameterID inParameterID, float inAlpha);
 #ifdef TARGET_API_AUDIOUNIT
 	AudioUnitParameter dfxgui_MakeAudioUnitParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope = kAudioUnitScope_Global, AudioUnitElement inElement = 0);
-	std::vector<long> CreateParameterList(AudioUnitScope inScope = kAudioUnitScope_Global);
+	std::vector<dfx::ParameterID> CreateParameterList(AudioUnitScope inScope = kAudioUnitScope_Global);
 #endif
 	long dfxgui_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
 								size_t& outDataSize, dfx::PropertyFlags& outFlags);
@@ -342,21 +341,21 @@ public:
 	void setmidilearning(bool inLearnMode);
 	bool getmidilearning();
 	void resetmidilearn();
-	void setmidilearner(long inParameterIndex);
-	long getmidilearner();
-	bool ismidilearner(long inParameterIndex);
-	void setparametermidiassignment(long inParameterIndex, dfx::ParameterAssignment const& inAssignment);
-	dfx::ParameterAssignment getparametermidiassignment(long inParameterIndex);
-	void parametermidiunassign(long inParameterIndex);
+	void setmidilearner(dfx::ParameterID inParameterID);
+	dfx::ParameterID getmidilearner();
+	bool ismidilearner(dfx::ParameterID inParameterID);
+	void setparametermidiassignment(dfx::ParameterID inParameterID, dfx::ParameterAssignment const& inAssignment);
+	dfx::ParameterAssignment getparametermidiassignment(dfx::ParameterID inParameterID);
+	void parametermidiunassign(dfx::ParameterID inParameterID);
 	void setMidiAssignmentsUseChannel(bool inEnable);
 	bool getMidiAssignmentsUseChannel();
 	void setMidiAssignmentsSteal(bool inEnable);
 	bool getMidiAssignmentsSteal();
-	void TextEntryForParameterMidiCC(long inParameterID);
+	void TextEntryForParameterMidiCC(dfx::ParameterID inParameterID);
 	void HandleMidiLearnChange();
 	void HandleMidiLearnerChange();
 	virtual void midiLearningChanged(bool inLearnMode) {}
-	virtual void midiLearnerChanged(long inParameterIndex) {}
+	virtual void midiLearnerChanged(dfx::ParameterID inParameterID) {}
 	DGButton* CreateMidiLearnButton(VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, DGImage* inImage, bool inDrawMomentaryState = false);
 	DGButton* CreateMidiResetButton(VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, DGImage* inImage);
 	auto GetMidiLearnButton() const noexcept
@@ -375,11 +374,11 @@ protected:
 private:
 	// update affected controls of a parameter value change
 	// optional: inSendingControl can specify the originating control to omit it from circular notification
-	void updateParameterControls(long inParameterIndex, float inValue, VSTGUI::CControl* inSendingControl = nullptr);
+	void updateParameterControls(dfx::ParameterID inParameterID, float inValue, VSTGUI::CControl* inSendingControl = nullptr);
 
 	[[nodiscard]] bool handleContextualMenuClick(VSTGUI::CControl* inControl, VSTGUI::MouseEventButtonState inButtonState);
 	VSTGUI::COptionMenu createContextualMenu(IDGControl* inControl);
-	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParameterContextualMenu(long inParameterID);
+	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParameterContextualMenu(dfx::ParameterID inParameterID);
 	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParametersContextualMenu();
 	long initClipboard();
 	long copySettings();
@@ -424,7 +423,7 @@ private:
 
 	bool mJustOpened = false;
 	long mEditorOpenErr = dfx::kStatus_NoError;
-	std::vector<long> mParameterList;
+	std::vector<dfx::ParameterID> mParameterList;
 	size_t mNumInputChannels = 0;
 	size_t mNumOutputChannels = 0;
 
@@ -450,7 +449,7 @@ private:
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
-	std::mutex mParameterListLock;
+	std::mutex mutable mParameterListLock;
 	AudioUnitParameterID mAUMaxParameterID = 0;
 	dfx::UniqueOpaqueType<AUEventListenerRef, AUListenerDispose> mAUEventListener;
 	AudioUnitEvent mStreamFormatPropertyAUEvent {};
@@ -460,7 +459,7 @@ private:
 #endif
 
 #ifdef TARGET_API_RTAS
-	std::vector<long> mParameterHighlightColors;
+	std::vector<short> mParameterHighlightColors;
 #endif
 };
 

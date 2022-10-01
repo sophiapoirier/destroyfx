@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of Polarizer.
 
@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Polarizer.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "polarizereditor.h"
@@ -83,9 +83,9 @@ static float amountValueFromTextConvertProc(float inValue, DGTextDisplay*)
 class PolarizerSlider final : public DGSlider
 {
 public:
-	PolarizerSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion,
+	PolarizerSlider(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion,
 					DGImage* inHandleImage, DGImage* inBackgroundImage)
-	:	DGSlider(inOwnerEditor, inParamID, inRegion, dfx::kAxis_Vertical, nullptr, inBackgroundImage),
+	:	DGSlider(inOwnerEditor, inParameterID, inRegion, dfx::kAxis_Vertical, nullptr, inBackgroundImage),
 		mHandleImage(inHandleImage)  // store handle image independently so that CSlider does not base control range on it
 	{
 		setOffsetHandle(VSTGUI::CPoint(0, kSliderFrameThickness));

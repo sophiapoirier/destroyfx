@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for doing all kinds of fancy plugin parameter stuff.
@@ -807,18 +807,18 @@ DfxPreset::DfxPreset(size_t inNumParameters)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPreset::setvalue(long inParameterIndex, DfxParam::Value inValue)
+void DfxPreset::setvalue(dfx::ParameterID inParameterIndex, DfxParam::Value inValue)
 {
-	if ((inParameterIndex >= 0) && (inParameterIndex < static_cast<long>(mValues.size())))
+	if (inParameterIndex < mValues.size())
 	{
 		mValues[inParameterIndex] = inValue;
 	}
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value DfxPreset::getvalue(long inParameterIndex) const
+DfxParam::Value DfxPreset::getvalue(dfx::ParameterID inParameterIndex) const
 {
-	if ((inParameterIndex >= 0) && (inParameterIndex < static_cast<long>(mValues.size())))
+	if (inParameterIndex < mValues.size())
 	{
 		return mValues[inParameterIndex];
 	}

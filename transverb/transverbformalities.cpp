@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "transverb.h"
@@ -59,8 +59,9 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_b(kAttenuateFeedbackByMixLevel, {"attenuate feedback by mix level", "AtnFdbk", "AtnFdb", "-fdb"}, false);
 
   setparameterenforcevaluelimits(kBsize, true);
-  setparameterenforcevaluelimits(kDist1, true);
-  setparameterenforcevaluelimits(kDist2, true);
+  for (auto const parameterID : kDistParameters) {
+    setparameterenforcevaluelimits(parameterID, true);
+  }
 
   setparametervaluestring(kQuality, kQualityMode_DirtFi, "dirt-fi");
   setparametervaluestring(kQuality, kQualityMode_HiFi, "hi-fi");
@@ -73,7 +74,7 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   addparameterattributes(kFreeze, DfxParam::kAttribute_OmitFromRandomizeAll);
   addparameterattributes(kAttenuateFeedbackByMixLevel, DfxParam::kAttribute_OmitFromRandomizeAll);
 
-  std::vector<long> mixparameters(1, kDrymix);
+  std::vector<dfx::ParameterID> mixparameters(1, kDrymix);
   for (size_t head = 0; head < kNumDelays; head++) {
     addparametergroup("head #" + std::to_string(head + 1),
       {kSpeedParameters[head], kFeedParameters[head], kDistParameters[head]});
@@ -422,7 +423,7 @@ void Transverb::randomizeparameters()
 {
 	// randomize the non-mix-level parameters
 
-	for (long i = 0; i < kDrymix; i++)
+	for (dfx::ParameterID i = 0; i < kDrymix; i++)
 	{
 		if (hasparameterattribute(i, DfxParam::kAttribute_OmitFromRandomizeAll) || hasparameterattribute(i, DfxParam::kAttribute_Unused))
 		{
@@ -499,7 +500,7 @@ void Transverb::randomizeparameters()
 	}
 
 
-	for (long i = 0; i < kNumParameters; i++)
+	for (dfx::ParameterID i = 0; i < kNumParameters; i++)
 	{
 		if (hasparameterattribute(i, DfxParam::kAttribute_OmitFromRandomizeAll) || hasparameterattribute(i, DfxParam::kAttribute_Unused))
 		{
@@ -575,40 +576,40 @@ void Transverb::settings_restoreExtendedData(void const* inData, size_t storedEx
   }
 }
 
-void Transverb::settings_doChunkRestoreSetParameterStuff(long tag, float value, unsigned int dataVersion, std::optional<size_t> presetIndex)
+void Transverb::settings_doChunkRestoreSetParameterStuff(dfx::ParameterID parameterID, float value, unsigned int dataVersion, std::optional<size_t> presetIndex)
 {
 	// prevent old speed mode 1 settings from applying to freeze
-	if ((dataVersion < 0x00010501) && (tag == kFreeze))
+	if ((dataVersion < 0x00010501) && (parameterID == kFreeze))
 	{
-		auto const defaultValue = getparameterdefault_b(tag);
+		auto const defaultValue = getparameterdefault_b(parameterID);
 		if (presetIndex)
 		{
-			setpresetparameter_b(*presetIndex, tag, defaultValue);
+			setpresetparameter_b(*presetIndex, parameterID, defaultValue);
 		}
 		else
 		{
-			setparameter_b(tag, defaultValue);
+			setparameter_b(parameterID, defaultValue);
 		}
 	}
 
 	if (dataVersion <= 0x00010502)
 	{
 		// invert old erroneously reversed dist parameter values
-		if ((tag == kDist1) || (tag == kDist2))
+		if (std::find(kDistParameters.cbegin(), kDistParameters.cend(), parameterID) != kDistParameters.cend())
 		{
-			auto const valueNormalized = 1. - contractparametervalue(tag, value);
+			auto const valueNormalized = 1. - contractparametervalue(parameterID, value);
 			if (presetIndex)
 			{
-				setpresetparameter_gen(*presetIndex, tag, valueNormalized);
+				setpresetparameter_gen(*presetIndex, parameterID, valueNormalized);
 			}
 			else
 			{
-				setparameter_gen(tag, valueNormalized);
+				setparameter_gen(parameterID, valueNormalized);
 			}
 		}
 
 		// hi-fi mode used to behave the same as and ultra hi-fi mode in TOMSOUND
-		if (tag == kTomsound)  // assumes that TOMSOUND parameter is restored after quality
+		if (parameterID == kTomsound)  // assumes that TOMSOUND parameter is restored after quality
 		{
 			if (presetIndex)
 			{

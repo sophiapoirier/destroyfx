@@ -19,7 +19,7 @@ the Free Software Foundation, either version 2 of the License, or
 You should have received a copy of the GNU General Public License 
 along with Turntablist.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the developer, use the contact form at http://destroyfx.org/
+To contact the developer, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 
@@ -75,7 +75,7 @@ enum
 
 //------------------------------------------------------------------------------------------
 // parameters
-enum
+enum : dfx::ParameterID
 {
 	// scratching
 	kParam_ScratchAmount,
@@ -174,7 +174,7 @@ private:
 	void noteOn(int inNote, int inVelocity, size_t inOffsetFrames);
 	void stopNote(bool inStopPlay = false);
 	void playNote(bool inValue);
-	long fixMidiData(long inParameterID, char inValue);
+	static int fixMidiData(dfx::ParameterID inParameterID, int inValue) noexcept;
 
 	OSStatus PostNotification_AudioFileNotFound(CFStringRef inFileName);
 

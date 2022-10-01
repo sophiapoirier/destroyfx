@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for E-Z plugin-making and E-Z multiple-API support.
@@ -168,7 +168,7 @@ bool DfxPlugin::getEffectName(char* outText)
 
 VstInt32 DfxPlugin::getVendorVersion()
 {
-	return getpluginversion();
+	return static_cast<VstInt32>(getpluginversion());
 }
 
 bool DfxPlugin::getVendorString(char* outText)
@@ -362,13 +362,13 @@ VstInt32 DfxPlugin::setChunk(void* data, VstInt32 byteSize, bool isPreset)
 //-----------------------------------------------------------------------------
 void DfxPlugin::setParameter(VstInt32 index, float value)
 {
-	setparameter_gen(index, value);
+	setparameter_gen(dfx::ParameterID_FromVST(index), value);
 }
 
 //-----------------------------------------------------------------------------
 float DfxPlugin::getParameter(VstInt32 index)
 {
-	return getparameter_gen(index);
+	return getparameter_gen(dfx::ParameterID_FromVST(index));
 }
 
 //-----------------------------------------------------------------------------
@@ -379,10 +379,10 @@ void DfxPlugin::getParameterName(VstInt32 index, char* name)
 	{
 		// kVstMaxParamStrLen is absurdly short for parameter names at 8-characters, 
 		// and given that exceding that length is common, hosts prepare for that, 
-		// and even the Vst2Wrapper in the VST3 SDK acknowleges as much by defining 
+		// and even the Vst2Wrapper in the VST3 SDK acknowledges as much by defining 
 		// the following "extended" constant to use instead
 		constexpr size_t kVstExtMaxParamStrLen = 32;
-		vst_strncpy(name, getparametername(index).c_str(), kVstExtMaxParamStrLen);
+		vst_strncpy(name, getparametername(dfx::ParameterID_FromVST(index)).c_str(), kVstExtMaxParamStrLen);
 	}
 }
 
@@ -395,22 +395,23 @@ void DfxPlugin::getParameterDisplay(VstInt32 index, char* text)
 		return;
 	}
 
-	if (getparameterusevaluestrings(index))
+	auto const parameterID = dfx::ParameterID_FromVST(index);
+	if (getparameterusevaluestrings(parameterID))
 	{
-		vst_strncpy(text, getparametervaluestring(index, getparameter_i(index)).value_or("").c_str(), kVstMaxParamStrLen);
+		vst_strncpy(text, getparametervaluestring(parameterID, getparameter_i(parameterID)).value_or("").c_str(), kVstMaxParamStrLen);
 		return;
 	}
 
-	switch (getparametervaluetype(index))
+	switch (getparametervaluetype(parameterID))
 	{
 		case DfxParam::ValueType::Float:
-			snprintf(text, kVstMaxParamStrLen + 1, "%.3f", getparameter_f(index));
+			snprintf(text, kVstMaxParamStrLen + 1, "%.3f", getparameter_f(parameterID));
 			break;
 		case DfxParam::ValueType::Int:
-			snprintf(text, kVstMaxParamStrLen + 1, "%" PRIi64, getparameter_i(index));
+			snprintf(text, kVstMaxParamStrLen + 1, "%" PRIi64, getparameter_i(parameterID));
 			break;
 		case DfxParam::ValueType::Boolean:
-			vst_strncpy(text, getparameter_b(index) ? "on" : "off", kVstMaxParamStrLen);
+			vst_strncpy(text, getparameter_b(parameterID) ? "on" : "off", kVstMaxParamStrLen);
 			break;
 		default:
 			assert(false);
@@ -424,7 +425,7 @@ void DfxPlugin::getParameterLabel(VstInt32 index, char* label)
 {
 	if (label)
 	{
-		vst_strncpy(label, getparameterunitstring(index).c_str(), kVstMaxParamStrLen);
+		vst_strncpy(label, getparameterunitstring(dfx::ParameterID_FromVST(index)).c_str(), kVstMaxParamStrLen);
 	}
 }
 
@@ -436,30 +437,31 @@ bool DfxPlugin::getParameterProperties(VstInt32 index, VstParameterProperties* p
 		return false;
 	}
 	*properties = {};
+	auto const parameterID = dfx::ParameterID_FromVST(index);
 
 	// note that kVstMax* are specified as "number of characters excluding the null terminator", 
 	// and vst_strncpy behaves accordingly and writes null at array[N], however the static arrays 
 	// in struct types (like VstParameterProperties here) size the arrays by N, meaning that 
 	// array[N] is out of range, so we call vst_strncpy in these cases passing N-1 as max length
-	vst_strncpy(properties->label, getparametername(index).c_str(), kVstMaxLabelLen - 1);
+	vst_strncpy(properties->label, getparametername(parameterID).c_str(), kVstMaxLabelLen - 1);
 
 	constexpr size_t recommendedShortLabelLength = 6;  // per the VST header comment
 	static_assert(recommendedShortLabelLength < kVstMaxShortLabelLen);
-	auto const shortName = getparametername(index, recommendedShortLabelLength);
+	auto const shortName = getparametername(parameterID, recommendedShortLabelLength);
 	vst_strncpy(properties->shortLabel, shortName.c_str(), kVstMaxShortLabelLen - 1);
 
-	auto const isVisible = [this](long parameterID)
+	auto const isVisible = [this](dfx::ParameterID parameterID)
 	{
 		return !hasparameterattribute(parameterID, DfxParam::kAttribute_Unused) && !hasparameterattribute(parameterID, DfxParam::kAttribute_Hidden);
 	};
-	if (isVisible(index))
+	if (isVisible(parameterID))
 	{
-		properties->displayIndex = [index, isVisible]
+		properties->displayIndex = [parameterID, isVisible]
 		{
 			VstInt16 result = 0;
-			for (VstInt16 parameterID = 0; parameterID <= index; parameterID++)
+			for (dfx::ParameterID i = 0; i <= parameterID; i++)
 			{
-				if (isVisible(parameterID))
+				if (isVisible(i))
 				{
 					assert(result < std::numeric_limits<decltype(result)>::max());
 					result++;
@@ -470,21 +472,21 @@ bool DfxPlugin::getParameterProperties(VstInt32 index, VstParameterProperties* p
 		properties->flags |= kVstParameterSupportsDisplayIndex;
 	}
 
-	switch (getparametervaluetype(index))
+	switch (getparametervaluetype(parameterID))
 	{
 		case DfxParam::ValueType::Boolean:
 			properties->flags |= kVstParameterIsSwitch;
 			break;
 		case DfxParam::ValueType::Int:
-			properties->minInteger = getparametermin_i(index);
-			properties->maxInteger = getparametermax_i(index);
+			properties->minInteger = getparametermin_i(parameterID);
+			properties->maxInteger = getparametermax_i(parameterID);
 			properties->flags |= kVstParameterUsesIntegerMinMax;
 			break;
 		default:
 			break;
 	}
 
-	if (auto const groupIndex = getparametergroup(index))
+	if (auto const groupIndex = getparametergroup(parameterID))
 	{
 		auto const downcastWithValidation = [](auto& destination, auto const& source)
 		{
@@ -547,7 +549,7 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 				if (ch == 0)
 				{
 					assert(mAsymmetricalInputAudioBuffer.size() >= static_cast<size_t>(sampleFrames));
-					std::copy_n(mInputAudioStreams[ch], sampleFrames, mAsymmetricalInputAudioBuffer.data());
+					std::copy_n(mInputAudioStreams[ch], dfx::math::ToUnsigned(sampleFrames), mAsymmetricalInputAudioBuffer.data());
 				}
 				inputAudio = mAsymmetricalInputAudioBuffer.data();
 			}

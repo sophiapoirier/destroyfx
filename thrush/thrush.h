@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Thrush.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -34,38 +34,38 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 //-------------------------------------------------------------------------------------
 // these are the plugin parameters:
-enum
+enum : dfx::ParameterID
 {
 	kDelay,
 	kTempo,
 	kTempoAuto,
 
-	kLFO1tempoSync,
+	kLFO1TempoSync,
 	kLFO1Rate_Hz,
 	kLFO1Rate_Sync,
-	kLFO1depth,
-	kLFO1shape,
+	kLFO1Depth,
+	kLFO1Shape,
 
-	kLFO2tempoSync,
+	kLFO2TempoSync,
 	kLFO2Rate_Hz,
 	kLFO2Rate_Sync,
-	kLFO2depth,
-	kLFO2shape,
+	kLFO2Depth,
+	kLFO2Shape,
 
 	kStereoLink,
 	kDelay2,
 
-	kLFO1tempoSync2,
+	kLFO1TempoSync2,
 	kLFO1Rate2_Hz,
 	kLFO1Rate2_Sync,
-	kLFO1depth2,
-	kLFO1shape2,
+	kLFO1Depth2,
+	kLFO1Shape2,
 
-	kLFO2tempoSync2,
+	kLFO2TempoSync2,
 	kLFO2Rate2_Hz,
 	kLFO2Rate2_Sync,
-	kLFO2depth2,
-	kLFO2shape2,
+	kLFO2Depth2,
+	kLFO2Shape2,
 
 	kDryWetMix,
 

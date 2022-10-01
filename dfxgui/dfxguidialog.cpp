@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "dfxguidialog.h"
@@ -28,6 +28,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cstring>
 #include <optional>
 #include <vector>
+
+#include "dfxplugin-base.h"
 
 
 //-----------------------------------------------------------------------------
@@ -77,7 +79,7 @@ class DGDialogButton final : public VSTGUI::CTextButton
 {
 public:
 	DGDialogButton(VSTGUI::IControlListener* inListener, DGRect const& inRegion, DGDialog::Selection inSelection, VSTGUI::UTF8StringPtr inTitle)
-	:	VSTGUI::CTextButton(inRegion, inListener, dfx::kParameterID_Invalid, inTitle, VSTGUI::CTextButton::kKickStyle),
+	:	VSTGUI::CTextButton(inRegion, inListener, dfx::ParameterID_ToVST(dfx::kParameterID_Invalid), inTitle, VSTGUI::CTextButton::kKickStyle),
 		mSelection(inSelection),
 		mIsDefaultButton(inSelection == DGDialog::kSelection_OK)
 	{
@@ -177,7 +179,7 @@ class DGDialogTextEdit final : public VSTGUI::CTextEdit
 {
 public:
 	DGDialogTextEdit(VSTGUI::CRect const& inRegion, VSTGUI::IControlListener* inListener)
-	:	VSTGUI::CTextEdit(inRegion, inListener, dfx::kParameterID_Invalid)
+	:	VSTGUI::CTextEdit(inRegion, inListener, dfx::ParameterID_ToVST(dfx::kParameterID_Invalid))
 	{
 		setFontColor(DGColor::getSystem(DGColor::System::Text));
 		setBackColor(DGColor::getSystem(DGColor::System::TextBackground));
@@ -527,11 +529,11 @@ VSTGUI::CTextButton* DGDialog::getButton(Selection inSelection) const
 //-----------------------------------------------------------------------------
 // Text-Entry Dialog
 //-----------------------------------------------------------------------------
-DGTextEntryDialog::DGTextEntryDialog(long inParamID, std::string const& inMessage, 
+DGTextEntryDialog::DGTextEntryDialog(dfx::ParameterID inParameterID, std::string const& inMessage, 
 									 char const* inTextEntryLabel, Buttons inButtons, 
 									 char const* inOkButtonTitle, char const* inCancelButtonTitle, char const* inOtherButtonTitle)
 :	DGDialog(DGRect(0.0, 0.0, 247.0, 134.0), inMessage, inButtons, inOkButtonTitle, inCancelButtonTitle, inOtherButtonTitle), 
-	mParameterID(inParamID)
+	mParameterID(inParameterID)
 {
 	constexpr VSTGUI::CCoord labelEditHeightOffset = (kTextEditHeight - kTextLabelHeight) / 2.0;
 
@@ -607,7 +609,7 @@ std::string DGTextEntryDialog::getText() const
 }
 
 //-----------------------------------------------------------------------------
-long DGTextEntryDialog::getParameterID() const noexcept
+dfx::ParameterID DGTextEntryDialog::getParameterID() const noexcept
 {
 	return mParameterID;
 }

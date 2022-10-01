@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "bufferoverrideeditor.h"
@@ -203,7 +203,7 @@ static bool bufferSizeDisplayProc(float inValue, char* outText, void* inEditor)
 
 // Generate the display text for the divisor or buffer LFO rate.
 // This depends on the slider value and whether we're synced to tempo.
-static bool lfoRateGenDisplayProc(float inValue, char* outText, void* inEditor, long rateSyncParameterID, long tempoSyncParameterID)
+static bool lfoRateGenDisplayProc(float inValue, char* outText, void* inEditor, dfx::ParameterID rateSyncParameterID, dfx::ParameterID tempoSyncParameterID)
 {
 	auto const dgEditor = static_cast<DfxGuiEditor*>(inEditor);
 	if (dgEditor->getparameter_b(tempoSyncParameterID))
@@ -295,17 +295,17 @@ long BufferOverrideEditor::OpenEditor()
 
 	DGRect pos;
 
-	auto const divisorLFORateTag = getparameter_b(kDivisorLFOTempoSync) ? kDivisorLFORate_Sync : kDivisorLFORate_Hz;
+	auto const divisorLFORateParameterID = getparameter_b(kDivisorLFOTempoSync) ? kDivisorLFORate_Sync : kDivisorLFORate_Hz;
 	pos.set(kDivisorLFORateSliderX, kDivisorLFORateSliderY, kLFOSliderWidth, kSliderHeight);
-	mDivisorLFORateSlider = emplaceControl<DGSlider>(this, divisorLFORateTag, pos, dfx::kAxis_Horizontal, sliderHandleImage);
+	mDivisorLFORateSlider = emplaceControl<DGSlider>(this, divisorLFORateParameterID, pos, dfx::kAxis_Horizontal, sliderHandleImage);
 	mDivisorLFORateSlider->setAlternateHandle(sliderHandleImage_glowing);
 
 	pos.set(kDivisorLFODepthSliderX, kDivisorLFODepthSliderY, kLFOSliderWidth, kSliderHeight);
 	emplaceControl<DGSlider>(this, kDivisorLFODepth, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
 
-	auto const bufferLFORateTag = getparameter_b(kBufferLFOTempoSync) ? kBufferLFORate_Sync : kBufferLFORate_Hz;
+	auto const bufferLFORateParameterID = getparameter_b(kBufferLFOTempoSync) ? kBufferLFORate_Sync : kBufferLFORate_Hz;
 	pos.set(kBufferLFORateSliderX, kBufferLFORateSliderY, kLFOSliderWidth, kSliderHeight);
-	mBufferLFORateSlider = emplaceControl<DGSlider>(this, bufferLFORateTag, pos, dfx::kAxis_Horizontal, sliderHandleImage);
+	mBufferLFORateSlider = emplaceControl<DGSlider>(this, bufferLFORateParameterID, pos, dfx::kAxis_Horizontal, sliderHandleImage);
 	mBufferLFORateSlider->setAlternateHandle(sliderHandleImage_glowing);
 
 	pos.set(kBufferLFODepthSliderX, kBufferLFODepthSliderY, kLFOSliderWidth, kSliderHeight);
@@ -323,9 +323,9 @@ long BufferOverrideEditor::OpenEditor()
 	pos.set(kTempoSliderX, kTempoSliderY, kTempoSliderWidth, kSliderHeight);
 	emplaceControl<DGSlider>(this, kTempo, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
 
-	auto const bufferSizeTag = getparameter_b(kBufferTempoSync) ? kBufferSize_Sync : kBufferSize_MS;
+	auto const bufferSizeParameterID = getparameter_b(kBufferTempoSync) ? kBufferSize_Sync : kBufferSize_MS;
 	pos.set(kDivisorBufferBoxX, kDivisorBufferBoxY, kDivisorBufferBoxWidth, kDivisorBufferBoxHeight);
-	mDivisorBufferBox = emplaceControl<DGXYBox>(this, kDivisor, bufferSizeTag, pos, xyBoxHandleImage, nullptr,
+	mDivisorBufferBox = emplaceControl<DGXYBox>(this, kDivisor, bufferSizeParameterID, pos, xyBoxHandleImage, nullptr,
 												VSTGUI::CSliderBase::kLeft | VSTGUI::CSliderBase::kTop);
 	mDivisorBufferBox->setAlternateHandles(xyBoxHandleImage_divisor_glowing, xyBoxHandleImage_buffer_glowing);
 	mDivisorBufferBox->setIntegralPosition(true);
@@ -335,16 +335,16 @@ long BufferOverrideEditor::OpenEditor()
 	emplaceControl<DGTextDisplay>(this, kDivisor, pos, divisorDisplayProc, nullptr, nullptr, dfx::TextAlignment::Center, kValueDisplayFontSize * 2.0f, kLCDCyanTextColor, kValueDisplayFont);
 
 	pos.set(kBufferDisplayX, kBufferDisplayY, kOLEDDisplayWidth, kOLEDDisplayHeight);
-	mBufferSizeDisplay = emplaceControl<DGTextDisplay>(this, bufferSizeTag, pos, bufferSizeDisplayProc, this, nullptr, dfx::TextAlignment::Center, kValueDisplayFontSize * 2.0f, kLCDCyanTextColor, kValueDisplayFont);
+	mBufferSizeDisplay = emplaceControl<DGTextDisplay>(this, bufferSizeParameterID, pos, bufferSizeDisplayProc, this, nullptr, dfx::TextAlignment::Center, kValueDisplayFontSize * 2.0f, kLCDCyanTextColor, kValueDisplayFont);
 
 	pos.set(kDivisorLFORateDisplayX, kDivisorLFORateDisplayY, kLCDDisplayWidth, kLCDDisplayHeight);
-	mDivisorLFORateDisplay = emplaceControl<DGTextDisplay>(this, divisorLFORateTag, pos, divisorLFORateDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	mDivisorLFORateDisplay = emplaceControl<DGTextDisplay>(this, divisorLFORateParameterID, pos, divisorLFORateDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
 
 	pos.set(kDivisorLFODepthDisplayX, kDivisorLFODepthDisplayY, kLCDDisplayWidth, kLCDDisplayHeight);
 	emplaceControl<DGTextDisplay>(this, kDivisorLFODepth, pos, lfoDepthDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
 
 	pos.set(kBufferLFORateDisplayX, kBufferLFORateDisplayY, kLCDDisplayWidth, kLCDDisplayHeight);
-	mBufferLFORateDisplay = emplaceControl<DGTextDisplay>(this, bufferLFORateTag, pos, bufferLFORateDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	mBufferLFORateDisplay = emplaceControl<DGTextDisplay>(this, bufferLFORateParameterID, pos, bufferLFORateDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
 
 	pos.set(kBufferLFODepthDisplayX, kBufferLFODepthDisplayY, kLCDDisplayWidth, kLCDDisplayHeight);
 	emplaceControl<DGTextDisplay>(this, kBufferLFODepth, pos, lfoDepthDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
@@ -445,7 +445,7 @@ void BufferOverrideEditor::CloseEditor()
 
 
 //-----------------------------------------------------------------------------
-void BufferOverrideEditor::parameterChanged(long inParameterID)
+void BufferOverrideEditor::parameterChanged(dfx::ParameterID inParameterID)
 {
 	IDGControl* slider = nullptr;
 	DGTextDisplay* textDisplay = nullptr;
@@ -457,7 +457,7 @@ void BufferOverrideEditor::parameterChanged(long inParameterID)
 		case kBufferTempoSync:
 		{
 			HandleTempoSyncChange();
-			constexpr std::array<long, 2> parameterIDs = { kBufferSize_MS, kBufferSize_Sync };
+			constexpr std::array<dfx::ParameterID, 2> parameterIDs = { kBufferSize_MS, kBufferSize_Sync };
 			newParameterID = parameterIDs[useSyncParam];
 			slider = mDivisorBufferBox->getControlByParameterID(parameterIDs[!useSyncParam]);
 			textDisplay = mBufferSizeDisplay;
@@ -656,7 +656,7 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 //-----------------------------------------------------------------------------
 void BufferOverrideEditor::HandleTempoSyncChange()
 {
-	auto const updateTextDisplay = [this](DGTextDisplay* control, long tempoSyncParameterID)
+	auto const updateTextDisplay = [this](DGTextDisplay* control, dfx::ParameterID tempoSyncParameterID)
 	{
 		auto const allowTextEdit = !getparameter_b(tempoSyncParameterID);
 		control->setTextEditEnabled(allowTextEdit);

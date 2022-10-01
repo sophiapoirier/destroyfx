@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "geometereditor.h"
@@ -226,9 +226,9 @@ long GeometerEditor::OpenEditor() {
   DGRect lpos(pos_sliderlabelX, pos_sliderlabelY, pos_sliderlabelwidth, pos_sliderlabelheight);
   for (size_t i=0; i < NUM_SLIDERS; i++) {
     auto const baseparam = get_base_param_for_slider(i);
-    assert(dfxgui_IsValidParamID(baseparam));
+    assert(dfxgui_IsValidParameterID(baseparam));
     auto labelstrings = &ops_labelstrings;
-    long xoff = 0, yoff = 0;
+    int xoff = 0, yoff = 0;
     // how to generate landmarks
     if (baseparam == P_POINTSTYLE) {
       labelstrings = &landmarks_labelstrings;
@@ -253,7 +253,7 @@ long GeometerEditor::OpenEditor() {
     }
     auto const param = choose_multiparam(baseparam);
 
-    constexpr long sliderRangeMargin = 1;
+    constexpr int sliderRangeMargin = 1;
     sliders[i] = emplaceControl<DGSlider>(this, param, pos, dfx::kAxis_Horizontal,
                                           g_sliderhandle, g_sliderbackground, sliderRangeMargin);
     sliders[i]->setAlternateHandle(g_sliderhandle_glowing);
@@ -346,7 +346,7 @@ void GeometerEditor::CloseEditor() {
 
 
 //-----------------------------------------------------------------------------
-void GeometerEditor::parameterChanged(long inParameterID) {
+void GeometerEditor::parameterChanged(dfx::ParameterID inParameterID) {
 
   for (size_t i=0; i < NUM_SLIDERS; i++) {
     auto const baseparam = get_base_param_for_slider(i);
@@ -466,7 +466,13 @@ std::string GeometerEditor::helptext(size_t inHelpCategory, int inItemNum) {
 }
 
 //-----------------------------------------------------------------------------
-long GeometerEditor::get_base_param_for_slider(size_t sliderIndex) noexcept {
+dfx::ParameterID GeometerEditor::choose_multiparam(dfx::ParameterID baseParamID) {
+
+  return static_cast<dfx::ParameterID>(getparameter_i(baseParamID)) + baseParamID + 1;
+}
+
+//-----------------------------------------------------------------------------
+dfx::ParameterID GeometerEditor::get_base_param_for_slider(size_t sliderIndex) noexcept {
 
   switch (sliderIndex) {
     case 0:

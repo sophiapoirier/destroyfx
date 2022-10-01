@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with EQ Sync.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "eqsynceditor.h"
@@ -85,9 +85,9 @@ static int GetMacOSVersion()
 class EQSyncSlider final : public DGSlider
 {
 public:
-	EQSyncSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion,
+	EQSyncSlider(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion,
 				 dfx::Axis inOrientation, DGImage* inHandle, DGImage* inHandleClicked, DGImage* inBackground)
-	:	DGSlider(inOwnerEditor, inParamID, inRegion, inOrientation, inHandle, inBackground),
+	:	DGSlider(inOwnerEditor, inParameterID, inRegion, inOrientation, inHandle, inBackground),
 		mRegularHandle(inHandle), mClickedHandle(inHandleClicked)
 	{
 	}
@@ -193,7 +193,7 @@ long EQSyncEditor::OpenEditor()
 
 	DGRect pos;
 
-	for (long i = kRate_Sync; i <= kTempo; i++)
+	for (dfx::ParameterID i = kRate_Sync; i <= kTempo; i++)
 	{
 		// create the horizontal sliders
 		pos.set(wideFaderX, wideFaderY + (kWideFaderInc * i), horizontalSliderBackgroundImage->getWidth(), horizontalSliderBackgroundImage->getHeight());
@@ -240,7 +240,7 @@ long EQSyncEditor::OpenEditor()
 	}
 
 	// create the vertical sliders
-	for (long i = kA0; i <= kB2; i++)
+	for (dfx::ParameterID i = kA0; i <= kB2; i++)
 	{
 		pos.set(tallFaderX + (kTallFaderInc * (i - kA0)), tallFaderY, verticalSliderBackgroundImage->getWidth(), verticalSliderBackgroundImage->getHeight());
 		emplaceControl<EQSyncSlider>(this, i, pos, dfx::kAxis_Vertical, sliderHandleImage, sliderHandleClickedImage, verticalSliderBackgroundImage);
@@ -272,7 +272,7 @@ long EQSyncEditor::OpenEditor()
 }
 
 //-----------------------------------------------------------------------------
-void EQSyncEditor::parameterChanged(long inParameterID)
+void EQSyncEditor::parameterChanged(dfx::ParameterID inParameterID)
 {
 	if (inParameterID == kTempoAuto)
 	{

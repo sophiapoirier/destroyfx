@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "dfxguitextdisplay.h"
@@ -189,7 +189,7 @@ static DGRect DFXGUI_GetTextDrawRegion(DGRect const& inRegion, int inYOffsetTwea
 // Text Display
 //-----------------------------------------------------------------------------
 DGTextDisplay::DGTextDisplay(DfxGuiEditor*							inOwnerEditor,
-							 long									inParamID,
+							 dfx::ParameterID						inParameterID,
 							 DGRect const&							inRegion,
 							 VSTGUI::CParamDisplayValueToStringProc	inTextProc,
 							 void*									inUserData,
@@ -198,7 +198,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor*							inOwnerEditor,
 							 float									inFontSize,
 							 DGColor								inFontColor,
 							 char const*							inFontName)
-:	DGControl<VSTGUI::CTextEdit>(inRegion, inOwnerEditor, inParamID, nullptr, inBackgroundImage),
+:	DGControl<VSTGUI::CTextEdit>(inRegion, inOwnerEditor, dfx::ParameterID_ToVST(inParameterID), nullptr, inBackgroundImage),
 	mValueToTextProc(inTextProc ? inTextProc : valueToTextProc_Generic),
 	mValueToTextUserData(inUserData),
 	mYOffsetTweak(DFXGUI_GetYOffsetTweak(inFontName)),
@@ -336,8 +336,8 @@ bool DGTextDisplay::valueToTextProc_LinearToPercent(float inValue, char outTextU
 //-----------------------------------------------------------------------------
 std::optional<float> DGTextDisplay::textToValueProc_Generic(std::string const& inText, DGTextDisplay* inTextDisplay)
 {
-	auto const paramID = inTextDisplay->getParameterID();
-	auto const value_d = inTextDisplay->getOwnerEditor()->dfxgui_GetParameterValueFromString_f(paramID, inText);
+	auto const parameterID = inTextDisplay->getParameterID();
+	auto const value_d = inTextDisplay->getOwnerEditor()->dfxgui_GetParameterValueFromString_f(parameterID, inText);
 	return value_d ? std::make_optional(static_cast<float>(*value_d)) : std::nullopt;
 }
 
@@ -493,10 +493,10 @@ void DGStaticTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTG
 //-----------------------------------------------------------------------------
 // Static Text Display
 //-----------------------------------------------------------------------------
-DGTextArrayDisplay::DGTextArrayDisplay(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion,
+DGTextArrayDisplay::DGTextArrayDisplay(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion,
 									   size_t inNumStrings, dfx::TextAlignment inTextAlignment, DGImage* inBackground,
 									   float inFontSize, DGColor inFontColor, char const* inFontName)
-:	DGTextDisplay(inOwnerEditor, inParamID, inRegion, nullptr, nullptr, inBackground,
+:	DGTextDisplay(inOwnerEditor, inParameterID, inRegion, nullptr, nullptr, inBackground,
 				  inTextAlignment, inFontSize, inFontColor, inFontName),
 	// TODO C++23: integer literal suffix UZ
 	mDisplayStrings(std::max(inNumStrings, size_t(1)))

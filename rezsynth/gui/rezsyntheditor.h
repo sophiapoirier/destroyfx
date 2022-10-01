@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Rez Synth.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -33,7 +33,7 @@ public:
 
 	long OpenEditor() override;
 	void CloseEditor() override;
-	void parameterChanged(long inParameterID) override;
+	void parameterChanged(dfx::ParameterID inParameterID) override;
 	void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) override;
 
 private:
@@ -48,7 +48,7 @@ private:
 
 	void HandleLegatoChange();
 	std::string GetHelpForControl(IDGControl* inControl) const;
-	static Section ParameterToSection(long inParameterID);
+	static Section ParameterToSection(dfx::ParameterID inParameterID) noexcept;
 
 	DGSlider* mSepAmountSlider = nullptr, * mBandwidthAmountSlider = nullptr;
 	DGTextDisplay* mSepAmountDisplay = nullptr, * mBandwidthAmountDisplay = nullptr;

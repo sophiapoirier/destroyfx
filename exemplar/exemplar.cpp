@@ -15,27 +15,25 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with Exemplar.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org
+
+DFX Exemplar, featuring the Super Destroy FX Windowing System!
 ------------------------------------------------------------------------*/
 
 #include "exemplar.h"
 
 #include <algorithm>
+#include <array>
 #include <cstdio>
 #include <fstream>
 
 
-// #include <fstream.h>
-
-#define DIMENSION 10
 #define NORMALIZE 1
-// should be param */
-#define STRIDE 128
 
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-  #ifndef _DFX_EXEMPLAREDITOR_H
-  #include "exemplareditor.hpp"
-  #endif
-#endif
+static constexpr int DIMENSION = 10;
+// should be param */
+static constexpr int STRIDE = 128;
 
 /* this macro does boring entry point stuff for us */
 DFX_ENTRY(Exemplar);
@@ -63,22 +61,21 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setparametervaluestring(P_MODE, MODE_MATCH, "match");
   setparametervaluestring(P_MODE, MODE_CAPTURE, "capture");
 
-  long i;
   /* set up values for windowing */
-  char bufstr[64];
-  for (i=0; i < BUFFERSIZESSIZE; i++) {
+  std::array<char, 64> bufstr {};
+  for (long i=0; i < BUFFERSIZESSIZE; i++) {
     if (buffersizes[i] > 1000)
-      sprintf(bufstr, "%ld,%03ld", buffersizes[i]/1000, buffersizes[i]%1000);
+      snprintf(bufstr.data(), bufstr.size(), "%ld,%03ld", buffersizes[i]/1000, buffersizes[i]%1000);
     else
-      sprintf(bufstr, "%ld", buffersizes[i]);
-    setparametervaluestring(P_BUFSIZE, i, bufstr);
+      snprintf(bufstr.data(), bufstr.size(), "%ld", buffersizes[i]);
+    setparametervaluestring(P_BUFSIZE, i, bufstr.data());
   }
 
   setparametervaluestring(P_SHAPE, WINDOW_TRIANGLE, "linear");
   setparametervaluestring(P_SHAPE, WINDOW_ARROW, "arrow");
   setparametervaluestring(P_SHAPE, WINDOW_WEDGE, "wedge");
   setparametervaluestring(P_SHAPE, WINDOW_COS, "best");
-  for (i=NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
+  for (int i=NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
     setparametervaluestring(P_SHAPE, i, "???");
 
   long delay_samples = buffersizes[getparameter_i(P_BUFSIZE)];
@@ -95,13 +92,6 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 #if !TARGET_PLUGIN_USES_DSPCORE
   addchannelconfig(1, 1);       /* mono */
 #endif
-
-#ifdef TARGET_API_VST
-  /* if you have a GUI, need an Editor class... */
-  #if TARGET_PLUGIN_HAS_GUI
-    editor = new ExemplarEditor(this);
-  #endif
-#endif
 }
 
 PLUGINCORE::PLUGINCORE(DfxPlugin * inInstance)
@@ -110,32 +100,18 @@ PLUGINCORE::PLUGINCORE(DfxPlugin * inInstance)
   constexpr auto maxframe = *std::max_element(std::cbegin(buffersizes), std::cend(buffersizes));
 
   /* add some leeway? */
-  in0 = (float*)malloc(maxframe * sizeof (float));
-  out0 = (float*)malloc(maxframe * 2 * sizeof (float));
+  in0.assign(maxframe, 0.f);
+  out0.assign(maxframe * 2, 0.f);
 
   /* prevmix is only a single third long */
-  prevmix = (float*)malloc((maxframe / 2) * sizeof (float));
-
-  /* initialize nn stuff */
-  capturemode = true;
-  nntree = 0;
-  ncapsamples = 0;
-  npoints = 0;
+  prevmix.assign(maxframe / 2, 0.f);
 
   /* initialize FFT stuff */
-  plan = rfftw_create_plan(framesize, FFTW_FORWARD, FFTW_ESTIMATE);
-  // rplan = rfftw_create_plan(framesize, FFTW_BACKWARD, FFTW_ESTIMATE);
+  plan.reset(rfftw_create_plan(framesize, FFTW_FORWARD, FFTW_ESTIMATE));
+  // rplan.reset(rfftw_create_plan(framesize, FFTW_BACKWARD, FFTW_ESTIMATE));
 
 }
 
-
-PLUGINCORE::~PLUGINCORE() {
-  /* windowing buffers */
-  free (in0);
-  free (out0);
-
-  free (prevmix);
-}
 
 void PLUGINCORE::reset() {
 
@@ -153,7 +129,7 @@ void PLUGINCORE::reset() {
     capturemode = newcapture;
     if (capturemode) {
       /* entering capture mode. discard the existing tree */
-      nntree = 0; /* XXX do it... */
+      nntree.reset(); /* XXX do it... */
 
       ncapsamples = 0;
       npoints = 0;
@@ -164,15 +140,15 @@ void PLUGINCORE::reset() {
       int exstart = 0;
       /* make points */
       for (exstart = 0; exstart < (ncapsamples - wsize); exstart += STRIDE) {
-	/* save which start point this is */
+        /* save which start point this is */
         cap_index[npoints] = exstart;
         classify(&(capsamples[exstart]), 
-		 cap_scale[npoints],
+                 cap_scale[npoints],
                  cap_point[npoints], wsize);
-	npoints++;
+        npoints++;
       }
 
-      nntree = new ANNkd_tree(cap_point, npoints, DIMENSION);
+      nntree = std::make_unique<ANNkd_tree>(cap_point, npoints, DIMENSION);
       char msg[512];
       // sprintf(msg, "ok %p", this);
       // MessageBoxA(0, "match mode", msg, MB_OK);
@@ -192,22 +168,17 @@ void PLUGINCORE::reset() {
   /* set up buffers. Prevmix and first frame of output are always 
      filled with zeros. XXX memset */
 
-  for (int i = 0; i < third; i ++) {
-    prevmix[i] = 0.0f;
-  }
+  std::fill_n(prevmix.begin(), third, 0.f);
+  std::fill_n(out0.begin(), framesize, 0.f)
 
-  for (int j = 0; j < framesize; j ++) {
-    out0[j] = 0.0f;
-  }
-  
   /* start input at beginning. Output has a frame of silence. */
   insize = 0;
   outstart = 0;
   outsize = framesize;
 
   /* restore FFT plans */
-  plan = rfftw_create_plan(framesize, FFTW_FORWARD, FFTW_ESTIMATE);
-  // rplan = rfftw_create_plan(framesize, FFTW_BACKWARD, FFTW_ESTIMATE);
+  plan.reset(rfftw_create_plan(framesize, FFTW_FORWARD, FFTW_ESTIMATE));
+  // rplan.reset(rfftw_create_plan(framesize, FFTW_BACKWARD, FFTW_ESTIMATE));
 
   dfxplugin->setlatency_samples(framesize);
   /* tail is the same as delay, of course */
@@ -217,7 +188,7 @@ void PLUGINCORE::reset() {
 void PLUGINCORE::processparameters() {
   
   /* can safely change this whenever... */
-  float erroramount = getparameter_f(P_ERRORAMOUNT);
+  erroramount = getparameter_f(P_ERRORAMOUNT);
 
   #ifdef TARGET_API_VST
     /* this tells the host to call a suspend()-resume() pair, 
@@ -232,7 +203,7 @@ void PLUGINCORE::processparameters() {
    write your DSP, and it will be always called with the same sample
    size (as long as the block size parameter stays the same) and
    automatically overlapped. */
-void PLUGINCORE::processw(float * in, float * out, long samples) {
+void PLUGINCORE::processw(float const * in, float * out, long samples) {
 
 #if 0
   /* this sounds pretty neat, actually. */
@@ -328,7 +299,7 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
  */
 
 /* assumes samples is a power of two. */
-void PLUGINCORE::classify_haar(float * in, float & scale, 
+void PLUGINCORE::classify_haar(float const * in, float & scale, 
                                ANNpoint & out, long samples) {
   out = annAllocPt(DIMENSION);
 
@@ -362,10 +333,9 @@ void PLUGINCORE::classify_haar(float * in, float & scale,
      wavelet degenerates too quickly, because the peaks
      shrink logarithmically). So, shrink at a smaller
      factor. */
-#define shrink freq = freq * 4 / 5
 
   for(int d = 0; d < DIMENSION; d++) {
-    shrink;
+    freq = freq * 4 / 5;  // shrink
     if (freq) {
       int i = 0;
       float prod = 0.0;
@@ -399,7 +369,7 @@ void PLUGINCORE::classify_haar(float * in, float & scale,
 
 }
 
-void PLUGINCORE::classify_fft(float * in, float & scale, 
+void PLUGINCORE::classify_fft(float const * in, float & scale, 
                               ANNpoint & out, long samples) {
   out = annAllocPt(DIMENSION);
 
@@ -426,7 +396,7 @@ void PLUGINCORE::classify_fft(float * in, float & scale,
 # endif
 
   /* do the fft */
-  rfftw_one(plan, in, fftr);
+  rfftw_one(plan.get(), in, fftr);
 
   /* what we've got now is frequency/amplitude pairs.
      we want to represent the characteristics of this
@@ -471,7 +441,7 @@ void PLUGINCORE::classify_fft(float * in, float & scale,
 
      idea 6: classifier is n/2 pairs of (freq, amplitude), where
              each pair is scaled by a constant determined by its
-	     index.
+             index.
 
      only bad when the n loudest frequencies are close to one
      another in amplitude.
@@ -486,7 +456,7 @@ void PLUGINCORE::classify_fft(float * in, float & scale,
      collect the DIMENSION highest bins,
      sorted in descending order. */
 
-  int best[DIMENSION];
+  int best[DIMENSION] {};
   { 
     for(int j = 0; j < DIMENSION; j ++) best[j] = -1;
   }
@@ -498,7 +468,7 @@ void PLUGINCORE::classify_fft(float * in, float & scale,
 
     if (getparameter_i(P_FFTRANGE) == FFTR_AUDIBLE) {
       /* XXX just a guess. Need to know the sample rate.
-	 But, whatever. */
+         But, whatever. */
       low = .005 * samples;
       hi = samples * 0.95;
     }
@@ -511,18 +481,18 @@ void PLUGINCORE::classify_fft(float * in, float & scale,
 
       int m = i;
       /* m will be inserted if larger than fftr[best[j]]
-	 or best[j] == -1 */
+         or best[j] == -1 */
       for(int j = 0; j < DIMENSION; j ++) {
-	if (best[j] == -1) {
-	  best[j] = m; break;
-	} else {
-	  /* better than current best */
-	  if (fftr[m] > fftr[best[j]]) {
-	    int tmp = best[j];
-	    best[j] = m;
-	    m = tmp;
-	  } else break;
-	}
+        if (best[j] == -1) {
+          best[j] = m; break;
+        } else {
+          /* better than current best */
+          if (fftr[m] > fftr[best[j]]) {
+            int tmp = best[j];
+            best[j] = m;
+            m = tmp;
+          } else break;
+        }
       }
 
     }
@@ -546,7 +516,7 @@ void PLUGINCORE::classify_fft(float * in, float & scale,
   }
 }
 
-void PLUGINCORE::classify(float * in, float & scale, 
+void PLUGINCORE::classify(float const * in, float & scale, 
                           ANNpoint & out, long samples) {
   classify_fft(in, scale, out, samples);
 }
@@ -598,7 +568,7 @@ void PLUGINCORE::process(const float *tin, float *tout, size_t samples) {
       /* frame is full! */
 
       /* in0 -> process -> out0(first free space) */
-      processw(in0, out0+outstart+outsize, framesize);
+      processw(in0.data(), out0.data()+outstart+outsize, framesize);
 
       float oneDivThird = 1.0f / (float)third;
       /* apply envelope */
@@ -640,11 +610,11 @@ void PLUGINCORE::process(const float *tin, float *tout, size_t samples) {
         out0[u+outstart+outsize] += prevmix[u];
 
       /* prevmix becomes out1 */
-      memcpy(prevmix, out0 + outstart + outsize + third, third * sizeof (float));
+      std::copy_n(std::next(out0.cbegin(), outstart + outsize + third), third, prevmix.begin());
 
       /* copy 2nd third of input over in0 (need to re-use it for next frame), 
          now insize = third */
-      memcpy(in0, in0 + third, third * sizeof (float));
+      std::copy_n(std::next(in0.cbegin(), third), third, in0.begin());
 
       insize = third;
       
@@ -659,7 +629,7 @@ void PLUGINCORE::process(const float *tin, float *tout, size_t samples) {
 
     /* make sure there is always enough room for a frame in out buffer */
     if (outstart == third) {
-      memmove(out0, out0 + outstart, outsize * sizeof (float));
+      memmove(out0.data(), out0.data() + outstart, outsize * sizeof (float));
       outstart = 0;
     }
   }

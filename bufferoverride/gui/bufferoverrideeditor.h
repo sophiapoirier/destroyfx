@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2022  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -35,7 +35,7 @@ public:
 
 	long OpenEditor() override;
 	void CloseEditor() override;
-	void parameterChanged(long inParameterID) override;
+	void parameterChanged(dfx::ParameterID inParameterID) override;
 	void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) override;
 
 private:

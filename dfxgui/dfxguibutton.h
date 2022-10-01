@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -45,7 +45,7 @@ public:
 		PictureReel
 	};
 
-	DGButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage, 
+	DGButton(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion, DGImage* inImage, 
 			 Mode inMode, bool inDrawMomentaryState = false);
 	DGButton(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inImage, 
 			 size_t inNumStates, Mode inMode, bool inDrawMomentaryState = false);
@@ -107,7 +107,7 @@ private:
 class DGToggleImageButton : public DGButton
 {
 public:
-	DGToggleImageButton(DfxGuiEditor* inOwnerEditor, long inParameterID, VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, 
+	DGToggleImageButton(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, 
 						DGImage* inImage, bool inDrawMomentaryState = false);
 	DGToggleImageButton(DfxGuiEditor* inOwnerEditor, VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, 
 						DGImage* inImage, bool inDrawMomentaryState = false);
@@ -126,7 +126,7 @@ private:
 class DGFineTuneButton : public DGControl<VSTGUI::CControl>
 {
 public:
-	DGFineTuneButton(DfxGuiEditor* inOwnerEditor, long inParameterID, DGRect const& inRegion, 
+	DGFineTuneButton(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion, 
 					 DGImage* inImage, float inValueChangeAmount = 0.0001f);
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
@@ -149,7 +149,7 @@ protected:
 class DGValueSpot : public DGControl<VSTGUI::CControl>
 {
 public:
-	DGValueSpot(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage, double inValue);
+	DGValueSpot(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion, DGImage* inImage, double inValue);
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
 	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;

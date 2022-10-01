@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -33,14 +33,14 @@ To contact the author, use the contact form at http://destroyfx.org/
 class TransverbSpeedTuneButton final : public DGFineTuneButton
 {
 public:
-	TransverbSpeedTuneButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage,
-							 float inValueChangeAmount)
-	:	DGFineTuneButton(inOwnerEditor, inParamID, inRegion, inImage, inValueChangeAmount)
+	TransverbSpeedTuneButton(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion,
+							 DGImage* inImage, float inValueChangeAmount)
+	:	DGFineTuneButton(inOwnerEditor, inParameterID, inRegion, inImage, inValueChangeAmount)
 	{}
 
 	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
 
-	void setTuneMode(long inTuneMode) noexcept
+	void setTuneMode(unsigned int inTuneMode) noexcept
 	{
 		mTuneMode = inTuneMode;
 	}
@@ -48,7 +48,7 @@ public:
 	CLASS_METHODS(TransverbSpeedTuneButton, DGFineTuneButton)
 
 private:
-	long mTuneMode {};
+	unsigned int mTuneMode {};
 };
 
 
@@ -62,7 +62,7 @@ public:
 	long OpenEditor() override;
 	void PostOpenEditor() override;
 	void CloseEditor() override;
-	void parameterChanged(long inParameterID) override;
+	void parameterChanged(dfx::ParameterID inParameterID) override;
 	void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex) override;
 
 private:

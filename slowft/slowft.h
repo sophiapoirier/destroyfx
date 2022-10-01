@@ -23,8 +23,8 @@ Slowft, starring the Super Destroy FX Windowing System!
 
 #pragma once
 
-#include <iterator>
 #include <numbers>
+#include <vector>
 
 #include "dfxplugin.h"
 
@@ -51,8 +51,8 @@ enum { WINDOW_TRIANGLE,
 };
 
 /* the names of the parameters */
-enum { P_BUFSIZE, P_SHAPE, 
-       NUM_PARAMS,
+enum : dfx::ParameterID { P_BUFSIZE, P_SHAPE, 
+                          NUM_PARAMS
 };
 
 
@@ -70,13 +70,12 @@ private:
 class PLUGINCORE : public DfxPluginCore {
 public:
   PLUGINCORE(DfxPlugin * inInstance);
-  ~PLUGINCORE() override;
 
   void reset() override;
   void processparameters() override;
   void process(const float *in, float *out, size_t inNumFrames) override;
 
-  long getwindowsize() { return third; }
+  long getwindowsize() const noexcept { return third; }
 
 private:
   static constexpr float BASE_FREQ = 27.5f;
@@ -87,32 +86,32 @@ private:
   /* input and output buffers. out is framesize*2 samples long, in is framesize
      samples long. (for maximum framesize)
   */
-  float * in0, * out0;
+  std::vector<float> in0, out0;
 
   /* bufsize is 3 * third, framesize is 2 * third 
      bufsize is used for outbuf.
   */
-  long bufsize, framesize, third;
+  long bufsize = 0, framesize = 0, third = 0;
 
-  void processw(float * in, float * out, long samples);
+  void processw(float const * in, float * out, long samples);
 
-  int shape;
+  int shape = 0;
 
   /* third-sized tail of previous processed frame. already has mixing envelope
      applied.
    */
-  float * prevmix;
+  std::vector<float> prevmix;
 
   /* number of samples in in0 */
-  int insize;
+  int insize = 0;
 
   /* number of samples and starting position of valid samples in out0 */
-  int outsize;
-  int outstart;
+  int outsize = 0;
+  int outstart = 0;
 
 
   /* the transformed data */
-  float sines[NUM_KEYS];
-  float cosines[NUM_KEYS];
+  float sines[NUM_KEYS] {};
+  float cosines[NUM_KEYS] {};
 
 };

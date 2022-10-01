@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Skidder.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "skidder.h"
@@ -196,7 +196,8 @@ bool Skidder::isAnyNoteOn() const
 //-----------------------------------------------------------------------------
 // this gets called when Skidder automates a parameter from CC messages.
 // this is where we can link parameter automation for rangeslider points.
-void Skidder::settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, int eventChannel, int eventNum,
+void Skidder::settings_doLearningAssignStuff(dfx::ParameterID parameterID, dfx::MidiEventType eventType,
+											 int eventChannel, int eventNum,
 											 size_t /*offsetFrames*/, int eventNum2, dfx::MidiEventBehaviorFlags eventBehaviourFlags,
 											 int data1, int data2, float fdata1, float fdata2)
 {
@@ -205,34 +206,34 @@ void Skidder::settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventT
 		return;
 	}
 
-	switch (tag)
+	switch (parameterID)
 	{
 		case kPulsewidth:
 			if (mPulsewidthDoubleAutomate)
 			{
-				getsettings().assignParam(kPulsewidthRandMin, eventType, eventChannel, eventNum, eventNum2,
-										  eventBehaviourFlags, data1, data2, fdata1, fdata2);
+				getsettings().assignParameter(kPulsewidthRandMin, eventType, eventChannel, eventNum, eventNum2,
+											  eventBehaviourFlags, data1, data2, fdata1, fdata2);
 			}
 			break;
 		case kPulsewidthRandMin:
 			if (mPulsewidthDoubleAutomate)
 			{
-				getsettings().assignParam(kPulsewidth, eventType, eventChannel, eventNum, eventNum2,
-										  eventBehaviourFlags, data1, data2, fdata1, fdata2);
+				getsettings().assignParameter(kPulsewidth, eventType, eventChannel, eventNum, eventNum2,
+											  eventBehaviourFlags, data1, data2, fdata1, fdata2);
 			}
 			break;
 		case kFloor:
 			if (mFloorDoubleAutomate)
 			{
-				getsettings().assignParam(kFloorRandMin, eventType, eventChannel, eventNum, eventNum2,
-										  eventBehaviourFlags, data1, data2, fdata1, fdata2);
+				getsettings().assignParameter(kFloorRandMin, eventType, eventChannel, eventNum, eventNum2,
+											  eventBehaviourFlags, data1, data2, fdata1, fdata2);
 			}
 			break;
 		case kFloorRandMin:
 			if (mFloorDoubleAutomate)
 			{
-				getsettings().assignParam(kFloor, eventType, eventChannel, eventNum, eventNum2,
-										  eventBehaviourFlags, data1, data2, fdata1, fdata2);
+				getsettings().assignParameter(kFloor, eventType, eventChannel, eventNum, eventNum2,
+											  eventBehaviourFlags, data1, data2, fdata1, fdata2);
 			}
 			break;
 		default:

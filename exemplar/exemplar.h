@@ -16,14 +16,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Exemplar.  If not, see <http://www.gnu.org/licenses/>.
 
+To contact the author, use the contact form at http://destroyfx.org
+
 DFX Exemplar, starring the Super Destroy FX Windowing System!
 ------------------------------------------------------------------------*/
 
 #pragma once
 
 #include <algorithm>
-#include <iterator>
+#include <memory>
+#include <vector>
 
+#include "dfxmisc.h"
 #include "dfxplugin.h"
 #include "ANN/ANN.h"
 #include "rfftw.h"
@@ -59,10 +63,10 @@ enum { FFTR_AUDIBLE,
        NUM_FFTRS, };
 
 /* the names of the parameters */
-enum { P_BUFSIZE, P_SHAPE, 
-       P_MODE, P_FFTRANGE,
-       P_ERRORAMOUNT,
-       NUM_PARAMS,
+enum : dfx::ParameterID { P_BUFSIZE, P_SHAPE, 
+                          P_MODE, P_FFTRANGE,
+                          P_ERRORAMOUNT,
+                          NUM_PARAMS
 };
 
 
@@ -80,7 +84,6 @@ private:
 class PLUGINCORE : public DfxPluginCore {
 public:
   explicit PLUGINCORE(DfxPlugin * inInstance);
-  ~PLUGINCORE() override;
 
   void reset() override;
   void processparameters() override;
@@ -93,46 +96,46 @@ private:
   /* input and output buffers. out is framesize*2 samples long, in is framesize
      samples long. (for maximum framesize)
   */
-  float * in0, * out0;
+  std::vector<float> in0, out0;
 
   /* bufsize is 3 * third, framesize is 2 * third 
      bufsize is used for outbuf.
   */
-  long bufsize, framesize, third;
+  long bufsize = 0, framesize = 0, third = 0;
 
-  void processw(float * in, float * out, long samples);
+  void processw(float const * in, float * out, long samples);
 
-  int shape;
+  int shape = 0;
 
   /* third-sized tail of previous processed frame. already has mixing envelope
      applied.
    */
-  float * prevmix;
+  std::vector<float> prevmix;
 
   /* number of samples in in0 */
-  int insize;
+  int insize = 0;
 
   /* number of samples and starting position of valid samples in out0 */
-  int outsize;
-  int outstart;
+  int outsize = 0;
+  int outstart = 0;
 
 
 
   /* Exemplar stuff */
   /* classifies a window */
-  void classify(float * in, float & scale, ANNpoint & out, long samples);
+  void classify(float const * in, float & scale, ANNpoint & out, long samples);
 
   /* specific classifiers */
-  void classify_haar(float * in, float & scale, ANNpoint & out, long samples);
-  void classify_fft (float * in, float & scale, ANNpoint & out, long samples);
+  void classify_haar(float const * in, float & scale, ANNpoint & out, long samples);
+  void classify_fft (float const * in, float & scale, ANNpoint & out, long samples);
 
 
-  bool capturemode;
-  float erroramount;
+  bool capturemode = true;
+  float erroramount = 0.f;
 
   static constexpr size_t CAPBUFFER = 500000; /* 1000000 */
-  float capsamples[CAPBUFFER];
-  int ncapsamples; /* < CAPBUFFER */
+  float capsamples[CAPBUFFER] {};
+  int ncapsamples = 0; /* < CAPBUFFER */
   
 #if 0
   /* an individual capture */
@@ -145,18 +148,17 @@ private:
   };
 #endif
 
-  ANNpoint cap_point[CAPBUFFER];
-  int cap_index[CAPBUFFER];
-  float cap_scale[CAPBUFFER];
-  int npoints;
+  ANNpoint cap_point[CAPBUFFER] {};
+  int cap_index[CAPBUFFER] {};
+  float cap_scale[CAPBUFFER] {};
+  int npoints = 0;
 
-  ANNkd_tree * nntree;
+  std::unique_ptr<ANNkd_tree> nntree;
 
   /* for FFTW: current analysis plan */
-  rfftw_plan plan;
-  rfftw_plan rplan;
+  dfx::UniqueOpaqueType<rfftw_plan, rfftw_destroy_plan> plan, rplan;
 
   /* result of ffts ( */
-  float fftr[*std::max_element(std::cbegin(buffersizes), std::cend(buffersizes))];
+  float fftr[*std::max_element(std::cbegin(buffersizes), std::cend(buffersizes))] {};
 
 };

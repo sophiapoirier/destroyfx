@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "transverbeditor.h"
@@ -90,13 +90,13 @@ constexpr float kSemitonesPerOctave = 12.0f;
 
 static bool bsizeDisplayProcedure(float inValue, char* outText, void*)
 {
-	long const thousands = static_cast<long>(inValue) / 1000;
+	int const thousands = static_cast<int>(inValue) / 1000;
 	auto const remainder = std::fmod(inValue, 1000.0f);
 
 	bool success = false;
 	if (thousands > 0)
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld,%05.1f", thousands, remainder) > 0;
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%d,%05.1f", thousands, remainder) > 0;
 	}
 	else
 	{
@@ -188,19 +188,19 @@ static std::optional<float> speedTextConvertProcedure(std::string const& inText,
 
 static bool feedbackDisplayProcedure(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld%%", static_cast<long>(inValue)) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%d%%", static_cast<int>(inValue)) > 0;
 }
 
 static bool distDisplayProcedure(float inValue, char* outText, void* inEditor)
 {
 	float const distance = inValue * static_cast<DfxGuiEditor*>(inEditor)->getparameter_f(kBsize);
-	long const thousands = static_cast<long>(distance) / 1000;
+	int const thousands = static_cast<int>(distance) / 1000;
 	auto const remainder = std::fmod(distance, 1000.0f);
 
 	bool success = false;
 	if (thousands > 0)
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld,%06.2f", thousands, remainder) > 0;
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%d,%06.2f", thousands, remainder) > 0;
 	}
 	else
 	{
@@ -344,22 +344,22 @@ long TransverbEditor::OpenEditor()
 
 
 	DGRect pos, textDisplayPos, tuneDownButtonPos, tuneUpButtonPos;
-	constexpr long sliderRangeMargin = 1;
+	constexpr int sliderRangeMargin = 1;
 
 	// Make horizontal sliders and add them to the pane
 	pos.set(kWideFaderX, kWideFaderY, horizontalSliderBackgroundImage->getWidth(), horizontalSliderBackgroundImage->getHeight());
 	textDisplayPos.set(kDisplayX, kDisplayY, kDisplayWidth, kDisplayHeight);
 	tuneDownButtonPos.set(kFineDownButtonX, kFineButtonY, fineDownButtonImage->getWidth(), fineDownButtonImage->getHeight() / 2);
 	tuneUpButtonPos.set(kFineUpButtonX, kFineButtonY, fineUpButtonImage->getWidth(), fineUpButtonImage->getHeight() / 2);
-	for (long tag = kSpeed1; tag <= kDist2; tag++)
+	for (dfx::ParameterID parameterID = kSpeed1; parameterID <= kDistParameters.back(); parameterID++)
 	{
 		VSTGUI::CParamDisplayValueToStringProc displayProc = nullptr;
 		void* userData = nullptr;
-		if ((tag == kSpeed1) || (tag == kSpeed2))
+		if (std::find(kSpeedParameters.cbegin(), kSpeedParameters.cend(), parameterID) != kSpeedParameters.cend())
 		{
 			displayProc = speedDisplayProcedure;
 		}
-		else if ((tag == kFeed1) || (tag == kFeed2))
+		else if (std::find(kFeedParameters.cbegin(), kFeedParameters.cend(), parameterID) != kFeedParameters.cend())
 		{
 			displayProc = feedbackDisplayProcedure;
 		}
@@ -369,28 +369,28 @@ long TransverbEditor::OpenEditor()
 			userData = this;
 		}
 		assert(displayProc);
-		emplaceControl<DGSlider>(this, tag, pos, dfx::kAxis_Horizontal, horizontalSliderHandleImage, horizontalSliderBackgroundImage, sliderRangeMargin)->setAlternateHandle(horizontalSliderHandleImage_glowing);
+		emplaceControl<DGSlider>(this, parameterID, pos, dfx::kAxis_Horizontal, horizontalSliderHandleImage, horizontalSliderBackgroundImage, sliderRangeMargin)->setAlternateHandle(horizontalSliderHandleImage_glowing);
 
-		auto const textDisplay = emplaceControl<DGTextDisplay>(this, tag, textDisplayPos, displayProc, userData, nullptr,
+		auto const textDisplay = emplaceControl<DGTextDisplay>(this, parameterID, textDisplayPos, displayProc, userData, nullptr,
 															   dfx::TextAlignment::Right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
 
-		if (auto const speedTag = std::find(kSpeedParameters.cbegin(), kSpeedParameters.cend(), tag); speedTag != kSpeedParameters.cend())
+		if (auto const speedParameterID = std::find(kSpeedParameters.cbegin(), kSpeedParameters.cend(), parameterID); speedParameterID != kSpeedParameters.cend())
 		{
-			auto const head = static_cast<size_t>(std::distance(kSpeedParameters.cbegin(), speedTag));
-			mSpeedDownButtons[head] = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
-			mSpeedUpButtons[head] = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
+			auto const head = static_cast<size_t>(std::distance(kSpeedParameters.cbegin(), speedParameterID));
+			mSpeedDownButtons[head] = emplaceControl<TransverbSpeedTuneButton>(this, parameterID, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
+			mSpeedUpButtons[head] = emplaceControl<TransverbSpeedTuneButton>(this, parameterID, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
 			textDisplay->setTextToValueProc(speedTextConvertProcedure);
 		}
 		else
 		{
-			emplaceControl<DGFineTuneButton>(this, tag, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
-			emplaceControl<DGFineTuneButton>(this, tag, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
+			emplaceControl<DGFineTuneButton>(this, parameterID, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
+			emplaceControl<DGFineTuneButton>(this, parameterID, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
 		}
 
-		long yoff = kWideFaderInc;
+		auto yoff = kWideFaderInc;
 		for (size_t head = 0; head < kNumDelays; head++)
 		{
-			if (tag == kDistParameters[head])
+			if (parameterID == kDistParameters[head])
 			{
 				bool const lastHead = (kDistParameters[head] == kDistParameters.back());
 				yoff = lastHead ? kWideFaderEvenMoreInc : kWideFaderMoreInc;
@@ -415,9 +415,9 @@ long TransverbEditor::OpenEditor()
 
 	// make horizontal sliders and add them to the view
 	pos.set(kTallFaderX, kTallFaderY, verticalSliderBackgroundImage->getWidth(), verticalSliderBackgroundImage->getHeight());
-	for (long tag = kDrymix; tag <= kMix2; tag++)
+	for (dfx::ParameterID parameterID = kDrymix; parameterID <= kMixParameters.back(); parameterID++)
 	{
-		emplaceControl<DGSlider>(this, tag, pos, dfx::kAxis_Vertical, verticalSliderHandleImage, verticalSliderBackgroundImage, sliderRangeMargin)->setAlternateHandle(verticalSliderHandleImage_glowing);
+		emplaceControl<DGSlider>(this, parameterID, pos, dfx::kAxis_Vertical, verticalSliderHandleImage, verticalSliderBackgroundImage, sliderRangeMargin)->setAlternateHandle(verticalSliderHandleImage_glowing);
 		pos.offset(kTallFaderInc, 0);
 	}
 
@@ -463,18 +463,24 @@ long TransverbEditor::OpenEditor()
 
 	SetParameterHelpText(kBsize, "the size of the buffer that both delays use");
 	constexpr char const* const speedHelpText = "how quickly or slowly the delay playback moves through the delay buffer";
-	SetParameterHelpText(kSpeed1, speedHelpText);
-	SetParameterHelpText(kSpeed2, speedHelpText);
+	for (auto const parameterID : kSpeedParameters)
+	{
+		SetParameterHelpText(parameterID, speedHelpText);
+	}
 	std::for_each(mSpeedModeButtons.begin(), mSpeedModeButtons.end(), [](auto* control){ control->setHelpText(speedHelpText); });
-	constexpr char const* const feedbackHelpText = "how much of the delay sound gets mixed back into the delay buffer";
-	SetParameterHelpText(kFeed1, feedbackHelpText);
-	SetParameterHelpText(kFeed2, feedbackHelpText);
-	constexpr char const* const distanceHelpText = "how far behind the delay is from the input signal (only really makes a difference when the speed is at zero)";
-	SetParameterHelpText(kDist1, distanceHelpText);
-	SetParameterHelpText(kDist2, distanceHelpText);
+	for (auto const parameterID : kFeedParameters)
+	{
+		SetParameterHelpText(parameterID, "how much of the delay sound gets mixed back into the delay buffer");
+	}
+	for (auto const parameterID : kDistParameters)
+	{
+		SetParameterHelpText(parameterID, "how far behind the delay is from the input signal (only really makes a difference when the speed is at zero)");
+	}
 	SetParameterHelpText(kDrymix, "input audio mix level");
-	SetParameterHelpText(kMix1, "delay head #1 mix level");
-	SetParameterHelpText(kMix2, "delay head #2 mix level");
+	for (size_t i = 0; i < kMixParameters.size(); i++)
+	{
+		SetParameterHelpText(kMixParameters[i], ("delay head #" + std::to_string(i + 1) + " mix level").c_str());
+	}
 	SetParameterHelpText(kQuality, "level of transposition quality of the delays' speed");
 	SetParameterHelpText(kTomsound, "megaharsh sound");
 	SetParameterHelpText(kFreeze, "pause recording new audio into the delay buffer");
@@ -503,7 +509,7 @@ void TransverbEditor::CloseEditor()
 }
 
 //-----------------------------------------------------------------------------
-void TransverbEditor::parameterChanged(long inParameterID)
+void TransverbEditor::parameterChanged(dfx::ParameterID inParameterID)
 {
 	switch (inParameterID)
 	{

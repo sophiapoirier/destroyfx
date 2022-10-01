@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Scrubby.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "scrubby.h"
@@ -80,7 +80,6 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	setparameterenforcevaluelimits(kPredelay, true);
 
-//for (size_t i = 3; i < 12; i++) printf("%zu %s\n", i, getparametername(kSeekRange, i).c_str());
 	// set the value strings for the sync rate parameters
 	for (long i = 0; i < numTempoRates; i++)
 	{
@@ -410,7 +409,7 @@ void Scrubby::processparameters()
 	mUseHostTempo = getparameter_b(kTempoAuto);
 	for (size_t i = 0; i < kNumPitchSteps; i++)
 	{
-		auto const parameterID = i + kPitchStep0;
+		dfx::ParameterID const parameterID = i + kPitchStep0;
 		// fetch latest value regardless of whether it "changed" since MIDI notes generate internal values "quietly"
 		mPitchSteps[i] = getparameter_b(parameterID);
 		// reset the associated note in the notes table; manual changes override MIDI

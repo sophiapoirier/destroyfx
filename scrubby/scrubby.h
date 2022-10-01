@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Scrubby.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -34,7 +34,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 //-----------------------------------------------------------------------------
 // these are the plugin parameters:
-enum
+enum : dfx::ParameterID
 {
 	kSeekRange,
 	kFreeze,
@@ -163,5 +163,5 @@ private:
 	std::array<long, kNumPitchSteps> mActiveNotesTable {};  // how many voices of each note in the octave are being played
 	bool mNotesWereAlreadyActive = false;  // says whether any notes were active in the previous block
 
-long mSineCount = 0;
+size_t mSineCount = 0;
 };

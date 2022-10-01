@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Geometer, starring the Super Destroy FX Windowing System!
 ------------------------------------------------------------------------*/
@@ -26,6 +26,7 @@ Geometer, starring the Super Destroy FX Windowing System!
 #include <array>
 #include <cstdint>
 
+#include "dfxdefines.h"
 #include "dfxmisc.h"
 #include "dfxpluginproperties.h"
 
@@ -82,18 +83,18 @@ enum { WINDOW_TRIANGLE,
 };
 
 /* the names of the parameters */
-enum { P_BUFSIZE, P_SHAPE,
-       P_POINTSTYLE,
-         P_POINTPARAMS,
-       P_INTERPSTYLE = P_POINTPARAMS + MAX_POINTSTYLES,
-         P_INTERPARAMS,
-       P_POINTOP1 = P_INTERPARAMS + MAX_INTERPSTYLES,
-         P_OPPAR1S,
-       P_POINTOP2 = P_OPPAR1S + MAX_OPS,
-         P_OPPAR2S,
-       P_POINTOP3 = P_OPPAR2S + MAX_OPS,
-         P_OPPAR3S,
-       NUM_PARAMS = P_OPPAR3S + MAX_OPS
+enum : dfx::ParameterID { P_BUFSIZE, P_SHAPE,
+                          P_POINTSTYLE,
+                            P_POINTPARAMS,
+                          P_INTERPSTYLE = P_POINTPARAMS + MAX_POINTSTYLES,
+                            P_INTERPARAMS,
+                          P_POINTOP1 = P_INTERPARAMS + MAX_INTERPSTYLES,
+                            P_OPPAR1S,
+                          P_POINTOP2 = P_OPPAR1S + MAX_OPS,
+                            P_OPPAR2S,
+                          P_POINTOP3 = P_OPPAR2S + MAX_OPS,
+                            P_OPPAR3S,
+                          NUM_PARAMS = P_OPPAR3S + MAX_OPS
 };
 
 enum : dfx::PropertyID { PROP_LAST_WINDOW_TIMESTAMP = dfx::kPluginProperty_EndOfList,

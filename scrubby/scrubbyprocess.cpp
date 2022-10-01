@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Scrubby.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "scrubby.h"
@@ -285,7 +285,7 @@ void Scrubby::generateNewTarget(size_t channel)
 		double const targetReadStep = calculateTargetSpeed(oldReadStep, static_cast<double>(mMoveCount[channel]), static_cast<double>(targetDistance));
 		mPortamentoStep[channel] = std::pow(std::fabs(targetReadStep) / oldReadStep, 1.0 / static_cast<double>(mMoveCount[channel]));
 		mPortamentoStep[channel] = std::fabs(mPortamentoStep[channel]);
-//auto const ktest = static_cast<long>(std::fabs((targetReadStep * static_cast<double>(mMoveCount)) / std::log(std::fabs(targetReadStep / oldReadStep))));
+//auto const ktest = static_cast<long>(std::fabs((targetReadStep * static_cast<double>(mMoveCount[channel])) / std::log(std::fabs(targetReadStep / oldReadStep))));
 //printf("oldReadStep = %.6f\nreadStep = %.6f\ntargetReadStep = %.6f\nportamentoStep = %.6f\nmovecount = %ld\ntargetDistance = %ld\nktest = %ld\n\n", oldReadStep, newReadStep, targetReadStep, mPortamentoStep[channel], mMoveCount[channel], targetDistance, ktest);
 //printf("a = %.3f,\tb = %.3f,\tn = %ld,\tk = %ld\tportamentoStep = %.6f\n", oldReadStep, targetReadStep, mMoveCount[channel], targetDistance, mPortamentoStep[channel]);
 //printf("\noldReadStep = %.6f\treadStep = %.6f\ttargetReadStep = %.6f\tportamentoStep = %.6f\n", oldReadStep, newReadStep, targetReadStep, mPortamentoStep[channel]);
@@ -540,7 +540,7 @@ void Scrubby::processMidiNotes()
 	for (size_t i = 0; i < getmidistate().getBlockEventCount(); i++)
 	{
 		// wrap the note value around to our 1-octave range
-		int const currentNote = (getmidistate().getBlockEvent(i).mByte1) % kNumPitchSteps;
+		auto const currentNote = dfx::math::ToIndex(getmidistate().getBlockEvent(i).mByte1) % kNumPitchSteps;
 
 		switch (getmidistate().getBlockEvent(i).mStatus)
 		{
@@ -571,14 +571,14 @@ void Scrubby::processMidiNotes()
 			case DfxMidi::kStatus_CC:
 				if (getmidistate().getBlockEvent(i).mByte1 == DfxMidi::kCC_AllNotesOff)
 				{
-					for (size_t notecount = 0; notecount < mActiveNotesTable.size(); notecount++)
+					for (size_t noteIndex = 0; noteIndex < mActiveNotesTable.size(); noteIndex++)
 					{
 						// if this note is currently active, then turn its
 						// associated pitch constraint parameter off
 						// (and reset this note in the table)
-						if (std::exchange(mActiveNotesTable[notecount], 0) > 0)
+						if (std::exchange(mActiveNotesTable[noteIndex], 0) > 0)
 						{
-							setparameterquietly_b(notecount + kPitchStep0, false);
+							setparameterquietly_b(noteIndex + kPitchStep0, false);
 						}
 					}
 				}
