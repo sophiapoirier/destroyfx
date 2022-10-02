@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2021  Sophia Poirier
+	Copyright (C) 2003-2022  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -942,12 +942,12 @@ OSStatus WritePropertyListToXMLFile(CFPropertyListRef inPropertyList, CFURLRef i
 		{
 			errorCode = CFErrorGetCode(errorRef);
 			CFRelease(errorRef);
-			return errorCode;
+			return (OSStatus)errorCode;
 		}
 		return kDFX_coreFoundationUnknownErr;
 	}
 
-	return errorCode;
+	return (OSStatus)errorCode;
 }
 
 //-----------------------------------------------------------------------------

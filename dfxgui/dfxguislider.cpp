@@ -827,7 +827,7 @@ DGAnimation::DGAnimation(DfxGuiEditor*		inOwnerEditor,
 						 DGImage*			inAnimationImage, 
 						 size_t				inNumAnimationFrames)
 :	DGControl<VSTGUI::CAnimKnob>(inRegion, inOwnerEditor, dfx::ParameterID_ToVST(inParameterID), 
-								 inNumAnimationFrames, inRegion.getHeight(), inAnimationImage)
+								 static_cast<int32_t>(inNumAnimationFrames), inRegion.getHeight(), inAnimationImage)
 {
 	assert(inNumAnimationFrames > 0);
 

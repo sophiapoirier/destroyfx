@@ -808,11 +808,11 @@ bool DfxSettings::restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDiction
 		if (assignmentCFDictionary)
 		{
 			auto const parameterID_optional = DFX_GetNumberFromCFDictionary_i(assignmentCFDictionary, kDfxSettings_ParameterIDKey);
-			if (!parameterID_optional)
+			if (!parameterID_optional || (*parameterID_optional < 0))
 			{
 				continue;
 			}
-			auto const parameterID = getParameterIndexFromMap(*parameterID_optional);
+			auto const parameterID = getParameterIndexFromMap(static_cast<dfx::ParameterID>(*parameterID_optional));
 			if (!isValidParameterID(parameterID))
 			{
 				continue;
@@ -1394,7 +1394,7 @@ dfx::ParameterID DfxSettings::getParameterIndexFromMap(dfx::ParameterID inParame
 	auto const foundID = std::find(inSearchIDs.begin(), inSearchIDs.end(), inParameterID);
 	if (foundID != inSearchIDs.end())
 	{
-		return std::distance(inSearchIDs.begin(), foundID);
+		return dfx::math::ToIndex(std::distance(inSearchIDs.begin(), foundID));
 	}
 	return dfx::kParameterID_Invalid;
 }

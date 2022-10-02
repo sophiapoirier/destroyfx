@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "bufferoverrideview.h"
@@ -177,20 +177,20 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
   // Place boxes in float space but round to integer coordinates
   // since we leave some thin pixel borders.
   for (CCoord xpos = MARGIN_HORIZ; xpos < width; xpos += majorbox_width) {
-    const int ixpos = std::lround(xpos);
-    const int majw = std::lround(xpos + majorbox_width) - xpos;
+    const auto ixpos = std::lround(xpos);
+    const auto majw = std::lround(xpos + majorbox_width - xpos);
 
     DrawBox(ixpos, MARGIN_TOP, majw, majorbox_height, color_lite);
 
     auto minorbox_color = color_lite;
     for (CCoord nxpos = 2.0; nxpos < majw - 2; nxpos += minorbox_width) {
-      const int inxpos = std::lround(nxpos);
-      const int minw = std::lround(nxpos + minorbox_width) - inxpos;
+      const auto inxpos = std::lround(nxpos);
+      const auto minw = std::lround(nxpos + minorbox_width) - inxpos;
 
       // Clip the width of the last minibuffer.
       // We can reuse the right margin by overlapping it with the
       // space after the last box, so just majw - 1.
-      const int w = std::min(minw, (majw - 1) - inxpos);
+      const auto w = std::min(minw, (majw - 1) - inxpos);
 
       DrawFilledBox(ixpos + inxpos, MARGIN_TOP + 2,
                     // leave space between boxes
