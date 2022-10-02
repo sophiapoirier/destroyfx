@@ -24,7 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #pragma once
 
 
-#include "dfxdefines.h"
+#include "dfx-base.h"
 
 
 // should be pretty much implied:  

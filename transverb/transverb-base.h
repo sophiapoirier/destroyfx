@@ -23,7 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include <array>
 
-#include "dfxdefines.h"
+#include "dfx-base.h"
 #include "dfxpluginproperties.h"
 
 

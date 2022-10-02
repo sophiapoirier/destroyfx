@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 These are some generally useful functions.
@@ -35,7 +35,7 @@ These are some generally useful functions.
 #include <string_view>
 #include <string>
 
-#include "dfxdefines.h"
+#include "dfx-base.h"
 
 #if TARGET_OS_MAC
 	#if !__OBJC__

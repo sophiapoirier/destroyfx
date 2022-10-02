@@ -80,7 +80,7 @@
 		4918B60C0680FC9C0034CE15 /* dfxsettings.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxsettings.h; sourceTree = "<group>"; };
 		4932F4CA06801180006A9591 /* dfx-au-utilities.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities.c"; sourceTree = "<group>"; };
 		4932F4CB06801180006A9591 /* dfx-au-utilities.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities.h"; sourceTree = "<group>"; };
-		4932F4CC06801180006A9591 /* dfxdefines.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxdefines.h; sourceTree = "<group>"; };
+		4932F4CC06801180006A9591 /* dfx-base.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfx-base.h; sourceTree = "<group>"; };
 		4932F4CD06801180006A9591 /* dfxmath.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxmath.h; sourceTree = "<group>"; };
 		4932F4CE06801180006A9591 /* dfxparameter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = dfxparameter.cpp; sourceTree = "<group>"; };
 		4932F4CF06801180006A9591 /* dfxparameter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxparameter.h; sourceTree = "<group>"; };
@@ -281,7 +281,7 @@
 		4932F4C6068010F8006A9591 /* DFX Library */ = {
 			isa = PBXGroup;
 			children = (
-				4932F4CC06801180006A9591 /* dfxdefines.h */,
+				4932F4CC06801180006A9591 /* dfx-base.h */,
 				EC89B482208D340D00E15129 /* dfxplugin-base.h */,
 				4932F4D206801180006A9591 /* dfxplugin.h */,
 				4932F4D106801180006A9591 /* dfxplugin.cpp */,

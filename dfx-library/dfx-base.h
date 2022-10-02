@@ -25,8 +25,8 @@ These are our general global defines and constants, to be included
 somewhere in the include tree for every file for a DfxPlugin.
 ------------------------------------------------------------------------*/
 
-#ifndef _DFX_DEFINES_H
-#define _DFX_DEFINES_H
+#ifndef _DFX_BASE_H
+#define _DFX_BASE_H
 
 
 
@@ -116,8 +116,8 @@ namespace dfx
 	static constexpr size_t kParameterGroupStringMaxLength = 256;
 }
 
-#endif
+#endif  /* __cplusplus */
 
 
 
-#endif
+#endif  /* _DFX_BASE_H */

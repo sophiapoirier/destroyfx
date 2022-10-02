@@ -33,7 +33,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <type_traits>
 #include <vector>
 
-#include "dfxdefines.h"
+#include "dfx-base.h"
 #include "dfxgui-base.h"
 #include "dfxgui-fontfactory.h"
 #include "dfxguimisc.h"

@@ -25,7 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <atomic>
 #include <type_traits>
 
-#include "dfxdefines.h"
+#include "dfx-base.h"
 #include "dfxmisc.h"
 #include "dfxpluginproperties.h"
 

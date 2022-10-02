@@ -26,7 +26,7 @@ Geometer, starring the Super Destroy FX Windowing System!
 #include <array>
 #include <cstdint>
 
-#include "dfxdefines.h"
+#include "dfx-base.h"
 #include "dfxmisc.h"
 #include "dfxpluginproperties.h"
 

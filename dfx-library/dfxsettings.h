@@ -78,7 +78,7 @@ This is our Destroy FX plugin data storage stuff
 #include <span>
 #include <vector>
 
-#include "dfxdefines.h"
+#include "dfx-base.h"
 #include "dfxpluginproperties.h"
 
 #ifdef TARGET_API_AUDIOUNIT

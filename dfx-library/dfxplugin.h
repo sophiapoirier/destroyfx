@@ -163,7 +163,7 @@ VST_NUM_CHANNELS
 
 // include our crucial shits
 
-#include "dfxdefines.h"
+#include "dfx-base.h"
 #include "dfxmath.h"
 #include "dfxmutex.h"
 #include "dfxparameter.h"

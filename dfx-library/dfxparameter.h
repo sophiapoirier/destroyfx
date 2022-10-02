@@ -178,7 +178,7 @@ setusevaluestrings is used to set this property.
 #include <string_view>
 #include <vector>
 
-#include "dfxdefines.h"
+#include "dfx-base.h"
 #include "dfxmisc.h"
 
 #ifdef TARGET_API_AUDIOUNIT

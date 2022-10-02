@@ -1,7 +1,7 @@
  /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier and Tom Murphy VII
+Copyright (C) 2002-2022  Sophia Poirier and Tom Murphy VII
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "dfxgui-fontfactory.h"
@@ -30,7 +30,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <string>
 #include <vector>
 
-#include "dfxdefines.h"
+#include "dfx-base.h"
 #include "dfxgui-base.h"
 #include "dfxmisc.h"
 

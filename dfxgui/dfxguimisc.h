@@ -30,7 +30,6 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <limits>
 #include <string>
 
-#include "dfxdefines.h"
 #include "dfxgui-base.h"
 
 

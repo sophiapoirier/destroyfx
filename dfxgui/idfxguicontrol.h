@@ -26,7 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include <vector>
 
-#include "dfxdefines.h"
+#include "dfx-base.h"
 
 
 

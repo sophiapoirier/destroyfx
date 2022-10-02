@@ -27,7 +27,7 @@ files are an exception in that they are offered under the terms of a
 modified BSD License (see bsd-license.txt) rather than the GNU 
 General Public License (GPL).
 
-`dfxdefines.h` a bunch of basic definitions for Destroy FX plugins,
+`dfx-base.h` a bunch of core definitions for Destroy FX plugins,
 and some base stuff that's just useful in all of our the source tree.
 
 `dfxmath.h` has various handy math-related constants and functions.
