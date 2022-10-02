@@ -781,7 +781,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		case kLogicAUProperty_NodePropertyDescriptions:
 		{
 			auto const nodePropertyDescs = static_cast<LogicAUNodePropertyDescription*>(outData);
-			for (long i = 0; i < dfx_GetNumPluginProperties(); i++)
+			for (size_t i = 0; i < dfx_GetNumPluginProperties(); i++)
 			{
 				auto& nodePropertyDesc = nodePropertyDescs[i];
 				nodePropertyDesc.mPropertyID = dfx::kPluginProperty_StartID + i;

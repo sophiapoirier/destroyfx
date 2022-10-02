@@ -490,11 +490,11 @@ public:
 	{
 		return dfx::kStatus_InvalidProperty;
 	}
-	long dfx_GetNumPluginProperties()
+	size_t dfx_GetNumPluginProperties() const
 	{
 		return dfx::kPluginProperty_NumProperties + dfx_GetNumAdditionalPluginProperties();
 	}
-	virtual long dfx_GetNumAdditionalPluginProperties()
+	virtual size_t dfx_GetNumAdditionalPluginProperties() const
 	{
 		return 0;
 	}
