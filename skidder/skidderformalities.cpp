@@ -59,7 +59,7 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparameterenforcevaluelimits(kCrossoverFrequency, true);
 
 	// set the value strings for the sync rate parameters
-	for (long i = 0; i < mTempoRateTable.getNumRates(); i++)
+	for (size_t i = 0; i < numTempoRates; i++)
 	{
 		auto const& tempoRateName = mTempoRateTable.getDisplay(i);
 		setparametervaluestring(kRate_Sync, i, tempoRateName);
@@ -152,10 +152,10 @@ void Skidder::reset()
 void Skidder::processparameters()
 {
 	mRate_Hz = getparameter_f(kRate_Hz);
-	mRateIndex = getparameter_i(kRate_Sync);
+	mRateIndex = getparameter_index(kRate_Sync);
 	mRate_Sync = mTempoRateTable.getScalar(mRateIndex);
 	auto const rateRandMin_Hz = getparameter_f(kRateRandMin_Hz);
-	mRateRandMinIndex = getparameter_i(kRateRandMin_Sync);
+	mRateRandMinIndex = getparameter_index(kRateRandMin_Sync);
 	auto const rateRandMin_Sync = mTempoRateTable.getScalar(mRateRandMinIndex);
 	mTempoSync = getparameter_b(kTempoSync);
 	mPulsewidth = getparameter_f(kPulsewidth);

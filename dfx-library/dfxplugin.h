@@ -353,6 +353,7 @@ public:
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].get_gen() : 0.0;
 	}
+	size_t getparameter_index(dfx::ParameterID inParameterID) const;
 	// return a (hopefully) 0 to 1 scalar version of the parameter's current value
 	double getparameter_scalar(dfx::ParameterID inParameterID) const;
 	std::optional<double> getparameterifchanged_f(dfx::ParameterID inParameterID) const;

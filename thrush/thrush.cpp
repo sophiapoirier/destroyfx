@@ -78,7 +78,7 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 		setparametervaluestring(kLFO2Shape2, i, shapeName);
 	}
 	// set the value strings for the sync rate parameters
-	for (long i = 0; i < mTempoRateTable.getNumRates(); i++)
+	for (size_t i = 0; i < numTempoRates; i++)
 	{
 		auto const& tempoRateName = mTempoRateTable.getDisplay(i);
 		setparametervaluestring(kLFO1Rate_Sync, i, tempoRateName);
@@ -284,7 +284,7 @@ void Thrush::processparameters()
 
 	mDelay2_gen = getparameter_gen(kDelay2);
 	mLFO1_2.mRateHz = getparameter_f(kLFO1Rate2_Hz);
-	mLFO1_2.mTempoRateScalar = mTempoRateTable.getScalar(getparameter_i(kLFO1Rate2_Sync));
+	mLFO1_2.mTempoRateScalar = mTempoRateTable.getScalar(getparameter_index(kLFO1Rate2_Sync));
 
 	if (auto const value = getparameterifchanged_b(kLFO1TempoSync2))
 	{
@@ -296,7 +296,7 @@ void Thrush::processparameters()
 	mLFO1_2.setDepth(getparameter_scalar(kLFO1Depth2));
 	mLFO1_2.setShape(getparameter_i(kLFO1Shape2));
 	mLFO2_2.mRateHz = getparameter_f(kLFO2Rate2_Hz);
-	mLFO2_2.mTempoRateScalar = mTempoRateTable.getScalar(getparameter_i(kLFO2Rate2_Sync));
+	mLFO2_2.mTempoRateScalar = mTempoRateTable.getScalar(getparameter_index(kLFO2Rate2_Sync));
 
 	if (auto const value = getparameterifchanged_b(kLFO2TempoSync2))
 	{

@@ -72,7 +72,7 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 		setparametervaluestring(kBufferLFOShape, i, shapeName);
 	}
 	// set the value strings for the sync rate parameters
-	for (long i = 0; i < mTempoRateTable.getNumRates(); i++)
+	for (size_t i = 0; i < numTempoRates; i++)
 	{
 		auto const& tempoRateName = mTempoRateTable.getDisplay(i);
 		setparametervaluestring(kBufferSize_Sync, i, tempoRateName);
@@ -339,16 +339,16 @@ void BufferOverride::processparameters()
 {
 	mDivisor = getparameter_f(kDivisor);
 	mBufferSizeMS = getparameter_f(kBufferSize_MS);
-	mBufferSizeSync = mTempoRateTable.getScalar(getparameter_i(kBufferSize_Sync));
+	mBufferSizeSync = mTempoRateTable.getScalar(getparameter_index(kBufferSize_Sync));
 	mBufferTempoSync = getparameter_b(kBufferTempoSync);
 	mBufferInterrupt = getparameter_b(kBufferInterrupt);
 	mDivisorLFORateHz = getparameter_f(kDivisorLFORate_Hz);
-	mDivisorLFOTempoRate = mTempoRateTable.getScalar(getparameter_i(kDivisorLFORate_Sync));
+	mDivisorLFOTempoRate = mTempoRateTable.getScalar(getparameter_index(kDivisorLFORate_Sync));
 	mDivisorLFO.setDepth(getparameter_scalar(kDivisorLFODepth));
 	mDivisorLFO.setShape(getparameter_i(kDivisorLFOShape));
 	mDivisorLFOTempoSync = getparameter_b(kDivisorLFOTempoSync);
 	mBufferLFORateHz = getparameter_f(kBufferLFORate_Hz);
-	mBufferLFOTempoRate = mTempoRateTable.getScalar(getparameter_i(kBufferLFORate_Sync));
+	mBufferLFOTempoRate = mTempoRateTable.getScalar(getparameter_index(kBufferLFORate_Sync));
 	mBufferLFO.setDepth(getparameter_scalar(kBufferLFODepth));
 	mBufferLFO.setShape(getparameter_i(kBufferLFOShape));
 	mBufferLFOTempoSync = getparameter_b(kBufferLFOTempoSync);
@@ -424,7 +424,7 @@ void BufferOverride::updateViewDataCache()
 
 	if (getparameter_b(kBufferTempoSync) && (tempoBPS > 0.))
 	{
-		viewData.mPreLFO.mForcedBufferSeconds = 1. / (tempoBPS * mTempoRateTable.getScalar(getparameter_i(kBufferSize_Sync)));
+		viewData.mPreLFO.mForcedBufferSeconds = 1. / (tempoBPS * mTempoRateTable.getScalar(getparameter_index(kBufferSize_Sync)));
 	}
 	else
 	{

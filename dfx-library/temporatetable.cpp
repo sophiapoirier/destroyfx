@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 Welcome to our tempo rate table.
@@ -91,11 +91,11 @@ dfx::TempoRateTable::TempoRateTable(Rates inRates)
 //-----------------------------------------------------------------------------
 // given a tempo rate value, return the index of the tempo rate 
 // that is closest to that requested value
-long dfx::TempoRateTable::getNearestTempoRateIndex(double inTempoRateValue) const
+size_t dfx::TempoRateTable::getNearestTempoRateIndex(double inTempoRateValue) const
 {
 	auto bestDiff = mScalars.back();
-	long bestIndex = 0;
-	for (long i = 0; i < getNumRates(); i++)
+	size_t bestIndex = 0;
+	for (size_t i = 0; i < getNumRates(); i++)
 	{
 		auto const diff = std::fabs(inTempoRateValue - mScalars[i]);
 		if (diff < bestDiff)

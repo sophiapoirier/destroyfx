@@ -129,7 +129,7 @@ private:
 	// the parameters
 	double mSeekRangeSeconds = 0.0, mSeekDur = 0.0, mSeekDurRandMin = 0.0;
 	double mSeekRateHz = 0.0, mSeekRateSync = 0.0;
-	long mSeekRateIndex = 0, mSeekRateRandMinIndex = 0;
+	size_t mSeekRateIndex = 0, mSeekRateRandMinIndex = 0;
 	double mUserTempo = 0.0;
 	long mSpeedMode = kSpeedMode_Robot, mOctaveMin = 0, mOctaveMax = 0;
 	bool mFreeze = false, mSplitChannels = false, mPitchConstraint = false, mTempoSync = false, mUseHostTempo = false;

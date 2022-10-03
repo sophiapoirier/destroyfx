@@ -53,7 +53,7 @@ EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kB2, {"b2"}, 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
 
 	// set the value strings for the sync rate parameters
-	for (long i = 0; i < numTempoRates; i++)
+	for (size_t i = 0; i < numTempoRates; i++)
 	{
 		setparametervaluestring(kRate_Sync, i, mTempoRateTable.getDisplay(i));
 	}
@@ -107,7 +107,7 @@ void EQSync::reset()
 //-----------------------------------------------------------------------------
 void EQSync::processparameters()
 {
-	mRate = mTempoRateTable.getScalar(getparameter_i(kRate_Sync));
+	mRate = mTempoRateTable.getScalar(getparameter_index(kRate_Sync));
 	mSmooth = getparameter_scalar(kSmooth);
 	mUserTempo = getparameter_f(kTempo);
 	mUseHostTempo = getparameter_b(kTempoAuto);

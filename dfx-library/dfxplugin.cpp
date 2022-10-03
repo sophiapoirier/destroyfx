@@ -689,6 +689,13 @@ DfxParam::Value DfxPlugin::getparameter(dfx::ParameterID inParameterID) const
 	return {};
 }
 
+size_t DfxPlugin::getparameter_index(dfx::ParameterID inParameterID) const
+{
+	auto const value = getparameter_i(inParameterID);
+	assert(value >= 0);
+	return dfx::math::ToIndex(value);
+}
+
 //-----------------------------------------------------------------------------
 // return a (hopefully) 0 to 1 scalar version of the parameter's current value
 double DfxPlugin::getparameter_scalar(dfx::ParameterID inParameterID) const

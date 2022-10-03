@@ -81,7 +81,7 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparameterenforcevaluelimits(kPredelay, true);
 
 	// set the value strings for the sync rate parameters
-	for (long i = 0; i < numTempoRates; i++)
+	for (size_t i = 0; i < numTempoRates; i++)
 	{
 		auto const& tempoRateName = mTempoRateTable.getDisplay(i);
 		setparametervaluestring(kSeekRate_Sync, i, tempoRateName);
@@ -401,10 +401,10 @@ void Scrubby::processparameters()
 	mSeekRangeSeconds = getparameter_f(kSeekRange) * 0.001;
 	mFreeze = getparameter_b(kFreeze);
 	mSeekRateHz = getparameter_f(kSeekRate_Hz);
-	mSeekRateIndex = getparameter_i(kSeekRate_Sync);
+	mSeekRateIndex = getparameter_index(kSeekRate_Sync);
 	mSeekRateSync = mTempoRateTable.getScalar(mSeekRateIndex);
 	auto const seekRateRandMinHz = getparameter_f(kSeekRateRandMin_Hz);
-	mSeekRateRandMinIndex = getparameter_i(kSeekRateRandMin_Sync);
+	mSeekRateRandMinIndex = getparameter_index(kSeekRateRandMin_Sync);
 	auto const seekRateRandMinSync = mTempoRateTable.getScalar(mSeekRateRandMinIndex);
 	mTempoSync = getparameter_b(kTempoSync);
 	mSeekDur = getparameter_scalar(kSeekDur);

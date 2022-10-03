@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 Welcome to our tempo rate table.
@@ -50,24 +50,24 @@ public:
 
 	explicit TempoRateTable(Rates inRates = Rates::Normal);
 
-	double getScalar(long inIndex) const
+	double getScalar(size_t inIndex) const
 	{
-		return mScalars[safeIndex(inIndex)];
+		return mScalars[boundedIndex(inIndex)];
 	}
-	std::string const& getDisplay(long inIndex) const
+	std::string const& getDisplay(size_t inIndex) const
 	{
-		return mDisplays[safeIndex(inIndex)];
+		return mDisplays[boundedIndex(inIndex)];
 	}
-	long getNumRates() const noexcept
+	auto getNumRates() const noexcept
 	{
-		return static_cast<long>(mScalars.size());
+		return mScalars.size();
 	}
-	long getNearestTempoRateIndex(double inTempoRateValue) const;
+	size_t getNearestTempoRateIndex(double inTempoRateValue) const;
 
 private:
-	size_t safeIndex(long inIndex) const noexcept
+	size_t boundedIndex(size_t inIndex) const noexcept
 	{
-		return static_cast<size_t>(std::clamp(inIndex, 0L, getNumRates() - 1));
+		return std::min(inIndex, getNumRates() - 1);
 	}
 
 	std::vector<double> mScalars;

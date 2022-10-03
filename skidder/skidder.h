@@ -135,7 +135,7 @@ private:
 	// the parameters
 	double mRate_Hz = 1., mRate_Sync = 1.;
 	float mPulsewidth = 0.f, mPulsewidthRandMin = 0.f;
-	long mRateIndex = 0, mRateRandMinIndex = 0;
+	size_t mRateIndex = 0, mRateRandMinIndex = 0;
 	float mPanWidth = 0.0f, mFloor = 0.0f;
 	dfx::SmoothedValue<float> mNoise;
 	double mSlopeSeconds = 0., mUserTempo = 1.;
