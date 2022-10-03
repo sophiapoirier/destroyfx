@@ -109,18 +109,6 @@ enum : dfx::ParameterID
 	kNumParameters
 };
 
-enum : UInt32
-{
-	kParamGroup_BaseID = kAudioUnitClumpID_System + 1,
-	kParamGroup_Scratching = kParamGroup_BaseID,
-	kParamGroup_Playback,
-	kParamGroup_Power,
-	kParamGroup_Pitch
-#ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
-	, kParamGroup_Output
-#endif
-};
-
 enum : dfx::PropertyID
 {
 	kTurntablistProperty_Play = dfx::kPluginProperty_EndOfList,
@@ -159,6 +147,18 @@ public:
 						   UInt32 inDesiredNameLength, CFStringRef* outClumpName) override;
 
 private:
+	enum : UInt32
+	{
+		kParamGroup_BaseID = kAudioUnitClumpID_System + 1,
+		kParamGroup_Scratching = kParamGroup_BaseID,
+		kParamGroup_Playback,
+		kParamGroup_Power,
+		kParamGroup_Pitch
+	#ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
+		, kParamGroup_Output
+	#endif
+	};
+
 	OSStatus loadAudioFile(FSRef const& inFileRef);
 	OSStatus createAudioFileAlias(AliasHandle* outAlias, Size* outDataSize = nullptr);
 	OSStatus resolveAudioFileAlias(AliasHandle const inAlias);
@@ -179,11 +179,11 @@ private:
 	OSStatus PostNotification_AudioFileNotFound(CFStringRef inFileName);
 
 
-	int m_nCurrentNote;
-	int m_nCurrentVelocity;
-	bool m_bNoteIsOn;
+	int m_nCurrentNote = 0;
+	int m_nCurrentVelocity = 0;
+	bool m_bNoteIsOn = false;
 
-	FSRef m_fsAudioFile;
+	FSRef m_fsAudioFile {};
 
 #ifdef USE_LIBSNDFILE
 	std::vector<float> m_fBuffer;
@@ -194,98 +194,97 @@ private:
 #endif
 
 	// our 32-bit floating point audio info
-	int m_nNumChannels;	// 1=mono, 2=stereo, 0=yomama
-	int m_nNumSamples;	// number of samples per channel
-	int m_nSampleRate;
-	double m_fSampleRate;
+	size_t m_nNumChannels = 0;	// 1=mono, 2=stereo, 0=yomama
+	size_t m_nNumSamples = 0;	// number of samples per channel
+	int m_nSampleRate = 0;
+	double m_fSampleRate = 0.;
 
 	// optional
-	double m_fBasePitch;
-	double m_fPlaySampleRate;
+	double m_fBasePitch = 0.;
+	double m_fPlaySampleRate = 0.;
 
 	// switches
-	bool m_bPower;	// on/off
-	bool m_bNotePowerTrack;	// scratch mode on/off
+	bool m_bPower = false;	// on/off
+	bool m_bNotePowerTrack = false;	// scratch mode on/off
 	// TODO: use dfx::SmoothedValue for continuous parameters
-	double m_fScratchAmount;
-	double m_fLastScratchAmount;
+	double m_fScratchAmount = 0.;
+	double m_fLastScratchAmount = 0.;
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
-	bool m_bMute;	// on/off
+	bool m_bMute = false;	// on/off
 #endif
-	double m_fPitchShift;
-	long m_nDirection;
+	double m_fPitchShift = 0.;
+	long m_nDirection = 0;
 //	float m_fScratchSpeed;
-	double m_fScratchSpeed_scrub, m_fScratchSpeed_spin;
+	double m_fScratchSpeed_scrub = 0., m_fScratchSpeed_spin = 0.;
 
 	// modifiers
-	long m_nNoteMode;	// reset/resume
-	bool m_bLoop;	// on/off
-	double m_fPitchRange;
-	double m_fSpinDownSpeed;
-	double m_fSpinUpSpeed;
-	bool m_bKeyTracking;
+	long m_nNoteMode = 0;	// reset/resume
+	bool m_bLoop = false;	// on/off
+	double m_fPitchRange = 0.;
+	double m_fSpinDownSpeed = 0.;
+	double m_fSpinUpSpeed = 0.;
+	bool m_bKeyTracking = false;
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
-	float m_fVolume;
+	float m_fVolume = 0.f;
 #endif
 
 
-	double m_fUsedSpinDownSpeed;
-	double m_fUsedSpinUpSpeed;
+	double m_fUsedSpinDownSpeed = 0.;
+	double m_fUsedSpinUpSpeed = 0.;
 
-	bool m_bPlayedReverse;
-	int m_nRootKey;
+	bool m_bPlayedReverse = false;
+	int m_nRootKey = 0;
 
-	double m_fPosition;
-	double m_fPosOffset;
-	double m_fNumSamples;
+	double m_fPosition = 0.;
+	double m_fPosOffset = 0.;
+	double m_fNumSamples = 0.;
 
-	bool m_bPlay;
+	bool m_bPlay = false;
 
-	bool m_bPitchBendSet;
-	double m_fPitchBend;
-	int m_nScratchDir;
-	bool m_bScratching;
-	bool m_bWasScratching;
-	int m_nWasScratchingDir;
-	int m_nScratchDelay;
+	bool m_bPitchBendSet = false;
+	double m_fPitchBend = 0.;
+	int m_nScratchDir = 0;
+	bool m_bScratching = false;
+	bool m_bWasScratching = false;
+	int m_nWasScratchingDir = 0;
 
-	double m_fDesiredPitch;
+	double m_fDesiredPitch = 0.;
 
-	long m_nScratchMode;
-	long m_nScratchSubMode;
-
-
-	float m_fNoteVolume;	// recalculated on note on and volume changes
-
-	int m_nPowerIntervalEnd;
-
-	bool m_bPlayForward;
+	long m_nScratchMode = 0;
+	long m_nScratchSubMode = 0;
 
 
-	double m_fDesiredScratchRate;
-	int m_nScratchInterval;
-	int m_nScratchIntervalEnd;
-	int m_nScratchIntervalEndBase;
-	bool m_bScratchStop;
+	float m_fNoteVolume = 0.f;	// recalculated on note on and volume changes
 
-	int m_nScratchCenter;	// center position where scratching starts
-	double m_fScratchCenter;
-	double m_fDesiredPosition;
-	double m_fPrevDesiredPosition;
+	int m_nPowerIntervalEnd = 0;
 
-	float m_fScratchVolumeModifier;
+	bool m_bPlayForward = true;
 
-	bool m_bScratchAmountSet;
 
-	double m_fDesiredScratchRate2;
+	double m_fDesiredScratchRate = 0.;
+	int m_nScratchInterval = 0;
+	int m_nScratchIntervalEnd = 0;
+	int m_nScratchIntervalEndBase = 0;
+	bool m_bScratchStop = false;
 
-	bool m_bAudioFileHasBeenLoaded;
+	int m_nScratchCenter = 0;	// center position where scratching starts
+	double m_fScratchCenter = 0.;
+	double m_fDesiredPosition = 0.;
+	double m_fPrevDesiredPosition = 0.;
 
-	double m_fTinyScratchAdjust;
+	float m_fScratchVolumeModifier = 0.f;
+
+	bool m_bScratchAmountSet = false;
+
+	double m_fDesiredScratchRate2 = 0.;
+
+	bool m_bAudioFileHasBeenLoaded = false;
+
+	double m_fTinyScratchAdjust = 0.;
 
 	// new power variables to do sample accurate powering up/down
-//	double m_fDesiredPowerRate;
-//	double m_fTinyPowerAdjust;
+//	double m_fDesiredPowerRate = 0.;
+//	double m_fTinyPowerAdjust = 0.;
 
 	std::mutex m_AudioFileLock;
 };

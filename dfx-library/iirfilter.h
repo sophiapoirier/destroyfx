@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 Welcome to our Infinite Impulse Response filter.
@@ -28,6 +28,7 @@ Welcome to our Infinite Impulse Response filter.
 
 
 #include <array>
+#include <cassert>
 #include <vector>
 
 #include "dfxmath.h"
@@ -131,8 +132,10 @@ public:
 		mPrevIn = inSample;
 	}
 
-	void processToCacheH2(float * inAudio, long inPos, long inBufferSize)
+	void processToCacheH2(float const* inAudio, size_t inPos, size_t inBufferSize)
 	{
+		assert(inBufferSize > 0);
+		assert(inPos < inBufferSize);
 		auto const in0 = inAudio[inPos];
 		auto const in1 = inAudio[(inPos + 1) % inBufferSize];
 
@@ -154,8 +157,10 @@ public:
 		mPrevIn = in1;
 	}
 
-	void processToCacheH3(float * inAudio, long inPos, long inBufferSize)
+	void processToCacheH3(float const* inAudio, size_t inPos, size_t inBufferSize)
 	{
+		assert(inBufferSize > 0);
+		assert(inPos < inBufferSize);
 		auto const in0 = inAudio[inPos];
 		auto const in1 = inAudio[(inPos + 1) % inBufferSize];
 		auto const in2 = inAudio[(inPos + 2) % inBufferSize];
@@ -178,8 +183,10 @@ public:
 		mPrevIn = in2;
 	}
 
-	void processToCacheH4(float * inAudio, long inPos, long inBufferSize)
+	void processToCacheH4(float const* inAudio, size_t inPos, size_t inBufferSize)
 	{
+		assert(inBufferSize > 0);
+		assert(inPos < inBufferSize);
 		auto const in0 = inAudio[inPos];
 		auto const in1 = inAudio[(inPos + 1) % inBufferSize];
 		auto const in2 = inAudio[(inPos + 2) % inBufferSize];

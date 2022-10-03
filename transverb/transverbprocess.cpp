@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "transverb.h"
@@ -214,17 +214,17 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, size_t numSamp
                 lowpasscount++;
                 break;
               case 2:
-                heads[h].filter.processToCacheH2(heads[h].buf.data(), lowpasspos[h], bsize);
+                heads[h].filter.processToCacheH2(heads[h].buf.data(), dfx::math::ToUnsigned(lowpasspos[h]), dfx::math::ToUnsigned(bsize));
                 lowpasspos[h] = (lowpasspos[h] + 2) % bsize;
                 lowpasscount += 2;
                 break;
               case 3:
-                heads[h].filter.processToCacheH3(heads[h].buf.data(), lowpasspos[h], bsize);
+                heads[h].filter.processToCacheH3(heads[h].buf.data(), dfx::math::ToUnsigned(lowpasspos[h]), dfx::math::ToUnsigned(bsize));
                 lowpasspos[h] = (lowpasspos[h] + 3) % bsize;
                 lowpasscount += 3;
                 break;
               default:
-                heads[h].filter.processToCacheH4(heads[h].buf.data(), lowpasspos[h], bsize);
+                heads[h].filter.processToCacheH4(heads[h].buf.data(), dfx::math::ToUnsigned(lowpasspos[h]), dfx::math::ToUnsigned(bsize));
                 lowpasspos[h] = (lowpasspos[h] + 4) % bsize;
                 lowpasscount += 4;
                 break;
@@ -311,7 +311,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, size_t numSamp
             delayvals[h] = interpolateLinear(buf.data(), heads[h].read, bsize);
             break;
           case kQualityMode_UltraHiFi:
-            delayvals[h] = dfx::math::InterpolateHermite(buf.data(), heads[h].read, bsize);
+            delayvals[h] = dfx::math::InterpolateHermite(buf.data(), heads[h].read, dfx::math::ToUnsigned(bsize));
             break;
         }
       }

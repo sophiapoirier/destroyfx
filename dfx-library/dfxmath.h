@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our math and numerics shit.
@@ -153,15 +153,19 @@ constexpr T FrequencyScalarBySemitones(T inSemitones)
 }
 
 //-----------------------------------------------------------------------------
-constexpr float InterpolateHermite(float const* inData, double inAddress, long inBufferSize)
+constexpr float InterpolateHermite(float const* inData, double inAddress, size_t inBufferSize)
 {
-	auto const pos = static_cast<long>(inAddress);
+	assert(inAddress >= 0.);
+	assert(inBufferSize > 0);
+
+	auto const pos = static_cast<size_t>(inAddress);
+	assert(pos < inBufferSize);
 	auto const posFract = static_cast<float>(inAddress - static_cast<double>(pos));
 
 #if 0  // XXX test performance using fewer variables/registers
-	long const posMinus1 = (pos == 0) ? (inBufferSize - 1) : (pos - 1);
-	long const posPlus1 = (pos + 1) % inBufferSize;
-	long const posPlus2 = (pos + 2) % inBufferSize;
+	size_t const posMinus1 = (pos == 0) ? (inBufferSize - 1) : (pos - 1);
+	size_t const posPlus1 = (pos + 1) % inBufferSize;
+	size_t const posPlus2 = (pos + 2) % inBufferSize;
 
 	return (((((((3.0f * (inData[pos] - inData[posPlus1])) - inData[posMinus1] + inData[posPlus2]) * 0.5f) * posFract)
 				+ ((2.0f * inData[posPlus1]) + inData[posMinus1] - (2.5f * inData[pos]) - (inData[posPlus2] * 0.5f))) * 
@@ -179,9 +183,9 @@ constexpr float InterpolateHermite(float const* inData, double inAddress, long i
 	return ((((a * posFract) + b) * posFract + c) * posFract) + inData[pos];
 
 #else
-	long const posMinus1 = (pos == 0) ? (inBufferSize - 1) : (pos - 1);
-	long const posPlus1 = (pos + 1) % inBufferSize;
-	long const posPlus2 = (pos + 2) % inBufferSize;
+	size_t const posMinus1 = (pos == 0) ? (inBufferSize - 1) : (pos - 1);
+	size_t const posPlus1 = (pos + 1) % inBufferSize;
+	size_t const posPlus2 = (pos + 2) % inBufferSize;
 
 	float const a = ((3.0f * (inData[pos] - inData[posPlus1])) - inData[posMinus1] + inData[posPlus2]) * 0.5f;
 	float const b = (2.0f * inData[posPlus1]) + inData[posMinus1] - (2.5f * inData[pos]) - (inData[posPlus2] * 0.5f);
@@ -192,9 +196,12 @@ constexpr float InterpolateHermite(float const* inData, double inAddress, long i
 }
 
 //-----------------------------------------------------------------------------
-constexpr float InterpolateHermite_NoWrap(float const* inData, double inAddress, long inBufferSize)
+constexpr float InterpolateHermite_NoWrap(float const* inData, double inAddress, size_t inBufferSize)
 {
-	auto const pos = static_cast<long>(inAddress);
+	assert(inAddress >= 0.);
+
+	auto const pos = static_cast<size_t>(inAddress);
+	assert(pos < inBufferSize);
 	auto const posFract = static_cast<float>(inAddress - static_cast<double>(pos));
 
 	float const dataPosMinus1 = (pos == 0) ? 0.0f : inData[pos - 1];

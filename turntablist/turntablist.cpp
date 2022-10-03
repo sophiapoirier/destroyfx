@@ -123,48 +123,15 @@ Turntablist::Turntablist(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setSupportedLogicNodeOperationMode(0);
 #endif
 
-	m_nNumChannels = 0;
-	m_nNumSamples = 0;
-	m_nSampleRate = 0;
-	m_fSampleRate = 0.0;
-
-
-	m_bPlayedReverse = false;
-	m_bPlay = false;
-
-	m_fPosition = 0.0;
-	m_fPosOffset = 0.0;
-	m_fNumSamples = 0.0;
 
 	m_fLastScratchAmount = getparameter_f(kParam_ScratchAmount);
 	m_fPitchBend = k_fScratchAmountMiddlePoint;
-	m_bPitchBendSet = false;
-	m_bScratching = false;
-	m_bWasScratching = false;
-	m_bPlayForward = true;
 	m_nScratchSubMode = 1;	// speed based from scrub scratch mode
-
-	m_nScratchDelay = 0;
 
 	m_nRootKey = static_cast<int>(getparameter_i(kParam_RootKey));
 
 	m_nCurrentNote = m_nRootKey;
 	m_nCurrentVelocity = 0x7F;
-
-	m_bAudioFileHasBeenLoaded = false;
-	m_bScratchStop = false;
-
-	memset(&m_fsAudioFile, 0, sizeof(m_fsAudioFile));
-
-	m_fScratchVolumeModifier = 0.0f;
-
-	m_bScratchAmountSet = false;
-	m_fDesiredScratchRate = 0.0;
-
-	m_nScratchInterval = 0;
-
-	m_fDesiredPosition = 0.0;
-	m_fPrevDesiredPosition = 0.0;
 }
 
 //-----------------------------------------------------------------------------------------
@@ -773,7 +740,7 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 
 	m_nNumChannels = clientStreamFormat.mChannelsPerFrame;
 	m_nSampleRate = clientStreamFormat.mSampleRate;
-	m_nNumSamples = static_cast<int>(audioFileNumFrames);
+	m_nNumSamples = dfx::math::ToUnsigned(audioFileNumFrames);
 
 	m_fPlaySampleRate = static_cast<double>(m_nSampleRate);
 	m_fSampleRate = static_cast<double>(m_nSampleRate);
@@ -820,9 +787,9 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 
 	std::unique_lock guard(m_AudioFileLock);
 
-	m_nNumChannels = sfInfo.channels;
+	m_nNumChannels = dfx::math::ToUnsigned(sfInfo.channels);
 	m_nSampleRate = sfInfo.samplerate;
-	m_nNumSamples = static_cast<int>(sfInfo.frames);
+	m_nNumSamples = dfx::math::ToUnsigned(sfInfo.frames);
 
 	m_fPlaySampleRate = static_cast<double>(m_nSampleRate);
 	m_fSampleRate = static_cast<double>(m_nSampleRate);
@@ -953,17 +920,11 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 					// speed mode
 					if (m_fTinyScratchAdjust > 0.0)	// positive
 					{
-						if (m_fPlaySampleRate > m_fDesiredScratchRate2)
-						{
-							m_fPlaySampleRate = m_fDesiredScratchRate2;
-						}
+						m_fPlaySampleRate = std::min(m_fPlaySampleRate, m_fDesiredScratchRate2);
 					}
 					else	// negative
 					{
-						if (m_fPlaySampleRate < m_fDesiredScratchRate2)
-						{
-							m_fPlaySampleRate = m_fDesiredScratchRate2;
-						}
+						m_fPlaySampleRate = std::max(m_fPlaySampleRate, m_fDesiredScratchRate2);
 					}
 				}
 			}
@@ -974,30 +935,18 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 			{
 				if (m_fPlaySampleRate > 0.0)	// too high, spin down
 				{
-					m_fPlaySampleRate -= m_fUsedSpinDownSpeed;	// adjust
-					if (m_fPlaySampleRate < 0.0)	// too low so we past it
-					{
-						m_fPlaySampleRate = 0.0;	// fix it
-					}
+					m_fPlaySampleRate = std::max(m_fPlaySampleRate - m_fUsedSpinDownSpeed, 0.);
 				}
 			}
 			else // power on - spin up
 			{
 				if (m_fPlaySampleRate < m_fDesiredPitch) // too low so bring up
 				{
-					m_fPlaySampleRate += m_fUsedSpinUpSpeed; // adjust
-					if (m_fPlaySampleRate > m_fDesiredPitch) // too high so we past it
-					{
-						m_fPlaySampleRate = m_fDesiredPitch; // fix it
-					}
+					m_fPlaySampleRate = std::min(m_fPlaySampleRate + m_fUsedSpinUpSpeed, m_fDesiredPitch);
 				}
 				else if (m_fPlaySampleRate > m_fDesiredPitch) // too high so bring down
 				{
-					m_fPlaySampleRate -= m_fUsedSpinUpSpeed; // adjust
-					if (m_fPlaySampleRate < m_fDesiredPitch) // too low so we past it
-					{
-						m_fPlaySampleRate = m_fDesiredPitch; // fix it
-					}
+					m_fPlaySampleRate = std::max(m_fPlaySampleRate - m_fUsedSpinUpSpeed, m_fDesiredPitch);
 				}
 			}
 		}
@@ -1106,8 +1055,8 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 
 #ifdef LINEAR_INTERPOLATION
 								float const floating_part = m_fPosition - static_cast<double>(static_cast<long>(m_fPosition));
-								long const big_part1 = static_cast<long>(m_fPosition);
-								long big_part2 = big_part1 + 1;
+								auto const big_part1 = static_cast<size_t>(m_fPosition);
+								auto big_part2 = big_part1 + 1;
 								if (big_part2 > m_nNumSamples)
 								{
 									big_part2 = 0;
@@ -1303,6 +1252,7 @@ void Turntablist::processScratch(bool inSetParameter)
 					if (m_nScratchInterval == 0)
 					{
 						m_fPosition = m_fDesiredPosition;
+						assert(m_fPosition >= 0.);
 						m_fTinyScratchAdjust = 0.0;
 					}
 					else
@@ -1401,16 +1351,9 @@ void Turntablist::processScratch(bool inSetParameter)
 
 			m_fLastScratchAmount = m_fScratchAmount;
 		}
-		m_fScratchVolumeModifier = m_fPlaySampleRate / m_fSampleRate;
-		if (m_fScratchVolumeModifier > 1.5f)
-		{
-			m_fScratchVolumeModifier = 1.5f;
-		}
+		m_fScratchVolumeModifier = std::min(m_fPlaySampleRate / m_fSampleRate, 1.5);
 
-		if (!m_bScratching)
-		{
-			m_bScratching = true;
-		}
+		m_bScratching = true;
 
 		if (m_bScratchStop)
 		{
