@@ -25,6 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <cmath>
 #include <numeric>
 
+#include "dfxmath.h"
 #include "dfxmisc.h"
 
 
@@ -103,7 +104,7 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	addchannelconfig(2, 2);  // stereo in / stereo out
 	//addchannelconfig(1, 2);  // it's okay to feed both inputs with the same signal
 
-	settailsize_samples(kDelayBufferSize);
+	settailsize_samples(dfx::math::ToUnsigned(kDelayBufferSize));
 
 	mCurrentTempoBPS = getparameter_f(kTempo) / 60.;
 

@@ -30,6 +30,8 @@ Windowingstub, featuring the Super Destroy FX Windowing System!
 #include <cmath>
 #include <cstdio>
 
+#include "dfxmath.h"
+
 /* this macro does boring entry point stuff for us */
 DFX_ENTRY(Windowingstub);
 DFX_CORE_ENTRY(WindowingstubDSP);
@@ -58,7 +60,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   for (int i = NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
     setparametervaluestring(P_SHAPE, i, "???");
 
-  long delay_samples = buffersizes[getparameter_i(P_BUFSIZE)];
+  auto const delay_samples = dfx::math::ToUnsigned(buffersizes[getparameter_i(P_BUFSIZE)]);
   setlatency_samples(delay_samples);
   settailsize_samples(delay_samples);
 
@@ -105,9 +107,9 @@ void PLUGINCORE::reset() {
   outstart = 0;
   outsize = framesize;
 
-  getplugin()->setlatency_samples(framesize);
+  getplugin()->setlatency_samples(dfx::math::ToUnsigned(framesize));
   /* tail is the same as delay, of course */
-  getplugin()->settailsize_samples(framesize);
+  getplugin()->settailsize_samples(dfx::math::ToUnsigned(framesize));
 }
 
 void PLUGINCORE::processparameters() {

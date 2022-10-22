@@ -28,6 +28,8 @@ DFX Exemplar, featuring the Super Destroy FX Windowing System!
 #include <cstdio>
 #include <fstream>
 
+#include "dfxmath.h"
+
 
 #define NORMALIZE 1
 
@@ -78,7 +80,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   for (int i=NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
     setparametervaluestring(P_SHAPE, i, "???");
 
-  long delay_samples = buffersizes[getparameter_i(P_BUFSIZE)];
+  auto const delay_samples = dfx::math::ToUnsigned(buffersizes[getparameter_i(P_BUFSIZE)]);
   setlatency_samples(delay_samples);
   settailsize_samples(delay_samples);
 
@@ -180,9 +182,9 @@ void PLUGINCORE::reset() {
   plan.reset(rfftw_create_plan(framesize, FFTW_FORWARD, FFTW_ESTIMATE));
   // rplan.reset(rfftw_create_plan(framesize, FFTW_BACKWARD, FFTW_ESTIMATE));
 
-  dfxplugin->setlatency_samples(framesize);
+  dfxplugin->setlatency_samples(dfx::math::ToUnsigned(framesize));
   /* tail is the same as delay, of course */
-  dfxplugin->settailsize_samples(framesize);
+  dfxplugin->settailsize_samples(dfx::math::ToUnsigned(framesize));
 }
 
 void PLUGINCORE::processparameters() {

@@ -27,6 +27,8 @@ Slowft, featuring the Super Destroy FX Windowing System!
 #include <array>
 #include <cstdio>
 
+#include "dfxmath.h"
+
 /* this macro does boring entry point stuff for us */
 DFX_ENTRY(Slowft);
 DFX_CORE_ENTRY(SlowftDSP);
@@ -55,7 +57,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   for (int i = NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
     setparametervaluestring(P_SHAPE, i, "???");
 
-  long delay_samples = buffersizes[getparameter_i(P_BUFSIZE)];
+  auto const delay_samples = dfx::math::ToUnsigned(buffersizes[getparameter_i(P_BUFSIZE)]);
   setlatency_samples(delay_samples);
   settailsize_samples(delay_samples);
 
@@ -102,9 +104,9 @@ void PLUGINCORE::reset() {
   outstart = 0;
   outsize = framesize;
 
-  dfxplugin->setlatency_samples(framesize);
+  dfxplugin->setlatency_samples(dfx::math::ToUnsigned(framesize));
   /* tail is the same as delay, of course */
-  dfxplugin->settailsize_samples(framesize);
+  dfxplugin->settailsize_samples(dfx::math::ToUnsigned(framesize));
 }
 
 void PLUGINCORE::processparameters() {

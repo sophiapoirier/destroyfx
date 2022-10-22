@@ -89,7 +89,7 @@ void DfxPlugin::resume()
 
 	// do these after calling do_reset, 
 	// because the value for latency could change there
-	setInitialDelay(getlatency_samples());
+	setInitialDelay(dfx::math::ToSigned(getlatency_samples()));
 
 	// it sure seems like we need to call ioChanged since we just
 	// called setInitialDelay(). -tom7
@@ -114,7 +114,7 @@ void DfxPlugin::setSampleRate(float newRate)
 // even if the audio input has ended
 VstInt32 DfxPlugin::getGetTailSize()
 {
-	return gettailsize_samples();
+	return dfx::math::ToSigned(gettailsize_samples());
 }
 
 

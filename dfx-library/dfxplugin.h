@@ -533,15 +533,15 @@ public:
 		return mTimeInfo;
 	}
 
-	void setlatency_samples(long inSamples);
+	void setlatency_samples(size_t inSampleFrames);
 	void setlatency_seconds(double inSeconds);
-	long getlatency_samples() const;
+	size_t getlatency_samples() const;
 	double getlatency_seconds() const;
 	void postupdate_latency();
 
-	void settailsize_samples(long inSamples);
+	void settailsize_samples(size_t inSampleFrames);
 	void settailsize_seconds(double inSeconds);
-	long gettailsize_samples() const;
+	size_t gettailsize_samples() const;
 	double gettailsize_seconds() const;
 	void postupdate_tailsize();
 
@@ -845,9 +845,9 @@ private:
 	// try to get musical tempo/time/location information from the host
 	void processtimeinfo();
 
-	std::variant<long, double> mLatency {0l};
+	std::variant<size_t, double> mLatency {size_t(0)};  // TODO C++23: integer literal suffix UZ
 	std::atomic_flag mLatencyChangeHasPosted;
-	std::variant<long, double> mTailSize {0l};
+	std::variant<size_t, double> mTailSize {size_t(0)};  // TODO C++23: integer literal suffix UZ
 	std::atomic_flag mTailSizeChangeHasPosted;
 	bool mInPlaceAudioProcessingAllowed = true;
 	bool mAudioIsRendering = false;

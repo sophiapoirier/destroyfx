@@ -368,7 +368,7 @@ PLUGINCORE::PLUGINCORE(DfxPlugin* inDfxPlugin)
   windowenvelope.assign(maxframe, 0.0f);
 
   if (iswaveformsource()) {  // does not matter which DSP core, but this just should happen only once
-    auto const delay_samples = PLUGIN::buffersizes.at(getparameter_i(P_BUFSIZE));
+    auto const delay_samples = dfx::math::ToUnsigned(PLUGIN::buffersizes.at(getparameter_i(P_BUFSIZE)));
     getplugin()->setlatency_samples(delay_samples);
     getplugin()->settailsize_samples(delay_samples);
   }
@@ -1259,9 +1259,9 @@ void PLUGINCORE::updatewindowsize()
   outstart = 0;
   outsize = framesize;
 
-  getplugin()->setlatency_samples(framesize);
+  getplugin()->setlatency_samples(dfx::math::ToUnsigned(framesize));
   /* tail is the same as delay, of course */
-  getplugin()->settailsize_samples(framesize);
+  getplugin()->settailsize_samples(dfx::math::ToUnsigned(framesize));
 }
 
 

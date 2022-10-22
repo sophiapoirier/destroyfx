@@ -1198,11 +1198,11 @@ void DfxPlugin::setsamplerate(double inSampleRate)
 		if (mAUElementsHaveBeenCreated)
 		{
 			// assume that sample-specified properties change in absolute duration when sample rate changes
-			if (auto const latencySamples = std::get_if<long>(&mLatency); latencySamples && (*latencySamples != 0))
+			if (auto const latencySamples = std::get_if<size_t>(&mLatency); latencySamples && (*latencySamples != 0))
 			{
 				postupdate_latency();
 			}
-			if (auto const tailSizeSamples = std::get_if<long>(&mTailSize); tailSizeSamples && (*tailSizeSamples != 0))
+			if (auto const tailSizeSamples = std::get_if<size_t>(&mTailSize); tailSizeSamples && (*tailSizeSamples != 0))
 			{
 				postupdate_tailsize();
 			}
@@ -1526,19 +1526,19 @@ bool DfxPlugin::ischannelcountsupported(size_t inNumInputs, size_t inNumOutputs)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setlatency_samples(long inSamples)
+void DfxPlugin::setlatency_samples(size_t inSampleFrames)
 {
 	bool changed = false;
 	if (std::holds_alternative<double>(mLatency))
 	{
 		changed = true;
 	}
-	else if (*std::get_if<long>(&mLatency) != inSamples)
+	else if (*std::get_if<size_t>(&mLatency) != inSampleFrames)
 	{
 		changed = true;
 	}
 
-	mLatency = inSamples;
+	mLatency = inSampleFrames;
 
 	if (changed)
 	{
@@ -1558,7 +1558,7 @@ void DfxPlugin::setlatency_samples(long inSamples)
 void DfxPlugin::setlatency_seconds(double inSeconds)
 {
 	bool changed = false;
-	if (std::holds_alternative<long>(mLatency))
+	if (std::holds_alternative<size_t>(mLatency))
 	{
 		changed = true;
 	}
@@ -1584,15 +1584,15 @@ void DfxPlugin::setlatency_seconds(double inSeconds)
 }
 
 //-----------------------------------------------------------------------------
-long DfxPlugin::getlatency_samples() const
+size_t DfxPlugin::getlatency_samples() const
 {
-	if (auto const latencySamples = std::get_if<long>(&mLatency))
+	if (auto const latencySamples = std::get_if<size_t>(&mLatency))
 	{
 		return *latencySamples;
 	}
 	else
 	{
-		return std::lround(*std::get_if<double>(&mLatency) * getsamplerate());
+		return dfx::math::ToUnsigned(std::lround(*std::get_if<double>(&mLatency) * getsamplerate()));
 	}
 }
 
@@ -1605,7 +1605,7 @@ double DfxPlugin::getlatency_seconds() const
 	}
 	else
 	{
-		return static_cast<double>(*std::get_if<long>(&mLatency)) / getsamplerate();
+		return static_cast<double>(*std::get_if<size_t>(&mLatency)) / getsamplerate();
 	}
 }
 
@@ -1622,19 +1622,19 @@ void DfxPlugin::postupdate_latency()
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::settailsize_samples(long inSamples)
+void DfxPlugin::settailsize_samples(size_t inSampleFrames)
 {
 	bool changed = false;
 	if (std::holds_alternative<double>(mTailSize))
 	{
 		changed = true;
 	}
-	else if (*std::get_if<long>(&mTailSize) != inSamples)
+	else if (*std::get_if<size_t>(&mTailSize) != inSampleFrames)
 	{
 		changed = true;
 	}
 
-	mTailSize = inSamples;
+	mTailSize = inSampleFrames;
 
 	if (changed)
 	{
@@ -1654,7 +1654,7 @@ void DfxPlugin::settailsize_samples(long inSamples)
 void DfxPlugin::settailsize_seconds(double inSeconds)
 {
 	bool changed = false;
-	if (std::holds_alternative<long>(mTailSize))
+	if (std::holds_alternative<size_t>(mTailSize))
 	{
 		changed = true;
 	}
@@ -1680,15 +1680,15 @@ void DfxPlugin::settailsize_seconds(double inSeconds)
 }
 
 //-----------------------------------------------------------------------------
-long DfxPlugin::gettailsize_samples() const
+size_t DfxPlugin::gettailsize_samples() const
 {
-	if (auto const tailSizeSamples = std::get_if<long>(&mTailSize))
+	if (auto const tailSizeSamples = std::get_if<size_t>(&mTailSize))
 	{
 		return *tailSizeSamples;
 	}
 	else
 	{
-		return std::lround(*std::get_if<double>(&mTailSize) * getsamplerate());
+		return dfx::math::ToUnsigned(std::lround(*std::get_if<double>(&mTailSize) * getsamplerate()));
 	}
 }
 
@@ -1701,7 +1701,7 @@ double DfxPlugin::gettailsize_seconds() const
 	}
 	else
 	{
-		return static_cast<double>(*std::get_if<long>(&mTailSize)) / getsamplerate();
+		return static_cast<double>(*std::get_if<size_t>(&mTailSize)) / getsamplerate();
 	}
 }
 
