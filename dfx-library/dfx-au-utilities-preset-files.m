@@ -33,7 +33,7 @@
 	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED 
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 	
-	To contact the author, please visit http://destroyfx.org/ 
+	To contact the author, please visit http://destroyfx.org 
 	and use the contact form.
 */
 
@@ -199,7 +199,7 @@ CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(AudioComponent inAUComponent, DF
 	}
 
 	// first we need to find the directory for the AU's preset files in this domain
-	presetsDirURL = FindPresetsDirForAU(inAUComponent, inFileSystemDomain, kDontCreateFolder);
+	presetsDirURL = FindPresetsDirForAU(inAUComponent, inFileSystemDomain, false);
 	if (presetsDirURL == NULL)
 	{
 		return NULL;
@@ -556,7 +556,7 @@ CFPropertyListRef CreatePropertyListFromXMLFile(CFURLRef inXMLFileURL, SInt32* o
 	{
 		if (error != NULL)
 		{
-			*outErrorCode = CFErrorGetCode(error);
+			*outErrorCode = (SInt32)CFErrorGetCode(error);
 			CFRelease(error);
 		}
 		else
@@ -773,7 +773,7 @@ OSStatus SaveAUStateToPresetFile_Bundle(AudioComponentInstance inAUComponentInst
 	}
 
 	// now we need to get the parent directory of where we will save this file
-	presetFileDirURL = FindPresetsDirForAU(AudioComponentInstanceGetComponent(inAUComponentInstance), kUserDomain, kCreateFolder);
+	presetFileDirURL = FindPresetsDirForAU(AudioComponentInstanceGetComponent(inAUComponentInstance), kDFXFileSystemDomain_User, true);
 	if (presetFileDirURL == NULL)
 	{
 		CFRelease(auStatePlist);
