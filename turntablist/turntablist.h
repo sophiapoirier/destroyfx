@@ -41,9 +41,9 @@ To contact the developer, use the contact form at http://destroyfx.org
 
 #include <CoreServices/CoreServices.h>
 #include <atomic>
-#include <mutex>
 #include <vector>
 
+#include "dfxmutex.h"
 #include "dfxplugin.h"
 
 
@@ -289,7 +289,7 @@ private:
 	//double m_fDesiredPowerRate = 0.;
 	//double m_fTinyPowerAdjust = 0.;
 
-	std::mutex m_AudioFileLock;
+	dfx::SpinLock m_AudioFileLock;
 
 	std::atomic_flag mPlayChangedInProcessHasPosted;
 };

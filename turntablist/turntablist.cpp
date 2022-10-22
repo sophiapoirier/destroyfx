@@ -27,6 +27,7 @@ To contact the developer, use the contact form at http://destroyfx.org
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <mutex>
 #include <optional>
 
 #include "dfxmath.h"
@@ -262,11 +263,7 @@ static const CFStringRef kTurntablistPreset_AudioFileAliasKey = CFSTR("DestroyFX
 //-----------------------------------------------------------------------------------------
 OSStatus Turntablist::SaveState(CFPropertyListRef* outData)
 {
-	auto const status = AUBase::SaveState(outData);
-	if (status != noErr)
-	{
-		return status;
-	}
+	AUSDK_Require_noerr(AUBase::SaveState(outData));
 
 	auto const dict = const_cast<CFMutableDictionaryRef>(reinterpret_cast<CFDictionaryRef>(*outData));
 
@@ -319,11 +316,7 @@ OSStatus Turntablist::SaveState(CFPropertyListRef* outData)
 //-----------------------------------------------------------------------------------------
 OSStatus Turntablist::RestoreState(CFPropertyListRef inData)
 {
-	auto const status = AUBase::RestoreState(inData);
-	if (status != noErr)
-	{
-		return status;
-	}
+	AUSDK_Require_noerr(AUBase::RestoreState(inData));
 
 	auto const dict = reinterpret_cast<CFDictionaryRef>(inData);
 
@@ -461,11 +454,7 @@ dfx::StatusCode Turntablist::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID,
 			}
 			AliasHandle alias = nullptr;
 			Size aliasSize = 0;
-			auto const status = createAudioFileAlias(&alias, &aliasSize);
-			if (status != noErr)
-			{
-				return status;
-			}
+			AUSDK_Require_noerr(createAudioFileAlias(&alias, &aliasSize));
 			outDataSize = aliasSize;
 			outFlags = dfx::kPropertyFlag_Readable | dfx::kPropertyFlag_Writable;
 			DisposeHandle(reinterpret_cast<Handle>(alias));
@@ -496,11 +485,7 @@ dfx::StatusCode Turntablist::dfx_GetProperty(dfx::PropertyID inPropertyID,
 			}
 			AliasHandle alias = nullptr;
 			Size aliasSize = 0;
-			auto const status = createAudioFileAlias(&alias, &aliasSize);
-			if (status != noErr)
-			{
-				return status;
-			}
+			AUSDK_Require_noerr(createAudioFileAlias(&alias, &aliasSize));
 			memcpy(outData, *alias, aliasSize);
 			DisposeHandle(reinterpret_cast<Handle>(alias));
 			return dfx::kStatus_NoError;
@@ -526,16 +511,12 @@ dfx::StatusCode Turntablist::dfx_SetProperty(dfx::PropertyID inPropertyID,
 		case kTurntablistProperty_AudioFile:
 		{
 			AliasHandle alias = nullptr;
-			auto status = PtrToHand(inData, (Handle*)(&alias), inDataSize);
-			if (status != noErr)
-			{
-				return status;
-			}
+			AUSDK_Require_noerr(PtrToHand(inData, (Handle*)(&alias), inDataSize));
 			if (!alias)
 			{
 				return memFullErr;
 			}
-			status = resolveAudioFileAlias(alias);
+			auto const status = resolveAudioFileAlias(alias);
 			DisposeHandle(reinterpret_cast<Handle>(alias));
 			return status;
 		}
@@ -550,11 +531,7 @@ OSStatus Turntablist::GetParameterInfo(AudioUnitScope inScope,
 									   AudioUnitParameterID inParameterID, 
 									   AudioUnitParameterInfo& outParameterInfo)
 {
-	auto const status = DfxPlugin::GetParameterInfo(inScope, inParameterID, outParameterInfo);
-	if (status != noErr)
-	{
-		return status;
-	}
+	AUSDK_Require_noerr(DfxPlugin::GetParameterInfo(inScope, inParameterID, outParameterInfo));
 
 	switch (inParameterID)
 	{
@@ -597,7 +574,7 @@ OSStatus Turntablist::GetParameterInfo(AudioUnitScope inScope,
 			break;
 	}
 
-	return status;
+	return noErr;
 }
 
 //-----------------------------------------------------------------------------------------
@@ -664,11 +641,7 @@ OSStatus Turntablist::createAudioFileAlias(AliasHandle* outAlias, Size* outDataS
 		return paramErr;
 	}
 
-	auto const error = FSNewAlias(nullptr, &m_fsAudioFile, outAlias);
-	if (error != noErr)
-	{
-		return error;
-	}
+	AUSDK_Require_noerr(FSNewAlias(nullptr, &m_fsAudioFile, outAlias));
 	if (*outAlias == nullptr)
 	{
 		return nilHandleErr;
@@ -679,7 +652,7 @@ OSStatus Turntablist::createAudioFileAlias(AliasHandle* outAlias, Size* outDataS
 		*outDataSize = GetAliasSize(*outAlias);
 	}
 
-	return error;
+	return noErr;
 }
 
 //-----------------------------------------------------------------------------
@@ -707,34 +680,18 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 // ExtAudioFile
 #ifndef USE_LIBSNDFILE
 	ExtAudioFileRef audioFileRef = nullptr;
-	auto status = ExtAudioFileOpen(&inFileRef, &audioFileRef);
-	if (status != noErr)
-	{
-		return status;
-	}
+	AUSDK_Require_noerr(ExtAudioFileOpen(&inFileRef, &audioFileRef));
 
 	SInt64 audioFileNumFrames = 0;
 	UInt32 dataSize = sizeof(audioFileNumFrames);
-	status = ExtAudioFileGetProperty(audioFileRef, kExtAudioFileProperty_FileLengthFrames, &dataSize, &audioFileNumFrames);
-	if (status != noErr)
-	{
-		return status;
-	}
+	AUSDK_Require_noerr(ExtAudioFileGetProperty(audioFileRef, kExtAudioFileProperty_FileLengthFrames, &dataSize, &audioFileNumFrames));
 
-	AudioStreamBasicDescription audioFileStreamFormat;
+	AudioStreamBasicDescription audioFileStreamFormat {};
 	dataSize = sizeof(audioFileStreamFormat);
-	status = ExtAudioFileGetProperty(audioFileRef, kExtAudioFileProperty_FileDataFormat, &dataSize, &audioFileStreamFormat);
-	if (status != noErr)
-	{
-		return status;
-	}
+	AUSDK_Require_noerr(ExtAudioFileGetProperty(audioFileRef, kExtAudioFileProperty_FileDataFormat, &dataSize, &audioFileStreamFormat));
 
 	auto const clientStreamFormat = ausdk::ASBD::CreateCommonFloat32(audioFileStreamFormat.mSampleRate, audioFileStreamFormat.mChannelsPerFrame);
-	status = ExtAudioFileSetProperty(audioFileRef, kExtAudioFileProperty_ClientDataFormat, sizeof(clientStreamFormat), &clientStreamFormat);
-	if (status != noErr)
-	{
-		return status;
-	}
+	AUSDK_Require_noerr(ExtAudioFileSetProperty(audioFileRef, kExtAudioFileProperty_ClientDataFormat, sizeof(clientStreamFormat), &clientStreamFormat));
 
 	std::unique_lock guard(m_AudioFileLock);
 
@@ -743,7 +700,7 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 	m_auBufferList.Allocate(clientStreamFormat, static_cast<UInt32>(audioFileNumFrames));
 	auto& abl = m_auBufferList.PrepareBuffer(clientStreamFormat, static_cast<UInt32>(audioFileNumFrames));
 	auto audioFileNumFrames_temp = static_cast<UInt32>(audioFileNumFrames);
-	status = ExtAudioFileRead(audioFileRef, &audioFileNumFrames_temp, &abl);
+	auto status = ExtAudioFileRead(audioFileRef, &audioFileNumFrames_temp, &abl);
 	if (status != noErr)
 	{
 		m_auBufferList.Deallocate();
@@ -773,11 +730,7 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 // libsndfile
 #else
 	UInt8 file[2048] {};
-	OSStatus status = FSRefMakePath(&inFileRef, file, std::size(file));
-	if (status != noErr)
-	{
-		return status;
-	}
+	AUSDK_Require_noerr(FSRefMakePath(&inFileRef, file, std::size(file)));
 //fprintf(stderr, PLUGIN_NAME_STRING " audio file:  %s\n", file);
 
 	SF_INFO sfInfo {};
@@ -886,7 +839,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 {
 	std::optional<size_t> eventFrame;
 	auto const numEvents = getmidistate().getBlockEventCount();
-	size_t currEvent = 0;
+	size_t eventIndex = 0;
 
 	auto const numOutputs = getnumoutputs();
 	//auto const interpolateHermiteFunctionPtr = m_bLoop ? dfx::math::InterpolateHermite : dfx::math::InterpolateHermite_NoWrap;
@@ -898,19 +851,19 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 	}
 	else
 	{
-		eventFrame = getmidistate().getBlockEvent(currEvent).mOffsetFrames;
+		eventFrame = getmidistate().getBlockEvent(eventIndex).mOffsetFrames;
 	}
-	for (size_t currFrame = 0; currFrame < inNumFrames; currFrame++)
+	for (size_t frameIndex = 0; frameIndex < inNumFrames; frameIndex++)
 	{
 		//
 		// process MIDI events if any
 		//
-		while (eventFrame && (currFrame == *eventFrame))
+		while (eventFrame && (frameIndex == *eventFrame))
 		{
-			processMidiEvent(currEvent);
-			currEvent++;	// check next event
+			processMidiEvent(eventIndex);
+			eventIndex++;	// check next event
 
-			if (currEvent >= numEvents)
+			if (eventIndex >= numEvents)
 			{
 				eventFrame.reset();	// no more events
 			}
@@ -996,158 +949,144 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 
 			m_fPosOffset = m_fPlaySampleRate / getsamplerate();   //m_fPlaySampleRate / m_fSampleRate;
 
-			std::unique_lock guard(m_AudioFileLock, std::defer_lock);
-			if (m_bAudioFileHasBeenLoaded)
+			std::unique_lock const guard(m_AudioFileLock, std::try_to_lock);
+			if (guard.owns_lock() && m_bAudioFileHasBeenLoaded && m_bNoteIsOn)
 			{
-				guard.try_lock();
-			}
-			if (guard.owns_lock())
-			{
-				if (m_bNoteIsOn)
+				if (!m_bPlayForward) // if play direction = reverse
 				{
-
-					if (!m_bPlayForward) // if play direction = reverse
+					if (m_fPlaySampleRate != 0.)
 					{
-						if (m_fPlaySampleRate != 0.0)
+						m_fPosition -= m_fPosOffset;
+						while (m_fPosition < 0.)	// was if
 						{
-							m_fPosition -= m_fPosOffset;
-							while (m_fPosition < 0.0)	// was if
+							if (!m_bLoop)	// off
 							{
-								if (!m_bLoop)	// off
+								if (m_bPlayedReverse)
 								{
-									if (m_bPlayedReverse)
-									{
-										stopNote(true);
-										m_fPosition = 0.0;
-									}
-									else
-									{
-										m_fPosition += m_fNumSamples; // - 1;
-										m_bPlayedReverse = true;
-									}
+									stopNote(true);
+									m_fPosition = 0.;
 								}
 								else
+								{
 									m_fPosition += m_fNumSamples; // - 1;
+									m_bPlayedReverse = true;
+								}
+							}
+							else
+							{
+								m_fPosition += m_fNumSamples; // - 1;
 							}
 						}
-					}  // if (!bPlayForward)
+					}
+				}  // if (!bPlayForward)
 
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
-					if (!m_bMute)   // if audio on
-					{
+				if (!m_bMute)   // if audio on
+				{
 #endif
-						if (m_fPlaySampleRate == 0.0)
+					if (m_fPlaySampleRate == 0.)
+					{
+						for (size_t ch = 0; ch < numOutputs; ch++)
 						{
-							for (size_t ch = 0; ch < numOutputs; ch++)
-							{
-								outAudio[ch][currFrame] = 0.0f;
-							}
+							outAudio[ch][frameIndex] = 0.f;
 						}
-						else
-						{
+					}
+					else
+					{
 //#define NO_INTERPOLATION
 //#define LINEAR_INTERPOLATION
 #define CUBIC_INTERPOLATION
 
-							for (size_t ch = 0; ch < numOutputs; ch++)
+						for (size_t ch = 0; ch < numOutputs; ch++)
+						{
+						#ifdef USE_LIBSNDFILE
+							auto const output = (ch == 0) ? m_fLeft : m_fRight;
+						#else
+							AudioBufferList& abl = m_auBufferList.GetBufferList();
+							size_t ablChannel = ch;
+							if (ch >= abl.mNumberBuffers)
 							{
-							#ifdef USE_LIBSNDFILE
-								auto const output = (ch == 0) ? m_fLeft : m_fRight;
-							#else
-								AudioBufferList& abl = m_auBufferList.GetBufferList();
-								size_t ablChannel = ch;
-								if (ch >= abl.mNumberBuffers)
+								ablChannel = abl.mNumberBuffers - 1;
+								// XXX only do the channel remapping for mono->stereo upmixing special case (?)
+								if (ch > 1)
 								{
-									ablChannel = abl.mNumberBuffers - 1;
-									// XXX only do the channel remapping for mono->stereo upmixing special case (?)
-									if (ch > 1)
-									{
-										break;
-									}
+									break;
 								}
-								auto const output = static_cast<float*>(abl.mBuffers[ablChannel].mData);
-							#endif
+							}
+							auto const output = static_cast<float*>(abl.mBuffers[ablChannel].mData);
+						#endif
 
 #ifdef NO_INTERPOLATION
-								auto const outval = output[static_cast<size_t>(m_fPosition)];
+							auto const outval = output[static_cast<size_t>(m_fPosition)];
 #endif  // NO_INTERPOLATION
 
 #ifdef LINEAR_INTERPOLATION
-								float const floating_part = m_fPosition - static_cast<double>(static_cast<long>(m_fPosition));
-								auto const big_part1 = static_cast<size_t>(m_fPosition);
-								auto big_part2 = big_part1 + 1;
-								if (big_part2 > m_nNumSamples)
-								{
-									big_part2 = 0;
-								}
-								float const outval = (floating_part * output[big_part1]) + ((1.0f - floating_part) * output[big_part2]);
+							float const floating_part = m_fPosition - static_cast<double>(static_cast<long>(m_fPosition));
+							auto const big_part1 = static_cast<size_t>(m_fPosition);
+							auto big_part2 = big_part1 + 1;
+							if (big_part2 > m_nNumSamples)
+							{
+								big_part2 = 0;
+							}
+							float const outval = (floating_part * output[big_part1]) + ((1.f - floating_part) * output[big_part2]);
 #endif  // LINEAR_INTERPOLATION
 
 #ifdef CUBIC_INTERPOLATION
-								float outval {};
-							#if 0
-								// XXX is this a silly optimization to avoid another branch?
-								// XXX can this even work for an inline function?
-								outval = interpolateHermiteFunctionPtr(output, m_fPosition, m_nNumSamples);
-							#else
-								if (m_bLoop)
-								{
-									outval = dfx::math::InterpolateHermite(output, m_fPosition, m_nNumSamples);
-								}
-								else
-								{
-									outval = dfx::math::InterpolateHermite_NoWrap(output, m_fPosition, m_nNumSamples);
-								}
-							#endif
+							float outval {};
+						#if 0
+							// XXX is this a silly optimization to avoid another branch?
+							// XXX can this even work for an inline function?
+							outval = interpolateHermiteFunctionPtr(output, m_fPosition, m_nNumSamples);
+						#else
+							if (m_bLoop)
+							{
+								outval = dfx::math::InterpolateHermite(output, m_fPosition, m_nNumSamples);
+							}
+							else
+							{
+								outval = dfx::math::InterpolateHermite_NoWrap(output, m_fPosition, m_nNumSamples);
+							}
+						#endif
 #endif  // CUBIC_INTERPOLATION
 
-								outAudio[ch][currFrame] = outval * m_fNoteVolume;
-							}
-						}
-#ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
-					}  // if (!m_bMute)
-					else
-					{
-						for (size_t ch = 0; ch < numOutputs; ch++)
-						{
-							outAudio[ch][currFrame] = 0.0f;
+							outAudio[ch][frameIndex] = outval * m_fNoteVolume;
 						}
 					}
-#endif
-
-
-					if (m_bPlayForward)	// if play direction = forward
-					{
-						m_bPlayedReverse = false;
-						if (m_fPlaySampleRate != 0.0)
-						{
-							m_fPosition += m_fPosOffset;
-
-							while (m_fPosition >= m_fNumSamples)
-							{
-								m_fPosition -= m_fNumSamples;
-								if (!m_bLoop) // off
-								{
-									stopNote(true);
-								}
-							}
-						}
-					}  // if (bPlayForward)
-
-				}  // if (bNoteIsOn)
+#ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
+				}  // if (!m_bMute)
 				else
 				{
 					for (size_t ch = 0; ch < numOutputs; ch++)
 					{
-						outAudio[ch][currFrame] = 0.0f;
+						outAudio[ch][frameIndex] = 0.f;
 					}
 				}
-			}  // if (owns_lock)
+#endif
+
+
+				if (m_bPlayForward)	// if play direction = forward
+				{
+					m_bPlayedReverse = false;
+					if (m_fPlaySampleRate != 0.)
+					{
+						m_fPosition += m_fPosOffset;
+
+						while (m_fPosition >= m_fNumSamples)
+						{
+							m_fPosition -= m_fNumSamples;
+							if (!m_bLoop) // off
+							{
+								stopNote(true);
+							}
+						}
+					}
+				}  // if (bPlayForward)
+			}  // if (owns_lock && m_bAudioFileHasBeenLoaded && m_bNoteIsOn)
 			else
 			{
 				for (size_t ch = 0; ch < numOutputs; ch++)
 				{
-					outAudio[ch][currFrame] = 0.0f;
+					outAudio[ch][frameIndex] = 0.f;
 				}
 			}
 		}  // if (bNoteIsOn)
@@ -1155,10 +1094,10 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 		{
 			for (size_t ch = 0; ch < numOutputs; ch++)
 			{
-				outAudio[ch][currFrame] = 0.0f;
+				outAudio[ch][frameIndex] = 0.f;
 			}
 		}
-	}  // (currFrame < inNumFrames)
+	}  // per frame loop
 }
 
 
@@ -1229,9 +1168,9 @@ void Turntablist::processScratch(bool inSetParameter)
 	// scratching will set target sample rate and system will catch up based on scratch speed parameter
 	// sort of like spin up/down speed param..
 
-	// if curr rate below target rate then add samplespeed2
+	// if current rate below target rate then add samplespeed2
 	// it gone over then set to target rate
-	// if curr rate above target rate then sub samplespeed2
+	// if current rate above target rate then sub samplespeed2
 	// if gone below then set to target rate
 
 
@@ -1317,7 +1256,7 @@ void Turntablist::processScratch(bool inSetParameter)
 					//
 					// desired rate = distance / time
 					// distance is samples to cover, time is interval
-					//accel = (desired rate - curr rate)/ time
+					//accel = (desired rate - current rate)/ time
 					// accel is tiny scratch adjust
 
 					// TO DO:
