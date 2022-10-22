@@ -40,6 +40,7 @@ To contact the developer, use the contact form at http://destroyfx.org
 #pragma once
 
 #include <CoreServices/CoreServices.h>
+#include <atomic>
 #include <mutex>
 #include <vector>
 
@@ -127,6 +128,8 @@ public:
 
 	void initialize() override;
 
+	void idle() override;
+
 	void processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames) override;
 	void processparameters() override;
 
@@ -154,9 +157,9 @@ private:
 		kParamGroup_Playback,
 		kParamGroup_Power,
 		kParamGroup_Pitch
-	#ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
+#ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
 		, kParamGroup_Output
-	#endif
+#endif
 	};
 
 	OSStatus loadAudioFile(FSRef const& inFileRef);
@@ -214,7 +217,7 @@ private:
 #endif
 	double m_fPitchShift = 0.;
 	long m_nDirection = 0;
-//	float m_fScratchSpeed;
+	//float m_fScratchSpeed = 0.f;
 	double m_fScratchSpeed_scrub = 0., m_fScratchSpeed_spin = 0.;
 
 	// modifiers
@@ -283,8 +286,10 @@ private:
 	double m_fTinyScratchAdjust = 0.;
 
 	// new power variables to do sample accurate powering up/down
-//	double m_fDesiredPowerRate = 0.;
-//	double m_fTinyPowerAdjust = 0.;
+	//double m_fDesiredPowerRate = 0.;
+	//double m_fTinyPowerAdjust = 0.;
 
 	std::mutex m_AudioFileLock;
+
+	std::atomic_flag mPlayChangedInProcessHasPosted;
 };

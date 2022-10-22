@@ -42,9 +42,9 @@ To contact the developer, use the contact form at http://destroyfx.org
 // use hard-coded MIDI CCs for parameters
 //#define USE_MIDI_CC
 
-constexpr long k_nScratchInterval = 16; //24
-constexpr long k_nPowerInterval = 120;
-constexpr long k_nRootKey_default = 60;   // middle C
+constexpr int k_nScratchInterval = 16;//24
+constexpr int k_nPowerInterval = 120;
+constexpr int k_nRootKey_default = 60;   // middle C
 
 constexpr double k_fScratchAmountMiddlePoint = 0.0;
 constexpr double k_fScratchAmountLaxRange = 0.000000001;
@@ -72,7 +72,7 @@ Turntablist::Turntablist(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 :	DfxPlugin(inInstance, kNumParameters, 0)
 {
 	initparameter_f(kParam_ScratchAmount, {"scratch amount"}, k_fScratchAmountMiddlePoint, k_fScratchAmountMiddlePoint, -1.0, 1.0, DfxParam::Unit::Generic);	// float2string(m_fPlaySampleRate, text);
-//	initparameter_f(kScratchSpeed, {"scratch speed"}, 0.33333333, 0.33333333, 0.0, 1.0, DfxParam::Unit::Scalar);
+	//initparameter_f(kScratchSpeed, {"scratch speed"}, 0.33333333, 0.33333333, 0.0, 1.0, DfxParam::Unit::Scalar);
 	initparameter_f(kParam_ScratchSpeed_scrub, {"scratch speed (scrub mode)"}, 2.0, 2.0, 0.5, 5.0, DfxParam::Unit::Seconds);
 	initparameter_f(kParam_ScratchSpeed_spin, {"scratch speed (spin mode)"}, 3.0, 3.0, 1.0, 8.0, DfxParam::Unit::Scalar);
 
@@ -132,6 +132,8 @@ Turntablist::Turntablist(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	m_nCurrentNote = m_nRootKey;
 	m_nCurrentVelocity = 0x7F;
+
+	mPlayChangedInProcessHasPosted.test_and_set();
 }
 
 //-----------------------------------------------------------------------------------------
@@ -154,6 +156,16 @@ void Turntablist::initialize()
 	}
 
 	stopNote();
+}
+
+
+//-----------------------------------------------------------------------------------------
+void Turntablist::idle()
+{
+	if (!mPlayChangedInProcessHasPosted.test_and_set(std::memory_order_relaxed))
+	{
+		PropertyChanged(kTurntablistProperty_Play, kAudioUnitScope_Global, 0);
+	}
 }
 
 
@@ -633,7 +645,14 @@ void Turntablist::setPlay(bool inPlayState, bool inShouldSendNotification)
 {
 	if (std::exchange(m_bPlay, inPlayState) != inPlayState)
 	{
-		PropertyChanged(kTurntablistProperty_Play, kAudioUnitScope_Global, 0);
+		if (isrenderthread())
+		{
+			mPlayChangedInProcessHasPosted.clear(std::memory_order_relaxed);
+		}
+		else
+		{
+			PropertyChanged(kTurntablistProperty_Play, kAudioUnitScope_Global, 0);
+		}
 	}
 }
 

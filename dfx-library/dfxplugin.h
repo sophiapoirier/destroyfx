@@ -726,6 +726,8 @@ protected:
 	template <typename T>
 	T generateParameterRandomValue(T const& inRangeMinimum, T const& inRangeMaximum);
 
+	bool isrenderthread() const noexcept;
+
 #if TARGET_PLUGIN_USES_DSPCORE
 	DfxPluginCore* getplugincore(size_t inChannel) const;
 #endif

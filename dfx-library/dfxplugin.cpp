@@ -654,7 +654,7 @@ void DfxPlugin::postupdate_parameter(dfx::ParameterID inParameterID)
 	}
 
 	// defer the notification because it is not realtime-safe
-	if (std::this_thread::get_id() == mAudioRenderThreadID)
+	if (isrenderthread())
 	{
 		// defer listener notification to later, off the realtime thread
 		mParametersChangedInProcessHavePosted[inParameterID].clear(std::memory_order_relaxed);
@@ -870,7 +870,7 @@ std::string DfxPlugin::getparametergroupname(size_t inGroupIndex) const
 //-----------------------------------------------------------------------------
 bool DfxPlugin::getparameterchanged(dfx::ParameterID inParameterID) const
 {
-	assert(std::this_thread::get_id() == mAudioRenderThreadID);  // only valid during audio rendering
+	assert(isrenderthread());  // only valid during audio rendering
 	if (parameterisvalid(inParameterID))
 	{
 		return mParametersChangedAsOfPreProcess[inParameterID];
@@ -881,7 +881,7 @@ bool DfxPlugin::getparameterchanged(dfx::ParameterID inParameterID) const
 //-----------------------------------------------------------------------------
 bool DfxPlugin::getparametertouched(dfx::ParameterID inParameterID) const
 {
-	assert(std::this_thread::get_id() == mAudioRenderThreadID);  // only valid during audio rendering
+	assert(isrenderthread());  // only valid during audio rendering
 	if (parameterisvalid(inParameterID))
 	{
 		return mParametersTouchedAsOfPreProcess[inParameterID];
@@ -998,7 +998,7 @@ void DfxPlugin::postupdate_preset()
 {
 	assert(presetisvalid(getcurrentpresetnum()));
 
-	if (std::this_thread::get_id() == mAudioRenderThreadID)
+	if (isrenderthread())
 	{
 		mPresetChangedInProcessHasPosted.clear(std::memory_order_relaxed);
 		return;
@@ -1543,7 +1543,7 @@ void DfxPlugin::setlatency_samples(size_t inSampleFrames)
 	if (changed)
 	{
 		// defer the notification because it is not realtime-safe
-		if (std::this_thread::get_id() == mAudioRenderThreadID)
+		if (isrenderthread())
 		{
 			mLatencyChangeHasPosted.clear(std::memory_order_relaxed);
 		}
@@ -1572,7 +1572,7 @@ void DfxPlugin::setlatency_seconds(double inSeconds)
 	if (changed)
 	{
 		// defer the notification because it is not realtime-safe
-		if (std::this_thread::get_id() == mAudioRenderThreadID)
+		if (isrenderthread())
 		{
 			mLatencyChangeHasPosted.clear(std::memory_order_relaxed);
 		}
@@ -1639,7 +1639,7 @@ void DfxPlugin::settailsize_samples(size_t inSampleFrames)
 	if (changed)
 	{
 		// defer the notification because it is not realtime-safe
-		if (std::this_thread::get_id() == mAudioRenderThreadID)
+		if (isrenderthread())
 		{
 			mTailSizeChangeHasPosted.clear(std::memory_order_relaxed);
 		}
@@ -1668,7 +1668,7 @@ void DfxPlugin::settailsize_seconds(double inSeconds)
 	if (changed)
 	{
 		// defer the notification because it is not realtime-safe
-		if (std::this_thread::get_id() == mAudioRenderThreadID)
+		if (isrenderthread())
 		{
 			mTailSizeChangeHasPosted.clear(std::memory_order_relaxed);
 		}
@@ -1985,6 +1985,12 @@ void DfxPlugin::do_processparameters()
 	{
 		std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), [](auto& value){ value.first->snap(); });
 	}
+}
+
+//-----------------------------------------------------------------------------
+bool DfxPlugin::isrenderthread() const noexcept
+{
+	return (std::this_thread::get_id() == mAudioRenderThreadID);
 }
 
 #if TARGET_PLUGIN_USES_DSPCORE

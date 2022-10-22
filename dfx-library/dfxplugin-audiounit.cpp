@@ -1061,7 +1061,7 @@ void DfxPlugin::PropertyChanged(AudioUnitPropertyID inPropertyID,
 								AudioUnitScope inScope, AudioUnitElement inElement)
 {
 #if TARGET_PLUGIN_USES_MIDI
-	if (std::this_thread::get_id() == mAudioRenderThreadID)
+	if (isrenderthread())
 	{
 		if (inPropertyID == dfx::kPluginProperty_MidiLearn)
 		{
@@ -1078,7 +1078,7 @@ void DfxPlugin::PropertyChanged(AudioUnitPropertyID inPropertyID,
 
 	// NOTE: this will bite you if running debug builds in hosts that offline render audio (hence the validator exception)
 	// NOTE: exception for Connection property because AUGraph seems to sometimes disconnect from the audio I/O thread
-	assert((std::this_thread::get_id() != mAudioRenderThreadID) || (inPropertyID == kAudioUnitProperty_MakeConnection) || dfx::IsHostValidator());  // this method is not realtime-safe
+	assert(!isrenderthread() || (inPropertyID == kAudioUnitProperty_MakeConnection) || dfx::IsHostValidator());  // this method is not realtime-safe
 
 	return TARGET_API_BASE_CLASS::PropertyChanged(inPropertyID, inScope, inElement);
 }
@@ -1432,7 +1432,7 @@ OSStatus DfxPlugin::GetPresets(CFArrayRef* outData) const
 	{
 		if (presetnameisvalid(i))
 		{
-			auto const aupreset = dfx::MakeUniqueCFAUPreset(kCFAllocatorDefault, i, getpresetcfname(i));
+			auto const aupreset = dfx::MakeUniqueCFAUPreset(kCFAllocatorDefault, dfx::math::ToSigned(i), getpresetcfname(i));
 			if (aupreset)
 			{
 				// insert the AUPreset into the output array
