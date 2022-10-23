@@ -842,7 +842,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 	size_t eventIndex = 0;
 
 	auto const numOutputs = getnumoutputs();
-	//auto const interpolateHermiteFunctionPtr = m_bLoop ? dfx::math::InterpolateHermite : dfx::math::InterpolateHermite_NoWrap;
+	auto const interpolateHermiteFunction = m_bLoop ? dfx::math::InterpolateHermite : dfx::math::InterpolateHermite_NoWrap;
 
 
 	if (numEvents == 0)
@@ -1017,39 +1017,22 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 						#endif
 
 #ifdef NO_INTERPOLATION
-							auto const outval = output[static_cast<size_t>(m_fPosition)];
+							auto const outputValue = output[static_cast<size_t>(m_fPosition)];
 #endif  // NO_INTERPOLATION
 
 #ifdef LINEAR_INTERPOLATION
-							float const floating_part = m_fPosition - static_cast<double>(static_cast<long>(m_fPosition));
-							auto const big_part1 = static_cast<size_t>(m_fPosition);
-							auto big_part2 = big_part1 + 1;
-							if (big_part2 > m_nNumSamples)
-							{
-								big_part2 = 0;
-							}
-							float const outval = (floating_part * output[big_part1]) + ((1.f - floating_part) * output[big_part2]);
+							auto const pos_integral = static_cast<size_t>(m_fPosition);
+							assert(pos_integral < m_nNumSamples);
+							auto const pos_integral_next = (pos_integral + 1) % m_nNumSamples;
+							float const pos_fractional = m_fPosition - static_cast<double>(pos_integral);
+							float const outputValue = std::lerp(output[pos_integral], output[pos_integral_next], pos_fractional);
 #endif  // LINEAR_INTERPOLATION
 
 #ifdef CUBIC_INTERPOLATION
-							float outval {};
-						#if 0
-							// XXX is this a silly optimization to avoid another branch?
-							// XXX can this even work for an inline function?
-							outval = interpolateHermiteFunctionPtr(output, m_fPosition, m_nNumSamples);
-						#else
-							if (m_bLoop)
-							{
-								outval = dfx::math::InterpolateHermite(output, m_fPosition, m_nNumSamples);
-							}
-							else
-							{
-								outval = dfx::math::InterpolateHermite_NoWrap(output, m_fPosition, m_nNumSamples);
-							}
-						#endif
+							auto const outputValue = interpolateHermiteFunction(output, m_fPosition, m_nNumSamples);
 #endif  // CUBIC_INTERPOLATION
 
-							outAudio[ch][frameIndex] = outval * m_fNoteVolume;
+							outAudio[ch][frameIndex] = outputValue * m_fNoteVolume;
 						}
 					}
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
@@ -1211,6 +1194,7 @@ void Turntablist::processScratch(bool inSetParameter)
 					{
 						m_fPosition = m_fDesiredPosition;
 						assert(m_fPosition >= 0.);
+						assert(m_fPosition < m_fNumSamples);
 						m_fTinyScratchAdjust = 0.0;
 					}
 					else
