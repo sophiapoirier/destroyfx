@@ -442,8 +442,10 @@ void Scrubby::processparameters()
 
 	// make sure the cycles match up if the tempo rate has changed
 	// or if tempo sync mode has just been switched on
-	bool const needResync = getparameterchanged(kSeekRate_Sync) || (getparameterchanged(kTempoSync) && mTempoSync);
-	std::fill(mNeedResync.begin(), mNeedResync.end(), needResync);
+	if (getparameterchanged(kSeekRate_Sync) || (getparameterchanged(kTempoSync) && mTempoSync))
+	{
+		std::fill(mNeedResync.begin(), mNeedResync.end(), true);
+	}
 
 	if (getparameterchanged(kPredelay))
 	{
