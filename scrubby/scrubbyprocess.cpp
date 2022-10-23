@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "scrubby.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <numbers>
 
@@ -508,19 +509,17 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 #endif
 				}
 				mReadPos[ch] += mReadStep[ch];
-				auto const readPosInt = static_cast<long>(mReadPos[ch]);
 				// wraparound the read position tracker if necessary
-				if (readPosInt >= mMaxAudioBufferSize)
+				if (mReadPos[ch] >= mMaxAudioBufferSize_f)
 				{
 					mReadPos[ch] = std::fmod(mReadPos[ch], mMaxAudioBufferSize_f);
 				}
-				else if (readPosInt < 0)
+				while (mReadPos[ch] < 0.0)
 				{
-					while (mReadPos[ch] < 0.0)
-					{
-						mReadPos[ch] += mMaxAudioBufferSize_f;
-					}
+					mReadPos[ch] += mMaxAudioBufferSize_f;
 				}
+				assert(static_cast<long>(mReadPos[ch]) >= 0);
+				assert(static_cast<long>(mReadPos[ch]) < mMaxAudioBufferSize);
 			}
 		}
 
