@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Skidder.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "skidder.h"
@@ -226,10 +226,10 @@ void Skidder::processValley()
 		// go to slopeIn next if slope is not 0.0, otherwise go to plateau
 		mState = (mSlopeDur > 0) ? SkidState::SlopeIn : SkidState::Plateau;
 
-		if (barSync)  // we need to adjust this cycle so that a skid syncs with the next bar
+		if (barSync && gettimeinfo().mSamplesToNextBar)  // we need to adjust this cycle so that a skid syncs with the next bar
 		{
 			// calculate how long this skid cycle needs to be
-			long const countdown = std::lround(gettimeinfo().mSamplesToNextBar) % mCycleSamples;
+			long const countdown = std::lround(*gettimeinfo().mSamplesToNextBar) % mCycleSamples;
 			// skip straight to the valley and adjust its length
 			if (countdown <= (mValleySamples + (mSlopeSamples * 2)))
 			{
@@ -481,9 +481,9 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 	if (mTempoSync)
 	{
 		// calculate the tempo at the current processing buffer
-		if (mUseHostTempo && hostCanDoTempo() && gettimeinfo().mTempoIsValid)  // get the tempo from the host
+		if (mUseHostTempo && hostCanDoTempo() && gettimeinfo().mTempoBPS)  // get the tempo from the host
 		{
-			mCurrentTempoBPS = gettimeinfo().mTempo_BPS;
+			mCurrentTempoBPS = *gettimeinfo().mTempoBPS;
 			// check if audio playback has just restarted and reset buffer stuff if it has (for measure sync)
 			if (gettimeinfo().mPlaybackChanged)
 			{

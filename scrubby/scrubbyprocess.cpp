@@ -96,9 +96,9 @@ void Scrubby::checkTempoSyncStuff()
 	if (mTempoSync)
 	{
 		// calculate the tempo at the current processing buffer
-		if (mUseHostTempo && hostCanDoTempo() && gettimeinfo().mTempoIsValid)  // get the tempo from the host
+		if (mUseHostTempo && hostCanDoTempo() && gettimeinfo().mTempoBPS)  // get the tempo from the host
 		{
-			mCurrentTempoBPS = gettimeinfo().mTempo_BPS;
+			mCurrentTempoBPS = *gettimeinfo().mTempoBPS;
 			// check if audio playback has just restarted and reset buffer stuff if it has (for measure sync)
 			if (gettimeinfo().mPlaybackChanged)
 			{
@@ -171,9 +171,9 @@ void Scrubby::generateNewTarget(size_t channel)
 	mSeekCount[channel] = std::lround(cycleDur * getsamplerate());
 	//
 	// do bar sync if we're in tempo sync and things resyncing is in order
-	if (mNeedResync[channel])
+	if (mNeedResync[channel] && gettimeinfo().mSamplesToNextBar)
 	{
-		auto const samplesUntilBar = std::lround(gettimeinfo().mSamplesToNextBar);
+		auto const samplesUntilBar = std::lround(*gettimeinfo().mSamplesToNextBar);
 		// because a 0 for mSeekCount will be soon turned into 1, which is not so good for DJ mode
 		if (samplesUntilBar > 0)
 		{
@@ -190,7 +190,6 @@ void Scrubby::generateNewTarget(size_t channel)
 			cycleDur = static_cast<double>(mSeekCount[channel]) / getsamplerate();
 		}
 	}
-	// avoid bad values
 	mSeekCount[channel] = std::max(mSeekCount[channel], 1L);
 
 // CALCULATE THE MOVEMENT CYCLE LENGTH

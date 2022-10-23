@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "bufferoverride-base.h"
@@ -32,7 +32,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 //-----------------------------------------------------------------------------
 template <typename T>
-static void updateViewCacheValue(std::atomic<T>& ioAtomicValue, const T inReplacementValue, bool& ioChanged)
+static void updateViewCacheValue(std::atomic<T>& ioAtomicValue, T const inReplacementValue, bool& ioChanged)
 {
 	ioChanged |= ioAtomicValue.exchange(inReplacementValue, std::memory_order_relaxed) != inReplacementValue;
 };
@@ -154,29 +154,31 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 	// this is a new forced buffer just beginning, act accordingly, do bar sync if necessary
 	else
 	{
-		auto const samplesPerBar = std::lround(gettimeinfo().mSamplesPerBeat * gettimeinfo().mNumerator);
-		long samplesToBar = std::lround(gettimeinfo().mSamplesToNextBar) - dfx::math::ToSigned(samplePos);
-		while ((samplesToBar < 0) && (samplesPerBar > 0))
+		auto const samplesPerBeat = TimeInfo::samplesPerBeat(mCurrentTempoBPS, getsamplerate());
+		auto const timeSigNumerator = gettimeinfo().timeSignatureNumerator().value_or(4.);
+		auto const samplesPerBar = samplesPerBeat * timeSigNumerator;
+		double samplesToNextBar = gettimeinfo().mSamplesToNextBar ? (*gettimeinfo().mSamplesToNextBar - static_cast<double>(samplePos)) : 0.;
+		while ((samplesToNextBar < 0.) && (samplesPerBar > 0.))
 		{
-			samplesToBar += samplesPerBar;
+			samplesToNextBar += samplesPerBar;
 		}
-		samplesToBar = std::max(samplesToBar, 0L);
+		samplesToNextBar = std::max(samplesToNextBar, 0.);
 		if (barSync)
 		{
 			// do beat sync for each LFO if it ought to be done
 			if (mDivisorLFOTempoSync)
 			{
-				mDivisorLFO.syncToTheBeat(samplesToBar);
+				mDivisorLFO.syncToTheBeat(samplesToNextBar);
 			}
 			if (mBufferLFOTempoSync)
 			{
-				mBufferLFO.syncToTheBeat(samplesToBar);
+				mBufferLFO.syncToTheBeat(samplesToNextBar);
 			}
 		}
 		// because there isn't really any division (given my implementation)
 		if (currentBufferDivisor < kActiveDivisorMinimum)
 		{
-			long const samplesToAlignForcedBufferToBar = samplesToBar % mCurrentForcedBufferSize;
+			long const samplesToAlignForcedBufferToBar = std::lround(samplesToNextBar) % mCurrentForcedBufferSize;
 			if (barSync && (samplesToAlignForcedBufferToBar > 0))
 			{
 				mCurrentForcedBufferSize = samplesToAlignForcedBufferToBar;
@@ -189,7 +191,7 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 			if (barSync)
 			{
 				// calculate how long this forced buffer needs to be
-				long const countdown = samplesToBar % mCurrentForcedBufferSize;
+				long const countdown = std::lround(samplesToNextBar) % mCurrentForcedBufferSize;
 				// update the forced buffer size and number of minibuffers so that
 				// the forced buffers sync up with the musical measures of the song
 				if (countdown < (mMinibufferSize * 2))  // extend the buffer if it would be too short...
@@ -259,9 +261,9 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 	if (mBufferTempoSync || mDivisorLFOTempoSync || mBufferLFOTempoSync)
 	{
 		// calculate the tempo at the current processing buffer
-		if (mUseHostTempo && hostCanDoTempo() && gettimeinfo().mTempoIsValid)  // get the tempo from the host
+		if (mUseHostTempo && hostCanDoTempo() && gettimeinfo().mTempoBPS)  // get the tempo from the host
 		{
-			mCurrentTempoBPS = gettimeinfo().mTempo_BPS;
+			mCurrentTempoBPS = *gettimeinfo().mTempoBPS;
 			updateViewCacheValue(mHostTempoBPS_viewCache, mCurrentTempoBPS, viewDataChanged);
 			// check if audio playback has just restarted and reset buffer stuff if it has (for measure sync)
 			if (gettimeinfo().mPlaybackChanged)

@@ -186,9 +186,9 @@ void Thrush::calculateEffectiveTempo()
 		 (!mStereoLink && (mLFO1_2.mTempoSync || mLFO2_2.mTempoSync)))
 	{
 		// calculate the tempo at the current processing buffer
-		if (mUseHostTempo && hostCanDoTempo() && gettimeinfo().mTempoIsValid)  // get the tempo from the host
+		if (mUseHostTempo && hostCanDoTempo() && gettimeinfo().mTempoBPS)  // get the tempo from the host
 		{
-			mCurrentTempoBPS = gettimeinfo().mTempo_BPS;
+			mCurrentTempoBPS = *gettimeinfo().mTempoBPS;
 			// check if audio playback has just restarted and reset cycle state stuff if it has (for measure sync)
 			mNeedResync |= gettimeinfo().mPlaybackChanged;
 		}
@@ -214,9 +214,9 @@ void Thrush::calculateEffectiveRate(ThrushLFO& lfo) const
 double Thrush::processLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const
 {
 	// do beat sync if it ought to be done
-	if (mNeedResync && lfoLayer2.mTempoSync && gettimeinfo().mSamplesToNextBarIsValid)
+	if (mNeedResync && lfoLayer2.mTempoSync && gettimeinfo().mSamplesToNextBar)
 	{
-		lfoLayer2.syncToTheBeat(gettimeinfo().mSamplesToNextBar);
+		lfoLayer2.syncToTheBeat(*gettimeinfo().mSamplesToNextBar);
 	}
 
 	lfoLayer2.updatePosition();  // move forward another sample position
@@ -228,9 +228,9 @@ double Thrush::processLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const
 	// update the first layer LFO's cycle phase step size as modulated by the second layer LFO
 	lfoLayer1.setStepSize(lfoLayer1.mEffectiveRateHz * lfoOffset * mOneDivSR);
 	// do beat sync if it must be done (don't do it if the 2nd layer LFO is active; that's too much to deal with)
-	if (mNeedResync && (lfoLayer1.mTempoSync && !lfoLayer2.isActive()) && gettimeinfo().mSamplesToNextBarIsValid)
+	if (mNeedResync && (lfoLayer1.mTempoSync && !lfoLayer2.isActive()) && gettimeinfo().mSamplesToNextBar)
 	{
-		lfoLayer1.syncToTheBeat(gettimeinfo().mSamplesToNextBar);
+		lfoLayer1.syncToTheBeat(*gettimeinfo().mSamplesToNextBar);
 	}
 
 	lfoLayer1.updatePosition();  // move forward another sample position

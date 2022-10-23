@@ -74,7 +74,6 @@ private:
 	float mCurA0 = 0.0f, mCurA1 = 0.0f, mCurA2 = 0.0f, mCurB1 = 0.0f, mCurB2 = 0.0f;  // these store the current random filter parameter values
 	dfx::math::RandomGenerator<float> mRandomGenerator {dfx::math::RandomSeed::Entropic};
 
-	double mCurrentTempoBPS = 1.0;  // tempo in beats per second
 	bool mNeedResync = false;  // true when playback has just started up again
 	dfx::TempoRateTable const mTempoRateTable;
 };

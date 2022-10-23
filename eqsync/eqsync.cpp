@@ -62,8 +62,6 @@ EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 
 	setpresetname(0, "with motors");  // default preset name
-
-	mCurrentTempoBPS = getparameter_f(kTempo) / 60.0;
 }
 
 //-----------------------------------------------------------------------------
@@ -132,9 +130,10 @@ void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, s
 
 	// . . . . . . . . . . . tempo stuff . . . . . . . . . . . . .
 	// calculate the tempo at the current processing buffer
-	if (mUseHostTempo && hostCanDoTempo() && gettimeinfo().mTempoIsValid)  // get the tempo from the host
+	double currentTempoBPS {};
+	if (mUseHostTempo && hostCanDoTempo() && gettimeinfo().mTempoBPS)  // get the tempo from the host
 	{
-		mCurrentTempoBPS = gettimeinfo().mTempo_BPS;
+		currentTempoBPS = *gettimeinfo().mTempoBPS;
 		// check if audio playback has just restarted and reset buffer stuff if it has (for measure sync)
 		if (gettimeinfo().mPlaybackChanged)
 		{
@@ -144,10 +143,10 @@ void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, s
 	}
 	else  // get the tempo from the user parameter
 	{
-		mCurrentTempoBPS = mUserTempo / 60.0;
+		currentTempoBPS = mUserTempo / 60.0;
 		mNeedResync = false;  // we don't want it true if we're not syncing to host tempo
 	}
-	auto const latestCycleDur = std::lround((getsamplerate() / mCurrentTempoBPS) / mRate);
+	auto const latestCycleDur = std::lround((getsamplerate() / currentTempoBPS) / mRate);
 
 
 	for (size_t sampleIndex = 0; sampleIndex < inNumFrames; sampleIndex++)
@@ -158,9 +157,9 @@ void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, s
 			// calculate the lengths of the next cycle and smooth portion
 			mCycleSamples = latestCycleDur;
 			// see if we need to adjust this cycle so that an EQ change syncs with the next measure
-			if (std::exchange(mNeedResync, false))
+			if (std::exchange(mNeedResync, false) && gettimeinfo().mSamplesToNextBar)
 			{
-				mCycleSamples = std::lround(gettimeinfo().mSamplesToNextBar) % mCycleSamples;
+				mCycleSamples = std::lround(*gettimeinfo().mSamplesToNextBar) % mCycleSamples;
 			}
 
 			mSmoothSamples = std::lround(static_cast<double>(mCycleSamples) * mSmooth);

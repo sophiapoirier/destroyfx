@@ -196,24 +196,25 @@ class DfxPlugin : public TARGET_API_BASE_CLASS
 public:
 	struct TimeInfo
 	{
-		double mTempo = 0.0, mTempo_BPS = 0.0;
-		double mSamplesPerBeat = 0.;
-		bool mTempoIsValid = false;
+		struct TimeSignature
+		{
+			double mNumerator = 0.;
+			double mDenominator = 0.;
+		};
 
-		double mBeatPos = 0.0;
-		bool mBeatPosIsValid = false;
-
-		double mBarPos = 0.0;
-		bool mBarPosIsValid = false;
-
-		double mDenominator = 0.0, mNumerator = 0.0;
-		bool mTimeSignatureIsValid = false;
-
-		double mSamplesToNextBar = 0.;
-		bool mSamplesToNextBarIsValid = false;
+		std::optional<double> mTempoBPS;
+		std::optional<double> mSamplesPerBeat;
+		std::optional<TimeSignature> mTimeSignature;
+		std::optional<double> mBeatPos;
+		std::optional<double> mBarPos;
+		std::optional<double> mSamplesToNextBar;
 
 		bool mPlaybackChanged = false;  // whether the playback state or position changed since the last audio render cycle
 		bool mPlaybackIsOccurring = false;
+
+		static double samplesPerBeat(double inTempoBPS, double inSampleRate);
+		std::optional<double> timeSignatureNumerator() const noexcept;
+		std::optional<double> timeSignatureDenominator() const noexcept;
 	};
 
 	// ***
@@ -530,6 +531,7 @@ public:
 	// get the TimeInfo struct with the latest time info values
 	TimeInfo const& gettimeinfo() const noexcept
 	{
+		assert(isrenderthread());  // only valid during audio rendering
 		return mTimeInfo;
 	}
 

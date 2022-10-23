@@ -1738,40 +1738,48 @@ void DfxPlugin::setInPlaceAudioProcessingAllowed(bool inEnable)
 #pragma mark processing
 
 //-----------------------------------------------------------------------------
+double DfxPlugin::TimeInfo::samplesPerBeat(double inTempoBPS, double inSampleRate)
+{
+	assert(inTempoBPS > 0.);
+	assert(inSampleRate > 0.);
+	return inSampleRate / inTempoBPS;
+}
+
+//-----------------------------------------------------------------------------
+std::optional<double> DfxPlugin::TimeInfo::timeSignatureNumerator() const noexcept
+{
+	return mTimeSignature ? std::make_optional(mTimeSignature->mNumerator) : std::nullopt;
+}
+
+//-----------------------------------------------------------------------------
+std::optional<double> DfxPlugin::TimeInfo::timeSignatureDenominator() const noexcept
+{
+	return mTimeSignature ? std::make_optional(mTimeSignature->mDenominator) : std::nullopt;
+}
+
+//-----------------------------------------------------------------------------
 // this is called once per audio processing block (before doing the processing) 
 // in order to try to get musical tempo/time/location information from the host
 void DfxPlugin::processtimeinfo()
 {
-	// default these values to something reasonable in case they are not available from the host
-	mTimeInfo.mTempo = 120.0;
-	mTimeInfo.mTempoIsValid = false;
-	mTimeInfo.mBeatPos = 0.0;
-	mTimeInfo.mBeatPosIsValid = false;
-	mTimeInfo.mBarPos = 0.0;
-	mTimeInfo.mBarPosIsValid = false;
-	mTimeInfo.mNumerator = 4.0;
-	mTimeInfo.mDenominator = 4.0;
-	mTimeInfo.mTimeSignatureIsValid = false;
-	mTimeInfo.mSamplesToNextBar = 0.;
-	mTimeInfo.mSamplesToNextBarIsValid = false;
-	mTimeInfo.mPlaybackChanged = false;
-	mTimeInfo.mPlaybackIsOccurring = true;
+	mTimeInfo = {};
+
+	constexpr auto bpmToBPS = [](double tempoBPM)
+	{
+		return tempoBPM / 60.;
+	};
 
 
 #ifdef TARGET_API_AUDIOUNIT
-	OSStatus status;
-
-	Float64 tempo = 120.0;
-	Float64 beat = 0.0;
-	status = CallHostBeatAndTempo(&beat, &tempo);
+	Float64 tempo {};
+	Float64 beat {};
+	auto status = CallHostBeatAndTempo(&beat, &tempo);
 	if (status == noErr)
 	{
 #ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
 fprintf(stderr, "\ntempo = %.2f\nbeat = %.2f\n", tempo, beat);
 #endif
-		mTimeInfo.mTempoIsValid = true;
-		mTimeInfo.mTempo = tempo;
-		mTimeInfo.mBeatPosIsValid = true;
+		mTimeInfo.mTempoBPS = bpmToBPS(tempo);
 		mTimeInfo.mBeatPos = beat;
 
 		mHostCanDoTempo = true;
@@ -1781,37 +1789,37 @@ else fprintf(stderr, "CallHostBeatAndTempo() error %ld\n", status);
 #endif
 
 	// the number of samples until the next beat from the start sample of the current rendering buffer
-//	UInt32 sampleOffsetToNextBeat = 0;
+//	UInt32 sampleOffsetToNextBeat {};
 	// the number of beats of the denominator value that contained in the current measure
-	Float32 timeSigNumerator = 4.0f;
+	Float32 timeSigNumerator {};
 	// music notational conventions (4 is a quarter note, 8 an eighth note, etc)
-	UInt32 timeSigDenominator = 4;
+	UInt32 timeSigDenominator {};
 	// the beat that corresponds to the downbeat (first beat) of the current measure
-	Float64 currentMeasureDownBeat = 0.0;
+	Float64 currentMeasureDownBeat {};
 	status = CallHostMusicalTimeLocation(nullptr, &timeSigNumerator, &timeSigDenominator, &currentMeasureDownBeat);
 	if (status == noErr)
 	{
 		// get the song beat position of the beginning of the current measure
-		mTimeInfo.mBarPosIsValid = true;
 		mTimeInfo.mBarPos = currentMeasureDownBeat;
 #ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
 fprintf(stderr, "time sig = %.0f/%lu\nmeasure beat = %.2f\n", timeSigNumerator, timeSigDenominator, currentMeasureDownBeat);
 #endif
 		// get the numerator of the time signature - this is the number of beats per measure
-		mTimeInfo.mTimeSignatureIsValid = true;
-		mTimeInfo.mNumerator = static_cast<double>(timeSigNumerator);
-		mTimeInfo.mDenominator = static_cast<double>(timeSigDenominator);
+		mTimeInfo.mTimeSignature =
+		{
+			.mNumerator = static_cast<double>(timeSigNumerator),
+			.mDenominator = static_cast<double>(timeSigDenominator)
+		};
 	}
 #ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
 else fprintf(stderr, "CallHostMusicalTimeLocation() error %ld\n", status);
 #endif
 
-	Boolean isPlaying = true;
-	Boolean transportStateChanged = false;
-//	Float64 currentSampleInTimeLine = 0.0;
-//	Boolean isCycling = false;
-//	Float64 cycleStartBeat = 0.0, cycleEndBeat = 0.0;
-//	status = CallHostTransportState(&isPlaying, &transportStateChanged, &currentSampleInTimeLine, &isCycling, &cycleStartBeat, &cycleEndBeat);
+	Boolean isPlaying {};
+	Boolean transportStateChanged {};
+//	Float64 currentSampleInTimeLine {};
+//	Boolean isCycling {};
+//	Float64 cycleStartBeat {}, cycleEndBeat {};
 	status = CallHostTransportState(&isPlaying, &transportStateChanged, nullptr, nullptr, nullptr, nullptr);
 	// determine whether the playback position or state has just changed
 	if (status == noErr)
@@ -1841,30 +1849,29 @@ else fprintf(stderr, "CallHostTransportState() error %ld\n", status);
 	{
 		if (kVstTempoValid & vstTimeInfo->flags)
 		{
-			mTimeInfo.mTempoIsValid = true;
-			mTimeInfo.mTempo = vstTimeInfo->tempo;
+			mTimeInfo.mTempoBPS = bpmToBPS(vstTimeInfo->tempo);
 		}
 
 		// get the song beat position of our precise current location
 		if (kVstPpqPosValid & vstTimeInfo->flags)
 		{
-			mTimeInfo.mBeatPosIsValid = true;
 			mTimeInfo.mBeatPos = vstTimeInfo->ppqPos;
 		}
 
 		// get the song beat position of the beginning of the current measure
 		if (kVstBarsValid & vstTimeInfo->flags)
 		{
-			mTimeInfo.mBarPosIsValid = true;
 			mTimeInfo.mBarPos = vstTimeInfo->barStartPos;
 		}
 
 		// get the numerator of the time signature - this is the number of beats per measure
 		if (kVstTimeSigValid & vstTimeInfo->flags)
 		{
-			mTimeInfo.mTimeSignatureIsValid = true;
-			mTimeInfo.mNumerator = static_cast<double>(vstTimeInfo->timeSigNumerator);
-			mTimeInfo.mDenominator = static_cast<double>(vstTimeInfo->timeSigDenominator);
+			mTimeInfo.mTimeSignature =
+			{
+				.mNumerator = static_cast<double>(vstTimeInfo->timeSigNumerator),
+				.mDenominator = static_cast<double>(vstTimeInfo->timeSigDenominator)
+			};
 		}
 
 		// determine whether the playback position or state has just changed
@@ -1879,50 +1886,45 @@ else fprintf(stderr, "CallHostTransportState() error %ld\n", status);
 // TARGET_API_VST
 
 
-	if (mTimeInfo.mTempo <= 0.0)
+	// check for lies
+	if (mTimeInfo.mTempoBPS && (*mTimeInfo.mTempoBPS <= 0.))
 	{
-		mTimeInfo.mTempo = 120.0;
+		mTimeInfo.mTempoBPS.reset();
 	}
-	mTimeInfo.mTempo_BPS = mTimeInfo.mTempo / 60.0;
-	mTimeInfo.mSamplesPerBeat = getsamplerate() / mTimeInfo.mTempo_BPS;
-
-	mTimeInfo.mSamplesToNextBarIsValid = (mTimeInfo.mTempoIsValid && mTimeInfo.mBeatPosIsValid && mTimeInfo.mBarPosIsValid && mTimeInfo.mTimeSignatureIsValid);
-
-	// it will screw up the while loop below bigtime if the numerator isn't a positive number
-	if (mTimeInfo.mNumerator <= 0.0)
+	if (mTimeInfo.mTimeSignature && ((mTimeInfo.mTimeSignature->mNumerator <= 0.) || (mTimeInfo.mTimeSignature->mDenominator <= 0.)))
 	{
-		mTimeInfo.mNumerator = 4.0;
-	}
-	if (mTimeInfo.mDenominator <= 0.0)
-	{
-		mTimeInfo.mDenominator = 4.0;
+		mTimeInfo.mTimeSignature.reset();
 	}
 
-	// calculate the number of samples frames from now until the next measure begins
-	if (mTimeInfo.mSamplesToNextBarIsValid)
+	if (mTimeInfo.mTempoBPS)
 	{
-		double numBeatsToBar {};
+		mTimeInfo.mSamplesPerBeat = TimeInfo::samplesPerBeat(*mTimeInfo.mTempoBPS, getsamplerate());
+	}
+
+	// calculate the number of samples frames from the start of this audio render until the next measure begins
+	if (mTimeInfo.mSamplesPerBeat && mTimeInfo.mBeatPos && mTimeInfo.mBarPos && mTimeInfo.mTimeSignature)
+	{
 		// calculate the distance in beats to the upcoming measure beginning point
-		if (mTimeInfo.mBarPos == mTimeInfo.mBeatPos)
+		if (*mTimeInfo.mBeatPos == *mTimeInfo.mBarPos)
 		{
-			numBeatsToBar = 0.0;
+			mTimeInfo.mSamplesToNextBar = 0.;
 		}
 		else
 		{
-			numBeatsToBar = mTimeInfo.mBarPos + mTimeInfo.mNumerator - mTimeInfo.mBeatPos;
+			auto numBeatsToBar = *mTimeInfo.mBarPos + mTimeInfo.mTimeSignature->mNumerator - *mTimeInfo.mBeatPos;
 			// do this stuff because some hosts (Cubase) give kind of wacky barStartPos sometimes
-			while (numBeatsToBar < 0.0)
+			while (numBeatsToBar < 0.)
 			{
-				numBeatsToBar += mTimeInfo.mNumerator;
+				numBeatsToBar += mTimeInfo.mTimeSignature->mNumerator;
 			}
-			while (numBeatsToBar > mTimeInfo.mNumerator)
+			while (numBeatsToBar > mTimeInfo.mTimeSignature->mNumerator)
 			{
-				numBeatsToBar -= mTimeInfo.mNumerator;
+				numBeatsToBar -= mTimeInfo.mTimeSignature->mNumerator;
 			}
-		}
 
-		// convert the value for the distance to the next measure from beats to samples
-		mTimeInfo.mSamplesToNextBar = std::max(numBeatsToBar * mTimeInfo.mSamplesPerBeat, 0.);
+			// convert the value for the distance to the next measure from beats to samples
+			mTimeInfo.mSamplesToNextBar = std::max(numBeatsToBar * *mTimeInfo.mSamplesPerBeat, 0.);
+		}
 	}
 }
 
