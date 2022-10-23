@@ -186,8 +186,6 @@ void Skidder::processValley()
 			{
 				auto const randomizedTempoRateIndex = mRandomEngine.next(mRateRandMinIndex, mRateIndex);
 				cycleRate = mTempoRateTable.getScalar(randomizedTempoRateIndex);
-				// we can't do the bar sync if the skids durations are random
-				mNeedResync = false;
 			}
 			else
 			{

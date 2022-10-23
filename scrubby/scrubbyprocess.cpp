@@ -141,9 +141,6 @@ void Scrubby::generateNewTarget(size_t channel)
 		{
 			auto const randomizedSeekRateIndex = mRandomEngine.next(mSeekRateRandMinIndex, mSeekRateIndex);
 			currentSeekRate = mTempoRateTable.getScalar(randomizedSeekRateIndex);
-			// don't do musical bar sync if we're using randomized tempo rate
-//			std::fill(mNeedResync.begin(), mNeedResync.end(), false);
-			mNeedResync[channel] = false;
 		}
 		else
 		{
