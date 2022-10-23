@@ -217,7 +217,11 @@ void Skidder::processparameters()
 	}
 
 	mGainRange = 1.0f - mFloor;  // the range of the skidding on/off gain
-	mUseRandomRate = mTempoSync ? (rateRandMin_Sync < mRate_Sync) : (rateRandMin_Hz < mRate_Hz);
+	auto const entryUseRandomRate = std::exchange(mUseRandomRate, mTempoSync ? (rateRandMin_Sync < mRate_Sync) : (rateRandMin_Hz < mRate_Hz));
+	if (entryUseRandomRate && !mUseRandomRate && mTempoSync)
+	{
+		mNeedResync = true;
+	}
 	mUseRandomFloor = (floorRandMin < mFloor);
 	mUseRandomPulsewidth = (mPulsewidthRandMin < mPulsewidth);
 }

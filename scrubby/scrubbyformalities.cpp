@@ -453,6 +453,10 @@ void Scrubby::processparameters()
 		setlatency_seconds(mSeekRangeSeconds * getparameter_scalar(kPredelay));
 	}
 
-	mUseSeekRateRandMin = mTempoSync ? (seekRateRandMinSync < mSeekRateSync) : (seekRateRandMinHz < mSeekRateHz);
+	auto const entryUseSeekRateRandMin = std::exchange(mUseSeekRateRandMin, mTempoSync ? (seekRateRandMinSync < mSeekRateSync) : (seekRateRandMinHz < mSeekRateHz));
+	if (entryUseSeekRateRandMin && !mUseSeekRateRandMin && mTempoSync)
+	{
+		std::fill(mNeedResync.begin(), mNeedResync.end(), true);
+	}
 	mUseSeekDurRandMin = (mSeekDurRandMin < mSeekDur);
 }
