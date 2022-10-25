@@ -227,7 +227,7 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 		// otherwise just make sure that we don't go outside of the allocated arrays
 		else
 		{
-			maxSmoothDur = std::lround(mBuffers.front().size()) - mPrevMinibufferSize;
+			maxSmoothDur = std::ssize(mBuffers.front()) - mPrevMinibufferSize;
 		}
 		mSmoothDur = std::min(mSmoothDur, maxSmoothDur);
 		mSmoothCount = mSmoothDur;
