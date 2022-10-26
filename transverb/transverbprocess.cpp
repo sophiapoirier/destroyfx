@@ -122,8 +122,8 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, size_t numSamp
             break;
           // spline interpolation, but no filtering
           case kQualityMode_HiFi:
-            //delayvals[h] = interpolateLinear(heads[h].buf.data(), heads[h].read, bsize, writer);
-            delayvals[h] = interpolateHermite(heads[h].buf.data(), heads[h].read, bsize, writer);
+            //delayvals[h] = interpolateLinear(std::span(heads[h].buf).subspan(0, bsize), heads[h].read, writer);
+            delayvals[h] = interpolateHermite(std::span(heads[h].buf).subspan(0, bsize), heads[h].read, writer);
             break;
           // spline interpolation plus anti-aliasing lowpass filtering for high speeds
           // or sub-bass-removing highpass filtering for low speeds
@@ -147,7 +147,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, size_t numSamp
                 break;
               }
               default:
-                delayvals[h] = interpolateHermite(heads[h].buf.data(), heads[h].read, bsize, writer);
+                delayvals[h] = interpolateHermite(std::span(heads[h].buf).subspan(0, bsize), heads[h].read, writer);
                 break;
             }
             break;
@@ -214,17 +214,17 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, size_t numSamp
                 lowpasscount++;
                 break;
               case 2:
-                heads[h].filter.processToCacheH2(heads[h].buf.data(), dfx::math::ToUnsigned(lowpasspos[h]), dfx::math::ToUnsigned(bsize));
+                heads[h].filter.processToCacheH2(std::span(heads[h].buf).subspan(0, bsize), dfx::math::ToUnsigned(lowpasspos[h]));
                 lowpasspos[h] = (lowpasspos[h] + 2) % bsize;
                 lowpasscount += 2;
                 break;
               case 3:
-                heads[h].filter.processToCacheH3(heads[h].buf.data(), dfx::math::ToUnsigned(lowpasspos[h]), dfx::math::ToUnsigned(bsize));
+                heads[h].filter.processToCacheH3(std::span(heads[h].buf).subspan(0, bsize), dfx::math::ToUnsigned(lowpasspos[h]));
                 lowpasspos[h] = (lowpasspos[h] + 3) % bsize;
                 lowpasscount += 3;
                 break;
               default:
-                heads[h].filter.processToCacheH4(heads[h].buf.data(), dfx::math::ToUnsigned(lowpasspos[h]), dfx::math::ToUnsigned(bsize));
+                heads[h].filter.processToCacheH4(std::span(heads[h].buf).subspan(0, bsize), dfx::math::ToUnsigned(lowpasspos[h]));
                 lowpasspos[h] = (lowpasspos[h] + 4) % bsize;
                 lowpasscount += 4;
                 break;
@@ -308,10 +308,10 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, size_t numSamp
             delayvals[h] = buf[static_cast<size_t>(heads[h].read)];
             break;
           case kQualityMode_HiFi:
-            delayvals[h] = interpolateLinear(buf.data(), heads[h].read, bsize);
+            delayvals[h] = interpolateLinear(std::span(buf).subspan(0, bsize), heads[h].read);
             break;
           case kQualityMode_UltraHiFi:
-            delayvals[h] = dfx::math::InterpolateHermite(buf.data(), heads[h].read, dfx::math::ToUnsigned(bsize));
+            delayvals[h] = dfx::math::InterpolateHermite(std::span(buf).subspan(0, bsize), heads[h].read);
             break;
         }
       }
@@ -342,7 +342,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, size_t numSamp
       for (auto& head : heads) {
         head.read += head.speed.getValue() * tomsoundMultiple_float;
         if (head.read >= bsize_float)
-          head.read = fmod_bipolar(head.read, bsize_float);
+          head.read = std::fmod(head.read, bsize_float);
       }
 
       /* make output */

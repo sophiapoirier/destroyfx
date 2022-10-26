@@ -443,7 +443,7 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 		for (size_t ch = 0; ch < numChannels; ch++)
 		{
 			auto const inputValue = (ch < getnuminputs()) ? inAudio[ch][sampleIndex] : inputValue_firstChannel;
-			auto outputValue = dfx::math::InterpolateHermite(mAudioBuffers[ch].data(), mReadPos[ch], dfx::math::ToUnsigned(mMaxAudioBufferSize));
+			auto outputValue = dfx::math::InterpolateHermite(std::span(mAudioBuffers[ch]).subspan(0, mMaxAudioBufferSize), mReadPos[ch]);
 			outputValue = mHighpassFilters[ch].process(outputValue);
 			outAudio[ch][sampleIndex] = (inputValue * mInputGain.getValue()) + (outputValue * mOutputGain.getValue());
 		}

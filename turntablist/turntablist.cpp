@@ -842,7 +842,11 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 	size_t eventIndex = 0;
 
 	auto const numOutputs = getnumoutputs();
-	auto const interpolateHermiteFunction = m_bLoop ? dfx::math::InterpolateHermite : dfx::math::InterpolateHermite_NoWrap;
+	auto interpolateHermiteFunction = dfx::math::InterpolateHermite_NoWrap;
+	if (m_bLoop)
+	{
+		interpolateHermiteFunction = dfx::math::InterpolateHermite;
+	}
 
 
 	if (numEvents == 0)
@@ -1021,15 +1025,14 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 #endif  // NO_INTERPOLATION
 
 #ifdef LINEAR_INTERPOLATION
-							auto const pos_integral = static_cast<size_t>(m_fPosition);
+							auto const [pos_fractional, pos_integral] = dfx::math::ModF<size_t>(m_fPosition);
 							assert(pos_integral < m_nNumSamples);
 							auto const pos_integral_next = (pos_integral + 1) % m_nNumSamples;
-							float const pos_fractional = m_fPosition - static_cast<double>(pos_integral);
-							float const outputValue = std::lerp(output[pos_integral], output[pos_integral_next], pos_fractional);
+							float const outputValue = std::lerp(output[pos_integral], output[pos_integral_next], static_cast<float>(pos_fractional));
 #endif  // LINEAR_INTERPOLATION
 
 #ifdef CUBIC_INTERPOLATION
-							auto const outputValue = interpolateHermiteFunction(output, m_fPosition, m_nNumSamples);
+							auto const outputValue = interpolateHermiteFunction({output, m_nNumSamples}, m_fPosition);
 #endif  // CUBIC_INTERPOLATION
 
 							outAudio[ch][frameIndex] = outputValue * m_fNoteVolume;

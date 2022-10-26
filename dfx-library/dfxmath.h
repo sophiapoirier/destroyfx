@@ -33,7 +33,9 @@ This is our math and numerics shit.
 #include <cmath>
 #include <limits>
 #include <random>
+#include <span>
 #include <type_traits>
+#include <utility>
 
 
 namespace dfx::math
@@ -153,66 +155,77 @@ constexpr T FrequencyScalarBySemitones(T inSemitones)
 }
 
 //-----------------------------------------------------------------------------
-constexpr float InterpolateHermite(float const* inData, double inAddress, size_t inBufferSize)
+// orders of magnitude faster performance than std::modf
+// leaving the integral template argument unspecified means that you only wish to retrieve the fractional component
+template <typename OptionalIntegralT = void, typename FloatingT>
+constexpr auto ModF(FloatingT inValue)
 {
-	assert(inAddress >= 0.);
-	assert(inBufferSize > 0);
+	static_assert(std::is_floating_point_v<FloatingT>);
+	constexpr bool integralTypeSpecified = !std::is_void_v<OptionalIntegralT>;
+	using IntegralT = std::conditional_t<integralTypeSpecified, OptionalIntegralT, long>;
+	static_assert(std::is_integral_v<IntegralT>);
+	if constexpr (std::is_unsigned_v<IntegralT>)
+	{
+		assert(inValue >= FloatingT(0));
+	}
+	auto const integralValue = static_cast<IntegralT>(inValue);
+	auto const fractionalValue = inValue - static_cast<FloatingT>(integralValue);
+	if constexpr (integralTypeSpecified)
+	{
+		return std::make_pair(fractionalValue, integralValue);
+	}
+	else
+	{
+		return fractionalValue;
+	}
+}
 
-	auto const pos = static_cast<size_t>(inAddress);
-	assert(pos < inBufferSize);
-	auto const posFract = static_cast<float>(inAddress - static_cast<double>(pos));
-
+//-----------------------------------------------------------------------------
+constexpr float InterpolateHermite(float inPrecedingValue, float inCurrentValue, float inNextValue, float inNextNextValue, float inPosition)
+{
 #if 0  // XXX test performance using fewer variables/registers
-	size_t const posMinus1 = (pos == 0) ? (inBufferSize - 1) : (pos - 1);
-	size_t const posPlus1 = (pos + 1) % inBufferSize;
-	size_t const posPlus2 = (pos + 2) % inBufferSize;
+	return (((((((3.f * (inCurrentValue - inNextValue)) - inPrecedingValue + inNextNextValue) * 0.5f) * inPosition)
+				+ ((2.f * inNextValue) + inPrecedingValue - (2.5f * inCurrentValue) - (inNextNextValue * 0.5f))) * 
+				inPosition + ((inNextValue - inPrecedingValue) * 0.5f)) * inPosition) + inCurrentValue;
 
-	return (((((((3.0f * (inData[pos] - inData[posPlus1])) - inData[posMinus1] + inData[posPlus2]) * 0.5f) * posFract)
-				+ ((2.0f * inData[posPlus1]) + inData[posMinus1] - (2.5f * inData[pos]) - (inData[posPlus2] * 0.5f))) * 
-				posFract + ((inData[posPlus1] - inData[posMinus1]) * 0.5f)) * posFract) + inData[pos];
-
-#elif 1  // XXX also test using float variables of inData[] rather than looking up with posMinus1, etc.
-	auto const dataPosMinus1 = inData[(pos == 0) ? (inBufferSize - 1) : (pos - 1)];
-	auto const dataPosPlus1 = inData[(pos + 1) % inBufferSize];
-	auto const dataPosPlus2 = inData[(pos + 2) % inBufferSize];
-
-	float const a = ((3.0f * (inData[pos] - dataPosPlus1)) - dataPosMinus1 + dataPosPlus2) * 0.5f;
-	float const b = (2.0f * dataPosPlus1) + dataPosMinus1 - (2.5f * inData[pos]) - (dataPosPlus2 * 0.5f);
-	float const c = (dataPosPlus1 - dataPosMinus1) * 0.5f;
-
-	return ((((a * posFract) + b) * posFract + c) * posFract) + inData[pos];
-
-#else
-	size_t const posMinus1 = (pos == 0) ? (inBufferSize - 1) : (pos - 1);
-	size_t const posPlus1 = (pos + 1) % inBufferSize;
-	size_t const posPlus2 = (pos + 2) % inBufferSize;
-
-	float const a = ((3.0f * (inData[pos] - inData[posPlus1])) - inData[posMinus1] + inData[posPlus2]) * 0.5f;
-	float const b = (2.0f * inData[posPlus1]) + inData[posMinus1] - (2.5f * inData[pos]) - (inData[posPlus2] * 0.5f);
-	float const c = (inData[posPlus1] - inData[posMinus1]) * 0.5f;
-
-	return ((((a * posFract) + b) * posFract + c) * posFract) + inData[pos];
+#elif 1
+	float const a = ((3.f * (inCurrentValue - inNextValue)) - inPrecedingValue + inNextNextValue) * 0.5f;
+	float const b = (2.f * inNextValue) + inPrecedingValue - (2.5f * inCurrentValue) - (inNextNextValue * 0.5f);
+	float const c = (inNextValue - inPrecedingValue) * 0.5f;
+	return ((((a * inPosition) + b) * inPosition + c) * inPosition) + inCurrentValue;
 #endif
 }
 
 //-----------------------------------------------------------------------------
-constexpr float InterpolateHermite_NoWrap(float const* inData, double inAddress, size_t inBufferSize)
+constexpr float InterpolateHermite(std::span<float const> inData, double inAddress)
 {
 	assert(inAddress >= 0.);
+	assert(!inData.empty());
 
-	auto const pos = static_cast<size_t>(inAddress);
-	assert(pos < inBufferSize);
-	auto const posFract = static_cast<float>(inAddress - static_cast<double>(pos));
+	auto const [posFract, pos] = ModF<size_t>(inAddress);
+	assert(pos < inData.size());
 
-	float const dataPosMinus1 = (pos == 0) ? 0.0f : inData[pos - 1];
-	float const dataPosPlus1 = ((pos + 1) == inBufferSize) ? 0.0f : inData[pos + 1];
-	float const dataPosPlus2 = ((pos + 2) >= inBufferSize) ? 0.0f : inData[pos + 2];
+	size_t const posMinus1 = (pos == 0) ? (inData.size() - 1) : (pos - 1);
+	size_t const posPlus1 = (pos + 1) % inData.size();
+	size_t const posPlus2 = (pos + 2) % inData.size();
 
-	float const a = ((3.0f * (inData[pos] - dataPosPlus1)) - dataPosMinus1 + dataPosPlus2) * 0.5f;
-	float const b = (2.0f * dataPosPlus1) + dataPosMinus1 - (2.5f * inData[pos]) - (dataPosPlus2 * 0.5f);
-	float const c = (dataPosPlus1 - dataPosMinus1) * 0.5f;
+	return InterpolateHermite(inData[posMinus1], inData[pos], inData[posPlus1], inData[posPlus2], static_cast<float>(posFract));
+}
 
-	return ((((a * posFract) + b) * posFract + c) * posFract) + inData[pos];
+//-----------------------------------------------------------------------------
+constexpr float InterpolateHermite_NoWrap(std::span<float const> inData, double inAddress)
+{
+	assert(inAddress >= 0.);
+	assert(!inData.empty());
+
+	auto const [posFract, pos] = ModF<size_t>(inAddress);
+	assert(pos < inData.size());
+
+	float const dataPosMinus1 = (pos == 0) ? 0.f : inData[pos - 1];
+	float const dataPosPlus1 = ((pos + 1) == inData.size()) ? 0.f : inData[pos + 1];
+	float const dataPosPlus2 = ((pos + 2) >= inData.size()) ? 0.f : inData[pos + 2];
+
+	return InterpolateHermite(dataPosMinus1, inData[pos], dataPosPlus1, dataPosPlus2, static_cast<float>(posFract));
 }
 
 //-----------------------------------------------------------------------------
@@ -257,7 +270,7 @@ enum class RandomSeed
 namespace detail
 {
 template <typename T>
-static constexpr void validateRandomValueType()
+static consteval void validateRandomValueType()
 {
 	static_assert(std::is_arithmetic_v<T>);
 }

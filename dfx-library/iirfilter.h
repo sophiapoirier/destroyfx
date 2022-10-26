@@ -29,7 +29,9 @@ Welcome to our Infinite Impulse Response filter.
 
 #include <array>
 #include <cassert>
+#include <span>
 #include <vector>
+#include <utility>
 
 #include "dfxmath.h"
 
@@ -132,12 +134,12 @@ public:
 		mPrevIn = inSample;
 	}
 
-	void processToCacheH2(float const* inAudio, size_t inPos, size_t inBufferSize)
+	void processToCacheH2(std::span<float const> inAudio, size_t inPos)
 	{
-		assert(inBufferSize > 0);
-		assert(inPos < inBufferSize);
+		assert(!inAudio.empty());
+		assert(inPos < inAudio.size());
 		auto const in0 = inAudio[inPos];
-		auto const in1 = inAudio[(inPos + 1) % inBufferSize];
+		auto const in1 = inAudio[(inPos + 1) % inAudio.size()];
 
 		mPrevPrevPrevOut = mPrevPrevOut;
 		mPrevPrevOut = mPrevOut;
@@ -157,13 +159,13 @@ public:
 		mPrevIn = in1;
 	}
 
-	void processToCacheH3(float const* inAudio, size_t inPos, size_t inBufferSize)
+	void processToCacheH3(std::span<float const> inAudio, size_t inPos)
 	{
-		assert(inBufferSize > 0);
-		assert(inPos < inBufferSize);
+		assert(!inAudio.empty());
+		assert(inPos < inAudio.size());
 		auto const in0 = inAudio[inPos];
-		auto const in1 = inAudio[(inPos + 1) % inBufferSize];
-		auto const in2 = inAudio[(inPos + 2) % inBufferSize];
+		auto const in1 = inAudio[(inPos + 1) % inAudio.size()];
+		auto const in2 = inAudio[(inPos + 2) % inAudio.size()];
 
 		// XXX this uses an optimization that only works for LP, HP, and notch filters
 		mPrevPrevPrevOut = ((in0 + mPrevPrevIn) * mCoeff.mIn) + (mPrevIn * mCoeff.mPrevIn)
@@ -183,14 +185,14 @@ public:
 		mPrevIn = in2;
 	}
 
-	void processToCacheH4(float const* inAudio, size_t inPos, size_t inBufferSize)
+	void processToCacheH4(std::span<float const> inAudio, size_t inPos)
 	{
-		assert(inBufferSize > 0);
-		assert(inPos < inBufferSize);
+		assert(!inAudio.empty());
+		assert(inPos < inAudio.size());
 		auto const in0 = inAudio[inPos];
-		auto const in1 = inAudio[(inPos + 1) % inBufferSize];
-		auto const in2 = inAudio[(inPos + 2) % inBufferSize];
-		auto const in3 = inAudio[(inPos + 3) % inBufferSize];
+		auto const in1 = inAudio[(inPos + 1) % inAudio.size()];
+		auto const in2 = inAudio[(inPos + 2) % inAudio.size()];
+		auto const in3 = inAudio[(inPos + 3) % inAudio.size()];
 
 		// XXX this uses an optimization that only works for LP, HP, and notch filters
 		mPrevPrevPrevOut = ((in0 + mPrevPrevIn) * mCoeff.mIn) + (mPrevIn * mCoeff.mPrevIn)
@@ -210,13 +212,8 @@ public:
 	// 4-point Hermite spline interpolation for use with IIR filter output histories
 	float interpolateHermitePostFilter(double inPos) const
 	{
-		auto const posFract = static_cast<float>(std::fmod(inPos, 1.0));
-
-		float const a = ((3.0f * (mPrevPrevOut-mPrevOut)) - mPrevPrevPrevOut + mCurrentOut) * 0.5f;
-		float const b = (2.0f * mPrevOut) + mPrevPrevPrevOut - (2.5f * mPrevPrevOut) - (mCurrentOut * 0.5f);
-		float const c = (mPrevOut - mPrevPrevPrevOut) * 0.5f;
-
-		return ((((a * posFract) + b) * posFract + c) * posFract) + mPrevPrevOut;
+		auto const posFract = static_cast<float>(dfx::math::ModF(inPos));
+		return dfx::math::InterpolateHermite(mPrevPrevPrevOut, mPrevPrevOut, mPrevOut, mCurrentOut, posFract);
 	}
 
 

@@ -26,8 +26,10 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <cmath>
 #include <cstdint>
 #include <numeric>
+#include <span>
 #include <vector>
 
+#include "dfxmath.h"
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
 #include "iirfilter.h"
@@ -70,14 +72,14 @@ private:
     void reset();
   };
 
-  static constexpr float interpolateHermite(float const* data, double readaddress, int arraysize, int writeaddress);
+  static constexpr float interpolateHermite(std::span<float const> data, double readaddress, int writeaddress);
   // uses only the fractional portion of the address
   static constexpr float interpolateLinear(float value1, float value2, double address)
   {
-    auto const posFract = static_cast<float>(std::fmod(address, 1.));
+    auto const posFract = static_cast<float>(dfx::math::ModF(address));
     return std::lerp(value1, value2, posFract);
   }
-  static constexpr float interpolateLinear(float const* data, double readaddress, int arraysize/*, int writeaddress*/);
+  static constexpr float interpolateLinear(std::span<float const> data, double readaddress/*, int writeaddress*/);
 
   // negative input values are bumped into non-negative range by incremements of modulo
   static constexpr int mod_bipolar(int value, int modulo);
@@ -151,71 +153,67 @@ inline double TransverbDSP::fmod_bipolar(double value, double modulo) {
   return std::fmod(value, modulo);
 }
 
-constexpr float TransverbDSP::interpolateHermite(float const* data, double readaddress,
-                                                 int arraysize, int writeaddress) {
-  int posMinus1 = 0, posPlus1 = 0, posPlus2 = 0;
+constexpr float TransverbDSP::interpolateHermite(std::span<float const> data, double readaddress,
+                                                 int writeaddress) {
+  assert(readaddress >= 0.);
+  assert(writeaddress >= 0);
+  assert(!data.empty());
 
-  auto const pos = static_cast<int>(readaddress);
-  auto const posFract = static_cast<float>(readaddress - static_cast<double>(pos));
+  auto const [posFract, pos] = dfx::math::ModF<size_t>(readaddress);
+  assert(pos < data.size());
+  size_t posMinus1 = 0, posPlus1 = 0, posPlus2 = 0;
 
   // because the readers and writer are not necessarily aligned,
   // upcoming or previous samples could be discontiguous, in which case
   // just "interpolate" with repeated samples
-  switch (mod_bipolar(writeaddress - pos, arraysize)) {
+  switch (mod_bipolar(writeaddress - static_cast<int>(pos), std::ssize(data))) {
     case 0:  // the previous sample is bogus
       posMinus1 = pos;
-      posPlus1 = (pos + 1) % arraysize;
-      posPlus2 = (pos + 2) % arraysize;
+      posPlus1 = (pos + 1) % data.size();
+      posPlus2 = (pos + 2) % data.size();
       break;
     case 1:  // the next 2 samples are bogus
-      posMinus1 = (pos == 0) ? (arraysize - 1) : (pos - 1);
+      posMinus1 = (pos == 0) ? (data.size() - 1) : (pos - 1);
       posPlus1 = posPlus2 = pos;
       break;
     case 2:  // the sample 2 steps ahead is bogus
-      posMinus1 = (pos == 0) ? (arraysize - 1) : (pos - 1);
-      posPlus1 = posPlus2 = (pos + 1) % arraysize;
+      posMinus1 = (pos == 0) ? (data.size() - 1) : (pos - 1);
+      posPlus1 = posPlus2 = (pos + 1) % data.size();
       break;
     default:  // everything's cool
-      posMinus1 = (pos == 0) ? (arraysize - 1) : (pos - 1);
-      posPlus1 = (pos + 1) % arraysize;
-      posPlus2 = (pos + 2) % arraysize;
+      posMinus1 = (pos == 0) ? (data.size() - 1) : (pos - 1);
+      posPlus1 = (pos + 1) % data.size();
+      posPlus2 = (pos + 2) % data.size();
       break;
   }
 
-  float const a = ((3.0f * (data[pos] - data[posPlus1])) -
-                   data[posMinus1] + data[posPlus2]) * 0.5f;
-  float const b = (2.0f * data[posPlus1]) + data[posMinus1] -
-                  (2.5f * data[pos]) - (data[posPlus2] * 0.5f);
-  float const c = (data[posPlus1] - data[posMinus1]) * 0.5f;
-
-  return (((a * posFract) + b) * posFract + c) * posFract + data[pos];
+  return dfx::math::InterpolateHermite(data[posMinus1], data[pos], data[posPlus1], data[posPlus2], posFract);
 }
 
 /*
-constexpr float TransverbDSP::interpolateHermitePostLowpass(float const* data, float address) {
-  auto const pos = static_cast<int>(address);
-  float const posFract = address - static_cast<float>(pos);
+constexpr float TransverbDSP::interpolateHermitePostLowpass(std::span<float const> data, float address) {
+  assert(address >= 0.f);
+  assert(!data.empty());
 
-  float const a = ((3.0f * (data[1] - data[2])) -
-                   data[0] + data[3]) * 0.5f;
-  float const b = (2.0f * data[2]) + data[0] -
-                  (2.5f * data[1]) - (data[3] * 0.5f);
-  float const c = (data[2] - data[0]) * 0.5f;
-
-  return (((a * posFract) + b) * posFract + c) * posFract + data[1];
+  auto const posFract = dfx::math::ModF(pos);
+  return dfx::math::InterpolateHermite(data[0], data[1], data[2], data[3], posFract);
 }
 */
 
-constexpr float TransverbDSP::interpolateLinear(float const* data, double readaddress,
-                                                int arraysize/*, int writeaddress*/) {
-  auto const pos = static_cast<int>(readaddress);
+constexpr float TransverbDSP::interpolateLinear(std::span<float const> data, double readaddress/*, int writeaddress*/) {
+  assert(readaddress >= 0.);
+  //assert(writeaddress >= 0);
+  assert(!data.empty());
+
+  auto const pos = static_cast<size_t>(readaddress);
+  assert(pos < data.size());
 #if 0
-  if (mod_bipolar(writeaddress - pos, arraysize) == 1) {
+  if (mod_bipolar(writeaddress - static_cast<int>(pos), std::ssize(data)) == 1) {
     // the upcoming sample is not contiguous because
     // the write head is about to write to it
     return data[pos];
   }
 #endif
-  auto const posPlus1 = (pos + 1) % arraysize;
+  auto const posPlus1 = (pos + 1) % data.size();
   return interpolateLinear(data[pos], data[posPlus1], readaddress);
 }

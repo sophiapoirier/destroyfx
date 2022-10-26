@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 Welcome to our Low Frequency Oscillator.
@@ -31,6 +31,8 @@ Welcome to our Low Frequency Oscillator.
 #include <cmath>
 #include <numbers>
 #include <numeric>
+
+#include "dfxmath.h"
 
 
 //------------------------------------------------------------------------
@@ -135,7 +137,7 @@ void dfx::LFO::syncToTheBeat(double inSamplesToBar)
 	mPosition = (cycleSize - countdown) * mStepSize;
 	// wrap around the new position if it is beyond the end of the cycle
 	mPosition = std::max(mPosition, 0.);
-	mPosition = std::fmod(mPosition, 1.);
+	mPosition = dfx::math::ModF(mPosition);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -149,7 +151,7 @@ void dfx::LFO::updatePosition(size_t inNumSteps)
 	if (mPosition >= 1.)
 	{
 		// wrap around the position tracker if it has made it past the end of the LFO cycle
-		mPosition = std::fmod(mPosition, 1.);
+		mPosition = dfx::math::ModF(mPosition);
 		// get new random LFO values, too
 		mPrevRandomNumber = std::exchange(mRandomNumber, mRandomGenerator.next());
 		// set up the sample smoothing if a discontiguous waveform's cycle just ended
