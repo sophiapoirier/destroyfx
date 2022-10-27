@@ -2011,7 +2011,7 @@ double DfxPlugin::getdspcoreparameter_scalar(dfx::ParameterID inParameterID) con
 {
 	if (parameterisvalid(inParameterID))
 	{
-		getparameter_scalar(inParameterID, mParameters[inParameterID].derive_f(mDSPCoreParameterValuesCache[inParameterID]));
+		return getparameter_scalar(inParameterID, mParameters[inParameterID].derive_f(mDSPCoreParameterValuesCache[inParameterID]));
 	}
 	return 0.;
 }
