@@ -40,8 +40,8 @@ enum : dfx::ParameterID
 class PolarizerDSP final : public DfxPluginCore
 {
 public:
-	explicit PolarizerDSP(DfxPlugin* inDfxPlugin);
-	void process(float const* inAudio, float* outAudio, size_t inNumFrames) override;
+	explicit PolarizerDSP(DfxPlugin& inDfxPlugin);
+	void process(std::span<float const> inAudio, std::span<float> outAudio) override;
 	void reset() override;
 	void processparameters() override;
 

@@ -106,7 +106,7 @@ void Transverb::dfx_PostConstructor() {
 
 
 
-TransverbDSP::TransverbDSP(DfxPlugin* inDfxPlugin)
+TransverbDSP::TransverbDSP(DfxPlugin& inDfxPlugin)
   : DfxPluginCore(inDfxPlugin),
     MAXBUF(static_cast<int>(getparametermax_f(kBsize) * 0.001 * getsamplerate())),
     firCoefficientsWindow(dfx::FIRFilter::generateKaiserWindow(kNumFIRTaps, 60.0f)) {
@@ -144,8 +144,8 @@ void TransverbDSP::processparameters() {
   if (auto const value = getparameterifchanged_f(kDrymix))
   {
     // balance the audio energy when mono input is fanned out to multiple output channels
-    auto const dryGainScalar = std::sqrt(static_cast<double>(getplugin()->getnuminputs()) /
-                                         static_cast<double>(getplugin()->getnumoutputs()));
+    auto const dryGainScalar = std::sqrt(static_cast<double>(getplugin().getnuminputs()) /
+                                         static_cast<double>(getplugin().getnumoutputs()));
     drymix = *value * dryGainScalar;
   }
   for (size_t head = 0; head < kNumDelays; head++)
@@ -208,10 +208,10 @@ void TransverbDSP::processparameters() {
   }
 
   // stereo-split-heads mode (head 1 goes to left output and 2 to right)
-  if (getplugin()->asymmetricalchannels())
+  if (getplugin().asymmetricalchannels())
   {
     static_assert(kNumDelays >= 2);
-    assert(getplugin()->getnumoutputs() == 2);
+    assert(getplugin().getnumoutputs() == 2);
     if (GetChannelNum() == 0)
     {
       heads[1].mix.setValueNow(getparametermin_f(kMix2));

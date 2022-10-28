@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with RMS Buddy.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "rmsbuddy.h"
@@ -26,6 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cassert>
 #include <cmath>
 #include <memory>
+#include <span>
 #include <type_traits>
 
 #include "rmsbuddy-base.h"
@@ -352,7 +353,8 @@ OSStatus RMSBuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope 
 			{
 				if (paramValue <= mMinMeterValueDb)
 				{
-					return CFStringCreateWithCString(kCFAllocatorDefault, u8"-\U0000221E", kCFStringEncodingUTF8);
+					constexpr UniChar minusInfinity = 0x221E;
+					return CFStringCreateWithCharacters(kCFAllocatorDefault, &minusInfinity, 1);
 				}
 				return nullptr;
 			}();
@@ -421,15 +423,15 @@ OSStatus RMSBuddy::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags,
 	for (UInt32 ch = 0; ch < mChannelCount; ch++)
 	{
 		// get pointer to the audio input stream
-		auto const inAudio = static_cast<float const*>(inBuffer.mBuffers[ch].mData);
+		std::span const inAudio(static_cast<float const*>(inBuffer.mBuffers[ch].mData), inFramesToProcess);
 
 		// these will store the values for this channel's processing buffer
 		double continualRMS = 0.0;
 		float continualPeak = 0.0f;
 		// analyze every sample for this channel
-		for (UInt32 i = 0; i < inFramesToProcess; i++)
+		for (auto const inputValue : inAudio)
 		{
-			auto const inSquared = inAudio[i] * inAudio[i];
+			auto const inSquared = inputValue * inputValue;
 			// RMS is the sum of squared input values, then averaged and square-rooted, so here we square and sum
 			continualRMS += inSquared;
 			// check if this is the peak sample for this processing buffer

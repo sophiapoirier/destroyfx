@@ -543,7 +543,7 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 	{
 		if (mDSPCores[ch])
 		{
-			auto inputAudio = mInputAudioStreams[ch];
+			std::span inputAudio(mInputAudioStreams[ch], dfx::math::ToUnsigned(sampleFrames));
 			if (asymmetricalchannels())
 			{
 				if (ch == 0)
@@ -551,9 +551,9 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 					assert(mAsymmetricalInputAudioBuffer.size() >= static_cast<size_t>(sampleFrames));
 					std::copy_n(mInputAudioStreams[ch], dfx::math::ToUnsigned(sampleFrames), mAsymmetricalInputAudioBuffer.data());
 				}
-				inputAudio = mAsymmetricalInputAudioBuffer.data();
+				inputAudio = std::span(mAsymmetricalInputAudioBuffer).subspan(0, dfx::math::ToUnsigned(sampleFrames));
 			}
-			mDSPCores[ch]->process(inputAudio, outputs[ch], dfx::math::ToUnsigned(sampleFrames));
+			mDSPCores[ch]->process(inputAudio, {outputs[ch], dfx::math::ToUnsigned(sampleFrames)});
 		}
 	}
 #else

@@ -301,14 +301,14 @@ void PLUGIN::updatewindowcache(PLUGINCORE * geometercore)
 void PLUGINCORE::clearwindowcache()
 {
   if (iswaveformsource()) {
-    geometer->clearwindowcache();
+    geometer.clearwindowcache();
   }
 }
 
 void PLUGINCORE::updatewindowcache()
 {
   if (iswaveformsource()) {
-    geometer->updatewindowcache(this);
+    geometer.updatewindowcache(this);
   }
 }
 
@@ -343,9 +343,9 @@ std::optional<dfx::ParameterAssignment> PLUGIN::settings_getLearningAssignData(d
   }
 }
 
-PLUGINCORE::PLUGINCORE(DfxPlugin* inDfxPlugin)
+PLUGINCORE::PLUGINCORE(DfxPlugin& inDfxPlugin)
   : DfxPluginCore(inDfxPlugin),
-    geometer(dynamic_cast<PLUGIN*>(inDfxPlugin))
+    geometer(dynamic_cast<PLUGIN&>(inDfxPlugin))
 {
   /* determine the size of the largest window size */
   constexpr auto maxframe = *std::max_element(PLUGIN::buffersizes.cbegin(), PLUGIN::buffersizes.cend());
@@ -369,8 +369,8 @@ PLUGINCORE::PLUGINCORE(DfxPlugin* inDfxPlugin)
 
   if (iswaveformsource()) {  // does not matter which DSP core, but this just should happen only once
     auto const delay_samples = dfx::math::ToUnsigned(PLUGIN::buffersizes.at(getparameter_i(P_BUFSIZE)));
-    getplugin()->setlatency_samples(delay_samples);
-    getplugin()->settailsize_samples(delay_samples);
+    getplugin().setlatency_samples(delay_samples);
+    getplugin().settailsize_samples(delay_samples);
   }
 }
 
@@ -1185,8 +1185,8 @@ XXX Sophia's ideas:
    - it would also be nice to make this windowing stuff into a reusable class so that we don't find ourselves maintaining the same code accross so many different plugins
 */
 
-void PLUGINCORE::process(float const* tin, float* tout, size_t samples) {
-  for (size_t ii = 0; ii < samples; ii++) {
+void PLUGINCORE::process(std::span<float const> tin, std::span<float> tout) {
+  for (size_t ii = 0; ii < tout.size(); ii++) {
 
     /* copy sample in */
     in0[insize] = tin[ii];
@@ -1259,9 +1259,9 @@ void PLUGINCORE::updatewindowsize()
   outstart = 0;
   outsize = framesize;
 
-  getplugin()->setlatency_samples(dfx::math::ToUnsigned(framesize));
+  getplugin().setlatency_samples(dfx::math::ToUnsigned(framesize));
   /* tail is the same as delay, of course */
-  getplugin()->settailsize_samples(dfx::math::ToUnsigned(framesize));
+  getplugin().settailsize_samples(dfx::math::ToUnsigned(framesize));
 }
 
 

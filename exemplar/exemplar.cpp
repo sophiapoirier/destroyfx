@@ -96,7 +96,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 #endif
 }
 
-PLUGINCORE::PLUGINCORE(DfxPlugin * inInstance)
+PLUGINCORE::PLUGINCORE(DfxPlugin& inInstance)
   : DfxPluginCore(inInstance) {
   /* determine the size of the largest window size */
   constexpr auto maxframe = *std::max_element(std::cbegin(buffersizes), std::cend(buffersizes));
@@ -557,10 +557,10 @@ void PLUGINCORE::classify(float const * in, float & scale,
 */
 
 
-void PLUGINCORE::process(const float *tin, float *tout, size_t samples) {
+void PLUGINCORE::process(std::span<float const> tin, std::span<float> tout) {
   int z = 0;
 
-  for (size_t ii = 0; ii < samples; ii++) {
+  for (size_t ii = 0; ii < tout.size(); ii++) {
 
     /* copy sample in */
     in0[insize] = tin[ii];

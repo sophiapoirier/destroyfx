@@ -83,11 +83,11 @@ private:
 
 class PLUGINCORE final : public DfxPluginCore {
 public:
-  explicit PLUGINCORE(DfxPlugin* inDfxPlugin);
+  explicit PLUGINCORE(DfxPlugin& inDfxPlugin);
 
   void reset() override;
   void processparameters() override;
-  void process(float const* inAudio, float* outAudio, size_t inNumFrames) override;
+  void process(std::span<float const> inAudio, std::span<float> outAudio) override;
 
   /* several of these are needed by geometerview. */
   int processw(float const * in, float * out, int samples,
@@ -106,7 +106,7 @@ private:
   void clearwindowcache();
   void updatewindowcache();
 
-  PLUGIN* const geometer;
+  PLUGIN& geometer;
 
   /* input and output buffers. out is framesize*2 samples long, in is framesize
      samples long. (for maximum framesize)

@@ -34,7 +34,7 @@ using namespace dfx::TV;
 
 
 
-void TransverbDSP::process(float const* inAudio, float* outAudio, size_t numSampleFrames) {
+void TransverbDSP::process(std::span<float const> inAudio, std::span<float> outAudio) {
 
   std::array<float, kNumDelays> delayvals {};  // delay buffer output values
   auto const bsize_float = static_cast<double>(bsize);  // cut down on casting
@@ -60,7 +60,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, size_t numSamp
     std::array<float, kNumDelays> mugs {};
     mugs.fill(1.f);
 
-    for (size_t i = 0; i < numSampleFrames; i++)  // samples loop
+    for (size_t i = 0; i < outAudio.size(); i++)  // samples loop
     {
       bool const firstSample = (i == 0);
       bool const speedSmoothingStrideHit = ((i % speedSmoothingStride) == 0);
@@ -292,7 +292,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, size_t numSamp
     // regardless of the actual buffer size.
     auto const bsizeWriteWrap = bsize - ((bsize % tomsoundMultiple) ? 0 : 1);
 
-    for(size_t i = 0; i < numSampleFrames; i++) {
+    for(size_t i = 0; i < outAudio.size(); i++) {
       //for(size_t ch = 0; ch < getnumoutputs(); ch++) {
 
       /* read from read heads */

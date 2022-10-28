@@ -95,12 +95,12 @@ private:
 class DfxStubDSP final : public DfxPluginCore
 {
 public:
-	explicit DfxStubDSP(DfxPlugin* inInstance);
+	explicit DfxStubDSP(DfxPlugin& inInstance);
 
 	void reset() override;
 
 	void processparameters() override;
-	void process(float const* inStream, float* outStream, size_t inNumFrames) override;
+	void process(std::span<float const> inStream, std::span<float> outStream) override;
 
 private:
 	// handy usable copies of the parameters

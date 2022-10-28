@@ -496,7 +496,7 @@ UInt32 DfxPlugin::ProcessAudio(bool inIsGlobalBypassed)
 			else	// no input connection; use default value of zero
 			{
 				// (re)allocate the zero audio buffer if it is not currently large enough for this rendering slice
-				if (static_cast<long>(mZeroAudioBuffer.size()) < totalInputSamples)
+				if (std::ssize(mZeroAudioBuffer) < totalInputSamples)
 				{
 					mZeroAudioBuffer.assign(totalInputSamples, 0.0f);
 				}
@@ -541,7 +541,7 @@ void DfxPlugin::RenderAudio(float** inAudioStreams, float** outAudioStreams, lon
 	// RTAS clip monitoring
 	for (SInt32 channel = 0; (channel < GetNumInputs()) && !fClipped; channel++)
 	{
-		mInputAudioStreams[[channel]] = nullptr;
+		mInputAudioStreams[channel] = nullptr;
 		if (!inAudioStreams[channel])	// XXX possible in AudioSuite
 		{
 			continue;
@@ -584,16 +584,16 @@ void DfxPlugin::RenderAudio(float** inAudioStreams, float** outAudioStreams, lon
 #if TARGET_PLUGIN_USES_DSPCORE
 			if (mDSPCores[channel])
 			{
-				auto inputAudio = mInputAudioStreams[channel];
+				std::span inputAudio(mInputAudioStreams[channel], dfx::math::ToUnsigned(inNumFramesToProcess));
 				if (asymmetricalchannels())
 				{
 					if (channel == 0)
 					{
 						std::copy_n(mInputAudioStreams[channel], sampleFrames, mAsymmetricalInputAudioBuffer.data());
 					}
-					inputAudio = mAsymmetricalInputAudioBuffer.data();
+					inputAudio = std::span(mAsymmetricalInputAudioBuffer).subspan(0, dfx::math::ToUnsigned(inNumFramesToProcess));
 				}
-				mDSPCores[channel]->process(inputAudio, outAudioStreams[channel], dfx::math::ToUnsigned(inNumFramesToProcess));
+				mDSPCores[channel]->process(inputAudio, {outAudioStreams[channel], dfx::math::ToUnsigned(inNumFramesToProcess)});
 			}
 #endif
 		}

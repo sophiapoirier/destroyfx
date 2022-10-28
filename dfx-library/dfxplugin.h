@@ -133,6 +133,7 @@ VST_NUM_CHANNELS
 #include <mutex>
 #include <optional>
 #include <set>
+#include <span>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -1110,20 +1111,20 @@ class DfxPluginCore
 #endif
 {
 public:
-	explicit DfxPluginCore(DfxPlugin* inDfxPlugin)
+	explicit DfxPluginCore(DfxPlugin& inDfxPlugin)
 	:
 	#ifdef TARGET_API_DSPCORE_CLASS
-		TARGET_API_DSPCORE_CLASS(*inDfxPlugin), 
+		TARGET_API_DSPCORE_CLASS(inDfxPlugin), 
 	#endif
 		mDfxPlugin(inDfxPlugin),
-		mSampleRate(inDfxPlugin->getsamplerate())
+		mSampleRate(inDfxPlugin.getsamplerate())
 	{
 		assert(mSampleRate > 0.);
 	}
 
 	virtual ~DfxPluginCore()
 	{
-		mDfxPlugin->unregisterAllSmoothedAudioValues(this);
+		mDfxPlugin.unregisterAllSmoothedAudioValues(this);
 	}
 
 	DfxPluginCore(DfxPluginCore const&) = delete;
@@ -1136,14 +1137,14 @@ public:
 		reset();
 	}
 
-	virtual void process(float const* inStream, float* outStream, size_t inNumFrames) = 0;
+	virtual void process(std::span<float const> inStream, std::span<float> outStream) = 0;
 	virtual void reset() {}
 	// NOTE: a weakness of the processparameters design, and then subsequent snapping of 
 	// all smoothed values if it is the first audio render since audio reset, is that you 
 	// initially miss that snap if you getValue a smoothed value within processparameters
 	virtual void processparameters() {}
 
-	auto getplugin() const noexcept
+	DfxPlugin& getplugin() const noexcept
 	{
 		return mDfxPlugin;
 	}
@@ -1157,23 +1158,23 @@ public:
 	}
 	double getparameter_f(dfx::ParameterID inParameterID) const
 	{
-		return mDfxPlugin->getdspcoreparameter_f(inParameterID);
+		return mDfxPlugin.getdspcoreparameter_f(inParameterID);
 	}
 	int64_t getparameter_i(dfx::ParameterID inParameterID) const
 	{
-		return mDfxPlugin->getdspcoreparameter_i(inParameterID);
+		return mDfxPlugin.getdspcoreparameter_i(inParameterID);
 	}
 	bool getparameter_b(dfx::ParameterID inParameterID) const
 	{
-		return mDfxPlugin->getdspcoreparameter_b(inParameterID);
+		return mDfxPlugin.getdspcoreparameter_b(inParameterID);
 	}
 	double getparameter_scalar(dfx::ParameterID inParameterID) const
 	{
-		return mDfxPlugin->getdspcoreparameter_scalar(inParameterID);
+		return mDfxPlugin.getdspcoreparameter_scalar(inParameterID);
 	}
 	double getparameter_gen(dfx::ParameterID inParameterID) const
 	{
-		return mDfxPlugin->getdspcoreparameter_gen(inParameterID);
+		return mDfxPlugin.getdspcoreparameter_gen(inParameterID);
 	}
 	std::optional<double> getparameterifchanged_f(dfx::ParameterID inParameterID) const
 	{
@@ -1197,38 +1198,38 @@ public:
 	}
 	double getparametermin_f(dfx::ParameterID inParameterID) const
 	{
-		return mDfxPlugin->getparametermin_f(inParameterID);
+		return mDfxPlugin.getparametermin_f(inParameterID);
 	}
 	int64_t getparametermin_i(dfx::ParameterID inParameterID) const
 	{
-		return mDfxPlugin->getparametermin_i(inParameterID);
+		return mDfxPlugin.getparametermin_i(inParameterID);
 	}
 	double getparametermax_f(dfx::ParameterID inParameterID) const
 	{
-		return mDfxPlugin->getparametermax_f(inParameterID);
+		return mDfxPlugin.getparametermax_f(inParameterID);
 	}
 	int64_t getparametermax_i(dfx::ParameterID inParameterID) const
 	{
-		return mDfxPlugin->getparametermax_i(inParameterID);
+		return mDfxPlugin.getparametermax_i(inParameterID);
 	}
 	bool getparameterchanged(dfx::ParameterID inParameterID) const
 	{
-		return mDfxPlugin->getparameterchanged(inParameterID);
+		return mDfxPlugin.getparameterchanged(inParameterID);
 	}
 	void registerSmoothedAudioValue(dfx::ISmoothedValue* smoothedValue)
 	{
-		mDfxPlugin->registerSmoothedAudioValue(smoothedValue, this);
+		mDfxPlugin.registerSmoothedAudioValue(smoothedValue, this);
 		smoothedValue->setSampleRate(getsamplerate());
 	}
 	void incrementSmoothedAudioValues()
 	{
-		mDfxPlugin->incrementSmoothedAudioValues(this);
+		mDfxPlugin.incrementSmoothedAudioValues(this);
 	}
 
 #ifdef TARGET_API_AUDIOUNIT
 	void Process(Float32 const* inStream, Float32* outStream, UInt32 inNumFrames, bool& ioSilence) final
 	{
-		process(inStream, outStream, inNumFrames);
+		process({inStream, inNumFrames}, {outStream, inNumFrames});
 		ioSilence = false;  // TODO: allow DSP cores to communicate their output silence status
 	}
 	void Reset() final
@@ -1244,7 +1245,7 @@ public:
 
 
 private:
-	DfxPlugin* const mDfxPlugin;
+	DfxPlugin& mDfxPlugin;
 	double const mSampleRate;  // fixed for the lifespan of a DSP core
 
 #ifndef TARGET_API_AUDIOUNIT
@@ -1434,7 +1435,7 @@ template <class DSPCoreClass>
 [[nodiscard]] std::unique_ptr<DSPCoreClass> DfxPlugin::dspCoreFactory()
 {
 	static_assert(std::is_base_of_v<DfxPluginCore, DSPCoreClass>);
-	auto core = std::make_unique<DSPCoreClass>(this);
+	auto core = std::make_unique<DSPCoreClass>(*this);
 	core->dfxplugincore_postconstructor();
 	return core;
 }

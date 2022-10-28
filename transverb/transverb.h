@@ -39,9 +39,9 @@ To contact the author, use the contact form at http://destroyfx.org
 class TransverbDSP final : public DfxPluginCore {
 
 public:
-  explicit TransverbDSP(DfxPlugin* inDfxPlugin);
+  explicit TransverbDSP(DfxPlugin& inDfxPlugin);
 
-  void process(float const* inAudio, float* outAudio, size_t inNumFrames) override;
+  void process(std::span<float const> inAudio, std::span<float> outAudio) override;
   void reset() override;
   void processparameters() override;
 

@@ -144,7 +144,7 @@ void DfxStub::cleanup()
 
 #if TARGET_PLUGIN_USES_DSPCORE
 //-------------------------------------------------------------------------
-DfxStubDSP::DfxStubDSP(DfxPlugin* inInstance)
+DfxStubDSP::DfxStubDSP(DfxPlugin& inInstance)
 :	DfxPluginCore(inInstance)
 {
 	auto const bufferSize = std::lround(getsamplerate() * kBufferSize_Seconds);
@@ -247,7 +247,7 @@ void DfxStub::processparameters()
 //-----------------------------------------------------------------------------
 // passes one stream of input audio, one stream of output audio, 
 // and the number of sample frames in each stream
-void DfxStubDSP::process(float const* inStream, float* outStream, size_t inNumFrames)
+void DfxStubDSP::process(std::span<float const> inStream, std::span<float> outStream)
 {
 	// do your audio processing here
 }

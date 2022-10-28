@@ -76,7 +76,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 #endif
 }
 
-PLUGINCORE::PLUGINCORE(DfxPlugin * inInstance)
+PLUGINCORE::PLUGINCORE(DfxPlugin& inInstance)
   : DfxPluginCore(inInstance) {
   /* determine the size of the largest window size */
   constexpr auto maxframe = *std::max_element(std::cbegin(buffersizes), std::cend(buffersizes));
@@ -107,9 +107,9 @@ void PLUGINCORE::reset() {
   outstart = 0;
   outsize = framesize;
 
-  getplugin()->setlatency_samples(dfx::math::ToUnsigned(framesize));
+  getplugin().setlatency_samples(dfx::math::ToUnsigned(framesize));
   /* tail is the same as delay, of course */
-  getplugin()->settailsize_samples(dfx::math::ToUnsigned(framesize));
+  getplugin().settailsize_samples(dfx::math::ToUnsigned(framesize));
 }
 
 void PLUGINCORE::processparameters() {
@@ -120,7 +120,7 @@ void PLUGINCORE::processparameters() {
     /* this tells the host to call a suspend()-resume() pair, 
       which updates initialDelay value */
   if (getparameterchanged(P_BUFSIZE))
-    getplugin()->setlatencychanged(true);
+    getplugin().setlatencychanged(true);
   #endif
 }
 
@@ -165,9 +165,9 @@ void PLUGINCORE::processw(float const * in, float * out, long samples) {
 */
 
 
-void PLUGINCORE::process(float const *tin, float *tout, size_t samples) {
+void PLUGINCORE::process(std::span<float const> tin, std::span<float> tout) {
 
-  for (size_t i = 0; i < samples; i++) {
+  for (size_t i = 0; i < tout.size(); i++) {
 
     /* copy sample in */
     in0[insize] = tin[i];

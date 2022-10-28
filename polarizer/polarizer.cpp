@@ -16,10 +16,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Polarizer.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "polarizer.h"
+
+#include <algorithm>
 
 
 // these are macros that do boring entry point stuff for us
@@ -40,7 +42,7 @@ Polarizer::Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 }
 
 //-----------------------------------------------------------------------------------------
-PolarizerDSP::PolarizerDSP(DfxPlugin* inDfxPlugin)
+PolarizerDSP::PolarizerDSP(DfxPlugin& inDfxPlugin)
 :	DfxPluginCore(inDfxPlugin)
 {
 	registerSmoothedAudioValue(&mPolarizedAmp);
@@ -62,15 +64,18 @@ void PolarizerDSP::processparameters()
 }
 
 //-----------------------------------------------------------------------------------------
-void PolarizerDSP::process(float const* inAudio, float* outAudio, size_t inNumFrames)
+void PolarizerDSP::process(std::span<float const> inAudio, std::span<float> outAudio)
 {
 	// fetch the current parameter values
-	auto const leapSize = getparameter_i(kSkip);
+	auto const leapSize = static_cast<decltype(mUnaffectedSamples)>(getparameter_i(kSkip));
 	auto const implode = getparameter_b(kImplode);
 
-	for (size_t sampleIndex = 0; sampleIndex < inNumFrames; sampleIndex++)
+	// catch up if leap size decreased
+	mUnaffectedSamples = std::min(mUnaffectedSamples, leapSize);
+
+	std::transform(inAudio.begin(), inAudio.end(), outAudio.begin(), [this, leapSize, implode](auto const inputValue)
 	{
-		auto outputValue = inAudio[sampleIndex];
+		auto outputValue = inputValue;
 		mUnaffectedSamples--;
 		if (mUnaffectedSamples < 0)  // go to polarized when the leap is done
 		{
@@ -93,8 +98,8 @@ void PolarizerDSP::process(float const* inAudio, float* outAudio, size_t inNumFr
 			}
 		}
 
-		outAudio[sampleIndex] = outputValue;
-
 		incrementSmoothedAudioValues();
-	}
+
+		return outputValue;
+	});
 }

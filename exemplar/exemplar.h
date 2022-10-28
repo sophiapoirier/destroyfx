@@ -70,7 +70,7 @@ enum : dfx::ParameterID { P_BUFSIZE, P_SHAPE,
 };
 
 
-class PLUGIN : public DfxPlugin {
+class PLUGIN final : public DfxPlugin {
 public:
   explicit PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
@@ -81,13 +81,13 @@ private:
   void makepresets();
 };
 
-class PLUGINCORE : public DfxPluginCore {
+class PLUGINCORE final : public DfxPluginCore {
 public:
-  explicit PLUGINCORE(DfxPlugin * inInstance);
+  explicit PLUGINCORE(DfxPlugin& inInstance);
 
   void reset() override;
   void processparameters() override;
-  void process(const float *in, float *out, size_t inNumFrames) override;
+  void process(std::span<float const> in, std::span<float> out) override;
 
   long getwindowsize() const noexcept { return third; }
 
