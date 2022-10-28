@@ -30,6 +30,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include "dfx-au-utilities.h"
 #include "dfxgui.h"
+#include "dfxmath.h"
 #include "dfxmisc.h"
 #include "lib/platform/iplatformframe.h"
 #include "turntablist.h"
@@ -220,7 +221,7 @@ static void TurntablistAboutButtonProc(long inValue)
 				auto valueString = reinterpret_cast<CFStringRef>(CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, kCFBundleNameKey));
 				if (valueString)
 				{
-					CFDictionaryAddValue(aboutDict.get(), static_cast<void const*>(kHIAboutBoxNameKey), static_cast<void const*>(valueString));
+					CFDictionaryAddValue(aboutDict.get(), kHIAboutBoxNameKey, valueString);
 				}
 
 				valueString = reinterpret_cast<CFStringRef>(CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("CFBundleShortVersionString")));
@@ -230,13 +231,13 @@ static void TurntablistAboutButtonProc(long inValue)
 				}
 				if (valueString)
 				{
-					CFDictionaryAddValue(aboutDict.get(), static_cast<void const*>(kHIAboutBoxVersionKey), static_cast<void const*>(valueString));
+					CFDictionaryAddValue(aboutDict.get(), kHIAboutBoxVersionKey, valueString);
 				}
 
 				valueString = reinterpret_cast<CFStringRef>(CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("NSHumanReadableCopyright")));
 				if (valueString)
 				{
-					CFDictionaryAddValue(aboutDict.get(), static_cast<void const*>(kHIAboutBoxCopyrightKey), static_cast<void const*>(valueString));
+					CFDictionaryAddValue(aboutDict.get(), kHIAboutBoxCopyrightKey, valueString);
 				}
 
 				HIAboutBox(aboutDict.get());
@@ -566,7 +567,7 @@ buttonStat = CreateRoundButtonControl(GetCarbonWindow(), &buttonRect, kControlSi
 	knob->setHelpText(helpText.get());
 
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
-	pos.set(kColumn2k, kRow3 + kKnobOffsetY, knobWidth, knobHeight);
+	pos.set(kColumn2, kRow3 + kKnobOffsetY, knobWidth, knobHeight);
 	knob = emplaceControl<DGAnimation>(this, kParam_Volume, pos, knobImage, kKnobFrames);
 	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls the overall volume of the audio output"), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Volume parameter")));
@@ -1387,7 +1388,7 @@ void TurntablistEditor::HandleParameterChange(dfx::ParameterID inParameterID, fl
 			if (inValue <= 0.0f)
 			{
 				constexpr UniChar minusInfinity[] = { '-', 0x221E, ' ', ' ', 'd', 'B' };
-				universalDisplayText.reset(CFStringCreateWithCharacters(cfAllocator, minusInfinity, sizeof(minusInfinity) / sizeof(*minusInfinity)));
+				universalDisplayText.reset(CFStringCreateWithCharacters(cfAllocator, minusInfinity, std::size(minusInfinity)));
 			}
 			else
 			{
@@ -1398,7 +1399,7 @@ void TurntablistEditor::HandleParameterChange(dfx::ParameterID inParameterID, fl
 					format = CFSTR("+" DB_FORMAT_STRING);
 				}
 				#undef DB_FORMAT_STRING
-				universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, format, linear2dB(inValue)));
+				universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, format, dfx::math::Linear2dB(inValue)));
 			}
 			break;
 #endif

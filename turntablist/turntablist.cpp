@@ -1477,7 +1477,7 @@ void Turntablist::noteOn(int inNote, int inVelocity, size_t /*inOffsetFrames*/)
 		}
 		// calculate note volume
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
-		m_fNoteVolume = m_fVolume * static_csat<float>(m_nCurrentVelocity) * DfxMidi::kValueScalar;
+		m_fNoteVolume = m_fVolume * static_cast<float>(m_nCurrentVelocity) * DfxMidi::kValueScalar;
 #else
 		m_fNoteVolume = static_cast<float>(m_nCurrentVelocity) * DfxMidi::kValueScalar;
 #endif
