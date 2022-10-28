@@ -54,7 +54,7 @@ MIDIGater::MIDIGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	getmidistate().setResumedAttackMode(true);  // this enables the lazy note attack mode
 	getmidistate().setEnvCurveType(kAmplitudeGateEnvelopeCurve);
 
-	registerSmoothedAudioValue(&mFloor);
+	registerSmoothedAudioValue(mFloor);
 }
 
 //-----------------------------------------------------------------------------------------

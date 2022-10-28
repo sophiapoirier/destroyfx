@@ -89,8 +89,8 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// start off with split CC automation of both range slider points
 	mRateDoubleAutomate = mPulsewidthDoubleAutomate = mFloorDoubleAutomate = false;
 
-	registerSmoothedAudioValue(&mNoise);
-	registerSmoothedAudioValue(&mCrossoverFrequency_gen);
+	registerSmoothedAudioValue(mNoise);
+	registerSmoothedAudioValue(mCrossoverFrequency_gen);
 }
 
 //-----------------------------------------------------------------------------------------

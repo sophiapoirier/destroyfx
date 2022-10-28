@@ -111,10 +111,10 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setpresetname(0, "thrush");  // default preset name
 	initPresets();
 
-	registerSmoothedAudioValue(&mInputGain);
-	registerSmoothedAudioValue(&mInverseGain);
-	registerSmoothedAudioValue(&mDelayOffset);
-	registerSmoothedAudioValue(&mDelayOffset2);
+	registerSmoothedAudioValue(mInputGain);
+	registerSmoothedAudioValue(mInverseGain);
+	registerSmoothedAudioValue(mDelayOffset);
+	registerSmoothedAudioValue(mDelayOffset2);
 }
 
 //-------------------------------------------------------------------------

@@ -111,14 +111,14 @@ TransverbDSP::TransverbDSP(DfxPlugin& inDfxPlugin)
     MAXBUF(static_cast<int>(getparametermax_f(kBsize) * 0.001 * getsamplerate())),
     firCoefficientsWindow(dfx::FIRFilter::generateKaiserWindow(kNumFIRTaps, 60.0f)) {
 
-  registerSmoothedAudioValue(&drymix);
+  registerSmoothedAudioValue(drymix);
 
   for (auto& head : heads) {
     head.buf.assign(MAXBUF, 0.f);
     head.filter.setSampleRate(getsamplerate());
-    registerSmoothedAudioValue(&head.speed);
-    registerSmoothedAudioValue(&head.mix);
-    registerSmoothedAudioValue(&head.feed);
+    registerSmoothedAudioValue(head.speed);
+    registerSmoothedAudioValue(head.mix);
+    registerSmoothedAudioValue(head.feed);
   }
 }
 

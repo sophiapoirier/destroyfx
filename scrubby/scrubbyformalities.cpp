@@ -121,8 +121,8 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	addchannelconfig(kChannelConfig_AnyMatchedIO);  // N-in/N-out
 	addchannelconfig(1, kChannelConfigCount_Any);  // 1-in/N-out
 
-	registerSmoothedAudioValue(&mInputGain);
-	registerSmoothedAudioValue(&mOutputGain);
+	registerSmoothedAudioValue(mInputGain);
+	registerSmoothedAudioValue(mOutputGain);
 
 	mCurrentTempoBPS = getparameter_f(kTempo) / 60.0;
 }

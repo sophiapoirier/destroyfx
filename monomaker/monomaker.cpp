@@ -81,16 +81,16 @@ The -3 dB setting uses a constant power curve based on sin/cos, while other two 
 	addchannelconfig(2, 2);  // 2-in/2-out
 	addchannelconfig(1, 2);  // 1-in/2-out
 
-	registerSmoothedAudioValue(&mInputSelection_left2left);
-	registerSmoothedAudioValue(&mInputSelection_left2right);
-	registerSmoothedAudioValue(&mInputSelection_right2left);
-	registerSmoothedAudioValue(&mInputSelection_right2right);
-	registerSmoothedAudioValue(&mMonomerge_main);
-	registerSmoothedAudioValue(&mMonomerge_other);
-	registerSmoothedAudioValue(&mPan_left1);
-	registerSmoothedAudioValue(&mPan_left2);
-	registerSmoothedAudioValue(&mPan_right1);
-	registerSmoothedAudioValue(&mPan_right2);
+	registerSmoothedAudioValue(mInputSelection_left2left);
+	registerSmoothedAudioValue(mInputSelection_left2right);
+	registerSmoothedAudioValue(mInputSelection_right2left);
+	registerSmoothedAudioValue(mInputSelection_right2right);
+	registerSmoothedAudioValue(mMonomerge_main);
+	registerSmoothedAudioValue(mMonomerge_other);
+	registerSmoothedAudioValue(mPan_left1);
+	registerSmoothedAudioValue(mPan_left2);
+	registerSmoothedAudioValue(mPan_right1);
+	registerSmoothedAudioValue(mPan_right2);
 }
 
 //-----------------------------------------------------------------------------------------

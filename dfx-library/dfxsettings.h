@@ -129,7 +129,7 @@ public:
 #endif
 
 
-	DfxSettings(uint32_t inMagic, DfxPlugin* inPlugin, size_t inSizeofExtendedData);
+	DfxSettings(uint32_t inMagic, DfxPlugin& inPlugin, size_t inSizeofExtendedData);
 
 
 	// - - - - - - - - - plugin API glue methods - - - - - - - - -
@@ -400,7 +400,7 @@ private:
 #endif // TARGET_PLUGIN_USES_MIDI
 
 
-	DfxPlugin* const mPlugin;
+	DfxPlugin& mPlugin;
 	size_t const mNumParameters, mNumPresets;
 
 	// size of one preset (preset name + all parameter values)

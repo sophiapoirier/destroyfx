@@ -96,8 +96,8 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setpresetname(0, "self-determined");  // default preset name
 	initPresets();
 
-	registerSmoothedAudioValue(&mInputGain);
-	registerSmoothedAudioValue(&mOutputGain);
+	registerSmoothedAudioValue(mInputGain);
+	registerSmoothedAudioValue(mOutputGain);
 
 	updateViewDataCache();
 }

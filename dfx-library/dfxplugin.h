@@ -252,7 +252,7 @@ public:
 	// ***
 	// do the audio processing (override with real stuff)
 	// pass in arrays of float buffers for input and output ([channel][sample]), 
-	// 
+	// TODO C++23: std::mdspan<float> 
 	virtual void processaudio(float const* const* inStreams, float* const* outStreams, size_t inNumFrames) {}
 
 	auto getnumparameters() const noexcept
@@ -562,9 +562,8 @@ public:
 	// Register a smoothed value with the given owner. Values can be updated en masse
 	// by incrementSmoothedAudioValues, and are automatically snapped to their target values
 	// after a reset.
-	void registerSmoothedAudioValue(dfx::ISmoothedValue* smoothedValue, DfxPluginCore* owner = nullptr);
-	// Here, nullptr means "the ones with owner == nullptr".
-	void unregisterAllSmoothedAudioValues(DfxPluginCore* owner);
+	void registerSmoothedAudioValue(dfx::ISmoothedValue& smoothedValue, DfxPluginCore* owner = nullptr);
+	void unregisterAllSmoothedAudioValues(DfxPluginCore& owner);
 	// Here, nullptr means "all of them".
 	void incrementSmoothedAudioValues(DfxPluginCore* owner = nullptr);
 	std::optional<double> getSmoothedAudioValueTime() const;
@@ -856,7 +855,7 @@ private:
 	std::atomic_flag mTailSizeChangeHasPosted;
 	bool mInPlaceAudioProcessingAllowed = true;
 	bool mAudioIsRendering = false;
-	std::vector<std::pair<dfx::ISmoothedValue*, DfxPluginCore*>> mSmoothedAudioValues;
+	std::vector<std::pair<dfx::ISmoothedValue&, DfxPluginCore*>> mSmoothedAudioValues;
 	bool mIsFirstRenderSinceReset = false;
 	std::thread::id mAudioRenderThreadID {};
 
@@ -1124,7 +1123,7 @@ public:
 
 	virtual ~DfxPluginCore()
 	{
-		mDfxPlugin.unregisterAllSmoothedAudioValues(this);
+		mDfxPlugin.unregisterAllSmoothedAudioValues(*this);
 	}
 
 	DfxPluginCore(DfxPluginCore const&) = delete;
@@ -1216,10 +1215,9 @@ public:
 	{
 		return mDfxPlugin.getparameterchanged(inParameterID);
 	}
-	void registerSmoothedAudioValue(dfx::ISmoothedValue* smoothedValue)
+	void registerSmoothedAudioValue(dfx::ISmoothedValue& smoothedValue)
 	{
 		mDfxPlugin.registerSmoothedAudioValue(smoothedValue, this);
-		smoothedValue->setSampleRate(getsamplerate());
 	}
 	void incrementSmoothedAudioValues()
 	{

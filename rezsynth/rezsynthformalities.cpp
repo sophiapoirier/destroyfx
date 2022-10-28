@@ -94,26 +94,26 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	setpresetname(0, "feminist synth");  // default preset name
 
-	registerSmoothedAudioValue(&mOutputGain);
-	registerSmoothedAudioValue(&mBetweenGain);
-	registerSmoothedAudioValue(&mDryGain);
-	registerSmoothedAudioValue(&mWetGain);
-	std::for_each(mAmpEvener.begin(), mAmpEvener.end(), [this](auto& value){ registerSmoothedAudioValue(&value); });
+	registerSmoothedAudioValue(mOutputGain);
+	registerSmoothedAudioValue(mBetweenGain);
+	registerSmoothedAudioValue(mDryGain);
+	registerSmoothedAudioValue(mWetGain);
+	std::for_each(mAmpEvener.begin(), mAmpEvener.end(), [this](auto& value){ registerSmoothedAudioValue(value); });
 
 	for (size_t noteIndex = 0; noteIndex < mBaseFreq.size(); noteIndex++)
 	{
-		registerSmoothedAudioValue(&(mBaseFreq[noteIndex]));
+		registerSmoothedAudioValue(mBaseFreq[noteIndex]);
 		auto const noteToQuery = (static_cast<int>(noteIndex) == DfxMidi::kLegatoVoiceNoteIndex) ? (DfxMidi::kNumNotes / 2) : static_cast<int>(noteIndex);
 		mBaseFreq[noteIndex].setValueNow(getmidistate().getNoteFrequency(noteToQuery));
 
 		std::for_each(mBandCenterFreq[noteIndex].begin(), mBandCenterFreq[noteIndex].end(), [this, noteIndex](auto& value)
 		{
-			registerSmoothedAudioValue(&value);
+			registerSmoothedAudioValue(value);
 			value.setValueNow(mBaseFreq[noteIndex].getValue());
 		});
 		std::for_each(mBandBandwidth[noteIndex].begin(), mBandBandwidth[noteIndex].end(), [this, noteIndex](auto& value)
 		{
-			registerSmoothedAudioValue(&value);
+			registerSmoothedAudioValue(value);
 			value.setValueNow(getBandwidthForFreq(mBaseFreq[noteIndex].getValue()));
 		});
 	}

@@ -53,17 +53,15 @@ Welcome to our settings persistence mess.
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------
-DfxSettings::DfxSettings(uint32_t inMagic, DfxPlugin* inPlugin, size_t inSizeofExtendedData)
+DfxSettings::DfxSettings(uint32_t inMagic, DfxPlugin& inPlugin, size_t inSizeofExtendedData)
 :	mPlugin(inPlugin),
 	// TODO C++23: integer literal suffix UZ
-	mNumParameters(std::max(inPlugin->getnumparameters(), size_t(1))),	// we need at least one parameter
-	mNumPresets(std::max(inPlugin->getnumpresets(), size_t(1))),	// we need at least one set of parameters
+	mNumParameters(std::max(inPlugin.getnumparameters(), size_t(1))),	// we need at least one parameter
+	mNumPresets(std::max(inPlugin.getnumpresets(), size_t(1))),	// we need at least one set of parameters
 	mSizeOfExtendedData(inSizeofExtendedData),
 	mParameterIDMap(mNumParameters, dfx::kParameterID_Invalid),
 	mParameterAssignments(mNumParameters)
 {
-	assert(inPlugin);
-
 	// default to each parameter having its ID equal its index
 	std::iota(mParameterIDMap.begin(), mParameterIDMap.end(), 0);
 
@@ -83,7 +81,7 @@ DfxSettings::DfxSettings(uint32_t inMagic, DfxPlugin* inPlugin, size_t inSizeofE
 
 	// set all of the header infos
 	mSettingsInfo.mMagic = inMagic;
-	mSettingsInfo.mVersion = mPlugin->getpluginversion();
+	mSettingsInfo.mVersion = mPlugin.getpluginversion();
 	mSettingsInfo.mLowestLoadableVersion = 0;
 	mSettingsInfo.mStoredHeaderSize = sizeof(SettingsInfo);
 	mSettingsInfo.mNumStoredParameters = mNumParameters;
@@ -94,7 +92,7 @@ DfxSettings::DfxSettings(uint32_t inMagic, DfxPlugin* inPlugin, size_t inSizeofE
 	clearAssignments();  // initialize all of the parameters to have no MIDI event assignments
 
 	// allow for further constructor stuff, if necessary
-	mPlugin->settings_init();
+	mPlugin.settings_init();
 }
 
 
@@ -136,10 +134,10 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 	// store only one preset setting if inIsPreset is true
 	if (inIsPreset)
 	{
-		dfx::StrLCpy(firstSharedPreset->mName, mPlugin->getpresetname(mPlugin->getcurrentpresetnum()), std::size(firstSharedPreset->mName));
+		dfx::StrLCpy(firstSharedPreset->mName, mPlugin.getpresetname(mPlugin.getcurrentpresetnum()), std::size(firstSharedPreset->mName));
 		for (dfx::ParameterID i = 0; i < mNumParameters; i++)
 		{
-			firstSharedPreset->mParameterValues[i] = mPlugin->getparameter_f(i);
+			firstSharedPreset->mParameterValues[i] = mPlugin.getparameter_f(i);
 		}
 	}
 	// otherwise store the entire bank of presets and the MIDI event assignments
@@ -149,11 +147,11 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 		for (size_t j = 0; j < mNumPresets; j++)
 		{
 			// copy the preset name to the chunk
-			dfx::StrLCpy(tempSharedPresets->mName, mPlugin->getpresetname(j), std::size(tempSharedPresets->mName));
+			dfx::StrLCpy(tempSharedPresets->mName, mPlugin.getpresetname(j), std::size(tempSharedPresets->mName));
 			// copy all of the parameters for this preset to the chunk
 			for (dfx::ParameterID i = 0; i < mNumParameters; i++)
 			{
-				tempSharedPresets->mParameterValues[i] = mPlugin->getpresetparameter_f(j, i);
+				tempSharedPresets->mParameterValues[i] = mPlugin.getpresetparameter_f(j, i);
 			}
 			// point to the next preset in the data array for the host
 			tempSharedPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(tempSharedPresets) + mSizeOfPreset);
@@ -170,7 +168,7 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 	// allow for the storage of extra data
 	if (mSizeOfExtendedData > 0)
 	{
-		mPlugin->settings_saveExtendedData(data.data() + data.size() - mSizeOfExtendedData, inIsPreset);
+		mPlugin.settings_saveExtendedData(data.data() + data.size() - mSizeOfExtendedData, inIsPreset);
 	}
 
 	return data;
@@ -345,7 +343,7 @@ try
 		// we are restoring the last user state
 		#ifndef TARGET_API_AUDIOUNIT
 		// copy the preset name from the chunk
-		mPlugin->setpresetname(mPlugin->getcurrentpresetnum(), getPresetNameWithFallback(*newPreset));
+		mPlugin.setpresetname(mPlugin.getcurrentpresetnum(), getPresetNameWithFallback(*newPreset));
 		#endif
 	#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 		// back up the pointer to account for shorter preset names
@@ -364,15 +362,15 @@ try
 				// handle old-style generic VST 0.0 to 1.0 parameter values
 				if (oldVST)
 				{
-					mPlugin->setparameter_gen(i, newPreset->mParameterValues[mappedParameterID]);
+					mPlugin.setparameter_gen(i, newPreset->mParameterValues[mappedParameterID]);
 				}
 				else
 			#endif
 				{
-					mPlugin->setparameter_f(i, newPreset->mParameterValues[mappedParameterID]);
+					mPlugin.setparameter_f(i, newPreset->mParameterValues[mappedParameterID]);
 				}
 				// allow for additional tweaking of the stored parameter setting
-				mPlugin->settings_doChunkRestoreSetParameterStuff(i, newPreset->mParameterValues[mappedParameterID], newSettingsInfo->mVersion, {});
+				mPlugin.settings_doChunkRestoreSetParameterStuff(i, newPreset->mParameterValues[mappedParameterID], newSettingsInfo->mVersion, {});
 			}
 		}
 		// point past the preset
@@ -386,7 +384,7 @@ try
 		for (size_t j = 0; j < copyPresets; j++)
 		{
 			// copy the preset name from the chunk
-			mPlugin->setpresetname(j, getPresetNameWithFallback(*newPreset));
+			mPlugin.setpresetname(j, getPresetNameWithFallback(*newPreset));
 		#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 			// back up the pointer to account for shorter preset names
 			if (oldVST)
@@ -404,15 +402,15 @@ try
 					// handle old-style generic VST 0.0 to 1.0 parameter values
 					if (oldVST)
 					{
-						mPlugin->setpresetparameter_gen(j, i, newPreset->mParameterValues[mappedParameterID]);
+						mPlugin.setpresetparameter_gen(j, i, newPreset->mParameterValues[mappedParameterID]);
 					}
 					else
 				#endif
 					{
-						mPlugin->setpresetparameter_f(j, i, newPreset->mParameterValues[mappedParameterID]);
+						mPlugin.setpresetparameter_f(j, i, newPreset->mParameterValues[mappedParameterID]);
 					}
 					// allow for additional tweaking of the stored parameter setting
-					mPlugin->settings_doChunkRestoreSetParameterStuff(i, newPreset->mParameterValues[mappedParameterID], newSettingsInfo->mVersion, j);
+					mPlugin.settings_doChunkRestoreSetParameterStuff(i, newPreset->mParameterValues[mappedParameterID], newSettingsInfo->mVersion, j);
 				}
 			}
 			// point to the next preset in the received data array
@@ -453,7 +451,7 @@ if (!(oldVST && inIsPreset))
 	{
 		auto const newExtendedData = newParameterAssignments + sizeOfStoredParameterAssignments;
 		validateRange(newExtendedData, storedExtendedDataSize, "extended data");
-		mPlugin->settings_restoreExtendedData(newExtendedData, storedExtendedDataSize, newSettingsInfo->mVersion, inIsPreset);
+		mPlugin.settings_restoreExtendedData(newExtendedData, storedExtendedDataSize, newSettingsInfo->mVersion, inIsPreset);
 	}
 
 	return true;
@@ -968,9 +966,9 @@ void DfxSettings::handleMidi_assignParameter(dfx::MidiEventType inEventType, int
 						mLearnerEventBehaviorFlags, mLearnerDataInt1, mLearnerDataInt2, 
 						mLearnerDataFloat1, mLearnerDataFloat2);
 		// this is an invitation to do something more, if necessary
-		mPlugin->settings_doLearningAssignStuff(mLearner, inEventType, inMidiChannel, eventNum, 
-												inOffsetFrames, eventNum2, mLearnerEventBehaviorFlags, 
-												mLearnerDataInt1, mLearnerDataInt2, mLearnerDataFloat1, mLearnerDataFloat2);
+		mPlugin.settings_doLearningAssignStuff(mLearner, inEventType, inMidiChannel, eventNum, 
+											   inOffsetFrames, eventNum2, mLearnerEventBehaviorFlags, 
+											   mLearnerDataInt1, mLearnerDataInt2, mLearnerDataFloat1, mLearnerDataFloat2);
 		// and then deactivate the current learner, the learning is complete
 		setLearner(dfx::kParameterID_Invalid);
 		if (getDeactivateLearningUponLearnt())
@@ -1098,7 +1096,7 @@ void DfxSettings::handleMidi_automateParameters(dfx::MidiEventType inEventType, 
 					maxSteps = numSteps;
 				}
 				// get the current state of the parameter
-				auto currentStep = static_cast<int>(mPlugin->getparameter_gen(parameterID) * (static_cast<float>(numSteps) - 0.01f));
+				auto currentStep = static_cast<int>(mPlugin.getparameter_gen(parameterID) * (static_cast<float>(numSteps) - 0.01f));
 				// cycle to the next state, wraparound if necessary (using maxSteps)
 				currentStep = (currentStep + 1) % maxSteps;
 				// get the 0.0 to 1.0 parameter value version of that state
@@ -1144,10 +1142,10 @@ void DfxSettings::handleMidi_automateParameters(dfx::MidiEventType inEventType, 
 		}
 
 		// automate the parameter with the value if we've reached this point
-		mPlugin->setparameter_gen(parameterID, valueNormalized);
-		mPlugin->postupdate_parameter(parameterID);  // notify listeners of internal parameter change
+		mPlugin.setparameter_gen(parameterID, valueNormalized);
+		mPlugin.postupdate_parameter(parameterID);  // notify listeners of internal parameter change
 		// this is an invitation to do something more, if necessary
-		mPlugin->settings_doMidiAutomatedSetParameterStuff(parameterID, valueNormalized, inOffsetFrames);
+		mPlugin.settings_doMidiAutomatedSetParameterStuff(parameterID, valueNormalized, inOffsetFrames);
 
 	}  // end of parameters loop (for automation)
 }
@@ -1286,7 +1284,7 @@ void DfxSettings::setLearning(bool inLearnMode)
 
 	mMidiLearn = inLearnMode;
 
-	mPlugin->postupdate_midilearn();
+	mPlugin.postupdate_midilearn();
 }
 
 //-----------------------------------------------------------------------------
@@ -1326,7 +1324,7 @@ void DfxSettings::setLearner(dfx::ParameterID inParameterID, dfx::MidiEventBehav
 		}
 	}
 
-	mPlugin->postupdate_midilearner();
+	mPlugin.postupdate_midilearner();
 }
 
 //-----------------------------------------------------------------------------
@@ -1456,7 +1454,7 @@ DfxSettings::CrisisError DfxSettings::handleCrisis(CrisisReasonFlags inFlags)
 			return CrisisError::QuitError;
 
 		case CrisisBehavior::LoadButComplain:
-			mPlugin->settings_crisisAlert(inFlags);
+			mPlugin.settings_crisisAlert(inFlags);
 			return CrisisError::ComplainError;
 
 		case CrisisBehavior::CrashTheHostApplication:
@@ -1501,7 +1499,7 @@ void DfxSettings::debugAlertCorruptData(char const* inDataItemName, size_t inDat
 	if (message)
 	{
 #ifdef TARGET_API_AUDIOUNIT
-		auto const iconURL = dfx::MakeUniqueCFType(mPlugin->CopyIconLocation());
+		auto const iconURL = dfx::MakeUniqueCFType(mPlugin.CopyIconLocation());
 #else
 		dfx::UniqueCFType<CFURLRef> const iconURL;
 #endif

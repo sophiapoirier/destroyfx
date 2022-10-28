@@ -45,7 +45,7 @@ Polarizer::Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 PolarizerDSP::PolarizerDSP(DfxPlugin& inDfxPlugin)
 :	DfxPluginCore(inDfxPlugin)
 {
-	registerSmoothedAudioValue(&mPolarizedAmp);
+	registerSmoothedAudioValue(mPolarizedAmp);
 }
 
 //-----------------------------------------------------------------------------------------
