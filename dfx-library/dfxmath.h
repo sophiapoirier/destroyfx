@@ -34,6 +34,7 @@ This is our math and numerics shit.
 #include <limits>
 #include <random>
 #include <span>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 

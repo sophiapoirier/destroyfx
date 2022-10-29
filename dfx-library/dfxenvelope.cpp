@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2010-2021  Sophia Poirier
+Copyright (C) 2010-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ---------------------------------------------------------------*/
 
 
@@ -27,6 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <tuple>
 
 #include "dfxmath.h"
 #include "dfxparameter.h"

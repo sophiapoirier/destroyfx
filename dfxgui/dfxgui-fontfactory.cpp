@@ -28,6 +28,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <mutex>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "dfx-base.h"

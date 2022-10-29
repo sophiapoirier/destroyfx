@@ -30,8 +30,9 @@ Welcome to our Infinite Impulse Response filter.
 #include <array>
 #include <cassert>
 #include <span>
-#include <vector>
+#include <tuple>
 #include <utility>
+#include <vector>
 
 #include "dfxmath.h"
 
