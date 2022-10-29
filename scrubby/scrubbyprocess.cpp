@@ -29,6 +29,22 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "dfxmath.h"
 
 
+//-----------------------------------------------------------------------------
+// computes the principle branch of the Lambert W function
+// { LambertW(x) = W(x), where W(x) * exp(W(x)) = x }
+inline double LambertW(double inValue)
+{
+	auto const x = std::fabs(inValue);
+	if (x <= 500.)
+	{
+		return 0.665 * (1. + (0.0195 * std::log(x + 1.))) * std::log(x + 1.) + 0.04;
+	}
+	else
+	{
+		return std::log(x - 4.) - ((1. - 1. / std::log(x)) * log(std::log(x)));
+	}
+}
+
 //-----------------------------------------------------------------------------------------
 inline double calculateTargetSpeed(double a, double n, double k)
 {
@@ -37,7 +53,7 @@ inline double calculateTargetSpeed(double a, double n, double k)
 	k = std::fabs(k);
 
 	double const lambertInput = (n * a) / k;
-	double b = k * dfx::math::LambertW(lambertInput) / n;  // the target speed
+	double b = k * LambertW(lambertInput) / n;  // the target speed
 	// cuz I don't totally trust my Lambert W function...
 	if (!std::isfinite(b))
 	{
@@ -53,20 +69,20 @@ inline double calculateTargetSpeed(double a, double n, double k)
 	}
 
 /*
-	float inc = 0.0f;
-	float testk = k * 2.0f;
+	double inc = 0.;
+	double testk = k * 2.;
 	b = a;
 	// b is less than a, guess downwards
 	if (k < (n * a))
 	{
-		inc = 0.5f;
+		inc = 0.5;
 	}
 	// b is larger than a, guess upwards
 	else
 	{
-		inc = 2.0f;
+		inc = 2.;
 	}
-	while (std::fabs((testk / k) - 1.0f) > 0.01f)
+	while (std::fabs((testk / k) - 1.) > 0.01)
 //	while (testk != k)
 	for (int i = 0; i < 90; i++)
 	{

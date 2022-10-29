@@ -316,26 +316,26 @@ struct PCGRandomEngine
 {
 	using result_type = uint32_t;
 
-	static constexpr uint32_t min() { return 0U; }
-	static constexpr uint32_t max() { return std::numeric_limits<uint32_t>::max(); }
-	explicit PCGRandomEngine(uint32_t s = 0x333777) : state(s + INCREMENT) {}
-	void seed(uint32_t s) { state = s + INCREMENT; }
-	uint32_t operator() ()
+	static constexpr result_type min() { return 0U; }
+	static constexpr result_type max() { return std::numeric_limits<result_type>::max(); }
+	explicit PCGRandomEngine(result_type s = 0x333777) : state(s + INCREMENT) {}
+	void seed(result_type s) { state = s + INCREMENT; }
+	result_type operator() ()
 	{
 		uint64_t x = state;
 		const unsigned count = static_cast<unsigned>(x >> 59);
 		state = x * MULTIPLIER + INCREMENT;
 		x ^= x >> 18;
-		return rotr32(static_cast<uint32_t>(x >> 27), count);
+		return rotr32(static_cast<result_type>(x >> 27), count);
 	}
 	void discard(unsigned long long z)
 	{
 		// Just run operator() z times.
-		while (z--) std::ignore = (*this)();
+		while (z--) { std::ignore = (*this)(); }
 	}
 
 private:
-	static constexpr uint32_t rotr32(uint32_t x, unsigned r) {
+	static constexpr result_type rotr32(result_type x, unsigned r) {
 		return x >> r | x << (-r & 31);
 	}
 	uint64_t state = 0U;
@@ -358,6 +358,11 @@ public:
 	// XXX since next() is templated, it's a bit suspicious
 	// that this is a specific type. But if any choice makes
 	// sense, it's the underlying type of the engine....
+	// reason: I think that it is the job of the random
+	// number distribution to map the engine's raw numerical
+	// output type to next's template type.
+	// that said: How can a 64-bit integral distribution do
+	// a good job fed with 32-bit engine values?
 	using result_type = EngineType::result_type;
 
 	explicit RandomEngine(RandomSeed inSeedType)
@@ -396,14 +401,14 @@ public:
 	}
 
 private:
-	static EngineType::result_type getSeed(RandomSeed inSeedType)
+	static result_type getSeed(RandomSeed inSeedType)
 	{
 		switch (inSeedType)
 		{
 			case RandomSeed::Static:
 				return 1729;
 			case RandomSeed::Monotonic:
-				return static_cast<EngineType::result_type>(std::chrono::steady_clock::now().time_since_epoch().count());
+				return static_cast<result_type>(std::chrono::steady_clock::now().time_since_epoch().count());
 			case RandomSeed::Entropic:
 				return std::random_device()();
 			default:
