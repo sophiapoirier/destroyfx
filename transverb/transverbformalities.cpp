@@ -490,8 +490,7 @@ void Transverb::randomizeparameters()
 	setparameter_b(kTomsound, newTomsound);
 	if (newTomsound)
 	{
-		// split probability evenly between lowest and higher qualities
-		setparameter_i(kQuality, generateParameterRandomValue<int64_t>(0, kQualityMode_NumModes) % kQualityMode_NumModes);
+		randomizeparameter(kQuality);
 	}
 	else
 	{
