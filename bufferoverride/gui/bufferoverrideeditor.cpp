@@ -259,7 +259,9 @@ DFX_EDITOR_ENTRY(BufferOverrideEditor)
 BufferOverrideEditor::BufferOverrideEditor(DGEditorListenerInstance inInstance)
 :	DfxGuiEditor(inInstance)
 {
+#if DEBUG
 	rect.bottom += 64;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -425,7 +427,7 @@ void BufferOverrideEditor::OpenEditor()
 	getFrame()->addView(mDataView = new BufferOverrideView(pos));
 
 
-#if 1
+#if DEBUG
 	auto const appendixY = kHelpDisplayY + (kHelpDisplayHeight * mHelpDisplays.size()) + kHelpDisplayLineSpacing;
 	constexpr int spacingX = 64;
 	auto const valueFont = CreateVstGuiFont(kValueDisplayFontSize, kValueDisplayFont);
@@ -448,16 +450,17 @@ void BufferOverrideEditor::OpenEditor()
 		CLASS_METHODS(BOOptionMenu, VSTGUI::COptionMenu)
 	};
 	pos.set(pos.right + spacingX, appendixY, 160, 32);
-	auto const decayTypeMenu = emplaceControl<BOOptionMenu>(this, kDecayType, pos);
-	decayTypeMenu->setFont(valueFont);
-	for (int64_t stringIndex = 0; stringIndex <= GetParameter_maxValue(kDecayType); stringIndex++)
+	auto const decayModeMenu = emplaceControl<BOOptionMenu>(this, kDecayMode, pos);
+	decayModeMenu->setFont(valueFont);
+	for (int64_t stringIndex = 0; stringIndex <= GetParameter_maxValue(kDecayMode); stringIndex++)
 	{
-		auto const valueString = getparametervaluestring(kDecayType, stringIndex);
+		auto const valueString = getparametervaluestring(kDecayMode, stringIndex);
 		assert(valueString);
-		decayTypeMenu->addEntry(valueString->c_str());
+		decayModeMenu->addEntry(valueString->c_str());
 	}
-	decayTypeMenu->setValue(getparameter_i(kDecayType));
+	decayModeMenu->setValue(getparameter_i(kDecayMode));
 
+#if 0
 	class BOTextButton : public DGControl<VSTGUI::CTextButton>
 	{
 	public:
@@ -466,8 +469,20 @@ void BufferOverrideEditor::OpenEditor()
 		CLASS_METHODS(BOTextButton, VSTGUI::CTextButton)
 	};
 	pos.set(pos.right + spacingX, appendixY, 110, 32);
-	emplaceControl<BOTextButton>(this, kDecayRandomize, pos, "randomize", VSTGUI::CTextButton::kOnOffStyle)->setFont(valueFont);
+	emplaceControl<BOTextButton>(this, kDecayShape, pos, "shape", VSTGUI::CTextButton::kOnOffStyle)->setFont(valueFont);
+#else
+	pos.set(pos.right + spacingX, appendixY, 93, 32);
+	auto const decayShapeMenu = emplaceControl<BOOptionMenu>(this, kDecayShape, pos);
+	decayShapeMenu->setFont(valueFont);
+	for (int64_t stringIndex = 0; stringIndex <= GetParameter_maxValue(kDecayShape); stringIndex++)
+	{
+		auto const valueString = getparametervaluestring(kDecayShape, stringIndex);
+		assert(valueString);
+		decayShapeMenu->addEntry(valueString->c_str());
+	}
+	decayShapeMenu->setValue(getparameter_i(kDecayShape));
 #endif
+#endif  // buffer decay controls
 
 
 	HandleTempoSyncChange();
@@ -524,7 +539,7 @@ void BufferOverrideEditor::parameterChanged(dfx::ParameterID inParameterID)
 			HandleTempoAutoChange();
 			break;
 		case kDecayDepth:
-		case kDecayRandomize:
+		case kDecayShape:
 			if (mDataView)
 			{
 				mDataView->invalid();

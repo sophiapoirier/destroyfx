@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #pragma once
 
 #include <atomic>
+#include <cassert>
 #include <cmath>
 #include <type_traits>
 
@@ -62,8 +63,8 @@ enum : dfx::ParameterID
 	kTempoAuto,
 
 	kDecayDepth,
-	kDecayType,
-	kDecayRandomize,
+	kDecayMode,
+	kDecayShape,
 
 	kNumParameters
 };
@@ -77,12 +78,21 @@ enum
 
 enum
 {
-	kDecayType_Gain,
-	kDecayType_Lowpass,
-	kDecayType_Highpass,
-	kDecayType_LP_HP_PingPong,
-	kDecayTypeCount
+	kDecayMode_Gain,
+	kDecayMode_Lowpass,
+	kDecayMode_Highpass,
+	kDecayMode_LP_HP_Alternating,
+	kDecayModeCount
 };
+
+enum
+{
+	kDecayShape_Ramp,
+	kDecayShape_Oscillate,
+	kDecayShape_Random,
+	kDecayShapeCount
+};
+using DecayShape = int;
 
 enum : dfx::PropertyID
 {
@@ -129,21 +139,33 @@ struct CompositeT
 using AtomicBufferOverrideViewData = std::conditional_t<detail::UnifiedT::is_always_lock_free, detail::UnifiedT, detail::CompositeT>;
 
 template <typename T>
-T GetBufferDecay(T normalizedPosition, T depth, bool randomize, dfx::math::RandomEngine& randomEngine)
+T GetBufferDecay(T normalizedPosition, T depth, DecayShape shape, dfx::math::RandomEngine& randomEngine)
 {
 	static_assert(std::is_floating_point_v<T>);
 	constexpr T maxValue = 1;
+	assert(normalizedPosition >= T(0));
+	assert(normalizedPosition <= maxValue);
 	auto const negativeDepth = std::signbit(depth);
-	if (randomize)
+	switch (shape)
 	{
-		// always maintain full level for the first minibuffer iteration
-		// (like accent on the downbeat) when depth is nonnegative
-		if (!negativeDepth && (normalizedPosition <= T(0)))
+		case kDecayShape_Ramp:
+			return std::lerp(maxValue - std::abs(depth), maxValue,
+							 negativeDepth ? normalizedPosition : (maxValue - normalizedPosition));
+		case kDecayShape_Oscillate:
 		{
-			return maxValue;
+			auto const oscillatingPosition = T(1) - std::fabs(T(1) - (normalizedPosition * T(2)));
+			return GetBufferDecay(oscillatingPosition, depth, kDecayShape_Ramp, randomEngine);
 		}
-		return randomEngine.next(maxValue - std::abs(depth), maxValue);
+		case kDecayShape_Random:
+			// always maintain full level for the first minibuffer iteration
+			// (like accent on the downbeat) when depth is nonnegative
+			if (!negativeDepth && (normalizedPosition <= T(0)))
+			{
+				return maxValue;
+			}
+			return randomEngine.next(maxValue - std::abs(depth), maxValue);
+		default:
+			assert(false);
+			return maxValue;
 	}
-	return std::lerp(maxValue - std::abs(depth), maxValue,
-					 negativeDepth ? normalizedPosition : (maxValue - normalizedPosition));
 }

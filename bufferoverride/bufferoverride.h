@@ -80,13 +80,13 @@ private:
 	bool mBufferTempoSync = false, mBufferInterrupt = false, mUseHostTempo = false;
 	float mSmoothPortion = 0.0f;
 	double mPitchBendRange = 0.0, mUserTempoBPM = 0.0;
-	long mMidiMode = 0;
+	long mMidiMode {};
 	bool mDivisorLFOTempoSync = false, mBufferLFOTempoSync = false;
 	double mDivisorLFORateHz = 0., mBufferLFORateHz = 0.;  // LFO rate (in Hz)
 	double mDivisorLFOTempoRate = 0., mBufferLFOTempoRate = 0.;  // LFO rate (in cycles per beat)
 	float mDecayDepth = 0.f;
-	long mDecayType = 0;
-	bool mDecayRandomize = false;
+	long mDecayMode {};
+	DecayShape mDecayShape {};
 
 	dfx::SmoothedValue<float> mInputGain, mOutputGain;  // the effective states of the dry/wet mix
 
@@ -99,7 +99,7 @@ private:
 	long mPrevMinibufferSize = 0;  // the previous size
 	long mReadPos = 0;  // the current sample position within the minibuffer
 
-	float mMinibufferDecay = 1.f, mPrevMinibufferDecay = 1.f;
+	float mMinibufferDecayGain = 1.f, mPrevMinibufferDecayGain = 1.f;
 	std::array<std::vector<dfx::IIRFilter>, 2> mDecayFilters;
 	std::span<dfx::IIRFilter> mCurrentDecayFilters, mPrevDecayFilters;
 	bool mDecayFilterIsLowpass = true;

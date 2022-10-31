@@ -164,7 +164,7 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
   const auto [forced_buffer, minibuffer, window_sec] =
     ScaleViewData(data, pixels_per_window);
   auto const decay_depth = editor->getparameter_f(kDecayDepth) * 0.01;
-  auto const decay_randomize = editor->getparameter_b(kDecayRandomize);
+  auto const decay_shape = editor->getparameter_i(kDecayShape);
 
   // draw 'major' boxes.
   const CCoord majorbox_width = std::max(pixels_per_window * forced_buffer,
@@ -199,7 +199,7 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
 
       const auto pos_normalized = (nxpos - xstart) / (xend - xstart);
       const auto decay = GetBufferDecay(pos_normalized, decay_depth,
-                                        decay_randomize, random_engine);
+                                        decay_shape, random_engine);
       const auto decayed_height = std::round(minorbox_height * decay);
       const auto ypos = MARGIN_TOP + 2 + (minorbox_height - decayed_height);
       DrawFilledBox(ixpos + inxpos, ypos,

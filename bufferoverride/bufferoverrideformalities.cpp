@@ -64,8 +64,8 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 57.0, 480.0, DfxParam::Unit::BPM);
 	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true);
 	initparameter_f(kDecayDepth, {"decay depth", "DecaDep", "DecDep", "DecD"}, 0., 0., -100., 100., DfxParam::Unit::Percent);
-	initparameter_list(kDecayType, {"decay type", "DecaTyp", "DecTyp", "DecT"}, kDecayType_Gain, kDecayType_Gain, kDecayTypeCount);
-	initparameter_b(kDecayRandomize, {"decay randomize", "DecaRnd", "DecRnd", "DecR"}, false);
+	initparameter_list(kDecayMode, {"decay mode", "DecaMod", "DecMod", "DecM"}, kDecayMode_Gain, kDecayMode_Gain, kDecayModeCount);
+	initparameter_list(kDecayShape, {"decay shape", "DecaShp", "DecShp", "DecS"}, kDecayShape_Ramp, kDecayShape_Ramp, kDecayShapeCount);
 
 	// set the value strings for the LFO shape parameters
 	for (dfx::LFO::Shape i = 0; i < dfx::LFO::kNumShapes; i++)
@@ -86,16 +86,20 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparametervaluestring(kMidiMode, kMidiMode_Nudge, "nudge");
 	setparametervaluestring(kMidiMode, kMidiMode_Trigger, "trigger");
 	// decay type value strings
-	setparametervaluestring(kDecayType, kDecayType_Gain, "gain");
-	setparametervaluestring(kDecayType, kDecayType_Lowpass, "low-pass");
-	setparametervaluestring(kDecayType, kDecayType_Highpass, "high-pass");
-	setparametervaluestring(kDecayType, kDecayType_LP_HP_PingPong, "LP/HP ping pong");
+	setparametervaluestring(kDecayMode, kDecayMode_Gain, "gain");
+	setparametervaluestring(kDecayMode, kDecayMode_Lowpass, "low-pass");
+	setparametervaluestring(kDecayMode, kDecayMode_Highpass, "high-pass");
+	setparametervaluestring(kDecayMode, kDecayMode_LP_HP_Alternating, "LP/HP ping pong");
+	// decay shape value strings
+	setparametervaluestring(kDecayShape, kDecayShape_Ramp, "ramp");
+	setparametervaluestring(kDecayShape, kDecayShape_Oscillate, "oscillate");
+	setparametervaluestring(kDecayShape, kDecayShape_Random, "random");
 
 	addparameterattributes(kMidiMode, DfxParam::kAttribute_OmitFromRandomizeAll);
 
 	addparametergroup("buffer divisor LFO", {kDivisorLFORate_Hz, kDivisorLFORate_Sync, kDivisorLFODepth, kDivisorLFOShape, kDivisorLFOTempoSync});
 	addparametergroup("forced buffer size LFO", {kBufferLFORate_Hz, kBufferLFORate_Sync, kBufferLFODepth, kBufferLFOShape, kBufferLFOTempoSync});
-	addparametergroup("buffer decay", {kDecayDepth, kDecayType, kDecayRandomize});
+	addparametergroup("buffer decay", {kDecayDepth, kDecayMode, kDecayShape});
 
 	settailsize_seconds(1.0 / (mTempoRateTable.getScalar(0) * kMinAllowableBPS));
 
@@ -159,7 +163,8 @@ void BufferOverride::reset()
 	mMinibufferSize = 1;
 	mPrevMinibufferSize = 0;
 	mSmoothCount = mSmoothDur = 0;
-	mMinibufferDecay = 1.f;
+	mMinibufferDecayGain = 1.f;
+	mPrevMinibufferDecayGain = 0.f;
 //	mSqrtFadeIn = mSqrtFadeOut = 1.0f;
 
 	mDivisorLFO.reset();
@@ -387,8 +392,8 @@ void BufferOverride::processparameters()
 	mUserTempoBPM = getparameter_f(kTempo);
 	mUseHostTempo = getparameter_b(kTempoAuto);
 	mDecayDepth = getparameter_scalar(kDecayDepth);
-	mDecayType = getparameter_i(kDecayType);
-	mDecayRandomize = getparameter_b(kDecayRandomize);
+	mDecayMode = getparameter_i(kDecayMode);
+	mDecayShape = getparameter_i(kDecayShape);
 
 	if (getparameterchanged(kDivisor))
 	{
