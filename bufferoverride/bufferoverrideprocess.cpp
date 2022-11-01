@@ -215,16 +215,14 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 	mPrevMinibufferDecayGain = mMinibufferDecayGain;
 	std::swap(mCurrentDecayFilters, mPrevDecayFilters);
 	std::for_each(mCurrentDecayFilters.begin(), mCurrentDecayFilters.end(), [](auto& filter){ filter.reset(); });
+	auto& firstFilter = mCurrentDecayFilters.front();
 
 	auto const positionNormalized = static_cast<float>(mWritePos) / static_cast<float>(mCurrentForcedBufferSize);
 	auto const decay = GetBufferDecay(positionNormalized, mDecayDepth, mDecayShape, mRandomEngine);
 	if (mDecayMode == kDecayMode_Gain)
 	{
 		mMinibufferDecayGain = decay * decay;
-		std::for_each(mCurrentDecayFilters.begin(), mCurrentDecayFilters.end(), [](auto& filter)
-		{
-			filter.setCoefficients(dfx::IIRFilter::kUnityCoeff);
-		});
+		firstFilter.setCoefficients(dfx::IIRFilter::kUnityCoeff);
 	}
 	else
 	{
@@ -247,28 +245,24 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 		constexpr float decayMax = 1.f;
 		if (decay >= decayMax)
 		{
-			std::for_each(mCurrentDecayFilters.begin(), mCurrentDecayFilters.end(), [](auto& filter)
-			{
-				filter.setCoefficients(dfx::IIRFilter::kUnityCoeff);
-			});
+			firstFilter.setCoefficients(dfx::IIRFilter::kUnityCoeff);
 		}
 		else if (mDecayFilterIsLowpass)
 		{
 			auto const cutoff = DfxParam::expand(decay, 40, 20'000., DfxParam::Curve::Log);
-			std::for_each(mCurrentDecayFilters.begin(), mCurrentDecayFilters.end(), [cutoff](auto& filter)
-			{
-				filter.setLowpassCoefficients(cutoff);
-			});
+			firstFilter.setLowpassCoefficients(cutoff);
 		}
 		else
 		{
 			auto const cutoff = DfxParam::expand(decayMax - decay, 20., 20'000., DfxParam::Curve::Log);
-			std::for_each(mCurrentDecayFilters.begin(), mCurrentDecayFilters.end(), [cutoff](auto& filter)
-			{
-				filter.setHighpassCoefficients(cutoff);
-			});
+			firstFilter.setHighpassCoefficients(cutoff);
 		}
 	}
+	auto const filterCoefficients = firstFilter.getCoefficients();
+	std::for_each(std::next(mCurrentDecayFilters.begin()), mCurrentDecayFilters.end(), [filterCoefficients](auto& filter)
+	{
+		filter.setCoefficients(filterCoefficients);
+	});
 
 	//-----------------------CALCULATE SMOOTHING DURATION-------------------------
 	if (doSmoothing)

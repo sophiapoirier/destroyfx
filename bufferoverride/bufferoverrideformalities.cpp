@@ -172,7 +172,11 @@ void BufferOverride::reset()
 
 	std::for_each(mDecayFilters.begin(), mDecayFilters.end(), [](auto& filters)
 	{
-		std::for_each(filters.begin(), filters.end(), [](auto& filter){ filter.reset(); });
+		std::for_each(filters.begin(), filters.end(), [](auto& filter)
+		{
+			filter.reset();
+			filter.setCoefficients(dfx::IIRFilter::kUnityCoeff);
+		});
 	});
 	mDecayFilterIsLowpass = true;
 
