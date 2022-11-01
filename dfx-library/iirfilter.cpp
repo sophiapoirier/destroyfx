@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 Welcome to our Infinite Impulse Response filter.
@@ -33,6 +33,7 @@ Welcome to our Infinite Impulse Response filter.
 #include <numeric>
 
 #include "dfxmath.h"
+#include "dfxparameter.h"
 
 
 //------------------------------------------------------------------------
@@ -232,6 +233,36 @@ void dfx::IIRFilter::setSampleRate(double inSampleRate)
 dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setLowpassCoefficients(double inCutoffFrequency)
 {
 	return setCoefficients(FilterType::Lowpass, inCutoffFrequency, kDefaultQ_LP_HP);
+}
+
+//------------------------------------------------------------------------
+dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setLowpassGateCoefficients(double inLevel)
+{
+	assert(inLevel >= 0.);
+	assert(inLevel <= 1.);
+
+	constexpr double minFreq = 20.;
+	constexpr double maxFreq = 20'000.;
+	auto const cutoffFreq = DfxParam::expand(inLevel, minFreq, maxFreq, DfxParam::Curve::Log);
+	auto const nyquist = mSampleRate * 0.5;
+	if (cutoffFreq >= std::min(nyquist, maxFreq))
+	{
+		return kUnityCoeff;
+	}
+
+	setLowpassCoefficients(cutoffFreq);
+
+	// level below which the low-pass gate begins gain-fading filter coefficients
+	constexpr double levelFadeOutThreshold = 0.1;
+	constexpr double levelFadeOutThresholdInverse = 1. / levelFadeOutThreshold;
+	if (inLevel < levelFadeOutThreshold)
+	{
+		auto const fadeGain = static_cast<float>(inLevel * levelFadeOutThresholdInverse);
+		mCoeff.mIn *= fadeGain;
+		mCoeff.mPrevIn *= fadeGain;
+		mCoeff.mPrevPrevIn *= fadeGain;
+	}
+	return mCoeff;
 }
 
 //------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2010-2021  Sophia Poirier
+Copyright (C) 2010-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ---------------------------------------------------------------*/
 
 #pragma once
@@ -87,8 +87,8 @@ private:
 	double calculateFall(size_t inPos, size_t inLength) const;
 	double calculateFall(double inPosNormalized) const;
 	double deriveAttackPosFromEnvValue(double inValue) const;
-	// maps the envelope amplitude returned by process to lowpass coefficients
-	[[nodiscard]] dfx::IIRFilter::Coefficients getLowpassGateCoefficients(double inAmplitude) const;
+	// maps the envelope gain level returned by process to lowpass coefficients
+	[[nodiscard]] dfx::IIRFilter::Coefficients getLowpassGateCoefficients(double inLevel) const;
 
 	double mAttackDur = 0.0, mDecayDur = 0.0, mSustainLevel = 1.0, mReleaseDur = 0.0;
 	CurveType mCurveType = kCurveType_Cubed;

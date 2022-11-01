@@ -249,8 +249,7 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 		}
 		else if (mDecayFilterIsLowpass)
 		{
-			auto const cutoff = DfxParam::expand(decay, 40, 20'000., DfxParam::Curve::Log);
-			firstFilter.setLowpassCoefficients(cutoff);
+			firstFilter.setLowpassGateCoefficients(decay);
 		}
 		else
 		{

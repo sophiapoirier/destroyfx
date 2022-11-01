@@ -81,6 +81,7 @@ public:
 	Coefficients const& setCoefficients(FilterType inFilterType, double inFrequency, double inQ, double inGain);
 	Coefficients const& setCoefficients(FilterType inFilterType, double inFrequency, double inQ);
 	Coefficients const& setLowpassCoefficients(double inCutoffFrequency);
+	Coefficients const& setLowpassGateCoefficients(double inLevel);
 	Coefficients const& setHighpassCoefficients(double inCutoffFrequency);
 	Coefficients const& setBandpassCoefficients(double inCenterFrequency, double inQ);
 	void copyCoefficients(IIRFilter const& inSourceFilter) noexcept;

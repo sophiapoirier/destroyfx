@@ -30,7 +30,6 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <tuple>
 
 #include "dfxmath.h"
-#include "dfxparameter.h"
 
 
 //-----------------------------------------------------------------------------
@@ -213,35 +212,14 @@ std::pair<dfx::IIRFilter::Coefficients, float> DfxEnvelope::processLowpassGate()
 		return 1.f;
 	}();
 
-	auto const envelopeAmplitude = process();
-	return {getLowpassGateCoefficients(envelopeAmplitude), postFilterGain};
+	auto const envelopeGainLevel = process();
+	return {getLowpassGateCoefficients(envelopeGainLevel), postFilterGain};
 }
 
 //-----------------------------------------------------------------------------
-dfx::IIRFilter::Coefficients DfxEnvelope::getLowpassGateCoefficients(double inAmplitude) const
+dfx::IIRFilter::Coefficients DfxEnvelope::getLowpassGateCoefficients(double inLevel) const
 {
-	constexpr double minFreq = 20.;
-	constexpr double maxFreq = 20'000.;
-	auto const cutoffFreq = DfxParam::expand(inAmplitude, minFreq, maxFreq, DfxParam::Curve::Log);
-	auto const nyquist = mSampleRate * 0.5;
-	if (cutoffFreq >= std::min(nyquist, maxFreq))
-	{
-		return dfx::IIRFilter::kUnityCoeff;
-	}
-
-	auto coeff = dfx::IIRFilter(mSampleRate).setLowpassCoefficients(cutoffFreq);
-
-	// envelope amplitude level below which the low-pass gate begins gain-fading filter coefficients
-	constexpr double amplitudeFadeThreshold = 0.1;
-	constexpr double amplitudeFadeThresholdInv = 1. / amplitudeFadeThreshold;
-	if (inAmplitude < amplitudeFadeThreshold)
-	{
-		auto const fadeAmp = static_cast<float>(inAmplitude * amplitudeFadeThresholdInv);
-		coeff.mIn *= fadeAmp;
-		coeff.mPrevIn *= fadeAmp;
-		coeff.mPrevPrevIn *= fadeAmp;
-	}
-	return coeff;
+	return dfx::IIRFilter(mSampleRate).setLowpassGateCoefficients(inLevel);
 }
 
 //-----------------------------------------------------------------------------
