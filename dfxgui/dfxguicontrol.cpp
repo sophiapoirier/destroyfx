@@ -69,5 +69,17 @@ void DGNullControl::draw(VSTGUI::CDrawContext* inContext)
 	{
 		image->draw(inContext, getViewSize());
 	}
+	else if (mBackgroundColor)
+	{
+		inContext->setDrawMode(VSTGUI::kAliasing);
+		inContext->setFillColor(*mBackgroundColor);
+		inContext->drawRect(getViewSize(), VSTGUI::kDrawFilled);
+	}
 	setDirty(false);
+}
+
+//-----------------------------------------------------------------------------
+void DGNullControl::setBackgroundColor(DGColor inColor)
+{
+	mBackgroundColor = inColor;
 }

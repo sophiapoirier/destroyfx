@@ -428,18 +428,25 @@ void BufferOverrideEditor::OpenEditor()
 
 
 #if DEBUG
+	auto const backgroundPixelAccess = VSTGUI::owned(VSTGUI::CBitmapPixelAccess::create(GetBackgroundImage()));
+	backgroundPixelAccess->setPosition(kDryWetMixSliderX, kDryWetMixSliderY);
+	DGColor backgroundColor;
+	backgroundPixelAccess->getColor(backgroundColor);
+	pos.set(0, GetHeight() - 64, GetWidth(), 64);
+	emplaceControl<DGNullControl>(this, pos)->setBackgroundColor(backgroundColor);
+
 	auto const appendixY = kHelpDisplayY + (kHelpDisplayHeight * mHelpDisplays.size()) + kHelpDisplayLineSpacing;
 	constexpr int spacingX = 64;
 	auto const valueFont = CreateVstGuiFont(kValueDisplayFontSize, kValueDisplayFont);
 
-	pos.set(16, appendixY, 90, dfx::kFontSize_Wetar16px * 2);
+	pos.set(16, appendixY, 88, dfx::kFontSize_Wetar16px * 2);
 	emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Left, dfx::kFontSize_Wetar16px * 2, DGColor::kBlack, dfx::kFontName_Wetar16px)->setText("DECAY");
 
 	pos.set(pos.right + spacingX, appendixY, kDryWetSliderWidth, kSliderHeight);
 	auto const decayDepthSlider = emplaceControl<DGSlider>(this, kDecayDepth, pos, dfx::kAxis_Horizontal, sliderHandleImage, GetBackgroundImage());
 	decayDepthSlider->setAlternateHandle(sliderHandleImage_glowing);
 	decayDepthSlider->setBackgroundOffset({kDryWetMixSliderX, kDryWetMixSliderY});
-	pos.set(pos.left + kDryWetMixDisplayX - kDryWetMixSliderX, appendixY + 24 + kVTextOffset, kLCDDisplayWidth, kLCDDisplayHeight);
+	pos.set(pos.left + kDryWetMixDisplayX - kDryWetMixSliderX, pos.top + 24 + kVTextOffset, kLCDDisplayWidth, kLCDDisplayHeight);
 	emplaceControl<DGTextDisplay>(this, kDecayDepth, pos, dryWetMixDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
 
 	class BOOptionMenu : public DGControl<VSTGUI::COptionMenu>

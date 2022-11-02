@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #pragma once
 
 
+#include <optional>
 #include <type_traits>
 #include <unordered_set>
 #include <vector>
@@ -268,5 +269,10 @@ public:
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
 
+	void setBackgroundColor(DGColor inColor);
+
 	CLASS_METHODS(DGNullControl, VSTGUI::CControl)
+
+private:
+	std::optional<DGColor> mBackgroundColor;
 };
