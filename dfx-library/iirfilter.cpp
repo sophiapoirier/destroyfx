@@ -70,6 +70,12 @@ struct PreCoeff
 //------------------------------------------------------------------------
 static dfx::IIRFilter::Coefficients CalculateCoefficients(dfx::IIRFilter::FilterType inFilterType, PreCoeff const& inPreCoeff)
 {
+#ifdef DFX_IIRFILTER_USE_OPTIMIZATION_FOR_EXCLUSIVELY_LP_HP_NOTCH
+	assert((inFilterType == dfx::IIRFilter::FilterType::Lowpass) ||
+		   (inFilterType == dfx::IIRFilter::FilterType::Highpass) ||
+		   (inFilterType == dfx::IIRFilter::FilterType::Notch));
+#endif
+
 	dfx::IIRFilter::Coefficients coeff;
 	double b0 {};
 

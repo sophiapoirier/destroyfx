@@ -91,132 +91,20 @@ public:
 	void reset() noexcept;
 
 
-	[[nodiscard]] float process(float inSample)
-	{
-		mPrevPrevOut = mPrevOut;
-		mPrevOut = mCurrentOut;
+	[[nodiscard]] float process(float inSample);
+	void processToCache(float inSample);
 
-#ifdef DFX_IIRFILTER_USE_OPTIMIZATION_FOR_EXCLUSIVELY_LP_HP_NOTCH  // one fewer multiplication
-		mCurrentOut = ((inSample + mPrevPrevIn) * mCoeff.mIn) + (mPrevIn * mCoeff.mPrevIn) 
-						- (mPrevOut * mCoeff.mPrevOut) - (mPrevPrevOut * mCoeff.mPrevPrevOut);
-#else
-		mCurrentOut = (inSample * mCoeff.mIn) + (mPrevIn * mCoeff.mPrevIn) + (mPrevPrevIn * mCoeff.mPrevPrevIn) 
-						- (mPrevOut * mCoeff.mPrevOut) - (mPrevPrevOut * mCoeff.mPrevPrevOut);
+#ifdef DFX_IIRFILTER_USE_OPTIMIZATION_FOR_EXCLUSIVELY_LP_HP_NOTCH
+	// pre-Hermite-specific functions
+	// there are four versions, three of which unroll for loops of two, three, and four iterations
+	void processToCacheH1(float inSample);
+	void processToCacheH2(std::span<float const> inAudio, size_t inPos);
+	void processToCacheH3(std::span<float const> inAudio, size_t inPos);
+	void processToCacheH4(std::span<float const> inAudio, size_t inPos);
 #endif
-		mCurrentOut = dfx::math::ClampDenormal(mCurrentOut);
-
-		mPrevPrevIn = mPrevIn;
-		mPrevIn = inSample;
-
-		return mCurrentOut;
-	}
-
-	void processToCache(float inSample)
-	{
-		// store four samples of history if we're preprocessing for Hermite interpolation
-		mPrevPrevPrevOut = mPrevPrevOut;
-		std::ignore = process(inSample);
-	}
-
-// start of pre-Hermite-specific functions
-// there are four versions, three of which unroll for loops of two, three, and four iterations
-
-	void processToCacheH1(float inSample)
-	{
-		mPrevPrevPrevOut = mPrevPrevOut;
-		mPrevPrevOut = mPrevOut;
-		mPrevOut = mCurrentOut;
-		//
-		// XXX this uses an optimization that only works for LP, HP, and notch filters
-		mCurrentOut = ((inSample + mPrevPrevIn) * mCoeff.mIn) + (mPrevIn * mCoeff.mPrevIn)
-						- (mPrevOut * mCoeff.mPrevOut) - (mPrevPrevOut * mCoeff.mPrevPrevOut);
-		mCurrentOut = dfx::math::ClampDenormal(mCurrentOut);
-		//
-		mPrevPrevIn = mPrevIn;
-		mPrevIn = inSample;
-	}
-
-	void processToCacheH2(std::span<float const> inAudio, size_t inPos)
-	{
-		assert(!inAudio.empty());
-		assert(inPos < inAudio.size());
-		auto const in0 = inAudio[inPos];
-		auto const in1 = inAudio[(inPos + 1) % inAudio.size()];
-
-		mPrevPrevPrevOut = mPrevPrevOut;
-		mPrevPrevOut = mPrevOut;
-		mPrevOut = mCurrentOut;
-		// XXX this uses an optimization that only works for LP, HP, and notch filters
-		mCurrentOut = ((in0 + mPrevPrevIn) * mCoeff.mIn) + (mPrevIn * mCoeff.mPrevIn)
-						- (mPrevOut * mCoeff.mPrevOut) - (mPrevPrevOut * mCoeff.mPrevPrevOut);
-		//
-		mPrevPrevPrevOut = mPrevPrevOut;
-		mPrevPrevOut = mPrevOut;
-		mPrevOut = mCurrentOut;
-		mCurrentOut = ((in1 + mPrevIn) * mCoeff.mIn) + (in0 * mCoeff.mPrevIn)
-						- (mPrevOut * mCoeff.mPrevOut) - (mPrevPrevOut * mCoeff.mPrevPrevOut);
-		//
-		mCurrentOut = dfx::math::ClampDenormal(mCurrentOut);
-		mPrevPrevIn = in0;
-		mPrevIn = in1;
-	}
-
-	void processToCacheH3(std::span<float const> inAudio, size_t inPos)
-	{
-		assert(!inAudio.empty());
-		assert(inPos < inAudio.size());
-		auto const in0 = inAudio[inPos];
-		auto const in1 = inAudio[(inPos + 1) % inAudio.size()];
-		auto const in2 = inAudio[(inPos + 2) % inAudio.size()];
-
-		// XXX this uses an optimization that only works for LP, HP, and notch filters
-		mPrevPrevPrevOut = ((in0 + mPrevPrevIn) * mCoeff.mIn) + (mPrevIn * mCoeff.mPrevIn)
-							- (mCurrentOut * mCoeff.mPrevOut) - (mPrevOut * mCoeff.mPrevPrevOut);
-		mPrevPrevOut = ((in1 + mPrevIn) * mCoeff.mIn) + (in0 * mCoeff.mPrevIn)
-						- (mPrevPrevPrevOut * mCoeff.mPrevOut) - (mCurrentOut * mCoeff.mPrevPrevOut);
-		mPrevOut = ((in2 + in0) * mCoeff.mIn) + (in1 * mCoeff.mPrevIn)
-					- (mPrevPrevOut * mCoeff.mPrevOut) - (mPrevPrevPrevOut * mCoeff.mPrevPrevOut);
-		//
-		mCurrentOut = mPrevOut;
-		mCurrentOut = dfx::math::ClampDenormal(mCurrentOut);
-		mPrevOut = mPrevPrevOut;
-		mPrevPrevOut = mPrevPrevPrevOut;
-		mPrevPrevPrevOut = mCurrentOut;
-		//
-		mPrevPrevIn = in1;
-		mPrevIn = in2;
-	}
-
-	void processToCacheH4(std::span<float const> inAudio, size_t inPos)
-	{
-		assert(!inAudio.empty());
-		assert(inPos < inAudio.size());
-		auto const in0 = inAudio[inPos];
-		auto const in1 = inAudio[(inPos + 1) % inAudio.size()];
-		auto const in2 = inAudio[(inPos + 2) % inAudio.size()];
-		auto const in3 = inAudio[(inPos + 3) % inAudio.size()];
-
-		// XXX this uses an optimization that only works for LP, HP, and notch filters
-		mPrevPrevPrevOut = ((in0 + mPrevPrevIn) * mCoeff.mIn) + (mPrevIn * mCoeff.mPrevIn)
-							- (mCurrentOut * mCoeff.mPrevOut) - (mPrevOut * mCoeff.mPrevPrevOut);
-		mPrevPrevOut = ((in1 + mPrevIn) * mCoeff.mIn) + (in0 * mCoeff.mPrevIn)
-						- (mPrevPrevPrevOut * mCoeff.mPrevOut) - (mCurrentOut * mCoeff.mPrevPrevOut);
-		mPrevOut = ((in2 + in0) * mCoeff.mIn) + (in1 * mCoeff.mPrevIn)
-					- (mPrevPrevOut * mCoeff.mPrevOut) - (mPrevPrevPrevOut * mCoeff.mPrevPrevOut);
-		mCurrentOut = ((in3 + in1) * mCoeff.mIn) + (in2 * mCoeff.mPrevIn)
-						- (mPrevOut * mCoeff.mPrevOut) - (mPrevPrevOut * mCoeff.mPrevPrevOut);
-		mCurrentOut = dfx::math::ClampDenormal(mCurrentOut);
-		//
-		mPrevPrevIn = in2;
-		mPrevIn = in3;
-	}
 
 	// 4-point Hermite spline interpolation for use with IIR filter output histories
-	float interpolateHermitePostFilter(double inPos) const
-	{
-		auto const posFract = static_cast<float>(dfx::math::ModF(inPos));
-		return dfx::math::InterpolateHermite(mPrevPrevPrevOut, mPrevPrevOut, mPrevOut, mCurrentOut, posFract);
-	}
+	float interpolateHermitePostFilter(double inPos) const;
 
 
 private:
@@ -269,6 +157,147 @@ private:
 	std::vector<std::array<IIRFilter, 2>> mLowpassFilters, mHighpassFilters;
 #endif
 };
+
+
+
+#pragma mark -
+
+//-----------------------------------------------------------------------------
+[[nodiscard]] inline float IIRFilter::process(float inSample)
+{
+	mPrevPrevOut = mPrevOut;
+	mPrevOut = mCurrentOut;
+
+#ifdef DFX_IIRFILTER_USE_OPTIMIZATION_FOR_EXCLUSIVELY_LP_HP_NOTCH  // one fewer multiplication
+	mCurrentOut = ((inSample + mPrevPrevIn) * mCoeff.mIn) + (mPrevIn * mCoeff.mPrevIn) 
+					- (mPrevOut * mCoeff.mPrevOut) - (mPrevPrevOut * mCoeff.mPrevPrevOut);
+#else
+	mCurrentOut = (inSample * mCoeff.mIn) + (mPrevIn * mCoeff.mPrevIn) + (mPrevPrevIn * mCoeff.mPrevPrevIn) 
+					- (mPrevOut * mCoeff.mPrevOut) - (mPrevPrevOut * mCoeff.mPrevPrevOut);
+#endif
+	mCurrentOut = dfx::math::ClampDenormal(mCurrentOut);
+
+	mPrevPrevIn = mPrevIn;
+	mPrevIn = inSample;
+
+	return mCurrentOut;
+}
+
+//-----------------------------------------------------------------------------
+inline void IIRFilter::processToCache(float inSample)
+{
+	// store four samples of history if we're preprocessing for Hermite interpolation
+	mPrevPrevPrevOut = mPrevPrevOut;
+	std::ignore = process(inSample);
+}
+
+#ifdef DFX_IIRFILTER_USE_OPTIMIZATION_FOR_EXCLUSIVELY_LP_HP_NOTCH
+
+//-----------------------------------------------------------------------------
+inline void IIRFilter::processToCacheH1(float inSample)
+{
+	mPrevPrevPrevOut = mPrevPrevOut;
+	mPrevPrevOut = mPrevOut;
+	mPrevOut = mCurrentOut;
+	//
+	// this uses an optimization that only works for LP, HP, and notch filters
+	mCurrentOut = ((inSample + mPrevPrevIn) * mCoeff.mIn) + (mPrevIn * mCoeff.mPrevIn)
+					- (mPrevOut * mCoeff.mPrevOut) - (mPrevPrevOut * mCoeff.mPrevPrevOut);
+	mCurrentOut = dfx::math::ClampDenormal(mCurrentOut);
+	//
+	mPrevPrevIn = mPrevIn;
+	mPrevIn = inSample;
+}
+
+//-----------------------------------------------------------------------------
+inline void IIRFilter::processToCacheH2(std::span<float const> inAudio, size_t inPos)
+{
+	assert(!inAudio.empty());
+	assert(inPos < inAudio.size());
+
+	auto const in0 = inAudio[inPos];
+	auto const in1 = inAudio[(inPos + 1) % inAudio.size()];
+
+	mPrevPrevPrevOut = mPrevPrevOut;
+	mPrevPrevOut = mPrevOut;
+	mPrevOut = mCurrentOut;
+	// this uses an optimization that only works for LP, HP, and notch filters
+	mCurrentOut = ((in0 + mPrevPrevIn) * mCoeff.mIn) + (mPrevIn * mCoeff.mPrevIn)
+					- (mPrevOut * mCoeff.mPrevOut) - (mPrevPrevOut * mCoeff.mPrevPrevOut);
+	//
+	mPrevPrevPrevOut = mPrevPrevOut;
+	mPrevPrevOut = mPrevOut;
+	mPrevOut = mCurrentOut;
+	mCurrentOut = ((in1 + mPrevIn) * mCoeff.mIn) + (in0 * mCoeff.mPrevIn)
+					- (mPrevOut * mCoeff.mPrevOut) - (mPrevPrevOut * mCoeff.mPrevPrevOut);
+	//
+	mCurrentOut = dfx::math::ClampDenormal(mCurrentOut);
+	mPrevPrevIn = in0;
+	mPrevIn = in1;
+}
+
+//-----------------------------------------------------------------------------
+inline void IIRFilter::processToCacheH3(std::span<float const> inAudio, size_t inPos)
+{
+	assert(!inAudio.empty());
+	assert(inPos < inAudio.size());
+
+	auto const in0 = inAudio[inPos];
+	auto const in1 = inAudio[(inPos + 1) % inAudio.size()];
+	auto const in2 = inAudio[(inPos + 2) % inAudio.size()];
+
+	// this uses an optimization that only works for LP, HP, and notch filters
+	mPrevPrevPrevOut = ((in0 + mPrevPrevIn) * mCoeff.mIn) + (mPrevIn * mCoeff.mPrevIn)
+						- (mCurrentOut * mCoeff.mPrevOut) - (mPrevOut * mCoeff.mPrevPrevOut);
+	mPrevPrevOut = ((in1 + mPrevIn) * mCoeff.mIn) + (in0 * mCoeff.mPrevIn)
+					- (mPrevPrevPrevOut * mCoeff.mPrevOut) - (mCurrentOut * mCoeff.mPrevPrevOut);
+	mPrevOut = ((in2 + in0) * mCoeff.mIn) + (in1 * mCoeff.mPrevIn)
+				- (mPrevPrevOut * mCoeff.mPrevOut) - (mPrevPrevPrevOut * mCoeff.mPrevPrevOut);
+	//
+	mCurrentOut = mPrevOut;
+	mCurrentOut = dfx::math::ClampDenormal(mCurrentOut);
+	mPrevOut = mPrevPrevOut;
+	mPrevPrevOut = mPrevPrevPrevOut;
+	mPrevPrevPrevOut = mCurrentOut;
+	//
+	mPrevPrevIn = in1;
+	mPrevIn = in2;
+}
+
+//-----------------------------------------------------------------------------
+inline void IIRFilter::processToCacheH4(std::span<float const> inAudio, size_t inPos)
+{
+	assert(!inAudio.empty());
+	assert(inPos < inAudio.size());
+
+	auto const in0 = inAudio[inPos];
+	auto const in1 = inAudio[(inPos + 1) % inAudio.size()];
+	auto const in2 = inAudio[(inPos + 2) % inAudio.size()];
+	auto const in3 = inAudio[(inPos + 3) % inAudio.size()];
+
+	// this uses an optimization that only works for LP, HP, and notch filters
+	mPrevPrevPrevOut = ((in0 + mPrevPrevIn) * mCoeff.mIn) + (mPrevIn * mCoeff.mPrevIn)
+						- (mCurrentOut * mCoeff.mPrevOut) - (mPrevOut * mCoeff.mPrevPrevOut);
+	mPrevPrevOut = ((in1 + mPrevIn) * mCoeff.mIn) + (in0 * mCoeff.mPrevIn)
+					- (mPrevPrevPrevOut * mCoeff.mPrevOut) - (mCurrentOut * mCoeff.mPrevPrevOut);
+	mPrevOut = ((in2 + in0) * mCoeff.mIn) + (in1 * mCoeff.mPrevIn)
+				- (mPrevPrevOut * mCoeff.mPrevOut) - (mPrevPrevPrevOut * mCoeff.mPrevPrevOut);
+	mCurrentOut = ((in3 + in1) * mCoeff.mIn) + (in2 * mCoeff.mPrevIn)
+					- (mPrevOut * mCoeff.mPrevOut) - (mPrevPrevOut * mCoeff.mPrevPrevOut);
+	mCurrentOut = dfx::math::ClampDenormal(mCurrentOut);
+	//
+	mPrevPrevIn = in2;
+	mPrevIn = in3;
+}
+
+#endif  // DFX_IIRFILTER_USE_OPTIMIZATION_FOR_EXCLUSIVELY_LP_HP_NOTCH
+
+//-----------------------------------------------------------------------------
+inline float IIRFilter::interpolateHermitePostFilter(double inPos) const
+{
+	auto const posFract = static_cast<float>(dfx::math::ModF(inPos));
+	return dfx::math::InterpolateHermite(mPrevPrevPrevOut, mPrevPrevOut, mPrevOut, mCurrentOut, posFract);
+}
 
 
 }  // namespace
