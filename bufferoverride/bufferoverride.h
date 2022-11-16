@@ -92,7 +92,7 @@ private:
 
 	long mCurrentForcedBufferSize = 0;  // the size of the larger, imposed buffer
 	std::vector<std::vector<float>> mBuffers;  // this stores the forced buffer
-	std::vector<float> mAudioOutputValues;  // array of current audio output values (1 for each channel)
+	std::vector<float> mAudioOutputValues;  // array of current audio output values (one for each channel)
 	long mWritePos = 0;  // the current sample position within the forced buffer
 
 	long mMinibufferSize = 0;  // the current size of the divided "mini" buffer
@@ -112,7 +112,7 @@ private:
 	dfx::TempoRateTable const mTempoRateTable;
 
 	long mSmoothDur = 0, mSmoothCount = 0;  // total duration and sample counter for the minibuffer transition smoothing period
-//	float mSmoothStep = 0.0f;  // the gain increment for each sample "step" during the smoothing period
+	float mSmoothStep = 0.f;  // the normalized position increment for each sample "step" during the smoothing period
 //	float mSqrtFadeIn = 0.0f, mSqrtFadeOut = 0.0f;  // square root of the smoothing gains, for equal power crossfading
 //	float mSmoothFract = 0.0f;
 
@@ -123,8 +123,6 @@ private:
 	bool mDivisorWasChangedByMIDI = false;  // tells the GUI that the divisor displays need updating
 
 	dfx::LFO mDivisorLFO, mBufferLFO;
-
-	float mFadeOutGain = 0.0f, mFadeInGain = 0.0f, mRealFadePart = 0.0f, mImaginaryFadePart = 0.0f;  // for trig crossfading
 
 	AtomicBufferOverrideViewData mViewDataCache;
 	std::atomic<uint64_t> mViewDataCacheTimestamp {0u};

@@ -281,16 +281,11 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 		}
 		mSmoothDur = std::min(mSmoothDur, maxSmoothDur);
 		mSmoothCount = mSmoothDur;
-//		mSmoothStep = 1.0f / static_cast<float>(mSmoothDur + 1);  // the gain increment for each smoothing step
+		mSmoothStep = 1.f / static_cast<float>(mSmoothDur + 1);
 
 //		mSqrtFadeIn = std::sqrt(mSmoothStep);
 //		mSqrtFadeOut = std::sqrt(1.0f - mSmoothStep);
 //		mSmoothFract = mSmoothStep;
-
-		mFadeOutGain = std::cos(std::numbers::pi_v<float> / static_cast<float>(4 * mSmoothDur));
-		mFadeInGain = std::sin(std::numbers::pi_v<float> / static_cast<float>(4 * mSmoothDur));
-		mRealFadePart = (mFadeOutGain * mFadeOutGain) - (mFadeInGain * mFadeInGain);  // std::cos(std::numbers::pi_v<float> / 2.f / n)
-		mImaginaryFadePart = 2.f * mFadeOutGain * mFadeInGain;  // std::sin(std::numbers::pi_v<float> / 2.f / n)
 	}
 	// no smoothing if the previous forced buffer wasn't divided
 	else
@@ -307,6 +302,7 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 {
 	auto const numChannels = getnumoutputs();
 	auto const entryDivisor = mDivisor;
+	constexpr float halfPi = std::numbers::pi_v<float> / 2.f;
 
 	bool viewDataChanged = false;
 
@@ -364,25 +360,26 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 		// and if smoothing is taking place, get the smoothed audio output
 		if (mSmoothCount > 0)
 		{
+			auto const normalizedPosition = static_cast<float>((mSmoothDur - mSmoothCount) + 1) * mSmoothStep;
+			auto const fadeOutGain = std::cos(halfPi * normalizedPosition);
+			auto const fadeInGain = std::sin(halfPi * normalizedPosition);
 			for (size_t ch = 0; ch < numChannels; ch++)
 			{
 				// crossfade between the current input and its corresponding overlap sample
 				auto const tailOutputValue = mPrevDecayFilters[ch].process(mBuffers[ch][mReadPos + mPrevMinibufferSize]) * mPrevMinibufferDecayGain;
 //				mAudioOutputValues[ch] *= 1.0f - (mSmoothStep * static_cast<float>(mSmoothCount));  // current
 //				mAudioOutputValues[ch] += tailOutputValue * mSmoothStep * static_cast<float>(mSmoothCount);  // + previous
-//				float const mSmoothFract = mSmoothStep * static_cast<float>(mSmoothCount);
-//				float const newgain = std::sqrt(1.0f - mSmoothFract);
-//				float const oldgain = std::sqrt(mSmoothFract);
-//				mAudioOutputValues[ch] = (mAudioOutputValues[ch] * newgain) + (tailOutputValue * oldgain);
+//				float const smoothFract = mSmoothStep * static_cast<float>(mSmoothCount);
+//				float const newGain = std::sqrt(1.f - smoothFract);
+//				float const oldGain = std::sqrt(smoothFract);
+//				mAudioOutputValues[ch] = (mAudioOutputValues[ch] * newGain) + (tailOutputValue * oldGain);
 //				mAudioOutputValues[ch] = (mAudioOutputValues[ch] * mSqrtFadeIn) + (tailOutputValue * mSqrtFadeOut);
-				mAudioOutputValues[ch] = (mAudioOutputValues[ch] * mFadeInGain) + (tailOutputValue * mFadeOutGain);
+				mAudioOutputValues[ch] = (mAudioOutputValues[ch] * fadeInGain) + (tailOutputValue * fadeOutGain);
 			}
 			mSmoothCount--;
 //			mSmoothFract += mSmoothStep;
 //			mSqrtFadeIn = 0.5f * (mSqrtFadeIn + (mSmoothFract / mSqrtFadeIn));
 //			mSqrtFadeOut = 0.5f * (mSqrtFadeOut + ((1.0f - mSmoothFract) / mSqrtFadeOut));
-			mFadeInGain = (mFadeOutGain * mImaginaryFadePart) + (mFadeInGain * mRealFadePart);
-			mFadeOutGain = (mRealFadePart * mFadeOutGain) - (mImaginaryFadePart * mFadeInGain);
 		}
 
 		// write the output samples into the output stream
