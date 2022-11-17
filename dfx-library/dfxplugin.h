@@ -564,7 +564,7 @@ public:
 	// after a reset.
 	void registerSmoothedAudioValue(dfx::ISmoothedValue& smoothedValue, DfxPluginCore* owner = nullptr);
 	void unregisterAllSmoothedAudioValues(DfxPluginCore& owner);
-	// Here, nullptr means "all of them".
+	// nullptr means "all of them"; specifying an owner means only its values
 	void incrementSmoothedAudioValues(DfxPluginCore* owner = nullptr);
 	std::optional<double> getSmoothedAudioValueTime() const;
 	void setSmoothedAudioValueTime(double inSmoothingTimeInSeconds);
@@ -809,6 +809,7 @@ private:
 	std::vector<DfxParam::Value> mDSPCoreParameterValuesCache;
 
 	#ifdef TARGET_API_AUDIOUNIT
+	std::vector<DfxPluginCore*> mDSPCores;  // a view of the kernels owned by AUEffectBase, but as our subclass, averting dynamic_cast's performance hit during audio render
 	ausdk::AUBufferList mAsymmetricalInputBufferList;
 	#else
 	[[nodiscard]] std::unique_ptr<DfxPluginCore> dspCoreFactory(size_t inChannel);
@@ -1236,7 +1237,7 @@ public:
 	}
 #else
 	// Mimic what AUKernelBase does here. The channel is just the index
-	// in the mDSPCores vector.
+	// in the DfxPlugin::mDSPCores vector.
 	void SetChannelNum(size_t inChannel) noexcept { mChannelNumber = inChannel; }
 	[[nodiscard]] size_t GetChannelNum() const noexcept { return mChannelNumber; }
 #endif

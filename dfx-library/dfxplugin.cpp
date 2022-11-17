@@ -322,15 +322,21 @@ void DfxPlugin::do_initialize()
 
 	#ifndef TARGET_API_AUDIOUNIT
 	cacheDSPCoreParameterValues();  // AU handles this in its Initialize override, since it must occur before the AU SDK base class' implementation
-
-	// regenerate the DSP core instances whenever the audio I/O format changes
-	mDSPCores.clear();
-	mDSPCores.reserve(getnumoutputs());
-	for (size_t ch = 0; ch < getnumoutputs(); ch++)
-	{
-		mDSPCores.emplace_back(dspCoreFactory(ch));
-	}
 	#endif
+
+	// regenerate the DSP core instances whenever the audio I/O format may have changed
+	auto const dspCoreCount = getnumoutputs();
+	mDSPCores.clear();
+	mDSPCores.reserve(dspCoreCount);
+	for (size_t ch = 0; ch < dspCoreCount; ch++)
+	{
+	#ifdef TARGET_API_AUDIOUNIT
+		mDSPCores.push_back(dynamic_cast<DfxPluginCore*>(GetKernel(ch)));
+	#else
+		mDSPCores.emplace_back(dspCoreFactory(ch));
+	#endif
+		assert(mDSPCores.back());
+	}
 #endif  // TARGET_PLUGIN_USES_DSPCORE
 
 	std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), 
@@ -354,10 +360,10 @@ void DfxPlugin::do_cleanup()
 #endif
 
 #if TARGET_PLUGIN_USES_DSPCORE
+	mDSPCores.clear();
 	#ifdef TARGET_API_AUDIOUNIT
 	mAsymmetricalInputBufferList.Deallocate();
 	#else
-	mDSPCores.clear();
 	mAsymmetricalInputAudioBuffer = {};
 	#endif
 #endif
@@ -2031,15 +2037,15 @@ void DfxPlugin::cacheDSPCoreParameterValues()
 //-----------------------------------------------------------------------------
 DfxPluginCore* DfxPlugin::getplugincore(size_t inChannel) const
 {
-#ifdef TARGET_API_AUDIOUNIT
-	return dynamic_cast<DfxPluginCore*>(GetKernel(inChannel));
-#else
 	if (inChannel < mDSPCores.size())
 	{
+#ifdef TARGET_API_AUDIOUNIT
+		return mDSPCores[inChannel];
+#else
 		return mDSPCores[inChannel].get();
+#endif
 	}
 	return nullptr;
-#endif
 }
 #endif
 
