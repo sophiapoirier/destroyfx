@@ -282,10 +282,6 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 		mSmoothDur = std::min(mSmoothDur, maxSmoothDur);
 		mSmoothCount = mSmoothDur;
 		mSmoothStep = 1.f / static_cast<float>(mSmoothDur + 1);
-
-//		mSqrtFadeIn = std::sqrt(mSmoothStep);
-//		mSqrtFadeOut = std::sqrt(1.0f - mSmoothStep);
-//		mSmoothFract = mSmoothStep;
 	}
 	// no smoothing if the previous forced buffer wasn't divided
 	else
@@ -361,25 +357,20 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 		if (mSmoothCount > 0)
 		{
 			auto const normalizedPosition = static_cast<float>((mSmoothDur - mSmoothCount) + 1) * mSmoothStep;
+#if 1  // sine/cosine crossfade
 			auto const fadeOutGain = std::cos(halfPi * normalizedPosition);
 			auto const fadeInGain = std::sin(halfPi * normalizedPosition);
+#else  // square root crossfade
+			auto const fadeInGain = std::sqrt(normalizedPosition);
+			auto const fadeOutGain = std::sqrt(1.f - normalizedPosition);
+#endif
 			for (size_t ch = 0; ch < numChannels; ch++)
 			{
 				// crossfade between the current input and its corresponding overlap sample
 				auto const tailOutputValue = mPrevDecayFilters[ch].process(mBuffers[ch][mReadPos + mPrevMinibufferSize]) * mPrevMinibufferDecayGain;
-//				mAudioOutputValues[ch] *= 1.0f - (mSmoothStep * static_cast<float>(mSmoothCount));  // current
-//				mAudioOutputValues[ch] += tailOutputValue * mSmoothStep * static_cast<float>(mSmoothCount);  // + previous
-//				float const smoothFract = mSmoothStep * static_cast<float>(mSmoothCount);
-//				float const newGain = std::sqrt(1.f - smoothFract);
-//				float const oldGain = std::sqrt(smoothFract);
-//				mAudioOutputValues[ch] = (mAudioOutputValues[ch] * newGain) + (tailOutputValue * oldGain);
-//				mAudioOutputValues[ch] = (mAudioOutputValues[ch] * mSqrtFadeIn) + (tailOutputValue * mSqrtFadeOut);
 				mAudioOutputValues[ch] = (mAudioOutputValues[ch] * fadeInGain) + (tailOutputValue * fadeOutGain);
 			}
 			mSmoothCount--;
-//			mSmoothFract += mSmoothStep;
-//			mSqrtFadeIn = 0.5f * (mSqrtFadeIn + (mSmoothFract / mSqrtFadeIn));
-//			mSqrtFadeOut = 0.5f * (mSqrtFadeOut + ((1.0f - mSmoothFract) / mSqrtFadeOut));
 		}
 
 		// write the output samples into the output stream

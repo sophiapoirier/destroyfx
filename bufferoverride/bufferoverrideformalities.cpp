@@ -165,7 +165,6 @@ void BufferOverride::reset()
 	mSmoothCount = mSmoothDur = 0;
 	mMinibufferDecayGain = 1.f;
 	mPrevMinibufferDecayGain = 0.f;
-//	mSqrtFadeIn = mSqrtFadeOut = 1.0f;
 
 	mDivisorLFO.reset();
 	mBufferLFO.reset();

@@ -113,8 +113,6 @@ private:
 
 	long mSmoothDur = 0, mSmoothCount = 0;  // total duration and sample counter for the minibuffer transition smoothing period
 	float mSmoothStep = 0.f;  // the normalized position increment for each sample "step" during the smoothing period
-//	float mSqrtFadeIn = 0.0f, mSqrtFadeOut = 0.0f;  // square root of the smoothing gains, for equal power crossfading
-//	float mSmoothFract = 0.0f;
 
 	double mPitchBend = 0.0, mOldPitchBend = 0.0;  // pitchbending scalar values
 	bool mOldNote = false;  // says if there was an old, unattended note-on or note-off from a previous block
