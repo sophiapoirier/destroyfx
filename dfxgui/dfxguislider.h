@@ -24,6 +24,8 @@ To contact the author, use the contact form at http://destroyfx.org
 #pragma once
 
 
+#include <optional>
+
 #include "dfxguicontrol.h"
 
 
@@ -76,7 +78,7 @@ public:
 				  DGImage* inLowerHandleImage, DGImage* inUpperHandleImage, 
 				  DGImage* inBackgroundImage = nullptr, 
 				  PushStyle inPushStyle = PushStyle::Neither, 
-				  int inOvershoot = 0);
+				  std::optional<VSTGUI::CCoord> inOvershoot = {});
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
 	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
@@ -103,7 +105,7 @@ private:
 	VSTGUI::CCoord const mMaxXPos;	// max X position in pixel
 	float const mEffectiveRange;
 	PushStyle const mPushStyle;
-	int const mOvershoot;	// how far (in pixel) you can click outside of being in between the points and still be close enough to be considered in between
+	VSTGUI::CCoord const mOvershoot;	// how far (in pixel) you can click outside of being in between the points and still be close enough to be considered in between
 
 	// mouse-down state
 	bool mClickBetween = false;

@@ -33,7 +33,7 @@ constexpr auto kValueDisplayFont = dfx::kFontName_Snooty10px;
 constexpr auto kValueDisplayFontSize = dfx::kFontSize_Snooty10px;
 constexpr DGColor kValueDisplayFontColor(187, 173, 131);
 constexpr float kUnusedControlAlpha = 0.234f;
-constexpr int kRangeSliderOvershoot = 3;
+constexpr VSTGUI::CCoord kRangeSliderOvershoot = 3;
 
 constexpr int kOctavesSliderWidth = 118 - 2;
 // TODO C++23: constexpr

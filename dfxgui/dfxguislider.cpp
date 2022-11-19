@@ -219,7 +219,8 @@ void DGSlider::setMidiLearner(bool inEnable)
 DGRangeSlider::DGRangeSlider(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inLowerParameterID, dfx::ParameterID inUpperParameterID, 
 							 DGRect const& inRegion, 
 							 DGImage* inLowerHandleImage, DGImage* inUpperHandleImage, 
-							 DGImage* inBackgroundImage, PushStyle inPushStyle, int inOvershoot)
+							 DGImage* inBackgroundImage, PushStyle inPushStyle, 
+							 std::optional<VSTGUI::CCoord> inOvershoot)
 :	DGMultiControl<VSTGUI::CControl>(inRegion, 
 									 inOwnerEditor, 
 									 dfx::ParameterID_ToVST(inUpperParameterID),
@@ -232,7 +233,8 @@ DGRangeSlider::DGRangeSlider(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inLow
 	mMaxXPos(inRegion.right - (inUpperHandleImage ? inUpperHandleImage->getWidth() : 0)),
 	mEffectiveRange(static_cast<float>(mMaxXPos - mMinXPos)),
 	mPushStyle(inPushStyle),
-	mOvershoot(inOvershoot)
+	mOvershoot(inOvershoot.value_or(((inLowerHandleImage ? inLowerHandleImage->getWidth() : 0.) / 3.) +
+									((inUpperHandleImage ? inUpperHandleImage->getWidth() : 0.) / 3.)))
 {
 	assert(!inLowerHandleImage == !inUpperHandleImage);
 
@@ -328,9 +330,9 @@ void DGRangeSlider::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 	}();
 	mAnchorStartValue = mAnchorControl->asCControl()->getValueNormalized();
 
-	// this determines if the mouse click was between the 2 points (or close, by 1 pixel)
-	float const pixelValue = static_cast<float>(mOvershoot) / mEffectiveRange;
-	mClickBetween = ((mClickStartValue >= (effectiveLowerStartValue - pixelValue)) && (mClickStartValue <= (effectiveUpperStartValue + pixelValue)));
+	// this determines if the mouse click was between the two points
+	float const overshootInValue = static_cast<float>(mOvershoot) / mEffectiveRange;
+	mClickBetween = ((mClickStartValue >= (effectiveLowerStartValue - overshootInValue)) && (mClickStartValue <= (effectiveUpperStartValue + overshootInValue)));
 
 	// the following stuff allows you click within a handle and have the value not "jump" at all
 	mClickOffsetInValue = [this]
