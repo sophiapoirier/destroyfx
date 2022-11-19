@@ -308,10 +308,14 @@ void DGRangeSlider::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 	mClickStartValue = static_cast<float>(ioEvent.mousePosition.x - mMinXPos) / mEffectiveRange;
 	mOldPosY = ioEvent.mousePosition.y;
 
-	mAnchorControl = [this]
+	bool const valuesInverted = (mLowerStartValue > mUpperStartValue);
+	auto const effectiveLowerStartValue = (valuesInverted && (mPushStyle == PushStyle::Upper)) ? mUpperStartValue : mLowerStartValue;
+	auto const effectiveUpperStartValue = (valuesInverted && (mPushStyle == PushStyle::Lower)) ? mLowerStartValue : mUpperStartValue;
+
+	mAnchorControl = [this, effectiveLowerStartValue, effectiveUpperStartValue]
 	{
-		auto const lowerDifference = std::fabs(mClickStartValue - mLowerStartValue);
-		auto const upperDifference = std::fabs(mClickStartValue - mUpperStartValue);
+		auto const lowerDifference = std::fabs(mClickStartValue - effectiveLowerStartValue);
+		auto const upperDifference = std::fabs(mClickStartValue - effectiveUpperStartValue);
 		if (lowerDifference < upperDifference)
 		{
 			return mUpperControl;
@@ -320,13 +324,13 @@ void DGRangeSlider::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 		{
 			return mLowerControl;
 		}
-		return (mClickStartValue < mLowerStartValue) ? mUpperControl : mLowerControl;
+		return (mClickStartValue < effectiveLowerStartValue) ? mUpperControl : mLowerControl;
 	}();
 	mAnchorStartValue = mAnchorControl->asCControl()->getValueNormalized();
 
 	// this determines if the mouse click was between the 2 points (or close, by 1 pixel)
 	float const pixelValue = static_cast<float>(mOvershoot) / mEffectiveRange;
-	mClickBetween = ((mClickStartValue >= (mLowerStartValue - pixelValue)) && (mClickStartValue <= (mUpperStartValue + pixelValue)));
+	mClickBetween = ((mClickStartValue >= (effectiveLowerStartValue - pixelValue)) && (mClickStartValue <= (effectiveUpperStartValue + pixelValue)));
 
 	// the following stuff allows you click within a handle and have the value not "jump" at all
 	mClickOffsetInValue = [this]
