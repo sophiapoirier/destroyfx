@@ -340,7 +340,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 			// handle the special case of mismatched input/output channel counts that we allow
 			// by repeating the mono-input to multiple (faked) input channels
 			// (copying to an intermediate input buffer in case processing in-place)
-			std::copy_n(mEffectualInputAudioBuffers[ch].data(), inNumFrames, mAsymmetricalInputAudioBuffer.data());
+			std::copy_n(mEffectualInputAudioBuffers[ch].cbegin(), inNumFrames, mAsymmetricalInputAudioBuffer.begin());
 			std::fill(mInputAudio.begin(), mInputAudio.end(), mAsymmetricalInputAudioBuffer.data());
 		}
 	}
@@ -407,7 +407,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 		{
 			auto const sumInPlace = [](float const* input, float* output, size_t count)
 			{
-				std::transform(input, input + count, output, output, std::plus<>{});
+				std::transform(input, std::next(input, count), output, output, std::plus<>{});
 			};
 
 			// check mWaitSamples also because, if it's zero, we can just move ahead normally

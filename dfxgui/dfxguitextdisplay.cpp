@@ -529,7 +529,7 @@ void DGTextArrayDisplay::draw(VSTGUI::CDrawContext* inContext)
 	size_t stringIndex = 0;
 	if (isParameterAttached())
 	{
-		stringIndex = dfx::math::ToIndex(std::lround(getOwnerEditor()->dfxgui_ExpandParameterValue(getParameterID(), getValueNormalized())));
+		stringIndex = dfx::math::RoundToIndex(getOwnerEditor()->dfxgui_ExpandParameterValue(getParameterID(), getValueNormalized()));
 	}
 	else
 	{

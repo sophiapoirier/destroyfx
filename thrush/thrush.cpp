@@ -261,7 +261,7 @@ void Thrush::processparameters()
 	}
 
 	mLFO1.setDepth(getparameter_scalar(kLFO1Depth));
-	mLFO1.setShape(getparameter_i(kLFO1Shape));
+	mLFO1.setShape(static_cast<dfx::LFO::Shape>(getparameter_i(kLFO1Shape)));
 
 	mLFO2.mRateHz = getparameter_f(kLFO2Rate_Hz);
 	// make sure the cycles match up if the tempo rate has changed
@@ -279,7 +279,7 @@ void Thrush::processparameters()
 	}
 
 	mLFO2.setDepth(getparameter_gen(kLFO2Depth));
-	mLFO2.setShape(getparameter_i(kLFO2Shape));
+	mLFO2.setShape(static_cast<dfx::LFO::Shape>(getparameter_i(kLFO2Shape)));
 
 	mStereoLink = getparameter_b(kStereoLink);
 
@@ -295,7 +295,7 @@ void Thrush::processparameters()
 	}
 
 	mLFO1_2.setDepth(getparameter_scalar(kLFO1Depth2));
-	mLFO1_2.setShape(getparameter_i(kLFO1Shape2));
+	mLFO1_2.setShape(static_cast<dfx::LFO::Shape>(getparameter_i(kLFO1Shape2)));
 	mLFO2_2.mRateHz = getparameter_f(kLFO2Rate2_Hz);
 	mLFO2_2.mTempoRateScalar = mTempoRateTable.getScalar(getparameter_index(kLFO2Rate2_Sync));
 
@@ -307,7 +307,7 @@ void Thrush::processparameters()
 	}
 
 	mLFO2_2.setDepth(getparameter_gen(kLFO2Depth2));
-	mLFO2_2.setShape(getparameter_i(kLFO2Shape2));
+	mLFO2_2.setShape(static_cast<dfx::LFO::Shape>(getparameter_i(kLFO2Shape2)));
 
 	if (auto const value = getparameterifchanged_scalar(kDryWetMix))
 	{

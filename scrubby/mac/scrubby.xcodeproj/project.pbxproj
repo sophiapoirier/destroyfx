@@ -72,7 +72,7 @@
 		EC89B44F208D330600E15129 /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC89B44E208D330500E15129 /* dfx-au-utilities-preset-files.m */; };
 		EC89B456208D331500E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B450208D331300E15129 /* dfxguidialog.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		EC89B457208D331500E15129 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B453208D331400E15129 /* dfxgui-auviewfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
-		EC89B4EB208D365900E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4EA208D365900E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -Wno-four-char-constants -fno-objc-arc"; }; };
+		EC89B4EB208D365900E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4EA208D365900E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -Wno-four-char-constants -Wno-float-conversion -fno-objc-arc"; }; };
 		EC89B4FA208D365E00E15129 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4F3208D365D00E15129 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-deprecated-declarations -Wno-four-char-constants"; }; };
 		EC8AB23A24CDF4BC000504F0 /* dfxgui-fontfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC8AB23824CDF4BC000504F0 /* dfxgui-fontfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		ECCB14E4209A8CB20050BDEC /* dfxenvelope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECCB14E3209A8CB20050BDEC /* dfxenvelope.cpp */; };
@@ -140,7 +140,7 @@
 		4918B60C0680FC9C0034CE15 /* dfxsettings.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxsettings.h; sourceTree = "<group>"; };
 		4932F4CA06801180006A9591 /* dfx-au-utilities.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities.c"; sourceTree = "<group>"; };
 		4932F4CB06801180006A9591 /* dfx-au-utilities.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities.h"; sourceTree = "<group>"; };
-		4932F4CC06801180006A9591 /* dfx-base.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfx-base.h; sourceTree = "<group>"; };
+		4932F4CC06801180006A9591 /* dfx-base.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-base.h"; sourceTree = "<group>"; };
 		4932F4CD06801180006A9591 /* dfxmath.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxmath.h; sourceTree = "<group>"; };
 		4932F4CE06801180006A9591 /* dfxparameter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = dfxparameter.cpp; sourceTree = "<group>"; };
 		4932F4CF06801180006A9591 /* dfxparameter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxparameter.h; sourceTree = "<group>"; };

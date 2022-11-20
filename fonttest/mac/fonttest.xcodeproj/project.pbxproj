@@ -44,7 +44,7 @@
 		ECF7D8D02002AB5800DCE42E /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECF7D8CC2002AB5700DCE42E /* dfxguidialog.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		ECF7D8D42002AC5D00DCE42E /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = ECF7D8D32002AC5D00DCE42E /* dfx-au-utilities-preset-files.m */; };
 		ECF7D8EF2002B7D300DCE42E /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECF7D8E42002B7D300DCE42E /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-deprecated-declarations -Wno-four-char-constants"; }; };
-		ECF7D8F52002B7F300DCE42E /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECF7D8F42002B7F300DCE42E /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -Wno-four-char-constants -fno-objc-arc"; }; };
+		ECF7D8F52002B7F300DCE42E /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECF7D8F42002B7F300DCE42E /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -Wno-four-char-constants -Wno-float-conversion -fno-objc-arc"; }; };
 		ECF7D8FC2002D34C00DCE42E /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECF7D8FB2002D34C00DCE42E /* Accelerate.framework */; };
 		ECF7D9042002D3A000DCE42E /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECF7D9032002D3A000DCE42E /* Cocoa.framework */; };
 		ECF7D9062002D3F600DCE42E /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECF7D9052002D3F600DCE42E /* OpenGL.framework */; };
@@ -55,7 +55,7 @@
 		490E76A607CAE29600688A1D /* dfxsnooty10px.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = dfxsnooty10px.ttf; path = ../../fonts/dfxsnooty10px.ttf; sourceTree = "<group>"; };
 		4932F4CA06801180006A9591 /* dfx-au-utilities.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities.c"; sourceTree = "<group>"; };
 		4932F4CB06801180006A9591 /* dfx-au-utilities.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities.h"; sourceTree = "<group>"; };
-		4932F4CC06801180006A9591 /* dfx-base.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfx-base.h; sourceTree = "<group>"; };
+		4932F4CC06801180006A9591 /* dfx-base.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-base.h"; sourceTree = "<group>"; };
 		4932F4CD06801180006A9591 /* dfxmath.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxmath.h; sourceTree = "<group>"; };
 		4932F4CE06801180006A9591 /* dfxparameter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = dfxparameter.cpp; sourceTree = "<group>"; };
 		4932F4CF06801180006A9591 /* dfxparameter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxparameter.h; sourceTree = "<group>"; };
@@ -291,37 +291,61 @@
 		ECCEE51425323309007251C9 /* AudioUnitSDK */ = {
 			isa = PBXGroup;
 			children = (
-				ECCEE51D25323309007251C9 /* Source */,
+				ECF46CD42929C344008C4E3D /* include */,
+				ECF46CE52929C34A008C4E3D /* src */,
 			);
 			name = AudioUnitSDK;
 			path = ../../AudioUnitSDK;
 			sourceTree = "<group>";
 		};
-		ECCEE51D25323309007251C9 /* Source */ = {
+		ECF46CD42929C344008C4E3D /* include */ = {
+			isa = PBXGroup;
+			children = (
+				ECF46CD52929C344008C4E3D /* AudioUnitSDK */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		ECF46CD52929C344008C4E3D /* AudioUnitSDK */ = {
 			isa = PBXGroup;
 			children = (
 				ECCEE52525323309007251C9 /* AUBase.h */,
-				ECCEE52225323309007251C9 /* AUBase.cpp */,
 				ECCEE53325323309007251C9 /* AUBuffer.h */,
-				ECCEE53025323309007251C9 /* AUBuffer.cpp */,
-				EC4FB172256ADD3000AFC27A /* AUBufferAllocator.cpp */,
 				ECCEE53525323309007251C9 /* AudioUnitSDK.h */,
 				ECCEE52E25323309007251C9 /* AUEffectBase.h */,
-				ECCEE52C25323309007251C9 /* AUEffectBase.cpp */,
 				ECCEE52325323309007251C9 /* AUInputElement.h */,
-				ECCEE53625323309007251C9 /* AUInputElement.cpp */,
 				ECCEE52F25323309007251C9 /* AUOutputElement.h */,
-				ECCEE52925323309007251C9 /* AUOutputElement.cpp */,
 				ECCEE52625323309007251C9 /* AUPlugInDispatch.h */,
-				ECCEE52D25323309007251C9 /* AUPlugInDispatch.cpp */,
 				ECCEE53425323309007251C9 /* AUScopeElement.h */,
-				ECCEE52025323309007251C9 /* AUScopeElement.cpp */,
 				ECCEE52B25323309007251C9 /* AUSilentTimeout.h */,
 				ECCEE52A25323309007251C9 /* AUUtility.h */,
 				ECCEE52125323309007251C9 /* ComponentBase.h */,
+			);
+			path = AudioUnitSDK;
+			sourceTree = "<group>";
+		};
+		ECF46CE52929C34A008C4E3D /* src */ = {
+			isa = PBXGroup;
+			children = (
+				ECF46CE62929C34A008C4E3D /* AudioUnitSDK */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		ECF46CE62929C34A008C4E3D /* AudioUnitSDK */ = {
+			isa = PBXGroup;
+			children = (
+				ECCEE52225323309007251C9 /* AUBase.cpp */,
+				ECCEE53025323309007251C9 /* AUBuffer.cpp */,
+				EC4FB172256ADD3000AFC27A /* AUBufferAllocator.cpp */,
+				ECCEE52C25323309007251C9 /* AUEffectBase.cpp */,
+				ECCEE53625323309007251C9 /* AUInputElement.cpp */,
+				ECCEE52925323309007251C9 /* AUOutputElement.cpp */,
+				ECCEE52D25323309007251C9 /* AUPlugInDispatch.cpp */,
+				ECCEE52025323309007251C9 /* AUScopeElement.cpp */,
 				ECCEE51E25323309007251C9 /* ComponentBase.cpp */,
 			);
-			path = Source;
+			path = AudioUnitSDK;
 			sourceTree = "<group>";
 		};
 		ECF7D8DA2002B75500DCE42E /* VSTGUI */ = {

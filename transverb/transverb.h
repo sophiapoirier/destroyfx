@@ -166,7 +166,7 @@ constexpr float TransverbDSP::interpolateHermite(std::span<float const> data, do
   // because the readers and writer are not necessarily aligned,
   // upcoming or previous samples could be discontiguous, in which case
   // just "interpolate" with repeated samples
-  switch (mod_bipolar(writeaddress - static_cast<int>(pos), std::ssize(data))) {
+  switch (mod_bipolar(writeaddress - static_cast<int>(pos), static_cast<int>(std::ssize(data)))) {
     case 0:  // the previous sample is bogus
       posMinus1 = pos;
       posPlus1 = (pos + 1) % data.size();

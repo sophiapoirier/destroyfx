@@ -1319,7 +1319,7 @@ static dfx::UniqueCFType<CFArrayRef> DFX_CopyAUParameterValueStrings(AudioUnit i
 //-----------------------------------------------------------------------------
 void TurntablistEditor::HandleParameterChange(dfx::ParameterID inParameterID, float inValue)
 {
-	auto const value_i = (inValue >= 0.0f) ? static_cast<long>(inValue + 0.001f) : static_cast<long>(inValue - 0.001f);
+	auto const value_i = (inValue >= 0.f) ? static_cast<int>(inValue + 0.001f) : static_cast<int>(inValue - 0.001f);
 
 	if ((inParameterID == kParam_ScratchMode) && mScratchSpeedKnob)
 	{

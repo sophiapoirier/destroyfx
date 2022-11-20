@@ -715,7 +715,7 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 	status = ExtAudioFileDispose(audioFileRef);
 
 	m_nNumChannels = clientStreamFormat.mChannelsPerFrame;
-	m_nSampleRate = clientStreamFormat.mSampleRate;
+	m_nSampleRate = dfx::math::IRound(clientStreamFormat.mSampleRate);
 	m_nNumSamples = dfx::math::ToUnsigned(audioFileNumFrames);
 
 	m_fPlaySampleRate = static_cast<double>(m_nSampleRate);

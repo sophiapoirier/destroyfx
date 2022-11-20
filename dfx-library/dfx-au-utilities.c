@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2021  Sophia Poirier
+	Copyright (C) 2003-2022  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -33,7 +33,7 @@
 	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED 
 	OF THE POSSIBILITY OF SUCH DAMAGE.
 	
-	To contact the author, please visit http://destroyfx.org/ 
+	To contact the author, please visit http://destroyfx.org 
 	and use the contact form.
 */
 
@@ -217,7 +217,7 @@ void CFAUPresetArrayCallBacks_Init(CFArrayCallBacks* outArrayCallBacks)
 //-----------------------------------------------------------------------------
 #ifdef __GNUC__
 CFArrayCallBacks const kCFAUPresetArrayCallBacks;
-static void kCFAUPresetArrayCallBacks_constructor() __attribute__((constructor));
+static void kCFAUPresetArrayCallBacks_constructor(void) __attribute__((constructor));
 static void kCFAUPresetArrayCallBacks_constructor()
 {
 	CFAUPresetArrayCallBacks_Init((CFArrayCallBacks*)&kCFAUPresetArrayCallBacks);
@@ -451,7 +451,7 @@ void CFAUOtherPluginDescArrayCallBacks_Init(CFArrayCallBacks* outArrayCallBacks)
 //-----------------------------------------------------------------------------
 #ifdef __GNUC__
 CFArrayCallBacks const kCFAUOtherPluginDescArrayCallBacks;
-static void kCFAUOtherPluginDescArrayCallBacks_constructor() __attribute__((constructor));
+static void kCFAUOtherPluginDescArrayCallBacks_constructor(void) __attribute__((constructor));
 static void kCFAUOtherPluginDescArrayCallBacks_constructor()
 {
 	CFAUOtherPluginDescArrayCallBacks_Init((CFArrayCallBacks*)&kCFAUOtherPluginDescArrayCallBacks);
@@ -659,7 +659,7 @@ Boolean ComponentDescriptionsMatch_General(AudioComponentDescription const* inCo
 Boolean ComponentAndDescriptionMatch_General(AudioComponent inComponent, AudioComponentDescription const* inComponentDescription, Boolean inIgnoreType);
 Boolean ComponentAndDescriptionMatch_General(AudioComponent inComponent, AudioComponentDescription const* inComponentDescription, Boolean inIgnoreType)
 {
-	OSErr status = noErr;
+	OSStatus status = noErr;
 	AudioComponentDescription desc = {0};
 
 	if ((inComponent == NULL) || (inComponentDescription == NULL))

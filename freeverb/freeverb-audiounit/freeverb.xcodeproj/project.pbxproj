@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 53;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -279,6 +279,7 @@
 /* Begin PBXShellScriptBuildPhase section */
 		EC8D55CE2543B72200EE156E /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -373,7 +374,7 @@
 				INFOPLIST_FILE = "freeverb-info.plist";
 				INSTALL_MODE_FLAG = "u+w,a+rX";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components";
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				PRODUCT_BUNDLE_IDENTIFIER = uk.co.dreampoint.Freeverb;
 				PRODUCT_NAME = Freeverb;
 				USE_HEADERMAP = NO;
@@ -427,7 +428,7 @@
 				INFOPLIST_FILE = "freeverb-info.plist";
 				INSTALL_MODE_FLAG = "u+w,a+rX";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components";
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = uk.co.dreampoint.Freeverb;
 				PRODUCT_NAME = Freeverb;

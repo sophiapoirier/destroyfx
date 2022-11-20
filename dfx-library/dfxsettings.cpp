@@ -84,10 +84,10 @@ DfxSettings::DfxSettings(uint32_t inMagic, DfxPlugin& inPlugin, size_t inSizeofE
 	mSettingsInfo.mVersion = mPlugin.getpluginversion();
 	mSettingsInfo.mLowestLoadableVersion = 0;
 	mSettingsInfo.mStoredHeaderSize = sizeof(SettingsInfo);
-	mSettingsInfo.mNumStoredParameters = mNumParameters;
-	mSettingsInfo.mNumStoredPresets = mNumPresets;
+	mSettingsInfo.mNumStoredParameters = static_cast<uint32_t>(mNumParameters);
+	mSettingsInfo.mNumStoredPresets = static_cast<uint32_t>(mNumPresets);
 	mSettingsInfo.mStoredParameterAssignmentSize = sizeof(dfx::ParameterAssignment);
-	mSettingsInfo.mStoredExtendedDataSize = inSizeofExtendedData;
+	mSettingsInfo.mStoredExtendedDataSize = static_cast<uint32_t>(inSizeofExtendedData);
 
 	clearAssignments();  // initialize all of the parameters to have no MIDI event assignments
 
@@ -1392,7 +1392,7 @@ dfx::ParameterID DfxSettings::getParameterIndexFromMap(dfx::ParameterID inParame
 	auto const foundID = std::find(inSearchIDs.begin(), inSearchIDs.end(), inParameterID);
 	if (foundID != inSearchIDs.end())
 	{
-		return dfx::math::ToIndex(std::distance(inSearchIDs.begin(), foundID));
+		return static_cast<dfx::ParameterID>(std::distance(inSearchIDs.begin(), foundID));
 	}
 	return dfx::kParameterID_Invalid;
 }

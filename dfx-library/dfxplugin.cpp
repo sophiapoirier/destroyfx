@@ -156,7 +156,7 @@ DfxPlugin::DfxPlugin(
 #endif
 
 #ifdef TARGET_API_VST
-	TARGET_API_BASE_CLASS(inInstance, inNumPresets, inNumParameters), 
+	TARGET_API_BASE_CLASS(inInstance, static_cast<VstInt32>(inNumPresets), static_cast<VstInt32>(inNumParameters)), 
 #endif
 // end API-specific base constructors
 
@@ -314,7 +314,7 @@ void DfxPlugin::do_initialize()
 	{
 		assert(getnumoutputs() > getnuminputs());  // the only imbalance we support with DSP cores
 	#ifdef TARGET_API_AUDIOUNIT
-		mAsymmetricalInputBufferList.Allocate(GetStreamFormat(kAudioUnitScope_Output, 0), getmaxframes());
+		mAsymmetricalInputBufferList.Allocate(GetStreamFormat(kAudioUnitScope_Output, 0), static_cast<UInt32>(getmaxframes()));
 	#else
 		mAsymmetricalInputAudioBuffer.assign(getmaxframes(), 0.0f);
 	#endif
@@ -331,7 +331,7 @@ void DfxPlugin::do_initialize()
 	for (size_t ch = 0; ch < dspCoreCount; ch++)
 	{
 	#ifdef TARGET_API_AUDIOUNIT
-		mDSPCores.push_back(dynamic_cast<DfxPluginCore*>(GetKernel(ch)));
+		mDSPCores.push_back(dynamic_cast<DfxPluginCore*>(GetKernel(static_cast<UInt32>(ch))));
 	#else
 		mDSPCores.emplace_back(dspCoreFactory(ch));
 	#endif
@@ -981,7 +981,7 @@ bool DfxPlugin::loadpreset(size_t inPresetIndex)
 	// for the program index to set parameter values, which means that the currently 
 	// selected program will have its parameter values overwritten by those of the 
 	// program currently being loaded, unless we do this first
-	TARGET_API_BASE_CLASS::setProgram(dfx::math::ToSigned(inPresetIndex));
+	TARGET_API_BASE_CLASS::setProgram(static_cast<VstInt32>(inPresetIndex));
 #endif
 
 	for (dfx::ParameterID i = 0; i < getnumparameters(); i++)
@@ -1012,7 +1012,7 @@ void DfxPlugin::postupdate_preset()
 
 #ifdef TARGET_API_AUDIOUNIT
 	AUPreset au_preset {};
-	au_preset.presetNumber = dfx::math::ToSigned(getcurrentpresetnum());
+	au_preset.presetNumber = static_cast<SInt32>(getcurrentpresetnum());
 	au_preset.presetName = getpresetcfname(getcurrentpresetnum());
 	SetAFactoryPresetAsCurrent(au_preset);
 	PropertyChanged(kAudioUnitProperty_PresentPreset, kAudioUnitScope_Global, AudioUnitElement(0));
@@ -1020,7 +1020,7 @@ void DfxPlugin::postupdate_preset()
 #endif
 
 #ifdef TARGET_API_VST
-	TARGET_API_BASE_CLASS::setProgram(dfx::math::ToSigned(getcurrentpresetnum()));
+	TARGET_API_BASE_CLASS::setProgram(static_cast<VstInt32>(getcurrentpresetnum()));
 	// XXX Cubase SX will crash if custom-GUI plugs call updateDisplay 
 	// while the editor is closed, so as a workaround, only do it 
 	// if the plugin has no custom GUI
@@ -1335,7 +1335,7 @@ void DfxPlugin::setSmoothedAudioValueTime(double inSmoothingTimeInSeconds)
 //-----------------------------------------------------------------------------
 void DfxPlugin::do_idle()
 {
-	for (size_t parameterIndex = 0; parameterIndex < mParametersChangedInProcessHavePosted.size(); parameterIndex++)
+	for (dfx::ParameterID parameterIndex = 0; parameterIndex < mParametersChangedInProcessHavePosted.size(); parameterIndex++)
 	{
 		if (!mParametersChangedInProcessHavePosted[parameterIndex].test_and_set(std::memory_order_relaxed))
 		{
@@ -2028,7 +2028,7 @@ double DfxPlugin::getdspcoreparameter_scalar(dfx::ParameterID inParameterID) con
 //-----------------------------------------------------------------------------
 void DfxPlugin::cacheDSPCoreParameterValues()
 {
-	for (size_t i = 0; i < getnumparameters(); i++)
+	for (dfx::ParameterID i = 0; i < getnumparameters(); i++)
 	{
 		mDSPCoreParameterValuesCache[i] = getparameter(i);
 	}
@@ -2140,7 +2140,7 @@ void DfxPlugin::setmidilearner(dfx::ParameterID inParameterID)
 	}
 	else
 	{
-		auto const numStates = getparametermax_i(inParameterID) - getparametermin_i(inParameterID) + 1;
+		auto const numStates = static_cast<int>(getparametermax_i(inParameterID) - getparametermin_i(inParameterID) + 1);
 		mDfxSettings->setLearner(inParameterID, dfx::kMidiEventBehaviorFlag_Toggle, numStates);
 	}
 }

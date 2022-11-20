@@ -343,7 +343,7 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 				status = dfx_GetPropertyInfo(inPropertyID, inScope, inElement, dfxDataSize, dfxFlags);
 				if (status == noErr)
 				{
-					outDataSize = dfxDataSize;
+					outDataSize = static_cast<UInt32>(dfxDataSize);
 					outWritable = dfxFlags & dfx::kPropertyFlag_Writable;
 				}
 			}
@@ -1312,7 +1312,7 @@ OSStatus DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 
 	if (auto const groupIndex = getparametergroup(inParameterID))
 	{
-		HasClump(outParameterInfo, kBaseClumpID + *groupIndex);
+		HasClump(outParameterInfo, kBaseClumpID + static_cast<UInt32>(*groupIndex));
 	}
 
 
@@ -1432,7 +1432,7 @@ OSStatus DfxPlugin::GetPresets(CFArrayRef* outData) const
 	{
 		if (presetnameisvalid(i))
 		{
-			auto const aupreset = dfx::MakeUniqueCFAUPreset(kCFAllocatorDefault, dfx::math::ToSigned(i), getpresetcfname(i));
+			auto const aupreset = dfx::MakeUniqueCFAUPreset(kCFAllocatorDefault, static_cast<SInt32>(i), getpresetcfname(i));
 			if (aupreset)
 			{
 				// insert the AUPreset into the output array

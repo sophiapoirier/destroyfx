@@ -545,7 +545,7 @@ void Scrubby::processMidiNotes()
 	std::array<bool, kNumPitchSteps> oldNotes {};
 	for (size_t i = 0; i < oldNotes.size(); i++)
 	{
-		oldNotes[i] = getparameter_b(i + kPitchStep0);
+		oldNotes[i] = getparameter_b(static_cast<dfx::ParameterID>(i) + kPitchStep0);
 	}
 
 	for (size_t i = 0; i < getmidistate().getBlockEventCount(); i++)
@@ -562,7 +562,7 @@ void Scrubby::processMidiNotes()
 				// then turn its associated pitch constraint parameter on
 				if (mActiveNotesTable[currentNote] == 0)
 				{
-					setparameterquietly_b(currentNote + kPitchStep0, true);
+					setparameterquietly_b(static_cast<dfx::ParameterID>(currentNote) + kPitchStep0, true);
 				}
 				// increment the active notes table for this note
 				mActiveNotesTable[currentNote]++;
@@ -573,7 +573,7 @@ void Scrubby::processMidiNotes()
 				// then turn its associated pitch constraint parameter off
 				if (mActiveNotesTable[currentNote] == 1)
 				{
-					setparameterquietly_b(currentNote + kPitchStep0, false);
+					setparameterquietly_b(static_cast<dfx::ParameterID>(currentNote) + kPitchStep0, false);
 				}
 				// decrement the active notes table for this note, but don't go below 0
 				mActiveNotesTable[currentNote] = std::max(mActiveNotesTable[currentNote] - 1, 0L);
@@ -589,7 +589,7 @@ void Scrubby::processMidiNotes()
 						// (and reset this note in the table)
 						if (std::exchange(mActiveNotesTable[noteIndex], 0) > 0)
 						{
-							setparameterquietly_b(noteIndex + kPitchStep0, false);
+							setparameterquietly_b(static_cast<dfx::ParameterID>(noteIndex) + kPitchStep0, false);
 						}
 					}
 				}
@@ -603,9 +603,9 @@ void Scrubby::processMidiNotes()
 	// go through and inform any listeners of any parameter changes that might have just happened
 	for (size_t i = 0; i < oldNotes.size(); i++)
 	{
-		if (oldNotes[i] != getparameter_b(i + kPitchStep0))
+		if (oldNotes[i] != getparameter_b(static_cast<dfx::ParameterID>(i) + kPitchStep0))
 		{
-			postupdate_parameter(i + kPitchStep0);
+			postupdate_parameter(static_cast<dfx::ParameterID>(i) + kPitchStep0);
 		}
 	}
 }

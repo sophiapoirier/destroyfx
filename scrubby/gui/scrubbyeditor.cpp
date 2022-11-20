@@ -394,7 +394,7 @@ void ScrubbyEditor::OpenEditor()
 	DGRect keyboardBottomKeyPos(kKeyboardX, kKeyboardY + pos.getHeight(), keyboardBottomKeyImages[0]->getWidth(), keyboardBottomKeyImages[0]->getHeight() / 2);
 	for (size_t i = 0; i < kNumPitchSteps; i++)
 	{
-		dfx::ParameterID const parameterID = kPitchStep0 + i;
+		dfx::ParameterID const parameterID = kPitchStep0 + static_cast<dfx::ParameterID>(i);
 
 		// this visually syncs the top and bottom button images upon mouse clicks
 		auto const keyboardButtonProc = [](DGButton* button, long value)

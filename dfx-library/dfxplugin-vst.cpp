@@ -89,7 +89,7 @@ void DfxPlugin::resume()
 
 	// do these after calling do_reset, 
 	// because the value for latency could change there
-	setInitialDelay(dfx::math::ToSigned(getlatency_samples()));
+	setInitialDelay(static_cast<VstInt32>(getlatency_samples()));
 
 	// it sure seems like we need to call ioChanged since we just
 	// called setInitialDelay(). -tom7
@@ -114,7 +114,7 @@ void DfxPlugin::setSampleRate(float newRate)
 // even if the audio input has ended
 VstInt32 DfxPlugin::getGetTailSize()
 {
-	return dfx::math::ToSigned(gettailsize_samples());
+	return static_cast<VstInt32>(gettailsize_samples());
 }
 
 
@@ -478,8 +478,8 @@ bool DfxPlugin::getParameterProperties(VstInt32 index, VstParameterProperties* p
 			properties->flags |= kVstParameterIsSwitch;
 			break;
 		case DfxParam::ValueType::Int:
-			properties->minInteger = getparametermin_i(parameterID);
-			properties->maxInteger = getparametermax_i(parameterID);
+			properties->minInteger = static_cast<VstInt32>(getparametermin_i(parameterID));
+			properties->maxInteger = static_cast<VstInt32>(getparametermax_i(parameterID));
 			properties->flags |= kVstParameterUsesIntegerMinMax;
 			break;
 		default:

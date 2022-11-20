@@ -153,8 +153,8 @@ DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 	if (mBackgroundImage)
 	{
 		// init the size of the plugin
-		rect.right = rect.left + std::lround(mBackgroundImage->getWidth());
-		rect.bottom = rect.top + std::lround(mBackgroundImage->getHeight());
+		rect.right = rect.left + dfx::math::IRound(mBackgroundImage->getWidth());
+		rect.bottom = rect.top + dfx::math::IRound(mBackgroundImage->getHeight());
 	}
 
 	setKnobMode(VSTGUI::kLinearMode);
@@ -1202,7 +1202,7 @@ std::string DfxGuiEditor::GetParameterGroupName(size_t inGroupIndex)
 	std::array<char, dfx::kParameterGroupStringMaxLength> groupName {};
 	size_t dataSize = groupName.size() * sizeof(groupName.front());
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterGroupName, dfx::kScope_Global, 
-										   inGroupIndex, groupName.data(), dataSize);
+										   static_cast<unsigned int>(inGroupIndex), groupName.data(), dataSize);
 	if (status == dfx::kStatus_NoError)
 	{
 		return groupName.data();
@@ -1472,7 +1472,7 @@ dfx::StatusCode DfxGuiEditor::dfxgui_GetProperty(dfx::PropertyID inPropertyID, d
 #ifdef TARGET_API_AUDIOUNIT
 	AUSDK_Require(dfxgui_GetEffectInstance(), kAudioUnitErr_Uninitialized);
 
-	UInt32 auDataSize = ioDataSize;
+	auto auDataSize = static_cast<UInt32>(ioDataSize);
 	auto const status = AudioUnitGetProperty(dfxgui_GetEffectInstance(), inPropertyID, inScope, inItemIndex, outData, &auDataSize);
 	if (status == noErr)
 	{
@@ -2322,7 +2322,7 @@ public:
 		{
 			return 0;
 		}
-		return mData.size();
+		return static_cast<uint32_t>(mData.size());
 	}
 
 	Type getDataType(uint32_t inIndex) const override
@@ -2500,7 +2500,7 @@ dfx::StatusCode DfxGuiEditor::copySettings()
 			parameterValues.push_back(getEffect()->getParameter(parameterID));
 		}
 		vstSettingsData = parameterValues.data();
-		vstSettingsDataSize = parameterValues.size() * sizeof(parameterValues.front());
+		vstSettingsDataSize = static_cast<VstInt32>(parameterValues.size() * sizeof(parameterValues.front()));
 	}
 
 	#if TARGET_OS_MAC
@@ -3100,7 +3100,7 @@ void DfxGuiEditor::RestoreVSTStateFromProgramFile(char const* inFilePath)
 		Require(numParameters >= 0, "invalid negative number of parameters");
 		using ValueT = std::decay_t<decltype(*(programData.content.params))>;
 		std::vector<ValueT> parameterValues(static_cast<size_t>(numParameters), {});
-		readWithValidation(parameterValues.data(), parameterValues.size() * sizeof(ValueT));
+		readWithValidation(parameterValues.data(), static_cast<uint32_t>(parameterValues.size() * sizeof(ValueT)));
 		requireReadCompletion();
 		for (VstInt32 parameterID = 0; parameterID < numParameters; parameterID++)
 		{
@@ -3113,9 +3113,9 @@ void DfxGuiEditor::RestoreVSTStateFromProgramFile(char const* inFilePath)
 		readWithValidation(&chunkDataSize, sizeof(chunkDataSize));
 		Require(DFXGUI_CorrectEndian(chunkDataSize) >= 0, "invalid negative number of chunk bytes");
 		std::vector<std::byte> chunkData(static_cast<size_t>(DFXGUI_CorrectEndian(chunkDataSize)), {});
-		readWithValidation(chunkData.data(), chunkData.size());
+		readWithValidation(chunkData.data(), static_cast<uint32_t>(chunkData.size()));
 		requireReadCompletion();
-		Require(getEffect()->setChunk(chunkData.data(), chunkData.size(), true), 
+		Require(getEffect()->setChunk(chunkData.data(), static_cast<VstInt32>(chunkData.size()), true), 
 				"failed to load chunk data");
 	}
 	else

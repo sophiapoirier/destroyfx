@@ -382,12 +382,12 @@ void BufferOverride::processparameters()
 	mDivisorLFORateHz = getparameter_f(kDivisorLFORate_Hz);
 	mDivisorLFOTempoRate = mTempoRateTable.getScalar(getparameter_index(kDivisorLFORate_Sync));
 	mDivisorLFO.setDepth(getparameter_scalar(kDivisorLFODepth));
-	mDivisorLFO.setShape(getparameter_i(kDivisorLFOShape));
+	mDivisorLFO.setShape(static_cast<dfx::LFO::Shape>(getparameter_i(kDivisorLFOShape)));
 	mDivisorLFOTempoSync = getparameter_b(kDivisorLFOTempoSync);
 	mBufferLFORateHz = getparameter_f(kBufferLFORate_Hz);
 	mBufferLFOTempoRate = mTempoRateTable.getScalar(getparameter_index(kBufferLFORate_Sync));
 	mBufferLFO.setDepth(getparameter_scalar(kBufferLFODepth));
-	mBufferLFO.setShape(getparameter_i(kBufferLFOShape));
+	mBufferLFO.setShape(static_cast<dfx::LFO::Shape>(getparameter_i(kBufferLFOShape)));
 	mBufferLFOTempoSync = getparameter_b(kBufferLFOTempoSync);
 	mSmoothPortion = getparameter_scalar(kSmooth);
 	mPitchBendRange = getparameter_f(kPitchBendRange);
@@ -396,7 +396,7 @@ void BufferOverride::processparameters()
 	mUseHostTempo = getparameter_b(kTempoAuto);
 	mDecayDepth = getparameter_scalar(kDecayDepth);
 	mDecayMode = getparameter_i(kDecayMode);
-	mDecayShape = getparameter_i(kDecayShape);
+	mDecayShape = static_cast<DecayShape>(getparameter_i(kDecayShape));
 
 	if (getparameterchanged(kDivisor))
 	{

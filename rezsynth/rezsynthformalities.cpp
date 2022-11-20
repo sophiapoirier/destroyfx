@@ -184,11 +184,11 @@ void RezSynth::processparameters()
 
 	mBandwidthAmount_Hz = getparameter_f(kBandwidthAmount_Hz);
 	mBandwidthAmount_Q = getparameter_f(kBandwidthAmount_Q);
-	mBandwidthMode = getparameter_i(kBandwidthMode);
-	mNumBands = std::clamp(getparameter_i(kNumBands), getparametermin_i(kNumBands), kMaxBands);
+	mBandwidthMode = static_cast<int>(getparameter_i(kBandwidthMode));
+	mNumBands = static_cast<int>(std::clamp(getparameter_i(kNumBands), getparametermin_i(kNumBands), kMaxBands));
 	mSepAmount_Octaval = getparameter_f(kSepAmount_Octaval) / 12.0;
 	mSepAmount_Linear = getparameter_f(kSepAmount_Linear);
-	mSepMode = getparameter_i(kSepMode);
+	mSepMode = static_cast<int>(getparameter_i(kSepMode));
 	mFoldover = getparameter_b(kFoldover);  // true for allow, false for resist
 	mAttack_Seconds = getparameter_f(kEnvAttack) * 0.001;
 	mDecay_Seconds = getparameter_f(kEnvDecay) * 0.001;
@@ -199,8 +199,8 @@ void RezSynth::processparameters()
 	mVelocityInfluence = getparameter_scalar(kVelocityInfluence);
 	mVelocityCurve = getparameter_f(kVelocityCurve);
 	getmidistate().setPitchBendRange(getparameter_f(kPitchBendRange));
-	mScaleMode = getparameter_i(kScaleMode);
-	mResonAlgorithm = getparameter_i(kResonAlgorithm);
+	mScaleMode = static_cast<int>(getparameter_i(kScaleMode));
+	mResonAlgorithm = static_cast<int>(getparameter_i(kResonAlgorithm));
 	if (auto const value = getparameterifchanged_f(kFilterOutputGain))
 	{
 		mOutputGain = *value;

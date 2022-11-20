@@ -394,13 +394,13 @@ void GeometerEditor::mouseovercontrolchanged(IDGControl * /*currentControlUnderM
 //-----------------------------------------------------------------------------
 std::string GeometerEditor::changehelp(IDGControl * currentControlUnderMouse) {
 
-  auto const updatehelp = [this](size_t category, int item, size_t numitems) {
+  auto const updatehelp = [this](size_t category, long item, size_t numitems) {
     if (helpicon) {
       helpicon->setNumStates(numitems);
       helpicon->setButtonImage(g_helpicons[category]);
       helpicon->setValue_i(item);
     }
-    return helptext(category, item);
+    return helptext(category, static_cast<int>(item));
   };
 
   auto paramID = dfx::kParameterID_Invalid;

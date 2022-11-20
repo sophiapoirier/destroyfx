@@ -27,6 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <cmath>
 
 #include "dfxguieditor.h"
+#include "dfxmath.h"
 
 
 namespace
@@ -115,7 +116,7 @@ DGSlider::DGSlider(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, 
 							   dfx::ParameterID_ToVST(inParameterID), 
 							   VSTGUI::CPoint((inOrientation & dfx::kAxis_Horizontal) ? inRangeMargin : 0, 
 											  (inOrientation & dfx::kAxis_Vertical) ? inRangeMargin : 0), 
-							   (inOrientation & dfx::kAxis_Horizontal) ? (inRegion.getWidth() - (inRangeMargin * 2)) : (inRegion.getHeight() - (inRangeMargin * 2)), 
+							   dfx::math::IRound((inOrientation & dfx::kAxis_Horizontal) ? inRegion.getWidth() : inRegion.getHeight()) - (inRangeMargin * 2), 
 							   inHandleImage, 
 							   inBackgroundImage, 
 							   VSTGUI::CPoint(0, 0), 

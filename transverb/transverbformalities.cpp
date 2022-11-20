@@ -612,7 +612,7 @@ void Transverb::settings_doChunkRestoreSetParameterStuff(dfx::ParameterID parame
 		{
 			if (presetIndex)
 			{
-				if (getpresetparameter_f(*presetIndex, kTomsound) && (getpresetparameter_i(*presetIndex, kQuality) == kQualityMode_HiFi))
+				if (getpresetparameter_b(*presetIndex, kTomsound) && (getpresetparameter_i(*presetIndex, kQuality) == kQualityMode_HiFi))
 				{
 					setpresetparameter_i(*presetIndex, kQuality, kQualityMode_UltraHiFi);
 				}

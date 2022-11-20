@@ -386,15 +386,15 @@ void PLUGINCORE::reset() {
 void PLUGINCORE::processparameters() {
 
   pointstyle = getparameter_i(P_POINTSTYLE);
-  pointparam = getparameter_f(P_POINTPARAMS + pointstyle);
+  pointparam = getparameter_f(P_POINTPARAMS + static_cast<dfx::ParameterID>(pointstyle));
   interpstyle = getparameter_i(P_INTERPSTYLE);
-  interparam = getparameter_f(P_INTERPARAMS + interpstyle);
+  interparam = getparameter_f(P_INTERPARAMS + static_cast<dfx::ParameterID>(interpstyle));
   pointop1 = getparameter_i(P_POINTOP1);
-  oppar1 = getparameter_f(P_OPPAR1S + pointop1);
+  oppar1 = getparameter_f(P_OPPAR1S + static_cast<dfx::ParameterID>(pointop1));
   pointop2 = getparameter_i(P_POINTOP2);
-  oppar2 = getparameter_f(P_OPPAR2S + pointop2);
+  oppar2 = getparameter_f(P_OPPAR2S + static_cast<dfx::ParameterID>(pointop2));
   pointop3 = getparameter_i(P_POINTOP3);
-  oppar3 = getparameter_f(P_OPPAR3S + pointop3);
+  oppar3 = getparameter_f(P_OPPAR3S + static_cast<dfx::ParameterID>(pointop3));
 
   if (getparameterchanged(P_BUFSIZE)) {
     updatewindowsize();
@@ -476,7 +476,7 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
     tempx[0] = px[0];
     tempy[0] = py[0];
 
-    int const stretch = (op_param * op_param) * samples;
+    int const stretch = static_cast<int>((op_param * op_param) * samples);
     int np = 1;
 
     for(int i=1; i < (npts-1); i++) {
@@ -506,7 +506,7 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
        specified amount, zero the 2nd endpoint.
     */
 
-    int const stretch = (op_param * op_param) * samples;
+    int const stretch = static_cast<int>((op_param * op_param) * samples);
 
     for (int i=1; i < npts; i++) {
       if (px[i] - px[i-1] > stretch) py[i] = 0.0f;
@@ -525,7 +525,7 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
        truncating)... */
     int i = 0;
     for(; i < (npts-1); i++) {
-      px[i] *= factor;
+      px[i] = static_cast<int>(px[i] * factor);
       if (px[i] > samples) {
         /* this sample can't stay. */
         i--;
@@ -551,10 +551,10 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
     int outi = 0;
     for(int rep = 0; rep < times; rep++) {
       /* where this copy of the points begins */
-      int const offset = rep * (onedivfactor * samples);
+      int const offset = static_cast<int>(rep * (onedivfactor * samples));
       for (int s = 0; s < npts; s++) {
         /* XXX is destx in range? */
-        int const destx = offset + (px[s] * onedivfactor);
+        int const destx = static_cast<int>(offset + (px[s] * onedivfactor));
 
         if (destx >= samples) goto op_fast_out_of_points;
 
@@ -775,7 +775,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
     /* at frequency */
 
     /* XXX let the user choose hz, do conversion */
-    int const nth = (pointparam * pointparam) * samples;
+    int const nth = static_cast<int>((pointparam * pointparam) * samples);
     int ctr = nth;
 
     for(int i = 0; i < samples; i++) {
@@ -821,7 +821,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
     suggested by bram.
     */
 
-    int const span = (pointparam * pointparam) * samples;
+    int const span = static_cast<int>((pointparam * pointparam) * samples);
 
     int i = abs((int)(py[0] * span)) + 1;
 
@@ -928,7 +928,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
 
     for(int z = 0; z < intervals; z++) {
       if (randomengine.next<float>() < interparam) {
-        float const range = interparam * interparam * 0.5f * (float)intervals;
+        int const range = static_cast<int>(interparam * interparam * 0.5f * static_cast<float>(intervals));
         int dest = z + randomengine.next(-range, range);
         dest = std::clamp(dest, 0, intervals - 1);
 
@@ -965,7 +965,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
       int const sizeright = px[x+1] - px[x];
       int const sizeleft = px[x] - px[x-1];
 
-      int const tgtlen = sizeleft + (sizeright * interparam);
+      int const tgtlen = static_cast<int>(sizeleft + (sizeright * interparam));
 
       if (tgtlen > 0) {
         /* to avoid using temporary storage, copy from end of target

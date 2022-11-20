@@ -79,6 +79,19 @@ constexpr OutputT RoundToIndex(InputT inValue)
 }
 
 //-----------------------------------------------------------------------------
+// fills the gap of a 32-bit int-returning flavor of std::lround or llround
+template <typename InputT>
+constexpr int IRound(InputT inValue)
+{
+	static_assert(std::is_floating_point_v<InputT>);
+	auto const result = std::llround(inValue);
+	using ResultT = int;
+	assert(result >= static_cast<decltype(result)>(std::numeric_limits<ResultT>::min()));
+	assert(result <= static_cast<decltype(result)>(std::numeric_limits<ResultT>::max()));
+	return static_cast<ResultT>(result);
+}
+
+//-----------------------------------------------------------------------------
 template <typename T>
 constexpr auto ToSigned(T inValue) noexcept
 {

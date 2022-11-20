@@ -164,7 +164,7 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
   const auto [forced_buffer, minibuffer, window_sec] =
     ScaleViewData(data, pixels_per_window);
   auto const decay_depth = editor->getparameter_f(kDecayDepth) * 0.01;
-  auto const decay_shape = editor->getparameter_i(kDecayShape);
+  auto const decay_shape = static_cast<DecayShape>(editor->getparameter_i(kDecayShape));
 
   // draw 'major' boxes.
   const CCoord majorbox_width = std::max(pixels_per_window * forced_buffer,
