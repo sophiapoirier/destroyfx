@@ -197,16 +197,22 @@ constexpr auto ModF(FloatingT inValue)
 //-----------------------------------------------------------------------------
 constexpr float InterpolateHermite(float inPrecedingValue, float inCurrentValue, float inNextValue, float inNextNextValue, float inPosition)
 {
-#if 0  // XXX test performance using fewer variables/registers
-	return (((((((3.f * (inCurrentValue - inNextValue)) - inPrecedingValue + inNextNextValue) * 0.5f) * inPosition)
-				+ ((2.f * inNextValue) + inPrecedingValue - (2.5f * inCurrentValue) - (inNextNextValue * 0.5f))) * 
-				inPosition + ((inNextValue - inPrecedingValue) * 0.5f)) * inPosition) + inCurrentValue;
-
-#elif 1
-	float const a = ((3.f * (inCurrentValue - inNextValue)) - inPrecedingValue + inNextNextValue) * 0.5f;
-	float const b = (2.f * inNextValue) + inPrecedingValue - (2.5f * inCurrentValue) - (inNextNextValue * 0.5f);
+#if 0
+	float const precedingMinusCurrent = inPrecedingValue - inCurrentValue;
+	//float const a = ((3.f * (inCurrentValue - inNextValue)) - inPrecedingValue + inNextNextValue) * 0.5f;
+	//float const b = (2.f * inNextValue) + inPrecedingValue - (2.5f * inCurrentValue) - (0.5f * inNextNextValue);
+	float const a = (inCurrentValue - inNextValue) + (0.5f * (inNextNextValue - precedingMinusCurrent - inNextValue));
 	float const c = (inNextValue - inPrecedingValue) * 0.5f;
-	return ((((a * inPosition) + b) * inPosition + c) * inPosition) + inCurrentValue;
+	float const b = precedingMinusCurrent + c - a;
+	return (((((a * inPosition) + b) * inPosition) + c) * inPosition) + inCurrentValue;
+#elif 1
+	// optimization by Laurent de Soras https://www.musicdsp.org/en/latest/Other/93-hermite-interpollation.html
+	float const c = (inNextValue - inPrecedingValue) * 0.5f;
+	float const currentMinusNext = inCurrentValue - inNextValue;
+	float const w = c + currentMinusNext;
+	float const a = w + currentMinusNext + ((inNextNextValue - inCurrentValue) * 0.5f);
+	float const b_neg = w + a;
+	return (((((a * inPosition) - b_neg) * inPosition) + c) * inPosition) + inCurrentValue;
 #endif
 }
 
