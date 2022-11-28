@@ -27,7 +27,11 @@ Welcome to our Finite Impulse Response filter.
 #pragma once
 
 
+#include <algorithm>
+#include <cassert>
 #include <cstddef>
+#include <functional>
+#include <numeric>
 #include <span>
 #include <vector>
 
@@ -50,23 +54,25 @@ std::vector<float> generateKaiserWindow(size_t inNumTaps, float inAttenuation);
 //-----------------------------------------------------------------------------
 inline float process(std::span<float const> inAudio, std::span<float const> inCoefficients, size_t inPos)
 {
-	float outval = 0.0f;
-	if ((inPos + inCoefficients.size()) > inAudio.size())
+	assert(inPos < inAudio.size());
+
+	auto audioPos = inPos;
+	float result = 0.f;
+	auto coefficientsBegin = inCoefficients.begin();
+
+	for (auto remainingLength = inCoefficients.size(); remainingLength > 0; )
 	{
-		for (size_t i = 0; i < inCoefficients.size(); i++)
-		{
-			outval += inAudio[(inPos + i) % inAudio.size()] * inCoefficients[i];
-		}
+		auto const subSliceLength = std::min(remainingLength, inAudio.size() - audioPos);
+		auto const coefficientsEnd = std::next(coefficientsBegin, subSliceLength);
+		result = std::transform_reduce(coefficientsBegin, coefficientsEnd, std::next(inAudio.begin(), audioPos), result, std::plus<>{}, std::multiplies<>{});
+
+		coefficientsBegin = coefficientsEnd;
+		audioPos = 0;
+		remainingLength -= subSliceLength;
 	}
-	else
-	{
-		for (size_t i = 0; i < inCoefficients.size(); i++)
-		{
-			outval += inAudio[inPos + i] * inCoefficients[i];
-		}
-	}
-	return outval;
-} 
+
+	return result;
+}
 
 
 }  // namespace

@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 Welcome to our Finite Impulse Response filter.
@@ -36,7 +36,6 @@ Welcome to our Finite Impulse Response filter.
 
 //-----------------------------------------------------------------------------
 float besselIZero(float input);
-//float besselIZero2(float input);
 
 
 //-----------------------------------------------------------------------------
@@ -50,21 +49,20 @@ void dfx::FIRFilter::calculateIdealLowpassCoefficients(double inCutoff, double i
 	// get the cutoff as a ratio of cutoff to Nyquist, scaled from 0 to Pi
 	double const corner = (inCutoff / (inSampleRate * 0.5)) * std::numbers::pi_v<double>;
 
-	size_t middleCoeff {};
-	if (outCoefficients.size() % 2)
-	{
-		middleCoeff = (outCoefficients.size() - 1) / 2;
-		outCoefficients[middleCoeff] = corner / std::numbers::pi_v<double>;
-	}
-	else
-	{
-		middleCoeff = outCoefficients.size() / 2;
-	}
+	size_t const middleIndex = (outCoefficients.size() - 1) / 2;
+	outCoefficients[middleIndex] = corner / std::numbers::pi_v<double>;
 
-	for (size_t n = 0; n < middleCoeff; n++)
+	double const halfLength = static_cast<double>(outCoefficients.size() - 1) * 0.5;
+	double numeratorRadians = -halfLength * corner;
+	double denominator = -halfLength * std::numbers::pi_v<double>;
+	for (size_t n = 0; n < middleIndex; n++, numeratorRadians += corner, denominator += std::numbers::pi_v<double>)
 	{
-		double const value = static_cast<double>(n) - (static_cast<double>(outCoefficients.size() - 1) * 0.5);
+#if 0
+		double const value = static_cast<double>(n) - halfLength;
 		outCoefficients[n] = std::sin(value * corner) / (value * std::numbers::pi_v<double>);
+#else
+		outCoefficients[n] = std::sin(numeratorRadians) / denominator;
+#endif
 		outCoefficients[outCoefficients.size() - 1 - n] = outCoefficients[n];
 	}
 }
@@ -114,9 +112,11 @@ std::vector<float> dfx::FIRFilter::generateKaiserWindow(size_t inNumTaps, float 
 }
 
 //-----------------------------------------------------------------------------
+// TODO: use std::cyl_bessel_if or std::cyl_bessel_jf if they ever become implemented in clang
 float besselIZero(float input)
 {
 	float sum = 1.0f;
+#if 1
 	float const halfIn = input * 0.5f;
 	float denominator = 1.0f;
 	float numerator = 1.0f;
@@ -127,14 +127,7 @@ float besselIZero(float input)
 		float const term = numerator / denominator;
 		sum += term * term;
 	}
-	return sum;
-}
-
-//-----------------------------------------------------------------------------
-#if 0
-float besselIZero2(float input)
-{
-	float sum = 1.0f;
+#else
 	float ds = 1.0f;
 	float d = 0.0f;
 
@@ -145,7 +138,7 @@ float besselIZero2(float input)
 		sum += ds;
 	}
 	while (ds > (1E-7f * sum));
+#endif
 
 	return sum;
 }
-#endif
