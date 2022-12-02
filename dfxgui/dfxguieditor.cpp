@@ -477,7 +477,37 @@ int DfxGuiEditor::GetHeight()
 VSTGUI::SharedPointer<DGImage> DfxGuiEditor::LoadImage(std::string const& inFileName)
 {
 	auto const result = VSTGUI::makeOwned<DGImage>(inFileName.c_str());
-	if (!result->isLoaded())
+	HandleLoadImageError(*result, inFileName);
+	return result;
+}
+
+//-----------------------------------------------------------------------------
+VSTGUI::SharedPointer<DGMultiFrameImage> DfxGuiEditor::LoadImage(std::string const& inFileName, size_t inFrameCount)
+{
+	assert(inFrameCount > 0);
+
+	auto const result = VSTGUI::makeOwned<DGMultiFrameImage>(inFileName.c_str());
+	HandleLoadImageError(*result, inFileName);
+
+	// fix up the frame dimensions relative to those of the actual image data
+	if (result->isLoaded())
+	{
+		VSTGUI::CMultiFrameBitmapDescription const framesDescription
+		{
+			.frameSize = { result->getWidth(), result->getHeight() / inFrameCount },
+			.numFrames = static_cast<uint16_t>(inFrameCount),
+			.framesPerRow = 1
+		};
+		result->setMultiFrameDesc(framesDescription);
+	}
+
+	return result;
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::HandleLoadImageError(DGImage& inImage, std::string const& inFileName)
+{
+	if (!inImage.isLoaded())
 	{
 		// use the pending error message since typically images are loaded in series 
 		// upon opening the editor view, prior to the idle timer running, and so 
@@ -488,7 +518,6 @@ VSTGUI::SharedPointer<DGImage> DfxGuiEditor::LoadImage(std::string const& inFile
 		}
 		mPendingErrorMessage += "failed to load image resource: " + inFileName + "\n";
 	}
-	return result;
 }
 
 

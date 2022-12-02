@@ -196,22 +196,9 @@ private:
 	class for loading and containing images
 ***********************************************************************/
 
-/* XXX should be "stacked" or "indexed" so that one bitmap might hold
-   several clipped regions that can be drawn. (but we use overloading
-   or default params so that it behaves like a single image when not
-   using those features) */
 //-----------------------------------------------------------------------------
-class DGImage : public VSTGUI::CBitmap
-{
-public:
-	using VSTGUI::CBitmap::CBitmap;
-
-/*	probably a better interface is:
-	void draw(VSTGUI::CCoord x, VSTGUI::CCoord y);
-	and also something like this for stacked images:
-	void drawex(VSTGUI::CCoord x, VSTGUI::CCoord y, int xIndex, int yIndex);
-*/
-};
+using DGImage = VSTGUI::CBitmap;
+using DGMultiFrameImage = VSTGUI::CMultiFrameBitmap;
 
 
 

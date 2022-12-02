@@ -89,10 +89,11 @@ MonomakerEditor::MonomakerEditor(DGEditorListenerInstance inInstance)
 void MonomakerEditor::OpenEditor()
 {
 	//--load the images-------------------------------------
+	constexpr size_t numAnimationFrames = 19;
 
 	auto const sliderHandleImage = LoadImage("slider-handle.png");
-	auto const monomergeAnimationImage = LoadImage("monomerge-blobs.png");
-	auto const panAnimationImage = LoadImage("pan-blobs.png");
+	auto const monomergeAnimationImage = LoadImage("monomerge-blobs.png", numAnimationFrames);
+	auto const panAnimationImage = LoadImage("pan-blobs.png", numAnimationFrames);
 
 	auto const phaseInvertButtonImage_left = LoadImage("phase-invert-left-button.png");
 	auto const phaseInvertButtonImage_right = LoadImage("phase-invert-right-button.png");
@@ -108,7 +109,6 @@ void MonomakerEditor::OpenEditor()
 
 
 	// --- sliders ---
-	constexpr size_t numAnimationFrames = 19;
 
 	// monomerge slider
 	pos.set(kSliderX, kSliderY, kSliderWidth, sliderHandleImage->getHeight());
@@ -119,13 +119,13 @@ void MonomakerEditor::OpenEditor()
 	emplaceControl<DGSlider>(this, kPan, pos, dfx::kAxis_Horizontal, sliderHandleImage);
 
 	// monomerge animation
-	pos.set(kMonomergeAnimationX, kMonomergeAnimationY, monomergeAnimationImage->getWidth(), monomergeAnimationImage->getHeight() / numAnimationFrames);
-	auto blobs = emplaceControl<DGAnimation>(this, kMonomerge, pos, monomergeAnimationImage, numAnimationFrames);
+	pos.set(kMonomergeAnimationX, kMonomergeAnimationY, monomergeAnimationImage->getFrameSize().x, monomergeAnimationImage->getFrameSize().y);
+	auto blobs = emplaceControl<DGAnimation>(this, kMonomerge, pos, monomergeAnimationImage);
 	blobs->setMouseAxis(dfx::kAxis_Horizontal);
 
 	// pan animation
-	pos.set(kPanAnimationX, kPanAnimationY, panAnimationImage->getWidth(), panAnimationImage->getHeight() / numAnimationFrames);
-	blobs = emplaceControl<DGAnimation>(this, kPan, pos, panAnimationImage, numAnimationFrames);
+	pos.set(kPanAnimationX, kPanAnimationY, panAnimationImage->getFrameSize().x, panAnimationImage->getFrameSize().y);
+	blobs = emplaceControl<DGAnimation>(this, kPan, pos, panAnimationImage);
 	blobs->setMouseAxis(dfx::kAxis_Horizontal);
 
 

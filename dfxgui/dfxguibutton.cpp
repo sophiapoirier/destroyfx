@@ -765,6 +765,8 @@ DGSplashScreen::DGSplashScreen(DfxGuiEditor*	inOwnerEditor,
 							   DGImage*			inSplashImage)
 :	DGControl<VSTGUI::CSplashScreen>(inClickRegion, inOwnerEditor, dfx::ParameterID_ToVST(dfx::kParameterID_Invalid), inSplashImage, inClickRegion)
 {
+	assert(inSplashImage);
+
 	setTransparency(true);
 
 	if (inSplashImage)

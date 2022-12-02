@@ -395,7 +395,7 @@ static bool DFX_IsSupportedAudioFileType(FSRef const& inFileRef)
 void TurntablistEditor::OpenEditor()
 {
 	auto const sliderHandleImage = LoadImage("slider-handle.png");
-	auto const knobImage = LoadImage("knob.png");
+	auto const knobImage = LoadImage("knob.png", kKnobFrames);
 	auto const onOffButtonImage = LoadImage("on-off-button.png");
 	auto const playButtonImage = LoadImage("play-button.png");
 	auto const directionButtonImage = LoadImage("direction-button.png");
@@ -532,43 +532,43 @@ buttonStat = CreateRoundButtonControl(GetCarbonWindow(), &buttonRect, kControlSi
 
 
 	// knobs
-	auto const knobWidth = knobImage->getWidth();
-	auto const knobHeight = knobImage->getHeight() / kKnobFrames;
+	auto const knobWidth = knobImage->getFrameSize().x;
+	auto const knobHeight = knobImage->getFrameSize().y;
 
 	pos.set(kPitchRangeKnobX, kPitchRangeKnobY, knobWidth, knobHeight);
-	auto knob = emplaceControl<DGAnimation>(this, kParam_PitchRange, pos, knobImage, kKnobFrames);
+	auto knob = emplaceControl<DGAnimation>(this, kParam_PitchRange, pos, knobImage);
 	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls the range of pitch adjustment values that the Pitch Shift parameter offers"), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Pitch Range parameter")));
 	knob->setHelpText(helpText.get());
 
 	auto const scratchSpeedParam = (getparameter_i(kParam_ScratchMode) == kScratchMode_Scrub) ? kParam_ScratchSpeed_scrub : kParam_ScratchSpeed_spin;
 	pos.set(kScratchSpeedKnobX, kScratchSpeedKnobY, knobWidth, knobHeight);
-	mScratchSpeedKnob = emplaceControl<DGAnimation>(this, scratchSpeedParam, pos, knobImage, kKnobFrames);
+	mScratchSpeedKnob = emplaceControl<DGAnimation>(this, scratchSpeedParam, pos, knobImage);
 	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this sets the speed of the scratching effect that the Scratch Amount parameter produces"), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Scratch Speed parameter")));
 	mScratchSpeedKnob->setHelpText(helpText.get());
 
 	pos.set(kSpinUpKnobX, kSpinUpKnobY, knobWidth, knobHeight);
-	knob = emplaceControl<DGAnimation>(this, kParam_SpinUpSpeed, pos, knobImage, kKnobFrames);
+	knob = emplaceControl<DGAnimation>(this, kParam_SpinUpSpeed, pos, knobImage);
 	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls how quickly the audio playback \"spins up\" when the turntable power turns on"), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Spin Up Speed parameter")));
 	knob->setHelpText(helpText.get());
 
 	pos.set(kSpinDownKnobX, kSpinDownKnobY, knobWidth, knobHeight);
-	knob = emplaceControl<DGAnimation>(this, kParam_SpinDownSpeed, pos, knobImage, kKnobFrames);
+	knob = emplaceControl<DGAnimation>(this, kParam_SpinDownSpeed, pos, knobImage);
 	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls how quickly the audio playback \"spins down\" when the turntable power turns off"), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Spin Down Speed parameter")));
 	knob->setHelpText(helpText.get());
 
 	pos.set(kRootKeyKnobX, kRootKeyKnobY, knobWidth, knobHeight);
-	knob = emplaceControl<DGAnimation>(this, kParam_RootKey, pos, knobImage, kKnobFrames);
+	knob = emplaceControl<DGAnimation>(this, kParam_RootKey, pos, knobImage);
 	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("when Key Track is enabled, this controls the MIDI key around which the transposition is centered"), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Root Key parameter")));
 	knob->setHelpText(helpText.get());
 
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
 	pos.set(kColumn2, kRow3 + kKnobOffsetY, knobWidth, knobHeight);
-	knob = emplaceControl<DGAnimation>(this, kParam_Volume, pos, knobImage, kKnobFrames);
+	knob = emplaceControl<DGAnimation>(this, kParam_Volume, pos, knobImage);
 	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls the overall volume of the audio output"), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Volume parameter")));
 	knob->setHelpText(helpText.get());

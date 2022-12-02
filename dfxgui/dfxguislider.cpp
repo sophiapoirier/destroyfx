@@ -831,12 +831,10 @@ float DGXYBox::mapValueY(float inValue) const
 DGAnimation::DGAnimation(DfxGuiEditor*		inOwnerEditor, 
 						 dfx::ParameterID	inParameterID, 
 						 DGRect const&		inRegion, 
-						 DGImage*			inAnimationImage, 
-						 size_t				inNumAnimationFrames)
-:	DGControl<VSTGUI::CAnimKnob>(inRegion, inOwnerEditor, dfx::ParameterID_ToVST(inParameterID), 
-								 static_cast<int32_t>(inNumAnimationFrames), inRegion.getHeight(), inAnimationImage)
+						 DGMultiFrameImage*	inAnimationImage)
+:	DGControl<VSTGUI::CAnimKnob>(inRegion, inOwnerEditor, dfx::ParameterID_ToVST(inParameterID), inAnimationImage)
 {
-	assert(inNumAnimationFrames > 0);
+	assert(inAnimationImage);
 
 	setTransparency(true);
 

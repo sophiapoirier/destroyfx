@@ -186,7 +186,7 @@ class DGAnimation : public DGControl<VSTGUI::CAnimKnob>
 {
 public:
 	DGAnimation(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion, 
-				DGImage* inAnimationImage, size_t inNumAnimationFrames);
+				DGMultiFrameImage* inAnimationImage);
 
 #ifdef TARGET_API_RTAS
 	void draw(VSTGUI::CDrawContext* inContext) override;

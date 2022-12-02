@@ -196,6 +196,7 @@ public:
 		return mBackgroundImage.get();
 	}
 	[[nodiscard]] VSTGUI::SharedPointer<DGImage> LoadImage(std::string const& inFileName);
+	[[nodiscard]] VSTGUI::SharedPointer<DGMultiFrameImage> LoadImage(std::string const& inFileName, size_t inFrameCount);
 
 	virtual void dfxgui_Idle() {}
 
@@ -387,6 +388,7 @@ private:
 
 	void ShowMessage(std::string const& inMessage);
 	void ShowAcknowledgements();
+	void HandleLoadImageError(DGImage& inImage, std::string const& inFileName);
 	static void Require(bool inCondition, char const* inFailureMessage = "");
 	static std::tuple<uint8_t, uint8_t, uint8_t> getPluginVersion() noexcept;
 
