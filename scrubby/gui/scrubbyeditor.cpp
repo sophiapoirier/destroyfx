@@ -287,8 +287,7 @@ void ScrubbyEditor::OpenEditor()
 
 
 	DGRect pos;
-	auto const seekRateParameterID = getparameter_b(kTempoSync) ? kSeekRate_Sync : kSeekRate_Hz;
-	auto const seekRateRandMinParameterID = getparameter_b(kTempoSync) ? kSeekRateRandMin_Sync : kSeekRateRandMin_Hz;
+	auto const [seekRateRandMinParameterID, seekRateParameterID] = GetActiveSeekRateParameterIDs();
 
 	//--create the sliders-----------------------------------------------
 
@@ -353,7 +352,7 @@ void ScrubbyEditor::OpenEditor()
 
 	// seek duration random minimum
 	pos.set(kSeekDurSliderX + kDisplayInsetX_leftAlign, kSeekDurSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kSeekDurRandMin, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mSeekDurRandMinDisplay = emplaceControl<DGTextDisplay>(this, kSeekDurRandMin, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// seek duration
 	pos.set(kSeekDurSliderX + kSeekDurSliderWidth - kDisplayWidth - kDisplayInsetX, kSeekDurSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
@@ -524,6 +523,7 @@ void ScrubbyEditor::OpenEditor()
 
 
 
+	UpdateRandomMinimumDisplays();
 	// this will initialize the translucency state of dependent controls
 	HandlePitchConstraintChange();
 	HandleTempoSyncChange();
@@ -538,11 +538,36 @@ void ScrubbyEditor::CloseEditor()
 	mSeekRateSlider = nullptr;
 	mSeekRateDisplay = nullptr;
 	mSeekRateRandMinDisplay = nullptr;
+	mSeekDurRandMinDisplay = nullptr;
 	mHelpBox = nullptr;
 	mTitleArea = nullptr;
 	mNotesButtons.clear();
 }
 
+
+//-----------------------------------------------------------------------------
+std::pair<dfx::ParameterID, dfx::ParameterID> ScrubbyEditor::GetActiveSeekRateParameterIDs()
+{
+	if (getparameter_b(kTempoSync))
+	{
+		return {kSeekRateRandMin_Sync, kSeekRate_Sync};
+	}
+	return {kSeekRateRandMin_Hz, kSeekRate_Hz};
+}
+
+//-----------------------------------------------------------------------------
+void ScrubbyEditor::UpdateRandomMinimumDisplays()
+{
+	auto const updateRandomMinimumVisibility = [this](dfx::ParameterID mainParameterID, dfx::ParameterID randMinParameterID, VSTGUI::CControl* control)
+	{
+		bool const visible = getparameter_f(mainParameterID) > getparameter_f(randMinParameterID);
+		control->setVisible(visible);
+	};
+
+	auto const [seekRateRandMinParameterID, seekRateParameterID] = GetActiveSeekRateParameterIDs();
+	updateRandomMinimumVisibility(seekRateParameterID, seekRateRandMinParameterID, mSeekRateRandMinDisplay);
+	updateRandomMinimumVisibility(kSeekDur, kSeekDurRandMin, mSeekDurRandMinDisplay);
+}
 
 //-----------------------------------------------------------------------------
 void ScrubbyEditor::HandleNotesButton(size_t inNotesButtonType)
@@ -668,19 +693,12 @@ void ScrubbyEditor::parameterChanged(dfx::ParameterID inParameterID)
 		case kTempoSync:
 		{
 			HandleTempoSyncChange();
-			auto const updateParameterID = [useSync = getparameter_b(inParameterID)](IDGControl* control)
+			auto const updateParameterID = [seekRateParameterIDs = GetActiveSeekRateParameterIDs()](IDGControl* control)
 			{
 				assert(control);
 				auto const entryParameterID = control->getParameterID();
-				auto newParameterID = dfx::kParameterID_Invalid;
-				if ((entryParameterID == kSeekRateRandMin_Hz) || (entryParameterID == kSeekRateRandMin_Sync))
-				{
-					newParameterID = useSync ? kSeekRateRandMin_Sync : kSeekRateRandMin_Hz;
-				}
-				else
-				{
-					newParameterID = useSync ? kSeekRate_Sync : kSeekRate_Hz;
-				}
+				bool const isRandMin = ((entryParameterID == kSeekRateRandMin_Hz) || (entryParameterID == kSeekRateRandMin_Sync));
+				auto const newParameterID = isRandMin ? seekRateParameterIDs.first : seekRateParameterIDs.second;
 				control->setParameterID(newParameterID);
 			};
 			updateParameterID(mSeekRateSlider);
@@ -689,6 +707,14 @@ void ScrubbyEditor::parameterChanged(dfx::ParameterID inParameterID)
 			updateParameterID(mSeekRateRandMinDisplay);
 			break;
 		}
+		case kSeekRate_Hz:
+		case kSeekRate_Sync:
+		case kSeekRateRandMin_Hz:
+		case kSeekRateRandMin_Sync:
+		case kSeekDur:
+		case kSeekDurRandMin:
+			UpdateRandomMinimumDisplays();
+			break;
 		case kSpeedMode:
 		case kPitchConstraint:
 			HandlePitchConstraintChange();

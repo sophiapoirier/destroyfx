@@ -40,6 +40,8 @@ public:
 	void outputChannelsChanged(size_t inChannelCount) override;
 
 private:
+	std::pair<dfx::ParameterID, dfx::ParameterID> GetActiveSeekRateParameterIDs();
+	void UpdateRandomMinimumDisplays();
 	void HandleNotesButton(size_t inNotesButtonType);
 	void HandlePitchConstraintChange();
 	void HandleTempoSyncChange();
@@ -49,6 +51,7 @@ private:
 	DGRangeSlider* mSeekRateSlider = nullptr;
 	DGTextDisplay* mSeekRateDisplay = nullptr;
 	DGTextDisplay* mSeekRateRandMinDisplay = nullptr;
+	DGTextDisplay* mSeekDurRandMinDisplay = nullptr;
 
 	DGHelpBox* mHelpBox = nullptr;
 	std::vector<DGButton*> mNotesButtons;

@@ -217,7 +217,7 @@ void SkidderEditor::OpenEditor()
 	auto const destroyFXLinkImage = LoadImage("destroy-fx-link.png");
 
 
-	auto const rateParameterIDs = GetActiveRateParameterIDs();
+	auto const [rateRandMinParameterID, rateParameterID] = GetActiveRateParameterIDs();
 
 
 	//--initialize the sliders-----------------------------------------------
@@ -226,7 +226,7 @@ void SkidderEditor::OpenEditor()
 
 	// rate   (single slider for "free" Hz rate and tempo synced rate)
 	pos.set(kSliderX, kSliderY, sliderBackgroundImage->getWidth(), sliderBackgroundImage->getHeight());
-	mRateSlider = emplaceControl<DGRangeSlider>(this, rateParameterIDs.first, rateParameterIDs.second, pos, rangeSliderHandleLeftImage, rangeSliderHandleRightImage, sliderBackgroundImage, rangeSliderPushStyle);
+	mRateSlider = emplaceControl<DGRangeSlider>(this, rateRandMinParameterID, rateParameterID, pos, rangeSliderHandleLeftImage, rangeSliderHandleRightImage, sliderBackgroundImage, rangeSliderPushStyle);
 	mRateSlider->setAlternateHandles(rangeSliderHandleLeftImage_learning, rangeSliderHandleRightImage_learning);
 
 	// pulsewidth
@@ -305,11 +305,11 @@ void SkidderEditor::OpenEditor()
 
 	// rate   (unified display for "free" Hz rate and tempo synced rate)
 	pos.set(kDisplayX, kDisplayY, kDisplayWidth, kDisplayHeight);
-	mRateDisplay = emplaceControl<DGTextDisplay>(this, rateParameterIDs.second, pos, rateDisplayProc, this, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mRateDisplay = emplaceControl<DGTextDisplay>(this, rateParameterID, pos, rateDisplayProc, this, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// rate random minimum
 	pos.set(kRandMinDisplayX, kRandMinDisplayY, kRandMinDisplayWidth, kRandMinDisplayHeight);
-	mRateRandMinDisplay = emplaceControl<DGTextDisplay>(this, rateParameterIDs.first, pos, rateRandMinDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mRateRandMinDisplay = emplaceControl<DGTextDisplay>(this, rateRandMinParameterID, pos, rateRandMinDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// pulsewidth
 	pos.set(kDisplayX, kDisplayY + (kSliderInc * 1), kDisplayWidth, kDisplayHeight);
@@ -382,11 +382,11 @@ void SkidderEditor::parameterChanged(dfx::ParameterID inParameterID)
 	{
 		case kTempoSync:
 		{
-			auto const rateParameterIDs = GetActiveRateParameterIDs();
-			mRateSlider->setParameterID(rateParameterIDs.second);
-			mRateSlider->getChildren().front()->setParameterID(rateParameterIDs.first);
-			mRateDisplay->setParameterID(rateParameterIDs.second);
-			mRateRandMinDisplay->setParameterID(rateParameterIDs.first);
+			auto const [rateRandMinParameterID, rateParameterID] = GetActiveRateParameterIDs();
+			mRateSlider->setParameterID(rateParameterID);
+			mRateSlider->getChildren().front()->setParameterID(rateRandMinParameterID);
+			mRateDisplay->setParameterID(rateParameterID);
+			mRateRandMinDisplay->setParameterID(rateRandMinParameterID);
 			HandleTempoSyncChange();
 			UpdateRandomMinimumDisplays();
 			break;
@@ -456,8 +456,8 @@ void SkidderEditor::UpdateRandomMinimumDisplays()
 		control->setVisible(visible);
 	};
 
-	auto const rateParameterIDs = GetActiveRateParameterIDs();
-	updateRandomMinimumVisibility(rateParameterIDs.second, rateParameterIDs.first, mRateRandMinDisplay);
+	auto const [rateRandMinParameterID, rateParameterID] = GetActiveRateParameterIDs();
+	updateRandomMinimumVisibility(rateParameterID, rateRandMinParameterID, mRateRandMinDisplay);
 	updateRandomMinimumVisibility(kPulsewidth, kPulsewidthRandMin, mPulsewidthRandMinDisplay);
 	updateRandomMinimumVisibility(kFloor, kFloorRandMin, mFloorRandMinDisplay);
 }
