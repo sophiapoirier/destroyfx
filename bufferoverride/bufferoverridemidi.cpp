@@ -59,7 +59,7 @@ float BufferOverride::getDivisorParameterFromPitchbend(int valueLSB, int valueMS
 
 		// this step gets the literal value for the new divisor
 		// you need to take into account where pitchbend is coming from, hence the division by mOldPitchBend
-		if (mOldPitchBend == 0.0)
+		if (dfx::math::IsZero(mOldPitchBend))
 		{
 			mOldPitchBend = 1.0;  // avoid division by zero <-- XXX necessary?
 		}

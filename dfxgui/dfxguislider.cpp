@@ -762,14 +762,14 @@ void DGXYBox::onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent)
 {
 	bool anyConsumed = false;
 
-	if (ioEvent.deltaX != 0.)
+	if (!dfx::math::IsZero(ioEvent.deltaX))
 	{
 		auto const entryDeltaY = std::exchange(ioEvent.deltaY, 0.);
 		detail::onMouseWheelEvent(mControlX, ioEvent);
 		ioEvent.deltaY = entryDeltaY;
 		anyConsumed |= ioEvent.consumed;
 	}
-	if (ioEvent.deltaY != 0.)
+	if (!dfx::math::IsZero(ioEvent.deltaY))
 	{
 		auto const entryDeltaX = std::exchange(ioEvent.deltaX, 0.);
 		detail::onMouseWheelEvent(mControlY, ioEvent);

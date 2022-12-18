@@ -26,10 +26,12 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <cassert>
 #include <cctype>
 #include <cmath>
+#include <concepts>
 #include <cstdint>
 #include <cstdio>
 #include <string_view>
 
+#include "dfxmath.h"
 #include "dfxmisc.h"
 
 using namespace dfx::TV;
@@ -88,6 +90,13 @@ constexpr float kSemitonesPerOctave = 12.0f;
 //-----------------------------------------------------------------------------
 // value text display procedures
 
+template <std::floating_point T>
+constexpr T modfMagnitude(T inValue)
+{
+	T integral_ignored {};
+	return std::fabs(std::modf(inValue, &integral_ignored));
+}
+
 static bool bsizeDisplayProcedure(float inValue, char* outText, void*)
 {
 	int const thousands = static_cast<int>(inValue) / 1000;
@@ -111,7 +120,7 @@ static bool speedDisplayProcedure(float inValue, char* outText, void*)
 {
 	std::array<char, 16> semitonesString {};
 	auto speed = inValue;
-	auto const remainder = std::fmod(std::fabs(speed), 1.0f);
+	auto const remainder = modfMagnitude(speed);
 	float semitones = remainder * kSemitonesPerOctave;
 	// make sure that these float crap doesn't result in wacky stuff
 	// like displays that say "-1 octave & 12.00 semitones"
@@ -214,7 +223,7 @@ static bool distDisplayProcedure(float inValue, char* outText, void* inEditor)
 static float distValueFromTextConvertProcedure(float inValue, DGTextDisplay* inTextDisplay)
 {
 	auto const bsize = static_cast<float>(inTextDisplay->getOwnerEditor()->getparameter_f(kBsize));
-	return (bsize != 0.0f) ? (inValue / bsize) : inValue;
+	return !dfx::math::IsZero(bsize) ? (inValue / bsize) : inValue;
 }
 
 
@@ -224,7 +233,7 @@ static float distValueFromTextConvertProcedure(float inValue, DGTextDisplay* inT
 static double nearestIntegerBelow(double number)
 {
 	bool const sign = (number >= 0.0);
-	auto const fraction = std::fmod(std::fabs(number), 1.0);
+	auto const fraction = modfMagnitude(number);
 
 	if (fraction <= 0.0001)
 	{
@@ -244,7 +253,7 @@ static double nearestIntegerBelow(double number)
 static double nearestIntegerAbove(double number)
 {
 	bool const sign = (number >= 0.0);
-	double const fraction = std::fmod(std::fabs(number), 1.0);
+	double const fraction = modfMagnitude(number);
 
 	if (fraction <= 0.0001)
 	{
@@ -293,6 +302,11 @@ void TransverbSpeedTuneButton::onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent)
 		setValue(mNewValue);
 		valueChanged();
 		invalid();
+	}
+	else
+	{
+		//redraw();  // at least make sure that redrawing occurs for mMouseIsDown change
+		// XXX or do I prefer it not to do the mouse-down state when nothing is happening anyway?
 	}
 
 	ioEvent.consumed = true;

@@ -246,7 +246,7 @@ void DGButton::onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent)
 	else
 	{
 		auto const compositeDelta = ioEvent.deltaX + ioEvent.deltaY;  // TODO: limit control to one axis?
-		long const delta = (compositeDelta == 0.) ? 0 : ((compositeDelta < 0.) ? -1 : 1);
+		long const delta = dfx::math::IsZero(compositeDelta) ? 0 : ((compositeDelta < 0.) ? -1 : 1);
 		newValue = constrainValue(getValue_i() + delta);
 		if (newValue != getValue_i())
 		{
@@ -494,10 +494,10 @@ void DGFineTuneButton::onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent)
 		{
 			setValue(mNewValue);
 		}
-// XXX or do I prefer it not to do the mouse-down state when nothing is happening anyway?
-//		else
+		else
 		{
 //			redraw();  // at least make sure that redrawing occurs for mMouseIsDown change
+			// XXX or do I prefer it not to do the mouse-down state when nothing is happening anyway?
 		}
 	}
 	else if (!mMouseIsDown && oldMouseDown)

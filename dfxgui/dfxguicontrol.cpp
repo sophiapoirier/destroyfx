@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include "dfxguicontrol.h"
 
+#include "dfxmath.h"
 #include "dfxplugin-base.h"
 
 
@@ -35,7 +36,7 @@ void detail::onMouseWheelEvent(IDGControl* inControl, VSTGUI::MouseWheelEvent& i
 	auto const compositeDelta = static_cast<float>(ioEvent.deltaX + ioEvent.deltaY);  // TODO: limit controls to one axis?
 	if (inControl->getNumStates() > 0)
 	{
-		long const delta = (compositeDelta == 0.f) ? 0 : ((compositeDelta < 0.f) ? -1 : 1);
+		long const delta = dfx::math::IsZero(compositeDelta) ? 0 : ((compositeDelta < 0.f) ? -1 : 1);
 		auto const newValue = inControl->getValue_i() + delta;
 		inControl->setValue_i(newValue);
 	}

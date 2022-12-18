@@ -31,6 +31,7 @@ This is our math and numerics shit.
 #include <cassert>
 #include <chrono>
 #include <cmath>
+#include <concepts>
 #include <limits>
 #include <random>
 #include <span>
@@ -115,6 +116,12 @@ constexpr auto ToUnsigned(T inValue) noexcept
 }
 
 //-----------------------------------------------------------------------------
+constexpr bool IsZero(std::floating_point auto inValue) noexcept
+{
+	return (std::fpclassify(inValue) == FP_ZERO);
+}
+
+//-----------------------------------------------------------------------------
 // return the parameter with larger magnitude
 template <typename T>
 constexpr T MagnitudeMax(T inValue1, T inValue2)
@@ -124,8 +131,8 @@ constexpr T MagnitudeMax(T inValue1, T inValue2)
 }
 
 //-----------------------------------------------------------------------------
-//static inline void Undenormalize(float& ioValue) { if (std::fabs(ioValue) < 1.0e-15f) ioValue = 0.0f; }
-//static inline void Undenormalize(float& ioValue) { if ((reinterpret_cast<unsigned int&>(ioValue) & 0x7f800000) == 0) ioValue = 0.0f; }
+//constexpr void Undenormalize(float& ioValue) { if (std::fabs(ioValue) < 1.0e-15f) ioValue = 0.f; }
+//constexpr void Undenormalize(float& ioValue) { if ((std::bit_cast<unsigned int>(ioValue) & 0x7f800000) == 0) ioValue = 0.f; }
 
 //-----------------------------------------------------------------------------
 template <typename T>
@@ -251,7 +258,7 @@ constexpr float InterpolateHermite_NoWrap(std::span<float const> inData, double 
 //-----------------------------------------------------------------------------
 // computes the principle branch of the Lambert W function
 // { LambertW(x) = W(x), where W(x) * exp(W(x)) = x }
-static inline double LambertW(double inValue)
+constexpr double LambertW(double inValue)
 {
 	auto const x = std::fabs(inValue);
 	if (x <= 500.0)
@@ -267,7 +274,7 @@ static inline double LambertW(double inValue)
 //-----------------------------------------------------------------------------
 // provides a good enough parameter smoothing update sample interval for frequency-based parameters;
 // this is targeting an update granularity of every 4 sample frames at a 44.1 kHz sample rate
-static inline size_t GetFrequencyBasedSmoothingStride(double inSamplerate)
+constexpr size_t GetFrequencyBasedSmoothingStride(double inSamplerate)
 {
 	assert(inSamplerate > 0.);
 	// TODO C++23: integer literal suffix UZ
@@ -290,13 +297,13 @@ enum class RandomSeed
 namespace detail
 {
 template <typename T>
-static consteval void validateRandomValueType()
+consteval void validateRandomValueType()
 {
 	static_assert(std::is_arithmetic_v<T>);
 }
 
 template <typename T>
-static constexpr T getRandomDefaultMaximum()
+constexpr T getRandomDefaultMaximum()
 {
 	validateRandomValueType<T>();
 	if constexpr (std::is_floating_point_v<T>)
@@ -311,7 +318,7 @@ static constexpr T getRandomDefaultMaximum()
 
 // allows to select between types at compile-time
 template <typename T>
-static constexpr auto getRandomDistribution(T inRangeMinimum = T(0), T inRangeMaximum = getRandomDefaultMaximum<T>())
+constexpr auto getRandomDistribution(T inRangeMinimum = T(0), T inRangeMaximum = getRandomDefaultMaximum<T>())
 {
 	validateRandomValueType<T>();
 	assert(inRangeMinimum <= inRangeMaximum);
@@ -355,7 +362,8 @@ struct PCGRandomEngine
 	}
 
 private:
-	static constexpr result_type rotr32(result_type x, unsigned r) {
+	static constexpr result_type rotr32(result_type x, unsigned r)
+	{
 		return x >> r | x << (-r & 31);
 	}
 	uint64_t state = 0U;

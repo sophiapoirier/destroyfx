@@ -55,7 +55,7 @@ void DfxEnvelope::setSampleRate(double inSampleRate)
 {
 	auto const prevSampleRate = mSampleRate;
 	mSampleRate = inSampleRate;
-	if ((prevSampleRate != inSampleRate) && (prevSampleRate != 0.0))
+	if ((prevSampleRate != inSampleRate) && !dfx::math::IsZero(prevSampleRate))
 	{
 		auto const srScalar = inSampleRate / prevSampleRate;
 		mSectionPos = dfx::math::RoundToIndex(static_cast<double>(mSectionPos) * srScalar);

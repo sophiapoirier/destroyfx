@@ -988,7 +988,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 				if (!m_bMute)   // if audio on
 				{
 #endif
-					if (m_fPlaySampleRate == 0.)
+					if (dfx::math::IsZero(m_fPlaySampleRate))
 					{
 						for (size_t ch = 0; ch < numOutputs; ch++)
 						{
@@ -1053,7 +1053,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 				if (m_bPlayForward)	// if play direction = forward
 				{
 					m_bPlayedReverse = false;
-					if (m_fPlaySampleRate != 0.)
+					if (!dfx::math::IsZero(m_fPlaySampleRate))
 					{
 						m_fPosition += m_fPosOffset;
 

@@ -260,7 +260,7 @@ void Skidder::processValley()
 float Skidder::processOutput(float in1, float in2, float panGain)
 {
 	// output noise
-	if ((mState == SkidState::Valley) && (mNoise.getValue() != 0.0f))
+	if ((mState == SkidState::Valley) && !dfx::math::IsZero(mNoise.getValue()))
 	{
 		// output gets random noise with samples from -1.0 to 1.0 times the random pan times rupture times the RMS scalar
 		return mRandomEngine.next<float>(-1.f, 1.f) * panGain * mNoise.getValue() * static_cast<float>(mRMS);

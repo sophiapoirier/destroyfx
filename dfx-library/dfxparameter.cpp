@@ -34,6 +34,8 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 #include <type_traits>
 #include <unordered_set>
 
+#include "dfxmath.h"
+
 
 
 //-----------------------------------------------------------------------------
@@ -48,7 +50,7 @@ static int64_t Float2Int(double const& inValue)
 // interpret fractional numbers as booleans
 static bool Float2Boolean(double const& inValue)
 {
-	return (inValue != 0.);
+	return !dfx::math::IsZero(inValue);
 }
 
 //-----------------------------------------------------------------------------

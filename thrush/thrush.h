@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include <vector>
 
+#include "dfxmath.h"
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
 #include "lfo.h"
@@ -101,7 +102,7 @@ private:
 	public:
 		bool isActive() const noexcept
 		{
-			return getDepth() != 0.;
+			return !dfx::math::IsZero(getDepth());
 		}
 	private:
 		friend class Thrush;

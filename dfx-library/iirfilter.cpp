@@ -108,7 +108,7 @@ static dfx::IIRFilter::Coefficients CalculateCoefficients(dfx::IIRFilter::Filter
 			break;
 
 		case dfx::IIRFilter::FilterType::Peak:
-			assert(inPreCoeff.mA != 0.);
+			assert(!dfx::math::IsZero(inPreCoeff.mA));
 			b0 = 1. + (inPreCoeff.mAlpha / inPreCoeff.mA);
 			coeff.mIn = 1. + (inPreCoeff.mAlpha * inPreCoeff.mA);
 			coeff.mPrevIn = coeff.mPrevOut = -2. * inPreCoeff.mCosOmega;
@@ -146,7 +146,7 @@ static dfx::IIRFilter::Coefficients CalculateCoefficients(dfx::IIRFilter::Filter
 			return dfx::IIRFilter::kZeroCoeff;
 	}
 
-	if (b0 != 0.)
+	if (!dfx::math::IsZero(b0))
 	{
 		coeff.mIn /= b0;
 		coeff.mPrevIn /= b0;
@@ -348,7 +348,7 @@ void dfx::Crossover::setFrequency(double inFrequency)
 	auto const sq_tmp1 = std::numbers::sqrt2_v<double> * wc3 * k;
 	auto const sq_tmp2 = std::numbers::sqrt2_v<double> * wc * k3;
 	auto const a_tmp = (4. * wc2 * k2) + (2. * sq_tmp1) + k4 + (2. * sq_tmp2) + wc4;
-	auto const a_tmp_inv = (a_tmp != 0.) ? (1. / a_tmp) : 1.;
+	auto const a_tmp_inv = !dfx::math::IsZero(a_tmp) ? (1. / a_tmp) : 1.;
 
 	mB1 = (4. * (wc4 + sq_tmp1 - k4 - sq_tmp2)) * a_tmp_inv;
 	mB2 = ((6. * wc4) - (8. * wc2 * k2) + (6. * k4)) * a_tmp_inv;
