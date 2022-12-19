@@ -31,6 +31,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <optional>
 #include <string>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "dfx-base.h"
@@ -180,10 +181,9 @@ public:
 	// Note that DFXGuiEditor observes but does not own these.  
 	// They are added to the VSTGUI frame which owns and manages their lifetime.
 	template <typename T, typename... Args>
+	requires std::is_base_of_v<IDGControl, T> && std::is_base_of_v<VSTGUI::CControl, T>
 	T* emplaceControl(Args&&... args)
 	{
-		static_assert(std::is_base_of_v<IDGControl, T>);
-		static_assert(std::is_base_of_v<VSTGUI::CControl, T>);
 		auto const control = new T(std::forward<Args>(args)...);
 		addControl(control);
 		return control;
@@ -296,10 +296,9 @@ public:
 										   size_t& outDataSize, dfx::PropertyFlags& outFlags);
 	dfx::StatusCode dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
 									   void* outData, size_t& ioDataSize);
-	template <typename T>
+	template <dfx::TriviallySerializable T>
 	std::optional<T> dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned int inItemIndex = 0)
 	{
-		static_assert(dfx::IsTriviallySerializable<T>);
 		T value {};
 		size_t dataSize = sizeof(value);
 		auto const status = dfxgui_GetProperty(inPropertyID, inScope, inItemIndex, &value, dataSize);
@@ -308,16 +307,13 @@ public:
 	dfx::StatusCode dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
 									   void const* inData, size_t inDataSize);
 	// Assumes the data's size is sizeof(T). Returns true if successful.
-	template <typename T>
-	bool dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, T const &data)
+	bool dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, dfx::TriviallySerializable auto const& data)
 	{
-		static_assert(dfx::IsTriviallySerializable<T>);
-		return dfx::kStatus_NoError == dfxgui_SetProperty(inPropertyID, inScope, inItemIndex, &data, sizeof data);
+		return dfxgui_SetProperty(inPropertyID, inScope, inItemIndex, &data, sizeof(data)) == dfx::kStatus_NoError;
 	}
-	template <typename T>
-	bool dfxgui_SetProperty(dfx::PropertyID inPropertyID, T const &data)
+	bool dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::TriviallySerializable auto const& data)
 	{
-		return dfxgui_SetProperty<T>(inPropertyID, dfx::kScope_Global, 0, data);
+		return dfxgui_SetProperty(inPropertyID, dfx::kScope_Global, 0, data);
 	}
 
 	size_t getNumInputChannels();

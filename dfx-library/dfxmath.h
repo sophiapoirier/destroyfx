@@ -63,28 +63,23 @@ true;
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-template <typename OutputT = size_t, typename InputT>
+template <std::unsigned_integral OutputT = size_t, std::signed_integral InputT>
 constexpr OutputT ToIndex(InputT inValue) noexcept
 {
-	static_assert(std::is_integral_v<InputT> && std::is_signed_v<InputT>);
-	static_assert(std::is_integral_v<OutputT> && std::is_unsigned_v<OutputT>);
 	return static_cast<OutputT>(std::max(inValue, InputT(0)));
 }
 
 //-----------------------------------------------------------------------------
-template <typename OutputT = size_t, typename InputT>
-constexpr OutputT RoundToIndex(InputT inValue)
+template <std::unsigned_integral OutputT = size_t>
+constexpr OutputT RoundToIndex(std::floating_point auto inValue)
 {
-	static_assert(std::is_floating_point_v<InputT>);
 	return ToIndex<OutputT>(std::llround(inValue));
 }
 
 //-----------------------------------------------------------------------------
 // fills the gap of a 32-bit int-returning flavor of std::lround or llround
-template <typename InputT>
-constexpr int IRound(InputT inValue)
+constexpr int IRound(std::floating_point auto inValue)
 {
-	static_assert(std::is_floating_point_v<InputT>);
 	auto const result = std::llround(inValue);
 	using ResultT = int;
 	assert(result >= static_cast<decltype(result)>(std::numeric_limits<ResultT>::min()));
@@ -93,26 +88,20 @@ constexpr int IRound(InputT inValue)
 }
 
 //-----------------------------------------------------------------------------
-template <typename T>
+template <std::unsigned_integral T>
 constexpr auto ToSigned(T inValue) noexcept
 {
-	static_assert(std::is_integral_v<T>);
-	static_assert(std::is_unsigned_v<T>);
-	using DecayedT = std::decay_t<T>;
-	using SignedT = std::make_signed_t<DecayedT>;
-	assert(inValue <= static_cast<DecayedT>(std::numeric_limits<SignedT>::max()));
+	using SignedT = std::make_signed_t<std::decay_t<T>>;
+	assert(inValue <= static_cast<T>(std::numeric_limits<SignedT>::max()));
 	return static_cast<SignedT>(inValue);
 }
 
 //-----------------------------------------------------------------------------
-template <typename T>
+template <std::signed_integral T>
 constexpr auto ToUnsigned(T inValue) noexcept
 {
-	static_assert(std::is_integral_v<T>);
-	static_assert(std::is_signed_v<T>);
-	using DecayedT = std::decay_t<T>;
-	assert(inValue >= DecayedT(0));
-	return static_cast<std::make_unsigned_t<DecayedT>>(inValue);
+	assert(inValue >= T(0));
+	return static_cast<std::make_unsigned_t<std::decay_t<T>>>(inValue);
 }
 
 //-----------------------------------------------------------------------------
@@ -123,10 +112,9 @@ constexpr bool IsZero(std::floating_point auto inValue) noexcept
 
 //-----------------------------------------------------------------------------
 // return the parameter with larger magnitude
-template <typename T>
+template <std::floating_point T>
 constexpr T MagnitudeMax(T inValue1, T inValue2)
 {
-	static_assert(std::is_floating_point_v<T>);
 	return (std::fabs(inValue1) > std::fabs(inValue2)) ? inValue1 : inValue2;
 }
 
@@ -135,10 +123,9 @@ constexpr T MagnitudeMax(T inValue1, T inValue2)
 //constexpr void Undenormalize(float& ioValue) { if ((std::bit_cast<unsigned int>(ioValue) & 0x7f800000) == 0) ioValue = 0.f; }
 
 //-----------------------------------------------------------------------------
-template <typename T>
+template <std::floating_point T>
 constexpr T ClampDenormal(T inValue)
 {
-	static_assert(std::is_floating_point_v<T>);
 	if constexpr (kDenormalProblem)
 	{
 		// clamp down any very small values (below -300 dB) to zero to hopefully avoid any denormal values
@@ -152,39 +139,35 @@ constexpr T ClampDenormal(T inValue)
 }
 
 //-----------------------------------------------------------------------------
-template <typename T>
+template <std::floating_point T>
 constexpr T Linear2dB(T inLinearValue)
 {
-	static_assert(std::is_floating_point_v<T>);
 	return T(20) * std::log10(inLinearValue);
 }
 
 //-----------------------------------------------------------------------------
-template <typename T>
+template <std::floating_point T>
 constexpr T Db2Linear(T inDecibalValue)
 {
-	static_assert(std::is_floating_point_v<T>);
 	return std::pow(T(10), inDecibalValue / T(20));
 }
 
 //-----------------------------------------------------------------------------
-template <typename T>
+template <std::floating_point T>
 constexpr T FrequencyScalarBySemitones(T inSemitones)
 {
-	static_assert(std::is_floating_point_v<T>);
 	return std::exp2(inSemitones / T(12));
 }
 
 //-----------------------------------------------------------------------------
 // orders of magnitude faster performance than std::modf
 // leaving the integral template argument unspecified means that you only wish to retrieve the fractional component
-template <typename OptionalIntegralT = void, typename FloatingT>
+template <typename OptionalIntegralT = void, std::floating_point FloatingT>
+requires std::is_integral_v<OptionalIntegralT> || std::is_void_v<OptionalIntegralT>
 constexpr auto ModF(FloatingT inValue)
 {
-	static_assert(std::is_floating_point_v<FloatingT>);
 	constexpr bool integralTypeSpecified = !std::is_void_v<OptionalIntegralT>;
 	using IntegralT = std::conditional_t<integralTypeSpecified, OptionalIntegralT, long>;
-	static_assert(std::is_integral_v<IntegralT>);
 	if constexpr (std::is_unsigned_v<IntegralT>)
 	{
 		assert(inValue >= FloatingT(0));
@@ -294,18 +277,14 @@ enum class RandomSeed
 	Entropic  // unbounded operation (not realtime-safe)
 };
 
+template <typename T>
+concept Randomizable = std::is_arithmetic_v<T>;
+
 namespace detail
 {
-template <typename T>
-consteval void validateRandomValueType()
-{
-	static_assert(std::is_arithmetic_v<T>);
-}
-
-template <typename T>
+template <Randomizable T>
 constexpr T getRandomDefaultMaximum()
 {
-	validateRandomValueType<T>();
 	if constexpr (std::is_floating_point_v<T>)
 	{
 		return T(1);
@@ -317,10 +296,9 @@ constexpr T getRandomDefaultMaximum()
 }
 
 // allows to select between types at compile-time
-template <typename T>
+template <Randomizable T>
 constexpr auto getRandomDistribution(T inRangeMinimum = T(0), T inRangeMaximum = getRandomDefaultMaximum<T>())
 {
-	validateRandomValueType<T>();
 	assert(inRangeMinimum <= inRangeMaximum);
 	if constexpr (std::is_floating_point_v<T>)
 	{
@@ -400,17 +378,15 @@ public:
 
 	// inclusive range (closed interval)
 	// allow dynamically using a new distribution range (creation is cheap)
-	template <typename T>
+	template <Randomizable T>
 	T next(T const& inRangeMinimum, T const& inRangeMaximum)
 	{
-		detail::validateRandomValueType<T>();
 		return detail::getRandomDistribution<T>(inRangeMinimum, inRangeMaximum)(mEngine);
 	}
 
-	template <typename T>
+	template <Randomizable T>
 	T next()
 	{
-		detail::validateRandomValueType<T>();
 		return detail::getRandomDistribution<T>()(mEngine);
 	}
 
@@ -449,7 +425,7 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-template <typename T>
+template <Randomizable T>
 class RandomGenerator
 {
 public:
@@ -458,7 +434,6 @@ public:
 	:	mEngine(inSeedType),
 		mDistribution(inRangeMinimum, inRangeMaximum)
 	{
-		detail::validateRandomValueType<T>();
 	}
 
 	T next()

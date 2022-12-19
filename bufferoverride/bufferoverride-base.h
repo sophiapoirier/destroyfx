@@ -25,6 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <atomic>
 #include <cassert>
 #include <cmath>
+#include <concepts>
 #include <type_traits>
 
 #include "dfx-base.h"
@@ -138,10 +139,9 @@ struct CompositeT
 
 using AtomicBufferOverrideViewData = std::conditional_t<detail::UnifiedT::is_always_lock_free, detail::UnifiedT, detail::CompositeT>;
 
-template <typename T>
+template <std::floating_point T>
 T GetBufferDecay(T normalizedPosition, T depth, DecayShape shape, dfx::math::RandomEngine& randomEngine)
 {
-	static_assert(std::is_floating_point_v<T>);
 	constexpr T maxValue = 1;
 	assert(normalizedPosition >= T(0));
 	assert(normalizedPosition <= maxValue);

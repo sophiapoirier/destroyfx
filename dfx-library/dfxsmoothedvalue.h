@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2021  Sophia Poirier
+Copyright (C) 2009-2022  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for doing interpolation of values over time.
@@ -29,6 +29,7 @@ This is our class for doing interpolation of values over time.
 
 #include "idfxsmoothedvalue.h"
 
+#include <concepts>
 #include <cstddef>
 
 
@@ -41,7 +42,7 @@ namespace dfx
 // A smoothed floating point value (T = float or double).
 // The value is linearly interpolated for the given number of seconds.
 // Client indicates the passage of time manually by calling inc() each sample.
-template <typename T>
+template <std::floating_point T>
 class SmoothedValue final : public ISmoothedValue
 {
 public:

@@ -359,9 +359,9 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 
 #if LOGIC_AU_PROPERTIES_AVAILABLE
 template <typename T>
+requires std::is_scalar_v<T>
 consteval auto DFX_EndianModeForScalarType()
 {
-	static_assert(std::is_scalar_v<T>);
 	if constexpr (sizeof(T) == sizeof(uint32_t))
 	{
 		return kLogicAUNodePropertyEndianMode_All32Bits;

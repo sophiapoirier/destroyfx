@@ -30,8 +30,8 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <concepts>
 #include <limits>
-#include <type_traits>
 #include <unordered_set>
 
 #include "dfxmath.h"
@@ -61,26 +61,23 @@ static bool Int2Boolean(int64_t const& inValue)
 }
 
 //-----------------------------------------------------------------------------
-template <typename T>
+template <std::floating_point T>
 auto sqrt_safe(T inValue)
 {
-	static_assert(std::is_floating_point_v<T>);
 	return std::sqrt(std::max(inValue, T(0)));
 }
 
 //-----------------------------------------------------------------------------
-template <typename T>
+template <std::floating_point T>
 auto pow_safe(T inBase, T inExponent)
 {
-	static_assert(std::is_floating_point_v<T>);
 	return std::pow(std::max(inBase, T(0)), inExponent);
 }
 
 //-----------------------------------------------------------------------------
-template <typename T>
+template <std::floating_point T>
 auto log_safe(T inValue)
 {
-	static_assert(std::is_floating_point_v<T>);
 	return std::log(std::max(inValue, std::numeric_limits<T>::min()));
 }
 

@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 These are some generally useful functions.
@@ -29,6 +29,7 @@ These are some generally useful functions.
 
 #include <array>
 #include <cassert>
+#include <concepts>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -48,10 +49,9 @@ namespace dfx
 namespace detail
 {
 	template <typename T, auto D>
+	requires std::is_pointer_v<T> && std::is_invocable_v<decltype(D), T>
 	struct UniqueTypeDeleter
 	{
-		static_assert(std::is_pointer_v<T>);
-		static_assert(std::is_invocable_v<decltype(D), T>);
 		void operator()(T object) noexcept
 		{
 			D(object);
@@ -91,17 +91,16 @@ auto MakeUniqueCFType(T object) noexcept
 //-----------------------------------------------------------------------------
 template <typename T>
 inline constexpr bool IsTriviallySerializable = std::is_trivially_copyable_v<T> && std::is_standard_layout_v<T>;
+template <typename T>
+concept TriviallySerializable = IsTriviallySerializable<T>;
 
 //-----------------------------------------------------------------------------
 void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount);
-template <typename T>
-void ReverseBytes(T* ioData, size_t inItemCount)
+void ReverseBytes(TriviallySerializable auto* ioData, size_t inItemCount)
 {
-	static_assert(IsTriviallySerializable<T>);
-	ReverseBytes(ioData, sizeof(T), inItemCount);
+	ReverseBytes(ioData, sizeof(*ioData), inItemCount);
 }
-template <typename T>
-void ReverseBytes(T& ioData)
+void ReverseBytes(TriviallySerializable auto& ioData)
 {
 	ReverseBytes(&ioData, 1);
 }

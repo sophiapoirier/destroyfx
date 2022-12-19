@@ -25,7 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <cassert>
 #include <cmath>
 #include <memory>
-#include <type_traits>
+#include <utility>
 
 #include "dfxguieditor.h"
 #include "dfxmisc.h"
@@ -34,7 +34,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 template <typename... Args>
 DGControl<T>::DGControl(Args&&... args)
 :	T(std::forward<Args>(args)...),
@@ -49,21 +49,21 @@ DGControl<T>::DGControl(Args&&... args)
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGControl<T>::setValue_gen(float inValue)
 {
 	T::setValueNormalized(inValue);
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGControl<T>::setDefaultValue_gen(float inValue)
 {
 	T::setDefaultValue((inValue * T::getRange()) + T::getMin());
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 long DGControl<T>::getValue_i()
 {
 	assert(getNumStates() > 0);
@@ -79,7 +79,7 @@ long DGControl<T>::getValue_i()
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGControl<T>::setValue_i(long inValue)
 {
 	assert(getNumStates() > 0);
@@ -114,7 +114,7 @@ void DGControl<T>::setValue_i(long inValue)
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGControl<T>::redraw()
 {
 //	T::invalid();  // XXX CView::invalid calls setDirty(false), which can have undesired consequences for control value handling
@@ -122,14 +122,14 @@ void DGControl<T>::redraw()
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 dfx::ParameterID DGControl<T>::getParameterID() const
 {
 	return dfx::ParameterID_FromVST(T::getTag());
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGControl<T>::setParameterID(dfx::ParameterID inParameterID)
 {
 	if (inParameterID != getParameterID())
@@ -141,14 +141,14 @@ void DGControl<T>::setParameterID(dfx::ParameterID inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 bool DGControl<T>::isParameterAttached() const
 {
 	return (getParameterID() != dfx::kParameterID_Invalid);
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGControl<T>::setNumStates(size_t inNumStates)
 {
 	mNumStates = inNumStates;
@@ -156,7 +156,7 @@ void DGControl<T>::setNumStates(size_t inNumStates)
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 bool DGControl<T>::notifyIfChanged()
 {
 	auto const entryDirty = T::isDirty();
@@ -175,14 +175,14 @@ namespace detail
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGControl<T>::onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent)
 {
 	detail::onMouseWheelEvent(this, ioEvent);
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGControl<T>::setDrawAlpha(float inAlpha)
 {
 	assert(inAlpha >= 0.f);
@@ -191,14 +191,14 @@ void DGControl<T>::setDrawAlpha(float inAlpha)
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 float DGControl<T>::getDrawAlpha() const
 {
 	return T::getAlphaValue();
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGControl<T>::setHelpText(char const* inText)
 {
 	assert(inText);
@@ -207,7 +207,7 @@ void DGControl<T>::setHelpText(char const* inText)
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGControl<T>::setHelpText(CFStringRef inText)
 {
 	assert(inText);
@@ -219,7 +219,7 @@ void DGControl<T>::setHelpText(CFStringRef inText)
 #endif
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGControl<T>::initValues()
 {
 	pullNumStatesFromParameter();
@@ -264,7 +264,7 @@ void DGControl<T>::initValues()
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGControl<T>::pullNumStatesFromParameter()
 {
 	if (isParameterAttached() && mOwnerEditor)
@@ -286,7 +286,7 @@ void DGControl<T>::pullNumStatesFromParameter()
 #pragma mark DGMultiControl
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGMultiControl<T>::setViewSize(VSTGUI::CRect const& inPos, bool inInvalidate)
 {
 	DGControl<T>::setViewSize(inPos, inInvalidate);
@@ -294,7 +294,7 @@ void DGMultiControl<T>::setViewSize(VSTGUI::CRect const& inPos, bool inInvalidat
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGMultiControl<T>::onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent)
 {
 	DGControl<T>::onMouseWheelEvent(ioEvent);
@@ -308,7 +308,7 @@ void DGMultiControl<T>::onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent)
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGMultiControl<T>::setDirty_all(bool inValue)
 {
 	DGControl<T>::setDirty(inValue);
@@ -316,14 +316,14 @@ void DGMultiControl<T>::setDirty_all(bool inValue)
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 bool DGMultiControl<T>::isDirty() const
 {
 	return DGControl<T>::isDirty() || std::any_of(mChildren.cbegin(), mChildren.cend(), [](auto const& child){ return child->asCControl()->isDirty(); });
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGMultiControl<T>::beginEdit_all()
 {
 	DGControl<T>::beginEdit();
@@ -331,7 +331,7 @@ void DGMultiControl<T>::beginEdit_all()
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGMultiControl<T>::endEdit_all()
 {
 	DGControl<T>::endEdit();
@@ -339,14 +339,14 @@ void DGMultiControl<T>::endEdit_all()
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 bool DGMultiControl<T>::isEditing_any() const
 {
 	return DGControl<T>::isEditing() || std::any_of(mChildren.cbegin(), mChildren.cend(), [](auto const& child){ return child->asCControl()->isEditing(); });
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 IDGControl* DGMultiControl<T>::getControlByParameterID(dfx::ParameterID inParameterID)
 {
 	if (DGControl<T>::getParameterID() == inParameterID)
@@ -359,7 +359,7 @@ IDGControl* DGMultiControl<T>::getControlByParameterID(dfx::ParameterID inParame
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 IDGControl* DGMultiControl<T>::addChild(dfx::ParameterID inParameterID)
 {
 	assert(inParameterID != dfx::kParameterID_Invalid);
@@ -376,7 +376,7 @@ IDGControl* DGMultiControl<T>::addChild(dfx::ParameterID inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGMultiControl<T>::addChildren(std::vector<dfx::ParameterID> const& inParameterIDs)
 {
 	assert(std::unordered_set(inParameterIDs.cbegin(), inParameterIDs.cend()).size() == inParameterIDs.size());
@@ -384,11 +384,10 @@ void DGMultiControl<T>::addChildren(std::vector<dfx::ParameterID> const& inParam
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
-template <typename Proc>
+template <std::derived_from<VSTGUI::CControl> T>
+template <std::invocable<IDGControl*> Proc>
 void DGMultiControl<T>::forEachChild(Proc inProc)
 {
-	static_assert(std::is_invocable_v<Proc, IDGControl*>);
 	for (auto&& child : getChildren())
 	{
 		inProc(child);
@@ -396,7 +395,7 @@ void DGMultiControl<T>::forEachChild(Proc inProc)
 }
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 void DGMultiControl<T>::notifyIfChanged_all()
 {
 	auto const baseChanged = DGControl<T>::notifyIfChanged();
@@ -415,7 +414,7 @@ void DGMultiControl<T>::notifyIfChanged_all()
 #pragma mark DGMultiControlChild
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 DGMultiControl<T>::DGMultiControlChild::DGMultiControlChild(DfxGuiEditor* inOwnerEditor,
 															DGRect const& inRegion,
 															dfx::ParameterID inParameterID)

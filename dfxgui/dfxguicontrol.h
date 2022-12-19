@@ -24,8 +24,8 @@ To contact the author, use the contact form at http://destroyfx.org
 #pragma once
 
 
+#include <concepts>
 #include <optional>
-#include <type_traits>
 #include <unordered_set>
 #include <vector>
 
@@ -43,11 +43,9 @@ To contact the author, use the contact form at http://destroyfx.org
 
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 class DGControl : public IDGControl, public T
 {
-	static_assert(std::is_base_of_v<VSTGUI::CControl, T>);
-
 public:
 	template <typename... Args>
 	explicit DGControl(Args&&... args);
@@ -206,7 +204,7 @@ private:
 
 
 //-----------------------------------------------------------------------------
-template <class T>
+template <std::derived_from<VSTGUI::CControl> T>
 class DGMultiControl : /*public IDGMultiControl,*/ public DGControl<T>
 {
 public:
@@ -238,7 +236,7 @@ protected:
 	// TODO: C++23 use std::span?
 	void addChildren(std::vector<dfx::ParameterID> const& inParameterID);
 
-	template <typename Proc>
+	template <std::invocable<IDGControl*> Proc>
 	void forEachChild(Proc inProc);
 
 	void notifyIfChanged_all();

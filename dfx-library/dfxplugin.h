@@ -128,6 +128,7 @@ VST_NUM_CHANNELS
 
 #include <atomic>
 #include <cassert>
+#include <concepts>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -137,7 +138,6 @@ VST_NUM_CHANNELS
 #include <string>
 #include <string_view>
 #include <thread>
-#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -684,7 +684,7 @@ public:
 #endif
 
 #ifdef TARGET_API_VST
-	template <class PluginClass>
+	template <std::derived_from<AudioEffect> PluginClass>
 	static AudioEffect* audioEffectFactory(audioMasterCallback inAudioMaster) noexcept;
 #endif
 
@@ -723,9 +723,9 @@ protected:
 		return mHostCanDoTempo;
 	}
 
-	template <typename T>
+	template <dfx::math::Randomizable T>
 	T generateParameterRandomValue();
-	template <typename T>
+	template <dfx::math::Randomizable T>
 	T generateParameterRandomValue(T const& inRangeMinimum, T const& inRangeMaximum);
 
 	bool isrenderthread() const noexcept;
@@ -798,7 +798,7 @@ private:
 	size_t mCurrentPresetNum = 0;
 
 #if TARGET_PLUGIN_USES_DSPCORE
-	template <class DSPCoreClass>
+	template <std::derived_from<DfxPluginCore> DSPCoreClass>
 	[[nodiscard]] std::unique_ptr<DSPCoreClass> dspCoreFactory();
 
 	// updates the parameter value cache used by DSP cores
@@ -1415,14 +1415,14 @@ public:
 // and therefore locking would be detrimental, the likelihood of contention on this lock is extremely low, 
 // and the critical section extremely brief, and the lock lightweight and out of the scheduler's management, 
 // that this shouldn't actually in practice present any issues
-template <typename T>
+template <dfx::math::Randomizable T>
 T DfxPlugin::generateParameterRandomValue()
 {
 	std::lock_guard const guard(mParameterRandomEngineLock);
 	return mParameterRandomEngine.next<T>();
 }
 
-template <typename T>
+template <dfx::math::Randomizable T>
 T DfxPlugin::generateParameterRandomValue(T const& inRangeMinimum, T const& inRangeMaximum)
 {
 	std::lock_guard const guard(mParameterRandomEngineLock);
@@ -1430,10 +1430,9 @@ T DfxPlugin::generateParameterRandomValue(T const& inRangeMinimum, T const& inRa
 }
 
 #if TARGET_PLUGIN_USES_DSPCORE
-template <class DSPCoreClass>
+template <std::derived_from<DfxPluginCore> DSPCoreClass>
 [[nodiscard]] std::unique_ptr<DSPCoreClass> DfxPlugin::dspCoreFactory()
 {
-	static_assert(std::is_base_of_v<DfxPluginCore, DSPCoreClass>);
 	auto core = std::make_unique<DSPCoreClass>(*this);
 	core->dfxplugincore_postconstructor();
 	return core;
@@ -1442,11 +1441,10 @@ template <class DSPCoreClass>
 
 
 #ifdef TARGET_API_VST
-template <class PluginClass>
+template <std::derived_from<AudioEffect> PluginClass>
 AudioEffect* DfxPlugin::audioEffectFactory(audioMasterCallback inAudioMaster) noexcept
 try
 {
-	static_assert(std::is_base_of_v<AudioEffect, PluginClass>);
 	auto const effect = new PluginClass(inAudioMaster);
 	effect->do_PostConstructor();
 	return effect;
