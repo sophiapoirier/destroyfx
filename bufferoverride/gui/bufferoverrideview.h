@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2021-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -40,6 +40,7 @@ class BufferOverrideView final : public VSTGUI::CView {
   explicit BufferOverrideView(VSTGUI::CRect const &size);
 
   bool attached(VSTGUI::CView *parent) override;
+  bool removed(VSTGUI::CView *parent) override;
   void draw(VSTGUI::CDrawContext *pContext) override;
   void onIdle() override;
 

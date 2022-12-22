@@ -823,13 +823,13 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
 
     int const span = static_cast<int>((pointparam * pointparam) * samples);
 
-    int i = abs((int)(py[0] * span)) + 1;
+    int i = std::abs(static_cast<int>(py[0] * span)) + 1;
 
     while (i < samples) {
       px[numpts] = i;
       py[numpts] = in[i];
       numpts++;
-      i = i + abs((int)(in[i] * span)) + 1;
+      i = i + std::abs(static_cast<int>(in[i] * span)) + 1;
     }
 
     break;

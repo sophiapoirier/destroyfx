@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -49,6 +49,7 @@ public:
   explicit GeometerView(VSTGUI::CRect const & size);
 
   bool attached(VSTGUI::CView * parent) override;
+  bool removed(VSTGUI::CView * parent) override;
   void draw(VSTGUI::CDrawContext * pContext) override;
   void onIdle() override;
 };

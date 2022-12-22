@@ -42,16 +42,16 @@ constexpr auto color_legend = VSTGUI::MakeCColor(0xc6, 0x85, 0x3d);
 constexpr CCoord FORCED_BUFFER_WIDTH_MIN = 4.;
 constexpr CCoord MINIBUFFER_WIDTH_MIN = 2.;
 
-BufferOverrideView::BufferOverrideView(VSTGUI::CRect const & size)
+BufferOverrideView::BufferOverrideView(VSTGUI::CRect const &size)
   : VSTGUI::CView(size) {
 
   setWantsIdle(true);
 }
 
 
-bool BufferOverrideView::attached(VSTGUI::CView * parent) {
+bool BufferOverrideView::attached(VSTGUI::CView *parent) {
 
-  auto const success = VSTGUI::CView::attached(parent);
+  const auto success = VSTGUI::CView::attached(parent);
 
   if (success) {
     editor = dynamic_cast<DfxGuiEditor*>(getEditor());
@@ -67,6 +67,15 @@ bool BufferOverrideView::attached(VSTGUI::CView * parent) {
   }
 
   return success;
+}
+
+
+bool BufferOverrideView::removed(VSTGUI::CView *parent) {
+
+  editor = nullptr;
+  offc = {};
+
+  return VSTGUI::CView::removed(parent);
 }
 
 
@@ -140,8 +149,8 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
   const CCoord pixels_per_window = width - (MARGIN_HORIZ * 2);
   assert(pixels_per_window > 0);
 
-  auto DrawBox = [this](CCoord x, CCoord y, CCoord w, CCoord h,
-                        CColor c) {
+  const auto DrawBox = [this](CCoord x, CCoord y, CCoord w, CCoord h,
+                              CColor c) {
       offc->setFrameColor(c);
       // top
       offc->drawLine(CPoint(x, y), CPoint(x + w - 1, y));
@@ -155,16 +164,16 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
       offc->drawLine(CPoint(x + w - 1, y), CPoint(x + w - 1, y + h - 1));
     };
 
-  auto DrawFilledBox = [this](CCoord x, CCoord y, CCoord w, CCoord h,
-                              CColor c) {
+  const auto DrawFilledBox = [this](CCoord x, CCoord y, CCoord w, CCoord h,
+                                    CColor c) {
       offc->setFillColor(c);
       offc->drawRect(DGRect(x, y, w, h), VSTGUI::kDrawFilled);
     };
 
   const auto [forced_buffer, minibuffer, window_sec] =
     ScaleViewData(data, pixels_per_window);
-  auto const decay_depth = editor->getparameter_f(kDecayDepth) * 0.01;
-  auto const decay_shape = static_cast<DecayShape>(editor->getparameter_i(kDecayShape));
+  const auto decay_depth = editor->getparameter_f(kDecayDepth) * 0.01;
+  const auto decay_shape = static_cast<DecayShape>(editor->getparameter_i(kDecayShape));
 
   // draw 'major' boxes.
   const CCoord majorbox_width = std::max(pixels_per_window * forced_buffer,
@@ -271,7 +280,7 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
 
 void BufferOverrideView::onIdle() {
   assert(editor);
-  auto const timestamp =
+  const auto timestamp =
     editor->dfxgui_GetProperty<uint64_t>(
         kBOProperty_LastViewDataTimestamp).value_or(prevtimestamp);
   if (std::exchange(prevtimestamp, timestamp) != timestamp) {

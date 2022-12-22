@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2022  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "geometerview.h"
@@ -54,6 +54,15 @@ bool GeometerView::attached(VSTGUI::CView * parent) {
   }
 
   return success;
+}
+
+
+bool GeometerView::removed(VSTGUI::CView * parent) {
+
+  editor = nullptr;
+  offc = {};
+
+  return VSTGUI::CView::removed(parent);
 }
 
 
