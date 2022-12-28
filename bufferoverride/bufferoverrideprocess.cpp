@@ -98,7 +98,7 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 		mWritePos = 0;  // start up a new forced buffer
 
 		// check on the previous forced and minibuffers; don't smooth if the last forced buffer wasn't divided
-		doSmoothing = (mPrevMinibufferSize < mCurrentForcedBufferSize);
+		doSmoothing = (mPrevMinibufferSize < prevForcedBufferSize);
 
 		// now update the the size of the current force buffer
 		if (mBufferTempoSync &&  // the user wants to do tempo sync / beat division rate
