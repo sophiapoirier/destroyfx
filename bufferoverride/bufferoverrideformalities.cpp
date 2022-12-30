@@ -63,9 +63,14 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_list(kMidiMode, dfx::MakeParameterNames(dfx::kParameterNames_MidiMode), kMidiMode_Nudge, kMidiMode_Nudge, kNumMidiModes);
 	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 57.0, 480.0, DfxParam::Unit::BPM);
 	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true);
+	initparameter_f(kMinibufferPortion, {"mini-buffer duration", "MBufDur", "MBfDur", "MBDr"}, 100.0, 100.0, 1.0, 100.0, DfxParam::Unit::Percent);
+	initparameter_f(kMinibufferPortionRandomMin, {"mini-buffer duration random min", "MBfDurM", "MBDurM", "MBDM"}, 100.0, 100.0, 1.0, 100.0, DfxParam::Unit::Percent);
 	initparameter_f(kDecayDepth, {"decay depth", "DecaDep", "DecDep", "DecD"}, 0., 0., -100., 100., DfxParam::Unit::Percent);
 	initparameter_list(kDecayMode, {"decay mode", "DecaMod", "DecMod", "DecM"}, kDecayMode_Gain, kDecayMode_Gain, kDecayModeCount);
 	initparameter_list(kDecayShape, {"decay shape", "DecaShp", "DecShp", "DecS"}, kDecayShape_Ramp, kDecayShape_Ramp, kDecayShapeCount);
+
+	setparameterenforcevaluelimits(kMinibufferPortion, true);
+	setparameterenforcevaluelimits(kMinibufferPortionRandomMin, true);
 
 	// set the value strings for the LFO shape parameters
 	for (dfx::LFO::Shape i = 0; i < dfx::LFO::kNumShapes; i++)
@@ -160,9 +165,10 @@ void BufferOverride::reset()
 	// setting the values like this will restart the forced buffer in the next process()
 	mCurrentForcedBufferSize = 1;
 	mWritePos = mReadPos = 1;
-	mMinibufferSize = 1;
+	mMinibufferSize = mMinibufferAudibleLength = 1;
 	mPrevMinibufferSize = 0;
-	mSmoothCount = mSmoothDur = 0;
+	mFadeInSmoothLength = mFadeOutSmoothLength = 0;
+	mFadeInSmoothCountDown = mFadeOutSmoothCountDown = 0;
 	mMinibufferDecayGain = 1.f;
 	mPrevMinibufferDecayGain = 0.f;
 
@@ -394,6 +400,8 @@ void BufferOverride::processparameters()
 	mMidiMode = getparameter_i(kMidiMode);
 	mUserTempoBPM = getparameter_f(kTempo);
 	mUseHostTempo = getparameter_b(kTempoAuto);
+	mMinibufferPortion = getparameter_scalar(kMinibufferPortion);
+	mMinibufferPortionRandomMin = getparameter_scalar(kMinibufferPortionRandomMin);
 	mDecayDepth = getparameter_scalar(kDecayDepth);
 	mDecayMode = getparameter_i(kDecayMode);
 	mDecayShape = static_cast<DecayShape>(getparameter_i(kDecayShape));

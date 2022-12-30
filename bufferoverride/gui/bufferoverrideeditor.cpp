@@ -436,10 +436,19 @@ void BufferOverrideEditor::OpenEditor()
 	emplaceControl<DGNullControl>(this, pos)->setBackgroundColor(backgroundColor);
 
 	auto const appendixY = kHelpDisplayY + (kHelpDisplayHeight * mHelpDisplays.size()) + kHelpDisplayLineSpacing;
-	constexpr int spacingX = 64;
+	constexpr int spacingX = 16;
 	auto const valueFont = CreateVstGuiFont(kValueDisplayFontSize, kValueDisplayFont);
 
-	pos.set(16, appendixY, 88, dfx::kFontSize_Wetar16px * 2);
+	pos.set(spacingX, appendixY, kDryWetSliderWidth, kSliderHeight);
+	auto const minibufferPortionSlider = emplaceControl<DGRangeSlider>(this, kMinibufferPortionRandomMin, kMinibufferPortion, pos, sliderHandleImage, sliderHandleImage, GetBackgroundImage(), DGRangeSlider::PushStyle::Upper);
+	minibufferPortionSlider->setAlternateHandles(sliderHandleImage_glowing, sliderHandleImage_glowing);
+	minibufferPortionSlider->setBackgroundOffset({kDryWetMixSliderX, kDryWetMixSliderY});
+	pos.set(pos.left, pos.top + 24 + kVTextOffset, kLCDDisplayWidth, kLCDDisplayHeight);
+	mMinibufferPortionRandomMinDisplay = emplaceControl<DGTextDisplay>(this, kMinibufferPortionRandomMin, pos, dryWetMixDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	pos.setX(pos.left + kDryWetMixDisplayX - kDryWetMixSliderX);
+	emplaceControl<DGTextDisplay>(this, kMinibufferPortion, pos, dryWetMixDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+
+	pos.set(pos.right + (spacingX * 4), appendixY, 88, dfx::kFontSize_Wetar16px * 2);
 	emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Left, dfx::kFontSize_Wetar16px * 2, DGColor::kBlack, dfx::kFontName_Wetar16px)->setText("DECAY");
 
 	pos.set(pos.right + spacingX, appendixY, kDryWetSliderWidth, kSliderHeight);
@@ -492,6 +501,7 @@ void BufferOverrideEditor::OpenEditor()
 #endif  // buffer decay controls
 
 
+	UpdateRandomMinimumDisplays();
 	HandleTempoSyncChange();
 	HandleTempoAutoChange();
 }
@@ -505,6 +515,7 @@ void BufferOverrideEditor::CloseEditor()
 	mBufferSizeDisplay = nullptr;
 	mDivisorLFORateDisplay = nullptr;
 	mBufferLFORateDisplay = nullptr;
+	mMinibufferPortionRandomMinDisplay = nullptr;
 	mTitleArea = nullptr;
 	mDataView = nullptr;
 	mHelpDisplays.fill(nullptr);
@@ -545,6 +556,10 @@ void BufferOverrideEditor::parameterChanged(dfx::ParameterID inParameterID)
 		case kTempoAuto:
 			HandleTempoAutoChange();
 			break;
+		case kMinibufferPortion:
+		case kMinibufferPortionRandomMin:
+			UpdateRandomMinimumDisplays();
+			[[fallthrough]];
 		case kDecayDepth:
 		case kDecayShape:
 			if (mDataView)
@@ -725,6 +740,15 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 	{
 		mHelpDisplays[i]->setText(helpStrings[i] ? helpStrings[i] : "");
 	}
+}
+
+//-----------------------------------------------------------------------------
+void BufferOverrideEditor::UpdateRandomMinimumDisplays()
+{
+	bool const visible = getparameter_f(kMinibufferPortion) > getparameter_f(kMinibufferPortionRandomMin);
+#if DEBUG
+	mMinibufferPortionRandomMinDisplay->setVisible(visible);
+#endif
 }
 
 //-----------------------------------------------------------------------------

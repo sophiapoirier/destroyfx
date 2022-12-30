@@ -32,6 +32,13 @@ To contact the author, use the contact form at http://destroyfx.org
 
 
 //-----------------------------------------------------------------------------
+constexpr float getStepAmount(long const inLength)
+{
+	assert(inLength >= 0);
+	return 1.f / static_cast<float>(inLength + 1);
+}
+
+//-----------------------------------------------------------------------------
 template <typename T>
 static void updateViewCacheValue(std::atomic<T>& ioAtomicValue, T const inReplacementValue, bool& ioChanged)
 {
@@ -62,6 +69,9 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 	mReadPos = 0;  // reset for starting a new minibuffer
 	mPrevMinibufferSize = mMinibufferSize;
 	auto const prevForcedBufferSize = mCurrentForcedBufferSize;
+	auto const prevMinibufferAudibleLength = mMinibufferAudibleLength;
+	bool const prevMinibufferShortened = (prevMinibufferAudibleLength < mPrevMinibufferSize);
+	bool const useMinibufferPortionRandomMin = (mMinibufferPortionRandomMin < mMinibufferPortion);
 
 	//--------------------------PROCESS THE LFOs----------------------------
 	// update the LFOs' positions to the current position
@@ -97,8 +107,8 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 	{
 		mWritePos = 0;  // start up a new forced buffer
 
-		// check on the previous forced and minibuffers; don't smooth if the last forced buffer wasn't divided
-		doSmoothing = (mPrevMinibufferSize < prevForcedBufferSize);
+		// check on the previous forced and minibuffers; don't smooth if the last forced buffer wasn't divided or shortened
+		doSmoothing = (prevMinibufferAudibleLength < prevForcedBufferSize);
 
 		// now update the the size of the current force buffer
 		if (mBufferTempoSync &&  // the user wants to do tempo sync / beat division rate
@@ -124,7 +134,7 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 		// untrue this so that we don't do the measure sync calculations again unnecessarily
 		mNeedResync = false;
 
-		ioViewDataChanged |= (mDecayShape == kDecayShape_Random);
+		ioViewDataChanged |= (mDecayShape == kDecayShape_Random) || useMinibufferPortionRandomMin;
 	}
 
 	//-----------------------CALCULATE THE DIVISOR-------------------------
@@ -210,6 +220,8 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 	}
 	// avoid zero-sized minibuffers
 	mMinibufferSize = std::max(mMinibufferSize, 1L);
+	auto const effectiveMinibufferPortion = useMinibufferPortionRandomMin ? mRandomEngine.next(mMinibufferPortionRandomMin, mMinibufferPortion) : mMinibufferPortion;
+	mMinibufferAudibleLength = std::max(std::lround(static_cast<double>(mMinibufferSize) * effectiveMinibufferPortion), 1L);
 
 	//-----------------------CALCULATE BUFFER DECAY-------------------------
 	mPrevMinibufferDecayGain = mMinibufferDecayGain;
@@ -264,29 +276,61 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 	});
 
 	//-----------------------CALCULATE SMOOTHING DURATION-------------------------
-	if (doSmoothing)
+	auto const accelerateFadeToMinibufferPortion = [remainderLength = mMinibufferAudibleLength](long& length, long& countDown)
 	{
-		mSmoothDur = std::lround(mSmoothPortion * static_cast<float>(mMinibufferSize));
-		long maxSmoothDur = 0;
+		assert(length > 0);
+		assert(countDown > 0);
+		auto const countDownProgress = static_cast<float>(countDown) / static_cast<float>(length);
+		countDown = remainderLength;
+		length = std::lround(static_cast<float>(countDown) / countDownProgress);
+	};
+
+	mFadeInSmoothLength = std::lround(mSmoothPortion * static_cast<float>(mMinibufferSize));
+	// if the previous forced buffer wasn't divided but was shortened, fade-in from the position of the fade-out
+	if ((mPrevMinibufferSize == prevForcedBufferSize) && prevMinibufferShortened)
+	{
+		float const countDownProgress = (mFadeOutSmoothLength > 0) ? (static_cast<float>(mFadeOutSmoothCountDown) / static_cast<float>(mFadeOutSmoothLength)) : 0.f;
+		mFadeInSmoothCountDown = std::lround((1.f - countDownProgress) * static_cast<float>(mFadeInSmoothLength));
+		if (mFadeInSmoothCountDown > mMinibufferAudibleLength)
+		{
+			accelerateFadeToMinibufferPortion(mFadeInSmoothLength, mFadeInSmoothCountDown);
+		}
+	}
+	else if (doSmoothing)
+	{
+		long maxSmoothLength {};
 		// if we're just starting a new forced buffer,
 		// then the samples beyond the end of the previous one are not valid
 		if (mWritePos <= 0)
 		{
-			maxSmoothDur = prevForcedBufferSize - mPrevMinibufferSize;
+			maxSmoothLength = prevForcedBufferSize - mPrevMinibufferSize;
 		}
 		// otherwise just make sure that we don't go outside of the allocated arrays
 		else
 		{
-			maxSmoothDur = std::ssize(mBuffers.front()) - mPrevMinibufferSize;
+			maxSmoothLength = std::ssize(mBuffers.front()) - mPrevMinibufferSize;
 		}
-		mSmoothDur = std::min(mSmoothDur, maxSmoothDur);
-		mSmoothCount = mSmoothDur;
-		mSmoothStep = 1.f / static_cast<float>(mSmoothDur + 1);
+		mFadeInSmoothLength = std::min({mFadeInSmoothLength, maxSmoothLength, mMinibufferAudibleLength});
+		mFadeInSmoothCountDown = mFadeInSmoothLength;
 	}
-	// no smoothing if the previous forced buffer wasn't divided
+	// no smoothing if the previous forced buffer wasn't divided or shortened
 	else
 	{
-		mSmoothCount = mSmoothDur = 0;
+		mFadeInSmoothLength = mFadeInSmoothCountDown = 0;
+	}
+	mFadeInSmoothStep = getStepAmount(mFadeInSmoothLength);
+
+	// an early fade-out from reduced portion minibuffer is not in progress or completed
+	if (!prevMinibufferShortened)
+	{
+		mFadeOutSmoothLength = mFadeInSmoothLength;
+		mFadeOutSmoothCountDown = mFadeInSmoothCountDown;
+		mFadeOutSmoothStep = mFadeInSmoothStep;
+	}
+	else if (mFadeOutSmoothCountDown > mMinibufferAudibleLength)
+	{
+		accelerateFadeToMinibufferPortion(mFadeOutSmoothLength, mFadeOutSmoothCountDown);
+		mFadeOutSmoothStep = getStepAmount(mFadeOutSmoothLength);
 	}
 }
 
@@ -320,7 +364,8 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 				mWritePos = 1;
 				mMinibufferSize = 1;
 				mPrevMinibufferSize = 0;
-				mSmoothCount = mSmoothDur = 0;
+				mFadeInSmoothLength = mFadeInSmoothCountDown = 0;
+				mFadeOutSmoothLength = mFadeOutSmoothCountDown = 0;
 			}
 		}
 		else  // get the tempo from the user parameter
@@ -347,30 +392,71 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 			mBuffers[ch][mWritePos] = inAudio[ch][sampleIndex];
 		}
 
-		// get the current output without any smoothing
-		for (size_t ch = 0; ch < numChannels; ch++)
+		if (mReadPos == mMinibufferAudibleLength)
 		{
-			mAudioOutputValues[ch] = mCurrentDecayFilters[ch].process(mBuffers[ch][mReadPos]) * mMinibufferDecayGain;
+			mFadeOutSmoothLength = std::lround(mSmoothPortion * static_cast<float>(mMinibufferSize));
+			long const maxSmoothLength = std::ssize(mBuffers.front()) - mMinibufferAudibleLength;
+			mFadeOutSmoothLength = std::min({mFadeOutSmoothLength, maxSmoothLength, mMinibufferAudibleLength});
+			mFadeOutSmoothCountDown = mFadeOutSmoothLength;
+			mFadeOutSmoothStep = getStepAmount(mFadeOutSmoothLength);
 		}
 
-		// and if smoothing is taking place, get the smoothed audio output
-		if (mSmoothCount > 0)
+		// get the current output without any smoothing
+		bool const minibufferIsAudiblePortion = (mReadPos < mMinibufferAudibleLength);
+		if (minibufferIsAudiblePortion || (mFadeOutSmoothCountDown > 0))
 		{
-			auto const normalizedPosition = static_cast<float>((mSmoothDur - mSmoothCount) + 1) * mSmoothStep;
+			for (size_t ch = 0; ch < numChannels; ch++)
+			{
+				mAudioOutputValues[ch] = mCurrentDecayFilters[ch].process(mBuffers[ch][mReadPos]) * mMinibufferDecayGain;
+			}
+		}
+		else
+		{
+			std::fill(mAudioOutputValues.begin(), mAudioOutputValues.end(), 0.f);
+		}
+
+		constexpr auto normalizePosition = [](long length, long countDown, float stepAmount)
+		{
+			return static_cast<float>((length - countDown) + 1) * stepAmount;
+		};
+		// and if smoothing is taking place, get the smoothed audio output
+		if (mFadeInSmoothCountDown > 0)
+		{
+			auto const normalizedPosition = normalizePosition(mFadeInSmoothLength, mFadeInSmoothCountDown, mFadeInSmoothStep);
 #if 1  // sine/cosine crossfade
-			auto const fadeOutGain = std::cos(halfPi * normalizedPosition);
 			auto const fadeInGain = std::sin(halfPi * normalizedPosition);
 #else  // square root crossfade
 			auto const fadeInGain = std::sqrt(normalizedPosition);
+#endif
+			// crossfade in the current input
+			std::transform(mAudioOutputValues.cbegin(), mAudioOutputValues.cend(), mAudioOutputValues.begin(),
+						   [fadeInGain](auto value){ return value * fadeInGain; });
+			mFadeInSmoothCountDown--;
+		}
+		if (mFadeOutSmoothCountDown > 0)
+		{
+			auto const normalizedPosition = normalizePosition(mFadeOutSmoothLength, mFadeOutSmoothCountDown, mFadeOutSmoothStep);
+#if 1  // sine/cosine crossfade
+			auto const fadeOutGain = std::cos(halfPi * normalizedPosition);
+#else  // square root crossfade
 			auto const fadeOutGain = std::sqrt(1.f - normalizedPosition);
 #endif
-			for (size_t ch = 0; ch < numChannels; ch++)
+			if (minibufferIsAudiblePortion)
 			{
-				// crossfade between the current input and its corresponding overlap sample
-				auto const tailOutputValue = mPrevDecayFilters[ch].process(mBuffers[ch][mReadPos + mPrevMinibufferSize]) * mPrevMinibufferDecayGain;
-				mAudioOutputValues[ch] = (mAudioOutputValues[ch] * fadeInGain) + (tailOutputValue * fadeOutGain);
+				// crossfade out the overlap sample
+				for (size_t ch = 0; ch < numChannels; ch++)
+				{
+					auto const tailOutputValue = mPrevDecayFilters[ch].process(mBuffers[ch][mReadPos + mPrevMinibufferSize]) * mPrevMinibufferDecayGain;
+					mAudioOutputValues[ch] += tailOutputValue * fadeOutGain;
+				}
 			}
-			mSmoothCount--;
+			else
+			{
+				// fade-out the of end of the shortened minibuffer
+				std::transform(mAudioOutputValues.cbegin(), mAudioOutputValues.cend(), mAudioOutputValues.begin(),
+							   [fadeOutGain](auto value){ return value * fadeOutGain; });
+			}
+			mFadeOutSmoothCountDown--;
 		}
 
 		// write the output samples into the output stream

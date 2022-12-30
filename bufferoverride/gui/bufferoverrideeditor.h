@@ -41,6 +41,7 @@ public:
 private:
 	static constexpr size_t kHelpDisplayLineCount = 2;
 
+	void UpdateRandomMinimumDisplays();
 	void HandleTempoSyncChange();
 	void HandleTempoAutoChange();
 
@@ -50,6 +51,7 @@ private:
 	DGTextDisplay* mBufferSizeDisplay = nullptr;
 	DGTextDisplay* mDivisorLFORateDisplay = nullptr;
 	DGTextDisplay* mBufferLFORateDisplay = nullptr;
+	DGTextDisplay* mMinibufferPortionRandomMinDisplay = nullptr;
 	IDGControl* mTitleArea = nullptr;
 	class BufferOverrideView* mDataView = nullptr;
 

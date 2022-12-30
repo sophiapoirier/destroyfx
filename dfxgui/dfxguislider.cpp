@@ -247,7 +247,7 @@ void DGRangeSlider::draw(VSTGUI::CDrawContext* inContext)
 {
 	if (auto const image = getDrawBackground())
 	{
-		image->draw(inContext, getViewSize());
+		image->draw(inContext, getViewSize(), mBackgroundOffset);
 	}
 
 #if TARGET_PLUGIN_USES_MIDI
@@ -521,6 +521,12 @@ void DGRangeSlider::onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent)
 	notifyIfChanged_all();
 
 	ioEvent.consumed = true;
+}
+
+//-----------------------------------------------------------------------------
+void DGRangeSlider::setBackgroundOffset(VSTGUI::CPoint const& inOffset)
+{
+	mBackgroundOffset = inOffset;
 }
 
 //-----------------------------------------------------------------------------

@@ -84,6 +84,7 @@ private:
 	bool mDivisorLFOTempoSync = false, mBufferLFOTempoSync = false;
 	double mDivisorLFORateHz = 0., mBufferLFORateHz = 0.;  // LFO rate (in Hz)
 	double mDivisorLFOTempoRate = 0., mBufferLFOTempoRate = 0.;  // LFO rate (in cycles per beat)
+	double mMinibufferPortion = 1., mMinibufferPortionRandomMin = 1.;
 	float mDecayDepth = 0.f;
 	long mDecayMode {};
 	DecayShape mDecayShape {};
@@ -96,6 +97,7 @@ private:
 	long mWritePos = 0;  // the current sample position within the forced buffer
 
 	long mMinibufferSize = 0;  // the current size of the divided "mini" buffer
+	long mMinibufferAudibleLength = 0;  // the audible duty cycle of the current minibuffer
 	long mPrevMinibufferSize = 0;  // the previous size
 	long mReadPos = 0;  // the current sample position within the minibuffer
 
@@ -111,8 +113,9 @@ private:
 	bool mNeedResync = false;
 	dfx::TempoRateTable const mTempoRateTable;
 
-	long mSmoothDur = 0, mSmoothCount = 0;  // total duration and sample counter for the minibuffer transition smoothing period
-	float mSmoothStep = 0.f;  // the normalized position increment for each sample "step" during the smoothing period
+	long mFadeInSmoothLength = 0, mFadeOutSmoothLength = 0;  // total duration and sample counter for the minibuffer transition smoothing period
+	long mFadeInSmoothCountDown = 0, mFadeOutSmoothCountDown = 0;
+	float mFadeInSmoothStep = 0.f, mFadeOutSmoothStep = 0.f;  // the normalized position increment for each sample "step" during the smoothing period
 
 	double mPitchBend = 0.0, mOldPitchBend = 0.0;  // pitchbending scalar values
 	bool mOldNote = false;  // says if there was an old, unattended note-on or note-off from a previous block

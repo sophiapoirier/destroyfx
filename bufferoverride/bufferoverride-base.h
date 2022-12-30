@@ -63,6 +63,9 @@ enum : dfx::ParameterID
 	kTempo,
 	kTempoAuto,
 
+	kMinibufferPortion,
+	kMinibufferPortionRandomMin,
+
 	kDecayDepth,
 	kDecayMode,
 	kDecayShape,

@@ -86,6 +86,7 @@ public:
 	void onMouseUpEvent(VSTGUI::MouseUpEvent& ioEvent) override;
 	void onMouseCancelEvent(VSTGUI::MouseCancelEvent& ioEvent) override;
 
+	void setBackgroundOffset(VSTGUI::CPoint const& inOffset);
 	void setAlternateHandles(VSTGUI::CBitmap* inLowerHandle, VSTGUI::CBitmap* inUpperHandle);
 
 #if TARGET_PLUGIN_USES_MIDI
@@ -106,6 +107,8 @@ private:
 	float const mEffectiveRange;
 	PushStyle const mPushStyle;
 	VSTGUI::CCoord const mOvershoot;	// how far (in pixel) you can click outside of being in between the points and still be close enough to be considered in between
+
+	VSTGUI::CPoint mBackgroundOffset;
 
 	// mouse-down state
 	bool mClickBetween = false;
