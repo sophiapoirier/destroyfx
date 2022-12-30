@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #ifndef DFX_BUFFER_OVERRIDE_DEF_H
@@ -27,9 +27,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #define PLUGIN_NAME_STRING	"Buffer Override"
 #define PLUGIN_ID	FOURCC('b', 'u', 'f', 'f')
-#define PLUGIN_VERSION_MAJOR	2
-#define PLUGIN_VERSION_MINOR	7
-#define PLUGIN_VERSION_BUGFIX	1
+#define PLUGIN_VERSION_MAJOR	3
+#define PLUGIN_VERSION_MINOR	0
+#define PLUGIN_VERSION_BUGFIX	0
 #define PLUGIN_CLASS_NAME	BufferOverride
 #define TARGET_PLUGIN_USES_MIDI	1
 #define TARGET_PLUGIN_IS_INSTRUMENT	0
