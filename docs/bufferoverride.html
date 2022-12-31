@@ -86,11 +86,38 @@ This number is divided into the <b>forced buffer size</b>, resulting in the mini
 <p class="label">mini-buffer duration:</p>
 
 <p class="desc">
-Lowering this value will shorten the audible duration of each mini-buffer. Below 100%, there are silent gaps at the end of each mini-buffer.
+Lowering this value will shorten the audible portion of each mini-buffer.  Below 100%, there are silent gaps at the end of each mini-buffer.
 </p>
 
 <p class="desc">
 This parameter can be set to use a randomized range.  If the two slider handles are not right next to each other, then upon each mini-buffer, a value is randomly chosen that is within the range of the minimum and maximum points.
+</p>
+
+<br />
+
+
+<p class="label">buffer decay depth:</p>
+
+<p class="desc">
+This is the degree to which each mini-buffer will be incrementally modulated over the course of a forced buffer.  Positive values leave the first mini-buffer unaffected and cause each subsequent mini-buffer to increase modulation towards the specified depth.  Negative values apply modulation to the first mini-buffer at the specified depth and then decrease each subsequent mini-buffer.  Zero effectively disables <b>buffer decay</b>.
+</p>
+
+<br />
+
+
+<p class="label">buffer decay mode:</p>
+
+<p class="desc">
+This selects the type of modulation to perform across mini-buffers within each forced buffer.  Gain mode alters the amplitude.  Low-pass mode applies a low-pass filter.  High-pass mode applies a high-pass filter.  LP/HP ping pong mode alternates at each mini-buffer between low-pass and high-pass filtering.
+</p>
+
+<br />
+
+
+<p class="label">buffer decay shape:</p>
+
+<p class="desc">
+This selects the form taken by the modulation depth changes over the course of a forced buffer.  Ramp mode steadily increases modulation (or decreases when <b>decay depth</b> is negative).  Oscillate mode increases then decreases (or the reverse when <b>decay depth</b> is negative).  Random mode randomizes modulation upon each mini-buffer, though always is unmodulated on the first mini-buffer within a forced buffer (unless <b>decay depth</b> is negative).
 </p>
 
 <br />

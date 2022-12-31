@@ -735,6 +735,24 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 					"Lowering this value will shorten the audible portion of each mini-buffer.",
 					"Below 100%, there are silent gaps at the end of each mini-buffer."
 				};
+			case kDecayDepth:
+				return
+				{
+					"The degree to which each mini-buffer will be incrementally modulated over the course of a forced buffer.",
+					"Positive values will increase modulation towards the specified depth and negative values cause the reverse."
+				};
+			case kDecayMode:
+				return
+				{
+					"Selects the type of modulation to perform across mini-buffers within each forced buffer.",
+					"Gain mode alters amplitude. Low-pass and high-pass modes filter. LP/HP ping pong mode alternates filters."
+				};
+			case kDecayShape:
+				return
+				{
+					"Selects the form taken by the modulation depth changes over the course of a forced buffer.",
+					"Ramp mode steadily increases. Oscillate mode increases then decreases. Random mode randomizes."
+				};
 			default:
 				break;
 		}
