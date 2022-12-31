@@ -728,6 +728,13 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 				};
 			case kTempoAuto:
 				return {"Enable this to get the tempo from your host application (if available).", nullptr};
+			case kMinibufferPortion:
+			case kMinibufferPortionRandomMin:
+				return
+				{
+					"Lowering this value will shorten the audible portion of each mini-buffer.",
+					"Below 100%, there are silent gaps at the end of each mini-buffer."
+				};
 			default:
 				break;
 		}
