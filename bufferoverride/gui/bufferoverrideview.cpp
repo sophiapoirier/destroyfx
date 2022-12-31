@@ -170,10 +170,15 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
       offc->drawRect(DGRect(x, y, w, h), VSTGUI::kDrawFilled);
     };
 
-  const auto MinibufferPortion = [this,
+  auto MinibufferPortion = [this,
     anchor = editor->getparameter_f(kMinibufferPortion) * 0.01,
-    random_min = editor->getparameter_f(kMinibufferPortionRandomMin) * 0.01] {
-      return random_engine.next(std::min(random_min, anchor), anchor);
+    random_min = editor->getparameter_f(kMinibufferPortionRandomMin) * 0.01,
+    buffer_interrupt = editor->getparameter_b(kBufferInterrupt),
+    result = 0.](bool forced_buffer_beginning) mutable {
+      if (forced_buffer_beginning || buffer_interrupt) {
+        result = random_engine.next(std::min(random_min, anchor), anchor);
+      }
+      return result;
     };
 
   const auto [forced_buffer, minibuffer, window_sec] =
@@ -199,7 +204,7 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
 
     DrawBox(ixpos, MARGIN_TOP, majw, majorbox_height, color_lite);
 
-    auto minorbox_color = color_lite;
+    bool first = true;
     constexpr CCoord xstart = 2;
     const CCoord xend = majw - xstart;
     // TODO: reflect that a fractional minibuffer extends the final one
@@ -207,7 +212,7 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
       const auto inxpos = std::lround(nxpos);
       const auto minw =
         std::lround((std::round(nxpos + minorbox_width) - std::round(nxpos)) *
-                    MinibufferPortion());
+                    MinibufferPortion(first));
 
       // Clip the width of the last minibuffer.
       // We can reuse the right margin by overlapping it with the
@@ -222,9 +227,9 @@ void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
       DrawFilledBox(ixpos + inxpos, ypos,
                     // leave space between boxes
                     std::max(w - 1, 1L), decayed_height,
-                    minorbox_color);
+                    first ? color_lite : color_med);
 
-      minorbox_color = color_med;
+      first = false;
     }
   }
 

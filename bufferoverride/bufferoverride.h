@@ -84,7 +84,7 @@ private:
 	bool mDivisorLFOTempoSync = false, mBufferLFOTempoSync = false;
 	double mDivisorLFORateHz = 0., mBufferLFORateHz = 0.;  // LFO rate (in Hz)
 	double mDivisorLFOTempoRate = 0., mBufferLFOTempoRate = 0.;  // LFO rate (in cycles per beat)
-	double mMinibufferPortion = 1., mMinibufferPortionRandomMin = 1.;
+	double mMinibufferPortion = 1., mMinibufferPortionRandomMin = 1., mEffectiveMinibufferPortion = 1.;
 	float mDecayDepth = 0.f;
 	long mDecayMode {};
 	DecayShape mDecayShape {};

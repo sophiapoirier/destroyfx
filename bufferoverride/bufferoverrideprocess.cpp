@@ -70,8 +70,9 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 	mPrevMinibufferSize = mMinibufferSize;
 	auto const prevForcedBufferSize = mCurrentForcedBufferSize;
 	auto const prevMinibufferAudibleLength = mMinibufferAudibleLength;
+	bool const forcedBufferIsBeginning = (mWritePos >= mCurrentForcedBufferSize);  // check if this forced buffer ended
 	bool const prevMinibufferShortened = (prevMinibufferAudibleLength < mPrevMinibufferSize);
-	bool const useMinibufferPortionRandomMin = (mMinibufferPortionRandomMin < mMinibufferPortion);
+	bool const randomizeMinibufferPortion = (mMinibufferPortionRandomMin < mMinibufferPortion);
 
 	//--------------------------PROCESS THE LFOs----------------------------
 	// update the LFOs' positions to the current position
@@ -102,8 +103,7 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 	}
 
 	//---------------------------CALCULATE FORCED BUFFER SIZE----------------------------
-	// check if it's the end of this forced buffer
-	if (mWritePos >= mCurrentForcedBufferSize)
+	if (forcedBufferIsBeginning)
 	{
 		mWritePos = 0;  // start up a new forced buffer
 
@@ -134,7 +134,7 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 		// untrue this so that we don't do the measure sync calculations again unnecessarily
 		mNeedResync = false;
 
-		ioViewDataChanged |= (mDecayShape == kDecayShape_Random) || useMinibufferPortionRandomMin;
+		ioViewDataChanged |= (mDecayShape == kDecayShape_Random) || randomizeMinibufferPortion;
 	}
 
 	//-----------------------CALCULATE THE DIVISOR-------------------------
@@ -148,8 +148,7 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 	}
 
 	//-----------------------CALCULATE THE MINIBUFFER SIZE-------------------------
-	// this is not a new forced buffer starting up
-	if (mWritePos > 0)
+	if (!forcedBufferIsBeginning)
 	{
 		// if it's allowed, update the minibuffer size midway through this forced buffer
 		if (mBufferInterrupt)
@@ -220,8 +219,11 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 	}
 	// avoid zero-sized minibuffers
 	mMinibufferSize = std::max(mMinibufferSize, 1L);
-	auto const effectiveMinibufferPortion = useMinibufferPortionRandomMin ? mRandomEngine.next(mMinibufferPortionRandomMin, mMinibufferPortion) : mMinibufferPortion;
-	mMinibufferAudibleLength = std::max(std::lround(static_cast<double>(mMinibufferSize) * effectiveMinibufferPortion), 1L);
+	if (forcedBufferIsBeginning || mBufferInterrupt)
+	{
+		mEffectiveMinibufferPortion = randomizeMinibufferPortion ? mRandomEngine.next(mMinibufferPortionRandomMin, mMinibufferPortion) : mMinibufferPortion;
+	}
+	mMinibufferAudibleLength = std::max(std::lround(static_cast<double>(mMinibufferSize) * mEffectiveMinibufferPortion), 1L);
 
 	//-----------------------CALCULATE BUFFER DECAY-------------------------
 	mPrevMinibufferDecayGain = mMinibufferDecayGain;
@@ -301,7 +303,7 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 		long maxSmoothLength {};
 		// if we're just starting a new forced buffer,
 		// then the samples beyond the end of the previous one are not valid
-		if (mWritePos <= 0)
+		if (forcedBufferIsBeginning)
 		{
 			maxSmoothLength = prevForcedBufferSize - mPrevMinibufferSize;
 		}
