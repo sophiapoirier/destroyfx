@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -708,8 +708,7 @@ void DGXYBox::onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent)
 		mOldValueY = mControlY->asCControl()->getValueNormalized();
 	}
 
-	// option/alt locks the X axis, so only adjust the X value if option is not being pressed
-	if (!ioEvent.modifiers.has(VSTGUI::ModifierKey::Alt))
+	if (!lockX(ioEvent.modifiers))
 	{
 		auto const value = [this, pos = ioEvent.mousePosition, isFineTune]
 		{
@@ -723,9 +722,7 @@ void DGXYBox::onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent)
 		mControlX->asCControl()->setValueNormalized(value);
 	}
 
-	// control locks the Y axis, so only adjust the Y value if control is not being pressed
-	auto const lockY = !isPlatformControlKeySet(ioEvent.modifiers);
-	if (lockY)
+	if (!lockY(ioEvent.modifiers))
 	{
 		auto const value = [this, pos = ioEvent.mousePosition, isFineTune]
 		{
@@ -768,14 +765,14 @@ void DGXYBox::onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent)
 {
 	bool anyConsumed = false;
 
-	if (!dfx::math::IsZero(ioEvent.deltaX))
+	if (!dfx::math::IsZero(ioEvent.deltaX) && !lockX(ioEvent.modifiers))
 	{
 		auto const entryDeltaY = std::exchange(ioEvent.deltaY, 0.);
 		detail::onMouseWheelEvent(mControlX, ioEvent);
 		ioEvent.deltaY = entryDeltaY;
 		anyConsumed |= ioEvent.consumed;
 	}
-	if (!dfx::math::IsZero(ioEvent.deltaY))
+	if (!dfx::math::IsZero(ioEvent.deltaY) && !lockY(ioEvent.modifiers))
 	{
 		auto const entryDeltaX = std::exchange(ioEvent.deltaX, 0.);
 		detail::onMouseWheelEvent(mControlY, ioEvent);
@@ -821,6 +818,20 @@ float DGXYBox::mapValueX(float inValue) const
 float DGXYBox::mapValueY(float inValue) const
 {
 	return invertIfStyle(inValue, VSTGUI::CSliderBase::kBottom);
+}
+
+//-----------------------------------------------------------------------------
+// option/alt key locks the X axis from mouse changes
+bool DGXYBox::lockX(VSTGUI::Modifiers inModifiers)
+{
+	return inModifiers.has(VSTGUI::ModifierKey::Alt);
+}
+
+//-----------------------------------------------------------------------------
+// control key locks the Y axis from mouse changes
+bool DGXYBox::lockY(VSTGUI::Modifiers inModifiers)
+{
+	return isPlatformControlKeySet(inModifiers);
 }
 
 

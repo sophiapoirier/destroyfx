@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -161,6 +161,9 @@ private:
 	float invertIfStyle(float inValue, VSTGUI::CSliderBase::Style inStyle) const;
 	float mapValueX(float inValue) const;
 	float mapValueY(float inValue) const;
+
+	static bool lockX(VSTGUI::Modifiers inModifiers);
+	static bool lockY(VSTGUI::Modifiers inModifiers);
 
 	IDGControl* const mControlX;
 	IDGControl* const mControlY;
