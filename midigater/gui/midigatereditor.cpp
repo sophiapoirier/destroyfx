@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -91,12 +91,6 @@ static bool envelopeDisplayProc(float inValue, char* outText, void*)
 
 //____________________________________________________________________________
 DFX_EDITOR_ENTRY(MIDIGaterEditor)
-
-//-----------------------------------------------------------------------------
-MIDIGaterEditor::MIDIGaterEditor(DGEditorListenerInstance inInstance)
-:	DfxGuiEditor(inInstance)
-{
-}
 
 //-----------------------------------------------------------------------------
 void MIDIGaterEditor::OpenEditor()

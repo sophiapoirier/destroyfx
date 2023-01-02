@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -28,7 +28,7 @@ To contact the author, use the contact form at http://destroyfx.org
 class EQSyncEditor final : public DfxGuiEditor
 {
 public:
-	explicit EQSyncEditor(DGEditorListenerInstance inInstance);
+	using DfxGuiEditor::DfxGuiEditor;
 	void OpenEditor() override;
 	void parameterChanged(dfx::ParameterID inParameterID) override;
 

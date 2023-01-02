@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -31,7 +31,7 @@ To contact the author, use the contact form at http://destroyfx.org
 class ScrubbyEditor final : public DfxGuiEditor
 {
 public:
-	explicit ScrubbyEditor(DGEditorListenerInstance inInstance);
+	using DfxGuiEditor::DfxGuiEditor;
 
 	void OpenEditor() override;
 	void CloseEditor() override;

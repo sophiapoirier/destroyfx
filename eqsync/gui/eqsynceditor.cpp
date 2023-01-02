@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -124,12 +124,6 @@ private:
 
 //-----------------------------------------------------------------------------
 DFX_EDITOR_ENTRY(EQSyncEditor)
-
-//-----------------------------------------------------------------------------
-EQSyncEditor::EQSyncEditor(DGEditorListenerInstance inInstance)
-:	DfxGuiEditor(inInstance)
-{
-}
 
 //-----------------------------------------------------------------------------
 void EQSyncEditor::OpenEditor()

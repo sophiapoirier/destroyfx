@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -222,12 +222,6 @@ static bool predelayDisplayProc(float inValue, char* outText, void*)
 
 //-----------------------------------------------------------------------------
 DFX_EDITOR_ENTRY(ScrubbyEditor)
-
-//-----------------------------------------------------------------------------
-ScrubbyEditor::ScrubbyEditor(DGEditorListenerInstance inInstance)
-:	DfxGuiEditor(inInstance)
-{
-}
 
 //-----------------------------------------------------------------------------
 void ScrubbyEditor::OpenEditor()

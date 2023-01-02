@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of Polarizer.
 
@@ -28,6 +28,6 @@ To contact the author, use the contact form at http://destroyfx.org
 class PolarizerEditor final : public DfxGuiEditor
 {
 public:
-	explicit PolarizerEditor(DGEditorListenerInstance inInstance);
+	using DfxGuiEditor::DfxGuiEditor;
 	void OpenEditor() override;
 };

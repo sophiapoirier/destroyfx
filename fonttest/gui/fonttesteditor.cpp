@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2021-2022  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2021-2023  Tom Murphy 7 and Sophia Poirier
 
 This file is part of FontTest.
 
@@ -49,13 +49,6 @@ enum
 
 //-----------------------------------------------------------------------------
 DFX_EDITOR_ENTRY(FontTestEditor)
-
-//-----------------------------------------------------------------------------
-FontTestEditor::FontTestEditor(DGEditorListenerInstance inInstance)
-:	DfxGuiEditor(inInstance)
-{
-
-}
 
 //-----------------------------------------------------------------------------
 void FontTestEditor::OpenEditor()

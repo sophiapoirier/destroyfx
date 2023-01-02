@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2022  Sophia Poirier
+Copyright (C) 2000-2023  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -31,7 +31,7 @@ To contact the author, use the contact form at http://destroyfx.org
 class SkidderEditor final : public DfxGuiEditor
 {
 public:
-	explicit SkidderEditor(DGEditorListenerInstance inInstance);
+	using DfxGuiEditor::DfxGuiEditor;
 
 	void OpenEditor() override;
 	void CloseEditor() override;

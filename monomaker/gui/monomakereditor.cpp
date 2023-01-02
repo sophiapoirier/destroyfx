@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of Monomaker.
 
@@ -78,12 +78,6 @@ static bool panDisplayProc(float inValue, char* outText, void*)
 
 //____________________________________________________________________________
 DFX_EDITOR_ENTRY(MonomakerEditor)
-
-//-----------------------------------------------------------------------------
-MonomakerEditor::MonomakerEditor(DGEditorListenerInstance inInstance)
-:	DfxGuiEditor(inInstance)
-{
-}
 
 //-----------------------------------------------------------------------------
 void MonomakerEditor::OpenEditor()

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2004-2022  Sophia Poirier
+Copyright (C) 2004-2023  Sophia Poirier
 
 This file is part of Turntablist.
 
@@ -180,11 +180,7 @@ private:
 class TurntablistScratchSlider final : public DGSlider
 {
 public:
-	TurntablistScratchSlider(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion, 
-							 dfx::Axis inOrientation, DGImage* inHandleImage)
-	:   DGSlider(inOwnerEditor, inParameterID, inRegion, inOrientation, inHandleImage)
-	{
-	}
+	using DGSlider::DGSlider;
 
 	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override
 	{
@@ -461,10 +457,7 @@ void TurntablistEditor::OpenEditor()
 	class TurntablistButton final : public DGButton
 	{
 	public:
-		TurntablistButton(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inImage, size_t inNumStates, Mode inMode)
-		:	DGButton(inOwnerEditor, inRegion, inImage, inNumStates, inMode)
-		{
-		}
+		using DGButton::DGButton;
 		/*void onDragEnter(IDataPackage* inDrag, VSTGUI::CPoint const& inPos) override
 		{
 			getFrame()->setCursor(kCursorCopy);

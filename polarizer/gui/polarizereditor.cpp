@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of Polarizer.
 
@@ -127,12 +127,6 @@ private:
 
 //-----------------------------------------------------------------------------
 DFX_EDITOR_ENTRY(PolarizerEditor)
-
-//-----------------------------------------------------------------------------
-PolarizerEditor::PolarizerEditor(DGEditorListenerInstance inInstance)
-:	DfxGuiEditor(inInstance)
-{
-}
 
 //-----------------------------------------------------------------------------
 void PolarizerEditor::OpenEditor()

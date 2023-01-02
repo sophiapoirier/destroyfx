@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -111,7 +111,7 @@ constexpr float kUnusedControlAlpha = 0.39f;
 
 static bool bandwidthAmountDisplayProc(float inValue, char* outText, void* inEditor)
 {
-	const auto success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
+	auto const success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
 	if (static_cast<DfxGuiEditor*>(inEditor)->getparameter_i(kBandwidthMode) == kBandwidthMode_Hz)
 	{
 		dfx::StrlCat(outText, " Hz", DGTextDisplay::kTextMaxLength);
@@ -190,12 +190,6 @@ static bool pitchBendDisplayProc(float inValue, char* outText, void*)
 
 //-----------------------------------------------------------------------------
 DFX_EDITOR_ENTRY(RezSynthEditor)
-
-//-----------------------------------------------------------------------------
-RezSynthEditor::RezSynthEditor(DGEditorListenerInstance inInstance)
-:	DfxGuiEditor(inInstance)
-{
-}
 
 //-----------------------------------------------------------------------------
 void RezSynthEditor::OpenEditor()

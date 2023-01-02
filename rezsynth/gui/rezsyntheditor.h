@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -29,7 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org
 class RezSynthEditor final : public DfxGuiEditor
 {
 public:
-	explicit RezSynthEditor(DGEditorListenerInstance inInstance);
+	using DfxGuiEditor::DfxGuiEditor;
 
 	void OpenEditor() override;
 	void CloseEditor() override;

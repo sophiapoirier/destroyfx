@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2021-2022  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2021-2023  Tom Murphy 7 and Sophia Poirier
 
 This file is part of FontTest.
 
@@ -29,7 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org
 class FontTestEditor final : public DfxGuiEditor
 {
 public:
-	explicit FontTestEditor(DGEditorListenerInstance inInstance);
+	using DfxGuiEditor::DfxGuiEditor;
 
 	void OpenEditor() override;
 };

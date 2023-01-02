@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2022  Sophia Poirier
+Copyright (C) 2000-2023  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -183,12 +183,6 @@ static bool tempoDisplayProc(float inValue, char* outText, void*)
 
 //-----------------------------------------------------------------------------
 DFX_EDITOR_ENTRY(SkidderEditor)
-
-//-----------------------------------------------------------------------------
-SkidderEditor::SkidderEditor(DGEditorListenerInstance inInstance)
-:	DfxGuiEditor(inInstance)
-{
-}
 
 //-----------------------------------------------------------------------------
 void SkidderEditor::OpenEditor()

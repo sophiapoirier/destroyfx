@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2023  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -33,10 +33,7 @@ To contact the author, use the contact form at http://destroyfx.org
 class TransverbSpeedTuneButton final : public DGFineTuneButton
 {
 public:
-	TransverbSpeedTuneButton(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion,
-							 DGImage* inImage, float inValueChangeAmount)
-	:	DGFineTuneButton(inOwnerEditor, inParameterID, inRegion, inImage, inValueChangeAmount)
-	{}
+	using DGFineTuneButton::DGFineTuneButton;
 
 	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
 
