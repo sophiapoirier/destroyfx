@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -33,15 +33,15 @@ void detail::onMouseWheelEvent(IDGControl* inControl, VSTGUI::MouseWheelEvent& i
 {
 	inControl->onMouseWheelEditing();
 
-	auto const compositeDelta = static_cast<float>(ioEvent.deltaX + ioEvent.deltaY);  // TODO: limit controls to one axis?
 	if (inControl->getNumStates() > 0)
 	{
-		long const delta = dfx::math::IsZero(compositeDelta) ? 0 : ((compositeDelta < 0.f) ? -1 : 1);
+		auto const delta = mouseWheelEventIntegralCompositeDelta(ioEvent);
 		auto const newValue = inControl->getValue_i() + delta;
 		inControl->setValue_i(newValue);
 	}
 	else
 	{
+		auto const compositeDelta = static_cast<float>(ioEvent.deltaX + ioEvent.deltaY);  // TODO: limit controls to one axis?
 		auto const cControl = inControl->asCControl();
 		auto const changeAmountDivisor = (VSTGUI::buttonStateFromEventModifiers(ioEvent.modifiers) & cControl->kZoomModifier) ? inControl->getFineTuneFactor() : 1.f;
 		auto const delta = compositeDelta * cControl->getWheelInc() / changeAmountDivisor;
@@ -50,6 +50,13 @@ void detail::onMouseWheelEvent(IDGControl* inControl, VSTGUI::MouseWheelEvent& i
 	inControl->notifyIfChanged();
 
 	ioEvent.consumed = true;
+}
+
+//-----------------------------------------------------------------------------
+int detail::mouseWheelEventIntegralCompositeDelta(VSTGUI::MouseWheelEvent const& inEvent)
+{
+	auto const compositeDelta = inEvent.deltaX + inEvent.deltaY;
+	return dfx::math::IsZero(compositeDelta) ? 0 : ((compositeDelta < 0.) ? -1 : 1);
 }
 
 

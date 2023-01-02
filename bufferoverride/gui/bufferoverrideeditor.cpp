@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cmath>
 #include <functional>
 
 #include "bufferoverride-base.h"
@@ -253,6 +254,36 @@ static bool tempoDisplayProc(float inValue, char* outText, void*)
 
 
 //-----------------------------------------------------------------------------
+// snaps mouse wheel adjustments to whole number values
+class BODivisorTextDisplay : public DGTextDisplay
+{
+public:
+	using DGTextDisplay::DGTextDisplay;
+
+	void onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent) override
+	{
+		if (VSTGUI::buttonStateFromEventModifiers(ioEvent.modifiers) & kZoomModifier)
+		{
+			return DGTextDisplay::onMouseWheelEvent(ioEvent);
+		}
+
+		onMouseWheelEditing();
+
+		auto const delta = detail::mouseWheelEventIntegralCompositeDelta(ioEvent);
+		auto const entryValue = std::lround(getOwnerEditor()->dfxgui_ExpandParameterValue(getParameterID(), getValueNormalized()));
+		auto const adjustedValue = static_cast<float>(entryValue + delta);
+		setValueNormalized(getOwnerEditor()->dfxgui_ContractParameterValue(getParameterID(), adjustedValue));
+		notifyIfChanged();
+
+		ioEvent.consumed = true;
+	}
+
+	CLASS_METHODS(BODivisorTextDisplay, DGTextDisplay)
+};
+
+
+
+//-----------------------------------------------------------------------------
 DFX_EDITOR_ENTRY(BufferOverrideEditor)
 
 //-----------------------------------------------------------------------------
@@ -335,7 +366,7 @@ void BufferOverrideEditor::OpenEditor()
 
 
 	pos.set(kDivisorDisplayX, kDivisorDisplayY, kOLEDDisplayWidth, kOLEDDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kDivisor, pos, divisorDisplayProc, nullptr, nullptr, dfx::TextAlignment::Center, kValueDisplayFontSize * 2.0f, kLCDCyanTextColor, kValueDisplayFont);
+	emplaceControl<BODivisorTextDisplay>(this, kDivisor, pos, divisorDisplayProc, nullptr, nullptr, dfx::TextAlignment::Center, kValueDisplayFontSize * 2.0f, kLCDCyanTextColor, kValueDisplayFont);
 
 	pos.set(kBufferDisplayX, kBufferDisplayY, kOLEDDisplayWidth, kOLEDDisplayHeight);
 	mBufferSizeDisplay = emplaceControl<DGTextDisplay>(this, bufferSizeParameterID, pos, bufferSizeDisplayProc, this, nullptr, dfx::TextAlignment::Center, kValueDisplayFontSize * 2.0f, kLCDCyanTextColor, kValueDisplayFont);
