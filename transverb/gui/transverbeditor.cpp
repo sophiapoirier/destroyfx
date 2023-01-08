@@ -476,6 +476,12 @@ void TransverbEditor::OpenEditor()
 	SetParameterHelpText(kQuality, "level of transposition quality of the delays' speed");
 	SetParameterHelpText(kTomsound, "megaharsh sound");
 	SetParameterHelpText(kFreeze, "pause recording new audio into the delay buffer");
+
+
+#if 1
+	pos.set(120, getFrame()->getHeight() - 24, 210, 16);
+	emplaceControl<DGPopUpMenu>(this, kDistChangeMode, pos, dfx::TextAlignment::Center, kDisplayTextSize, VSTGUI::MakeCColor(92, 151, 209), kDisplayFont);
+#endif
 }
 
 //-----------------------------------------------------------------------------
