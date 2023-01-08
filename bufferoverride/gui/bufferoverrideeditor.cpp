@@ -489,46 +489,11 @@ void BufferOverrideEditor::OpenEditor()
 	pos.set(pos.left + kDryWetMixDisplayX - kDryWetMixSliderX, pos.top + 24 + kVTextOffset, kLCDDisplayWidth, kLCDDisplayHeight);
 	emplaceControl<DGTextDisplay>(this, kDecayDepth, pos, dryWetMixDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
 
-	class BOOptionMenu : public DGControl<VSTGUI::COptionMenu>
-	{
-	public:
-		BOOptionMenu(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion)
-		:	DGControl<VSTGUI::COptionMenu>(inRegion, inOwnerEditor, dfx::ParameterID_ToVST(inParameterID)) {}
-		CLASS_METHODS(BOOptionMenu, VSTGUI::COptionMenu)
-	};
 	pos.set(pos.right + spacingX, appendixY, 160, 32);
-	auto const decayModeMenu = emplaceControl<BOOptionMenu>(this, kDecayMode, pos);
-	decayModeMenu->setFont(valueFont);
-	for (int64_t stringIndex = 0; stringIndex <= GetParameter_maxValue(kDecayMode); stringIndex++)
-	{
-		auto const valueString = getparametervaluestring(kDecayMode, stringIndex);
-		assert(valueString);
-		decayModeMenu->addEntry(valueString->c_str());
-	}
-	decayModeMenu->setValue(getparameter_i(kDecayMode));
+	emplaceControl<DGPopUpMenu>(this, kDecayMode, pos, dfx::TextAlignment::Center, kValueDisplayFontSize, DGColor::kWhite, kValueDisplayFont, DGColor::kBlack);
 
-#if 0
-	class BOTextButton : public DGControl<VSTGUI::CTextButton>
-	{
-	public:
-		BOTextButton(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion, VSTGUI::UTF8StringPtr inTitle, VSTGUI::CTextButton::Style inStyle)
-		:	DGControl<VSTGUI::CTextButton>(inRegion, inOwnerEditor, dfx::ParameterID_ToVST(inParameterID), inTitle, inStyle) {}
-		CLASS_METHODS(BOTextButton, VSTGUI::CTextButton)
-	};
-	pos.set(pos.right + spacingX, appendixY, 110, 32);
-	emplaceControl<BOTextButton>(this, kDecayShape, pos, "shape", VSTGUI::CTextButton::kOnOffStyle)->setFont(valueFont);
-#else
 	pos.set(pos.right + spacingX, appendixY, 93, 32);
-	auto const decayShapeMenu = emplaceControl<BOOptionMenu>(this, kDecayShape, pos);
-	decayShapeMenu->setFont(valueFont);
-	for (int64_t stringIndex = 0; stringIndex <= GetParameter_maxValue(kDecayShape); stringIndex++)
-	{
-		auto const valueString = getparametervaluestring(kDecayShape, stringIndex);
-		assert(valueString);
-		decayShapeMenu->addEntry(valueString->c_str());
-	}
-	decayShapeMenu->setValue(getparameter_i(kDecayShape));
-#endif
+	emplaceControl<DGPopUpMenu>(this, kDecayShape, pos, dfx::TextAlignment::Center, kValueDisplayFontSize, DGColor::kWhite, kValueDisplayFont, DGColor::kBlack);
 #endif  // buffer decay controls
 
 

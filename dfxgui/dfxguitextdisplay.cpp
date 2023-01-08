@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code
 for creating audio processing plug-ins.
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -144,7 +144,7 @@ static DGRect UnAdjustTextViewForPlatform(char const* inFontName,
 //-----------------------------------------------------------------------------
 // common constructor-time setup
 static void DFXGUI_ConfigureTextDisplay(DfxGuiEditor* inOwnerEditor,
-										VSTGUI::CTextLabel* inTextDisplay,
+										VSTGUI::CParamDisplay* inTextDisplay,
 										dfx::TextAlignment inTextAlignment,
 										float inFontSize, DGColor inFontColor,
 										char const* inFontName)
@@ -655,5 +655,45 @@ void DGHelpBox::setHeaderSpacing(VSTGUI::CCoord inSpacing)
 	if (std::exchange(mHeaderSpacing, inSpacing) != inSpacing)
 	{
 		setDirty();
+	}
+}
+
+
+
+
+
+
+#pragma mark -
+#pragma mark DGPopUpMenu
+
+//-----------------------------------------------------------------------------
+// pop-up menu
+//-----------------------------------------------------------------------------
+DGPopUpMenu::DGPopUpMenu(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion,
+						 dfx::TextAlignment inTextAlignment, float inFontSize,
+						 DGColor inFontColor, char const* inFontName,
+						 std::optional<DGColor> inBackgroundColor)
+:	DGControl<VSTGUI::COptionMenu>(inRegion, inOwnerEditor, dfx::ParameterID_ToVST(inParameterID),
+								   nullptr, nullptr, VSTGUI::COptionMenu::kCheckStyle)
+{
+	DFXGUI_ConfigureTextDisplay(inOwnerEditor, this, inTextAlignment, inFontSize, inFontColor, inFontName);
+
+	if (inBackgroundColor)
+	{
+		setBackColor(*inBackgroundColor);
+		setTransparency(false);
+	}
+
+	if (isParameterAttached())
+	{
+		auto const minValue = std::lround(inOwnerEditor->GetParameter_minValue(inParameterID));
+		auto const maxValue = std::lround(inOwnerEditor->GetParameter_maxValue(inParameterID));
+		auto const currentValue = inOwnerEditor->getparameter_i(inParameterID);
+		for (auto stringIndex = minValue; stringIndex <= maxValue; stringIndex++)
+		{
+			auto const valueString = inOwnerEditor->getparametervaluestring(inParameterID, stringIndex).value_or(std::to_string(stringIndex));
+			addEntry(valueString.c_str());
+		}
+		setValue(currentValue - minValue);
 	}
 }

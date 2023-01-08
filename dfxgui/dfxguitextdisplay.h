@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -49,8 +49,8 @@ public:
 	// inBackgroundImage may be null
 	DGTextDisplay(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion, 
 				  VSTGUI::CParamDisplayValueToStringProc inTextProc, void* inUserData, DGImage* inBackgroundImage, 
-				  dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.0f, 
-				  DGColor inFontColor = VSTGUI::kBlackCColor, char const* inFontName = nullptr);
+				  dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.f,
+				  DGColor inFontColor = DGColor::kBlack, char const* inFontName = nullptr);
 
 	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
 	void onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent) override;
@@ -115,8 +115,8 @@ class DGStaticTextDisplay : public DGControl<VSTGUI::CTextLabel>
 public:
 	// inBackgroundImage may be null
 	DGStaticTextDisplay(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage, 
-						dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.0f, 
-						DGColor inFontColor = VSTGUI::kBlackCColor, char const* inFontName = nullptr);
+						dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.f, 
+						DGColor inFontColor = DGColor::kBlack, char const* inFontName = nullptr);
 
 #if TARGET_OS_MAC
 	void setCFText(CFStringRef inText);
@@ -141,7 +141,7 @@ class DGTextArrayDisplay : public DGTextDisplay
 public:
 	DGTextArrayDisplay(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion, size_t inNumStrings, 
 					   dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, DGImage* inBackground = nullptr, 
-					   float inFontSize = 12.0f, DGColor inFontColor = VSTGUI::kBlackCColor, char const* inFontName = nullptr);
+					   float inFontSize = 12.f, DGColor inFontColor = DGColor::kBlack, char const* inFontName = nullptr);
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
 
@@ -165,7 +165,7 @@ public:
 
 	DGHelpBox(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, 
 			  TextForControlProc const& inTextForControlProc, 
-			  DGImage* inBackground = nullptr, DGColor inFontColor = VSTGUI::kBlackCColor);
+			  DGImage* inBackground = nullptr, DGColor inFontColor = DGColor::kBlack);
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
 
@@ -184,4 +184,19 @@ private:
 	VSTGUI::CPoint mTextMargin;
 	VSTGUI::CCoord mLineSpacing = 1;
 	VSTGUI::CCoord mHeaderSpacing = 2;
+};
+
+
+
+#pragma mark -
+//-----------------------------------------------------------------------------
+class DGPopUpMenu : public DGControl<VSTGUI::COptionMenu>
+{
+public:
+	DGPopUpMenu(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion,
+				dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.f,
+				DGColor inFontColor = DGColor::kBlack, char const* inFontName = nullptr,
+				std::optional<DGColor> inBackgroundColor = {});
+
+	CLASS_METHODS(DGPopUpMenu, VSTGUI::COptionMenu)
 };
