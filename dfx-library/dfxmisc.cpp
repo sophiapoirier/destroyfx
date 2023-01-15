@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -64,17 +64,15 @@ namespace dfx
 // this reverses the bytes in a stream of data, for correcting endian difference
 void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount)
 {
-	size_t const half = (inItemSize / 2) + (inItemSize % 2);
+	size_t const halfItemSize = inItemSize / 2;
 	auto dataBytes = static_cast<std::byte*>(ioData);
 
-	for (size_t c = 0; c < inItemCount; c++)
+	for (size_t itemIndex = 0; itemIndex < inItemCount; itemIndex++)
 	{
-		for (size_t i = 0; i < half; i++)
+		for (size_t byteIndex = 0; byteIndex < halfItemSize; byteIndex++)
 		{
-			auto const temp = dataBytes[i];
-			size_t const complementIndex = (inItemSize - 1) - i;
-			dataBytes[i] = dataBytes[complementIndex];
-			dataBytes[complementIndex] = temp;
+			size_t const complementIndex = (inItemSize - 1) - byteIndex;
+			std::swap(dataBytes[byteIndex], dataBytes[complementIndex]);
 		}
 		dataBytes += inItemSize;
 	}
@@ -92,15 +90,18 @@ std::string ToLower(std::string_view inText)
 //------------------------------------------------------
 size_t StrlCat(char* buf, std::string_view appendme, size_t maxlen)
 {
-	const size_t appendlen = appendme.size();
-	const size_t buflen = strnlen(buf, maxlen);
+	size_t const appendlen = appendme.size();
+	size_t const buflen = strnlen(buf, maxlen);
 	// no more space
-	if (buflen >= maxlen) return maxlen + appendlen;
-	const size_t remaining = maxlen - buflen;
+	if (buflen >= maxlen)
+	{
+		return maxlen + appendlen;
+	}
+	size_t const remaining = maxlen - buflen;
 	// remaining > 1
 	// Bytes to copy, not including terminating nul.
-	const size_t copylen =
-		appendlen < remaining ? appendlen : maxlen - 1;
+	size_t const copylen =
+		(appendlen < remaining) ? appendlen : (maxlen - 1);
 	memcpy(&buf[buflen], appendme.data(), copylen);
 	buf[buflen + copylen] = '\0';
 	return buflen + appendlen;
