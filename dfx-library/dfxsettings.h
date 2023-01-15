@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -391,7 +391,7 @@ private:
 		return (inParameterID < mNumParameters);
 	}
 
-	static dfx::ParameterID getParameterIndexFromMap(dfx::ParameterID inParameterID, std::span<int32_t const> inSearchIDs);
+	static dfx::ParameterID getParameterIndexFromMap(dfx::ParameterID inParameterID, std::span<uint32_t const> inSearchIDs);
 	dfx::ParameterID getParameterIndexFromMap(dfx::ParameterID inParameterID) const;
 
 #if TARGET_PLUGIN_USES_MIDI
@@ -422,7 +422,7 @@ private:
 	// an ordered table of IDs for each parameter stored in each preset
 	// (this is so that non-parameter-compatible plugin versions can load 
 	// settings and know which stored parameters correspond to theirs)
-	std::vector<int32_t> mParameterIDMap;
+	std::vector<uint32_t> mParameterIDMap;
 
 	// what to do if restore() sends data with a mismatched byte size
 	CrisisBehavior mCrisisBehavior = CrisisBehavior::LoadWhatYouCan;

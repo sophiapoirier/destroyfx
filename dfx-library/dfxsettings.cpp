@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -111,7 +111,7 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 	auto const sharedChunk = reinterpret_cast<SettingsInfo*>(data.data());
 
 	// and a few pointers to elements within that data, just for ease of use
-	auto const firstSharedParameterID = reinterpret_cast<int32_t*>(data.data() + sizeof(SettingsInfo));
+	auto const firstSharedParameterID = reinterpret_cast<uint32_t*>(data.data() + sizeof(SettingsInfo));
 	auto const firstSharedPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(firstSharedParameterID) + mSizeOfParameterIDs);
 	// TODO C++23: integer literal suffix UZ
 	auto const savePresetCount = inIsPreset ? size_t(1) : mNumPresets;
@@ -312,7 +312,7 @@ try
 	}
 
 	// point to the next data element after the chunk header:  the first parameter ID
-	auto const newParameterIDs = reinterpret_cast<int32_t const*>(reinterpret_cast<std::byte const*>(newSettingsInfo) + storedHeaderSize);
+	auto const newParameterIDs = reinterpret_cast<uint32_t const*>(reinterpret_cast<std::byte const*>(newSettingsInfo) + storedHeaderSize);
 	size_t const sizeOfStoredParameterIDs = sizeof(*newParameterIDs) * numStoredParameters;
 	validateRange(newParameterIDs, sizeOfStoredParameterIDs, "parameter IDs");
 	// create a mapping table for corresponding the incoming parameters to the 
@@ -537,7 +537,7 @@ void blah(long long x)
 	dfx::ReverseBytes(dataHeader, headerItemSize, storedHeaderSize / headerItemSize);
 
 	// reverse the byte order for each of the parameter IDs
-	auto const dataParameterIDs = reinterpret_cast<int32_t*>(static_cast<std::byte*>(ioData) + storedHeaderSize);
+	auto const dataParameterIDs = reinterpret_cast<uint32_t*>(static_cast<std::byte*>(ioData) + storedHeaderSize);
 	validateRange(dataParameterIDs, sizeof(*dataParameterIDs) * numStoredParameters, "parameter IDs");
 	dfx::ReverseBytes(dataParameterIDs, numStoredParameters);
 
@@ -1387,7 +1387,7 @@ dfx::MidiEventType DfxSettings::getParameterAssignmentType(dfx::ParameterID inPa
 
 //-----------------------------------------------------------------------------
 // given a parameter ID, find the tag (index) for that parameter in a table of parameter IDs
-dfx::ParameterID DfxSettings::getParameterIndexFromMap(dfx::ParameterID inParameterID, std::span<int32_t const> inSearchIDs)
+dfx::ParameterID DfxSettings::getParameterIndexFromMap(dfx::ParameterID inParameterID, std::span<uint32_t const> inSearchIDs)
 {
 	auto const foundID = std::find(inSearchIDs.begin(), inSearchIDs.end(), inParameterID);
 	if (foundID != inSearchIDs.end())
