@@ -105,7 +105,7 @@ DfxSettings::DfxSettings(uint32_t inMagic, DfxPlugin& inPlugin, size_t inSizeofE
 //-----------------------------------------------------------------------------
 // this gets called when the host wants to save settings data, 
 // like when saving a session document or preset files
-std::vector<std::byte> DfxSettings::save(bool inIsPreset)
+std::vector<std::byte> DfxSettings::save(bool inIsPreset) const
 {
 	std::vector<std::byte> data(inIsPreset ? mSizeOfPresetChunk : mSizeOfChunk, std::byte{0});
 	auto const sharedChunk = reinterpret_cast<SettingsInfo*>(data.data());
@@ -485,7 +485,7 @@ bool DfxSettings::minimalValidate(void const* inData, size_t inDataSize) const n
 // this function, if called for the non-reference endian architecture, 
 // will reverse the order of bytes in each variable/value of the data 
 // to correct endian differences and make a uniform data chunk
-bool DfxSettings::correctEndian(void* const ioData, size_t const inDataSize, bool inIsReversed, bool inIsPreset)
+bool DfxSettings::correctEndian(void* const ioData, size_t const inDataSize, bool inIsReversed, bool inIsPreset) const
 try
 {
 /*
@@ -714,7 +714,7 @@ std::optional<Float64> DFX_GetNumberFromCFDictionary_f(CFDictionaryRef inDiction
 }
 
 //-----------------------------------------------------------------------------------------
-bool DfxSettings::saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDictionary)
+bool DfxSettings::saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDictionary) const
 {
 	if (!inDictionary)
 	{
@@ -1437,7 +1437,7 @@ void DfxSettings::setUseChannel(bool inMode) noexcept
 //-----------------------------------------------------------------------------
 // this is called to investigate what to do when a data chunk is received in 
 // restore() that doesn't match the characteristics of what we are expecting
-DfxSettings::CrisisError DfxSettings::handleCrisis(CrisisReasonFlags inFlags)
+DfxSettings::CrisisError DfxSettings::handleCrisis(CrisisReasonFlags inFlags) const
 {
 	// no need to continue on if there is no crisis situation
 	if (inFlags == kCrisisReasonFlag_None)

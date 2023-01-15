@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2023  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -552,7 +552,7 @@ size_t Transverb::settings_sizeOfExtendedData() const noexcept
 	return speedModeStates.size() * sizeof(speedModeStates.front());
 }
 
-void Transverb::settings_saveExtendedData(void* outData, bool /*isPreset*/)
+void Transverb::settings_saveExtendedData(void* outData, bool /*isPreset*/) const
 {
   auto speedModeStatesSerialization = speedModeStates;
   if constexpr (!DfxSettings::serializationIsNativeEndian())

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2023  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -120,7 +120,7 @@ public:
 
 protected:
   size_t settings_sizeOfExtendedData() const noexcept override;
-  void settings_saveExtendedData(void* outData, bool isPreset) override;
+  void settings_saveExtendedData(void* outData, bool isPreset) const override;
   void settings_restoreExtendedData(void const* inData, size_t storedExtendedDataSize,
                                     unsigned int dataVersion, bool isPreset) override;
   void settings_doChunkRestoreSetParameterStuff(dfx::ParameterID parameterID, float value, unsigned int dataVersion, std::optional<size_t> presetIndex) override;

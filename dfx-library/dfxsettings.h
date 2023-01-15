@@ -135,13 +135,13 @@ public:
 	// - - - - - - - - - plugin API glue methods - - - - - - - - -
 
 	// for adding to your base plugin class methods
-	[[nodiscard]] std::vector<std::byte> save(bool inIsPreset);
+	[[nodiscard]] std::vector<std::byte> save(bool inIsPreset) const;
 	[[nodiscard]] bool restore(void const* inData, size_t inDataSize, bool inIsPreset);
 	[[nodiscard]] bool minimalValidate(void const* inData, size_t inDataSize) const noexcept;
 
 #if TARGET_PLUGIN_USES_MIDI
 #ifdef TARGET_API_AUDIOUNIT
-	[[nodiscard]] bool saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDictionary);
+	[[nodiscard]] bool saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDictionary) const;
 	[[nodiscard]] bool restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDictionary);
 #endif
 
@@ -376,11 +376,11 @@ private:
 #pragma pack(pop)
 
 	// reverse the byte order of data
-	[[nodiscard]] bool correctEndian(void* ioData, size_t inDataSize, bool inIsReversed, bool inIsPreset);
+	[[nodiscard]] bool correctEndian(void* ioData, size_t inDataSize, bool inIsReversed, bool inIsPreset) const;
 
 	// investigates what to do when a data is received in 
 	// restore() that doesn't match what we are expecting
-	CrisisError handleCrisis(CrisisReasonFlags inFlags);
+	CrisisError handleCrisis(CrisisReasonFlags inFlags) const;
 
 	void validateRange(void const* inData, size_t inDataSize, void const* inAddress, size_t inAddressSize, char const* inDataItemName) const;
 	void debugAlertCorruptData(char const* inDataItemName, size_t inDataItemSize, size_t inDataTotalSize) const;
