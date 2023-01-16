@@ -394,6 +394,8 @@ private:
 	static dfx::ParameterID getParameterIndexFromMap(dfx::ParameterID inParameterID, std::span<uint32_t const> inSearchIDs);
 	dfx::ParameterID getParameterIndexFromMap(dfx::ParameterID inParameterID) const;
 
+	static size_t sizeOfGenPreset(size_t inParameterCount) noexcept;
+
 #if TARGET_PLUGIN_USES_MIDI
 	void handleMidi_assignParameter(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, size_t inOffsetFrames);
 	void handleMidi_automateParameters(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, int inByte2, size_t inOffsetFrames, bool inIsNoteOn = false);

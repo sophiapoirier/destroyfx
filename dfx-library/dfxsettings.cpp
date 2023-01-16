@@ -66,7 +66,7 @@ DfxSettings::DfxSettings(uint32_t inMagic, DfxPlugin& inPlugin, size_t inSizeofE
 	std::iota(mParameterIDMap.begin(), mParameterIDMap.end(), 0);
 
 	// calculate some data sizes that are useful to know
-	mSizeOfPreset = sizeof(GenPreset) + (sizeof(*GenPreset::mParameterValues) * mNumParameters) - sizeof(GenPreset::mParameterValues);
+	mSizeOfPreset = sizeOfGenPreset(mNumParameters);
 	mSizeOfParameterIDs = sizeof(mParameterIDMap.front()) * mNumParameters;
 	mSizeOfPresetChunk = mSizeOfPreset 				// 1 preset
 						 + sizeof(SettingsInfo) 	// the special data header info
@@ -327,8 +327,8 @@ try
 
 	// point to the next data element after the parameter IDs:  the first preset name
 	auto newPreset = reinterpret_cast<GenPreset const*>(reinterpret_cast<std::byte const*>(newParameterIDs) + sizeOfStoredParameterIDs);
-	size_t const sizeofStoredPreset = sizeof(GenPreset) + (sizeof(*GenPreset::mParameterValues) * numStoredParameters) - sizeof(GenPreset::mParameterValues);
-	validateRange(newPreset, sizeofStoredPreset * numStoredPresets, "presets");
+	size_t const sizeOfStoredPreset = sizeOfGenPreset(numStoredParameters);
+	validateRange(newPreset, sizeOfStoredPreset * numStoredPresets, "presets");
 
 	auto const getPresetNameWithFallback = [](GenPreset const& preset) -> std::string_view
 	{
@@ -359,7 +359,7 @@ try
 			if ((mappedParameterID != dfx::kParameterID_Invalid) && (mappedParameterID < numStoredParameters))
 			{
 			#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-				// handle old-style generic VST 0.0 to 1.0 parameter values
+				// handle old-style generic VST 0-to-1 normalized parameter values
 				if (oldVST)
 				{
 					mPlugin.setparameter_gen(i, newPreset->mParameterValues[mappedParameterID]);
@@ -374,7 +374,7 @@ try
 			}
 		}
 		// point past the preset
-		newPreset = reinterpret_cast<GenPreset const*>(reinterpret_cast<std::byte const*>(newPreset) + sizeofStoredPreset);
+		newPreset = reinterpret_cast<GenPreset const*>(reinterpret_cast<std::byte const*>(newPreset) + sizeOfStoredPreset);
 	}
 	// the chunk being received has all of the presets plus the MIDI event assignments
 	else
@@ -399,7 +399,7 @@ try
 				if ((mappedParameterID != dfx::kParameterID_Invalid) && (mappedParameterID < numStoredParameters))
 				{
 				#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-					// handle old-style generic VST 0.0 to 1.0 parameter values
+					// handle old-style generic VST 0-to-1 normalized parameter values
 					if (oldVST)
 					{
 						mPlugin.setpresetparameter_gen(j, i, newPreset->mParameterValues[mappedParameterID]);
@@ -414,13 +414,13 @@ try
 				}
 			}
 			// point to the next preset in the received data array
-			newPreset = reinterpret_cast<GenPreset const*>(reinterpret_cast<std::byte const*>(newPreset) + sizeofStoredPreset);
+			newPreset = reinterpret_cast<GenPreset const*>(reinterpret_cast<std::byte const*>(newPreset) + sizeOfStoredPreset);
 		}
 	}
 
 	// point to the last chunk data element, the MIDI event assignment array
 	// (offset by the number of stored presets that were skipped, if any)
-	auto const newParameterAssignments = reinterpret_cast<std::byte const*>(newPreset) + ((numStoredPresets - copyPresets) * sizeofStoredPreset);
+	auto const newParameterAssignments = reinterpret_cast<std::byte const*>(newPreset) + ((numStoredPresets - copyPresets) * sizeOfStoredPreset);
 	size_t sizeOfStoredParameterAssignments = 0;  // until we establish that they are present
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 if (!(oldVST && inIsPreset))
@@ -437,6 +437,7 @@ if (!(oldVST && inIsPreset))
 		auto const mappedParameterID = parameterMap[i];
 		if ((mappedParameterID != dfx::kParameterID_Invalid) && (mappedParameterID < numStoredParameters))
 		{
+			mParameterAssignments[i] = {};
 			memcpy(&(mParameterAssignments[i]), 
 				   newParameterAssignments + (mappedParameterID * storedParameterAssignmentSize), 
 				   copyParameterAssignmentSize);
@@ -544,28 +545,28 @@ void blah(long long x)
 	// reverse the order of bytes for each parameter value, 
 	// but no need to mess with the preset names since they are char arrays
 	auto dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataParameterIDs) + (sizeof(*dataParameterIDs) * numStoredParameters));
-	size_t sizeofStoredPreset = sizeof(*dataPresets) + (sizeof(*(dataPresets->mParameterValues)) * numStoredParameters) - sizeof(dataPresets->mParameterValues);
+	size_t sizeOfStoredPreset = sizeOfGenPreset(numStoredParameters);
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 	if (DFX_IsOldVstVersionNumber(storedVersion))
 	{
 		// back up the pointer to account for shorter preset names
-		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataPresets) - dfx::kPresetNameMaxLength + kDfxOldPresetNameMaxLength);
+		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataPresets) + kDfxOldPresetNameMaxLength - dfx::kPresetNameMaxLength);
 		// and shrink the size to account for shorter preset names
-		if (sizeofStoredPreset < dfx::kPresetNameMaxLength)
+		if (sizeOfStoredPreset < dfx::kPresetNameMaxLength)
 		{
-			debugAlertCorruptData("old VST presets", sizeofStoredPreset, inDataSize);
+			debugAlertCorruptData("old VST presets", sizeOfStoredPreset, inDataSize);
 			return false;
 		}
-		sizeofStoredPreset -= dfx::kPresetNameMaxLength;
-		sizeofStoredPreset += kDfxOldPresetNameMaxLength;
+		sizeOfStoredPreset += kDfxOldPresetNameMaxLength;
+		sizeOfStoredPreset -= dfx::kPresetNameMaxLength;
 	}
 #endif
-	validateRange(dataPresets, sizeofStoredPreset * numStoredPresets, "presets");
+	validateRange(dataPresets, sizeOfStoredPreset * numStoredPresets, "presets");
 	for (uint32_t i = 0; i < numStoredPresets; i++)
 	{
 		dfx::ReverseBytes(dataPresets->mParameterValues, numStoredParameters);  //XXX potential floating point machine error?
 		// point to the next preset in the data array
-		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataPresets) + sizeofStoredPreset);
+		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataPresets) + sizeOfStoredPreset);
 	}
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 	if (DFX_IsOldVstVersionNumber(storedVersion))
@@ -1099,7 +1100,7 @@ void DfxSettings::handleMidi_automateParameters(dfx::MidiEventType inEventType, 
 				auto currentStep = static_cast<int>(mPlugin.getparameter_gen(parameterID) * (static_cast<float>(numSteps) - 0.01f));
 				// cycle to the next state, wraparound if necessary (using maxSteps)
 				currentStep = (currentStep + 1) % maxSteps;
-				// get the 0.0 to 1.0 parameter value version of that state
+				// get the 0-to-1 normalized parameter value version of that state
 				valueNormalized = static_cast<float>(currentStep) / static_cast<float>(numSteps - 1);
 			}
 			// otherwise use a note range
@@ -1402,6 +1403,13 @@ dfx::ParameterID DfxSettings::getParameterIndexFromMap(dfx::ParameterID inParame
 dfx::ParameterID DfxSettings::getParameterIndexFromMap(dfx::ParameterID inParameterID) const
 {
 	return getParameterIndexFromMap(inParameterID, mParameterIDMap);
+}
+
+//-----------------------------------------------------------------------------
+size_t DfxSettings::sizeOfGenPreset(size_t inParameterCount) noexcept
+{
+	constexpr auto sizeOfParameterValue = sizeof(std::remove_extent_t<decltype(GenPreset::mParameterValues)>);
+	return sizeof(GenPreset) + (sizeOfParameterValue * inParameterCount) - sizeof(GenPreset::mParameterValues);
 }
 
 
