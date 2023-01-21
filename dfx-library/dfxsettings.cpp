@@ -175,13 +175,14 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset) const
 }
 
 
+#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 //-----------------------------------------------------------------------------
 // for backwerds compaxibilitee
 inline bool DFX_IsOldVstVersionNumber(uint32_t inVersion) noexcept
 {
 	return (inVersion < 0x00010000);
 }
-#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
+
 constexpr size_t kDfxOldPresetNameMaxLength = 32;
 #endif
 
@@ -192,6 +193,8 @@ constexpr size_t kDfxOldPresetNameMaxLength = 32;
 bool DfxSettings::restore(void const* inData, size_t const inDataSize, bool inIsPreset)
 try
 {
+	static_assert(std::numeric_limits<float>::is_iec559, "floating point values cannot be deserialized if the representation is inconsistent");
+
 	auto const require = [](bool condition)
 	{
 		if (!condition)
@@ -206,7 +209,7 @@ try
 	// create our own copy of the data before we muck with it (e.g. reversing endianness, etc.)
 	auto const incomingData_copy = dfx::MakeUniqueMemoryBlock<void>(inDataSize);
 	require(incomingData_copy.get());
-	memcpy(incomingData_copy.get(), inData, inDataSize);
+	std::memcpy(incomingData_copy.get(), inData, inDataSize);
 
 	// un-reverse the order of bytes in the received data, if necessary
 	require(correctEndian(incomingData_copy.get(), inDataSize, true, inIsPreset));
@@ -423,29 +426,27 @@ try
 	auto const newParameterAssignments = reinterpret_cast<std::byte const*>(newPreset) + ((numStoredPresets - copyPresets) * sizeOfStoredPreset);
 	size_t sizeOfStoredParameterAssignments = 0;  // until we establish that they are present
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-if (!(oldVST && inIsPreset))
-{
+	if (!(oldVST && inIsPreset))
 #endif
-	// completely clear our table of parameter assignments before loading the new 
-	// table since the new one might not have all of the data members
-	clearAssignments();
-	sizeOfStoredParameterAssignments = storedParameterAssignmentSize * numStoredParameters;
-	validateRange(newParameterAssignments, sizeOfStoredParameterAssignments, "parameter assignments");
-	// and load up as many of them as we can
-	for (size_t i = 0; i < std::min(parameterMap.size(), mParameterAssignments.size()); i++)
 	{
-		auto const mappedParameterID = parameterMap[i];
-		if ((mappedParameterID != dfx::kParameterID_Invalid) && (mappedParameterID < numStoredParameters))
+		// completely clear our table of parameter assignments before loading the new
+		// table since the new one might not have all of the data members
+		clearAssignments();
+		sizeOfStoredParameterAssignments = storedParameterAssignmentSize * numStoredParameters;
+		validateRange(newParameterAssignments, sizeOfStoredParameterAssignments, "parameter assignments");
+		// and load up as many of them as we can
+		for (size_t i = 0; i < std::min(parameterMap.size(), mParameterAssignments.size()); i++)
 		{
-			mParameterAssignments[i] = {};
-			memcpy(&(mParameterAssignments[i]), 
-				   newParameterAssignments + (mappedParameterID * storedParameterAssignmentSize), 
-				   copyParameterAssignmentSize);
+			auto const mappedParameterID = parameterMap[i];
+			if ((mappedParameterID != dfx::kParameterID_Invalid) && (mappedParameterID < numStoredParameters))
+			{
+				mParameterAssignments[i] = {};
+				std::memcpy(&(mParameterAssignments[i]),
+							newParameterAssignments + (mappedParameterID * storedParameterAssignmentSize),
+							copyParameterAssignmentSize);
+			}
 		}
 	}
-#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-}
-#endif
 
 	// allow for the retrieval of extra data
 	if (storedExtendedDataSize > 0)
@@ -470,7 +471,7 @@ bool DfxSettings::minimalValidate(void const* inData, size_t inDataSize) const n
 	{
 		return false;
 	}
-	memcpy(&settingsInfo, inData, sizeof(settingsInfo));
+	std::memcpy(&settingsInfo, inData, sizeof(settingsInfo));
 
 	if constexpr (!serializationIsNativeEndian())
 	{
@@ -509,17 +510,19 @@ void blah(long long x)
 	// start by looking at the header info
 	auto const dataHeader = static_cast<SettingsInfo*>(ioData);
 	// we need to know how big the header is before dealing with it
+	auto storedVersion = dataHeader->mVersion;
 	auto storedHeaderSize = dataHeader->mStoredHeaderSize;
 	auto numStoredParameters = dataHeader->mNumStoredParameters;
 	auto numStoredPresets = dataHeader->mNumStoredPresets;
-	auto storedVersion = dataHeader->mVersion;
+	auto storedParameterAssignmentSize = dataHeader->mStoredParameterAssignmentSize;
 	// correct the values' endian byte order order if the data was received byte-swapped
 	if (inIsReversed)
 	{
+		dfx::ReverseBytes(storedVersion);
 		dfx::ReverseBytes(storedHeaderSize);
 		dfx::ReverseBytes(numStoredParameters);
 		dfx::ReverseBytes(numStoredPresets);
-		dfx::ReverseBytes(storedVersion);
+		dfx::ReverseBytes(storedParameterAssignmentSize);
 	}
 
 	auto const validateRange = [ioData, inDataSize, this](void const* address, size_t length, char const* name)
@@ -564,7 +567,7 @@ void blah(long long x)
 	validateRange(dataPresets, sizeOfStoredPreset * numStoredPresets, "presets");
 	for (uint32_t i = 0; i < numStoredPresets; i++)
 	{
-		dfx::ReverseBytes(dataPresets->mParameterValues, numStoredParameters);  //XXX potential floating point machine error?
+		dfx::ReverseBytes(dataPresets->mParameterValues, numStoredParameters);
 		// point to the next preset in the data array
 		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataPresets) + sizeOfStoredPreset);
 	}
@@ -577,27 +580,30 @@ void blah(long long x)
 #endif
 
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-if (!(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset))
-{
+	if (!(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset))
 #endif
-	// and reverse the byte order of each event assignment
-	auto const dataParameterAssignments = reinterpret_cast<dfx::ParameterAssignment*>(dataPresets);
-	validateRange(dataParameterAssignments, sizeof(*dataParameterAssignments) * numStoredParameters, "parameter assignments");
-	for (auto& pa : std::span(dataParameterAssignments, numStoredParameters))
 	{
-		dfx::ReverseBytes(pa.mEventType);
-		dfx::ReverseBytes(pa.mEventChannel);
-		dfx::ReverseBytes(pa.mEventNum);
-		dfx::ReverseBytes(pa.mEventNum2);
-		dfx::ReverseBytes(pa.mEventBehaviorFlags);
-		dfx::ReverseBytes(pa.mDataInt1);
-		dfx::ReverseBytes(pa.mDataInt2);
-		dfx::ReverseBytes(pa.mDataFloat1);  // XXX potential floating point machine error?
-		dfx::ReverseBytes(pa.mDataFloat2);  // XXX potential floating point machine error?
+		// and reverse the byte order of each event assignment
+		auto dataParameterAssignment = reinterpret_cast<dfx::ParameterAssignment*>(dataPresets);
+		validateRange(dataParameterAssignment, storedParameterAssignmentSize * numStoredParameters, "parameter assignments");
+		auto const copyParameterAssignmentSize = std::min(storedParameterAssignmentSize, mSettingsInfo.mStoredParameterAssignmentSize);
+		for (uint32_t i = 0; i < numStoredParameters; ++i)
+		{
+			dfx::ParameterAssignment pa;
+			std::memcpy(&pa, dataParameterAssignment, copyParameterAssignmentSize);
+			dfx::ReverseBytes(pa.mEventType);
+			dfx::ReverseBytes(pa.mEventChannel);
+			dfx::ReverseBytes(pa.mEventNum);
+			dfx::ReverseBytes(pa.mEventNum2);
+			dfx::ReverseBytes(pa.mEventBehaviorFlags);
+			dfx::ReverseBytes(pa.mDataInt1);
+			dfx::ReverseBytes(pa.mDataInt2);
+			dfx::ReverseBytes(pa.mDataFloat1);
+			dfx::ReverseBytes(pa.mDataFloat2);
+			std::memcpy(dataParameterAssignment, &pa, copyParameterAssignmentSize);
+			dataParameterAssignment = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<std::byte*>(dataParameterAssignment) + storedParameterAssignmentSize);
+		}
 	}
-#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-}
-#endif
 
 	return true;
 }
