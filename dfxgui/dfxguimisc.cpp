@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "dfxguimisc.h"
@@ -26,6 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstring>
 #include <functional>
 #include <optional>
 
@@ -212,9 +213,9 @@ std::string dfx::SanitizeNumericalInput(std::string const& inText)
 		{
 			resultText.erase(0, 1);
 		}
-		else if (resultText.find(kPlusMinusUTF8) == 0)
+		else if (resultText.starts_with(kPlusMinusUTF8))
 		{
-			resultText.erase(0, strlen(kPlusMinusUTF8));
+			resultText.erase(0, std::strlen(kPlusMinusUTF8));
 		}
 		else
 		{
@@ -229,6 +230,7 @@ std::string dfx::SanitizeNumericalInput(std::string const& inText)
 void dfx::InitGUI()
 {
 #if TARGET_OS_MAC
+	static_assert((MAC_OS_X_VERSION_MIN_REQUIRED <= MAC_OS_X_VERSION_10_15) || TARGET_CPU_ARM64, "this workaround can be retired");
 	auto const processInfo = [NSProcessInfo processInfo];
 	if ([processInfo respondsToSelector:@selector(operatingSystemVersion)])
 	{
