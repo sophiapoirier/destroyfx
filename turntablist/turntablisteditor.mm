@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <AudioToolbox/AudioFile.h>
 #include <cassert>
 #include <cmath>
+#include <cstdio>
 #include <mutex>
 #include <type_traits>
 #include <vector>
@@ -324,7 +325,7 @@ static void DFX_InitializeSupportedAudioFileTypesArrays()
 			{
 				auto const cfReleaser = dfx::MakeUniqueCFType(extensionsArray);
 //auto const audioFileType_bigEndian = CFSwapInt32HostToBig(audioFileTypeCode);
-//fprintf(stderr, "\n\t%.4s\n", reinterpret_cast<const char*>(&audioFileType_bigEndian));
+//std::fprintf(stderr, "\n\t%.*s\n", static_cast<int>(sizeof(audioFileType_bigEndian)), reinterpret_cast<char const*>(&audioFileType_bigEndian));
 				auto const numExtensions = CFArrayGetCount(extensionsArray);
 				for (CFIndex i = 0; i < numExtensions; i++)
 				{
@@ -830,10 +831,9 @@ void TurntablistEditor::HandleLoadButton()
 						  {
 							  if (auto const filePath = inFileSelector->getSelectedFile(0))
 							  {
-								  auto const fileURL = dfx::MakeUniqueCFType(CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false));
-								  if (fileURL)
+								  if (auto const fileURL = PathToCFURL(filePath))
 								  {
-									  FSRef fileRef;
+									  FSRef fileRef {};
 									  if (CFURLGetFSRef(fileURL.get(), &fileRef))
 									  {
 										  auto const status = LoadAudioFile(fileRef);
@@ -931,7 +931,7 @@ void TurntablistEditor::HandleAudioFileChange()
 			assert(status == dfx::kStatus_NoError);
 			if (status == dfx::kStatus_NoError)
 			{
-				FSRef audioFileRef;
+				FSRef audioFileRef {};
 				Boolean wasChanged {};
 				status = FSResolveAlias(nullptr, aliasHandle, &audioFileRef, &wasChanged);
 				assert(status == noErr);
@@ -1075,7 +1075,7 @@ bool TurntablistEditor::HandleEvent(EventHandlerCallRef inHandlerRef, EventRef i
 			{
 				case kEventControlDragEnter:
 					{
-//fprintf(stderr, "kEventControlDragEnter\n");
+//std::fprintf(stderr, "kEventControlDragEnter\n");
 						getBackgroundControl()->setDragActive(true);
 						mDragAudioFileError = noErr;
 						Boolean acceptDrop = true;
@@ -1111,13 +1111,13 @@ bool TurntablistEditor::HandleEvent(EventHandlerCallRef inHandlerRef, EventRef i
 
 				case kEventControlDragWithin:
 					{
-//fprintf(stderr, "kEventControlDragWithin\n");
+//std::fprintf(stderr, "kEventControlDragWithin\n");
 						return true;
 					}
 					break;
 
 				case kEventControlDragLeave:
-//fprintf(stderr, "kEventControlDragLeave\n");
+//std::fprintf(stderr, "kEventControlDragLeave\n");
 					{
 //						status = HideDragHilite(drag);
 						getBackgroundControl()->setDragActive(false);
@@ -1130,7 +1130,7 @@ bool TurntablistEditor::HandleEvent(EventHandlerCallRef inHandlerRef, EventRef i
 
 				case kEventControlDragReceive:
 					{
-//fprintf(stderr, "kEventControlDragReceive\n");
+//std::fprintf(stderr, "kEventControlDragReceive\n");
 //						status = HideDragHilite(drag);
 						getBackgroundControl()->setDragActive(false);
 
@@ -1161,7 +1161,7 @@ bool TurntablistEditor::HandleEvent(EventHandlerCallRef inHandlerRef, EventRef i
 												Size dragFlavorDataSize = 0;
 												status = GetFlavorDataSize(drag, dragItem, dragFlavorType, &dragFlavorDataSize);
 FlavorType dragFlavorType_bigEndian = CFSwapInt32HostToBig(dragFlavorType);
-fprintf(stderr, "flavor = '%.4s', size = %ld\n", (char*)(&dragFlavorType_bigEndian), dragFlavorDataSize);
+std::fprintf(stderr, "flavor = '%.4s', size = %ld\n", (char*)(&dragFlavorType_bigEndian), dragFlavorDataSize);
 											}
 										}
 									}
@@ -1178,7 +1178,7 @@ fprintf(stderr, "flavor = '%.4s', size = %ld\n", (char*)(&dragFlavorType_bigEndi
 											status = GetFlavorData(drag, dragItem, dragFlavorType, fileUrlFlavorData.get(), &dragFlavorDataSize, 0);
 											if (status == noErr)
 											{
-//fprintf(stderr, "file URL = %.*s\n", dragFlavorDataSize, fileUrlFlavorData.get());
+//std::fprintf(stderr, "file URL = %.*s\n", dragFlavorDataSize, fileUrlFlavorData.get());
 												fileURL.reset(CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, fileUrlFlavorData.get(), dragFlavorDataSize, false));
 												if (fileURL)
 												{

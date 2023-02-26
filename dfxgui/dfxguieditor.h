@@ -363,6 +363,10 @@ public:
 #endif
 
 protected:
+#if TARGET_OS_MAC
+	static dfx::UniqueCFType<CFURLRef> PathToCFURL(VSTGUI::UTF8StringPtr inFilePath);
+#endif
+
 	std::vector<IDGControl*> mControlsList;
 
 private:

@@ -1535,14 +1535,16 @@ dfx::StatusCode DfxGuiEditor::dfxgui_SetProperty(dfx::PropertyID inPropertyID, d
 #endif
 }
 
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-static auto DFXGUI_PathToCFURL(VSTGUI::UTF8StringPtr inFilePath)
+dfx::UniqueCFType<CFURLRef> DfxGuiEditor::PathToCFURL(VSTGUI::UTF8StringPtr inFilePath)
 {
 	return dfx::MakeUniqueCFType(CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault,
 																		 reinterpret_cast<UInt8 const*>(inFilePath),
 																		 static_cast<CFIndex>(std::strlen(inFilePath)),
 																		 false));
 }
+#endif
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::LoadPresetFile()
@@ -1577,7 +1579,7 @@ void DfxGuiEditor::LoadPresetFile()
 				try
 				{
 #ifdef TARGET_API_AUDIOUNIT
-					auto const fileURL = DFXGUI_PathToCFURL(filePath);
+					auto const fileURL = PathToCFURL(filePath);
 					Require(fileURL.get(), "failed to create file URL");
 					RestoreAUStateFromPresetFile(dfxgui_GetEffectInstance(), fileURL.get());
 #elif defined(TARGET_API_VST)
@@ -1659,7 +1661,7 @@ void DfxGuiEditor::SavePresetFile()
 							{
 								try
 								{
-									auto const fileURL = DFXGUI_PathToCFURL(filePath);
+									auto const fileURL = PathToCFURL(filePath);
 									Require(fileURL.get(), "could not create platform representation of preset file location");
 									auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 									assert(pluginBundle);
