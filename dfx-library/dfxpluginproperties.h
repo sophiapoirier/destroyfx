@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2003-2022  Sophia Poirier
+Copyright (C) 2003-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 These are our extended Audio Unit property IDs and types.  
@@ -47,7 +47,7 @@ enum : uint32_t
 
 	kPluginProperty_ParameterValue = kPluginProperty_StartID,	// get/set parameter values (current, min, max, etc.) using specific variable types
 	kPluginProperty_ParameterValueConversion,	// expand or contract a parameter value
-	kPluginProperty_ParameterValueString,		// get/set parameter value strings
+	kPluginProperty_ParameterValueString,		// get parameter value strings
 	kPluginProperty_ParameterUnitLabel,			// get parameter unit label
 	kPluginProperty_ParameterValueType,			// get parameter value type
 	kPluginProperty_ParameterUnit,				// get parameter unit
@@ -141,7 +141,7 @@ static_assert(IsTriviallySerializable<ParameterValueConversionRequest>);
 struct ParameterValueStringRequest
 {
 	int64_t inStringIndex = 0;
-	char valueString[dfx::kParameterValueStringMaxLength];
+	char valueString[dfx::kParameterValueStringMaxLength] {};
 };
 static_assert(IsTriviallySerializable<ParameterValueStringRequest>);
 
@@ -209,8 +209,8 @@ struct ParameterAssignment
 	float mDataFloat2 = 0.0f;
 };
 static_assert(IsTriviallySerializable<ParameterAssignment>);
-static_assert(sizeof (ParameterAssignment) == 9 * 4,
-	      "expected a packed struct of 9 32-bit fields");
+static_assert(sizeof(ParameterAssignment) == 9 * 4,
+			  "expected a packed struct of 9 32-bit fields");
 #pragma pack(pop)
 
 #endif  // TARGET_PLUGIN_USES_MIDI
