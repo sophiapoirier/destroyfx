@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of RMS Buddy.
 
@@ -25,6 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <AudioToolbox/AudioUnitUtilities.h>
 #include <cassert>
 #include <cmath>
+#include <cstring>
 #include <memory>
 #include <span>
 #include <type_traits>
@@ -342,16 +343,17 @@ OSStatus RMSBuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope 
 	{
 		case kAudioUnitProperty_ParameterStringFromValue:
 		{
-			auto const parameterStringFromValue = static_cast<AudioUnitParameterStringFromValue*>(outData);
-			auto const paramID = parameterStringFromValue->inParamID;
-			if (parameterStringFromValue->inParamID < kChannelParameter_Base)
+			AudioUnitParameterStringFromValue parameterStringFromValue {};
+			std::memcpy(&parameterStringFromValue, outData, sizeof(parameterStringFromValue));
+			auto const parameterID = parameterStringFromValue.inParamID;
+			if (parameterID < kChannelParameter_Base)
 			{
 				return AUEffectBase::GetProperty(inPropertyID, inScope, inElement, outData);
 			}
-			auto const paramValue = parameterStringFromValue->inValue ? *parameterStringFromValue->inValue : GetParameter(paramID);
-			parameterStringFromValue->outString = [&]()-> CFStringRef
+			auto const parameterValue = parameterStringFromValue.inValue ? *parameterStringFromValue.inValue : GetParameter(parameterID);
+			parameterStringFromValue.outString = [parameterValue, this]() -> CFStringRef
 			{
-				if (paramValue <= mMinMeterValueDb)
+				if (parameterValue <= mMinMeterValueDb)
 				{
 					constexpr UniChar minusInfinity[] = { '-', 0x221E };
 					return CFStringCreateWithCharacters(kCFAllocatorDefault, minusInfinity, std::size(minusInfinity));

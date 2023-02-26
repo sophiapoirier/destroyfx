@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -228,10 +228,10 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			outWritable = false;
 			break;
 
-		// get/set parameter value strings
+		// get parameter value strings
 		case dfx::kPluginProperty_ParameterValueString:
 			outDataSize = sizeof(dfx::ParameterValueStringRequest);
-			outWritable = true;
+			outWritable = false;
 			break;
 
 		// get parameter unit label
@@ -398,7 +398,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					cocoaViewInfo.mCocoaAUViewClass[0] = dfx::DGCocoaAUViewFactory_CopyClassName();
 					if (cocoaViewInfo.mCocoaAUViewClass[0])
 					{
-						*static_cast<AudioUnitCocoaViewInfo*>(outData) = cocoaViewInfo;
+						dfx::MemCpyObject(cocoaViewInfo, outData);
 						status = noErr;
 					}
 					else
@@ -421,7 +421,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 
 		case kAudioUnitProperty_ParameterIDName:
 		{
-			auto& parameterIDName = *static_cast<AudioUnitParameterIDName*>(outData);
+			auto parameterIDName = dfx::Enliven<AudioUnitParameterIDName>(outData);
 			auto const parameterID = parameterIDName.inID;
 			if (inScope != kAudioUnitScope_Global)
 			{
@@ -445,6 +445,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				auto const shortName = getparametername(parameterID, static_cast<size_t>(parameterIDName.inDesiredLength));
 				parameterIDName.outName = CFStringCreateWithCString(kCFAllocatorDefault, shortName.c_str(), DfxParam::kDefaultCStringEncoding);
 			}
+			dfx::MemCpyObject(parameterIDName, outData);
 			break;
 		}
 
@@ -459,7 +460,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			if (descsArray)
 			{
 				CFArrayAppendValue(descsArray, &vstPluginMigrationDesc);
-				*static_cast<CFArrayRef*>(outData) = descsArray;
+				dfx::MemCpyObject(descsArray, outData);
 			}
 			else
 			{
@@ -470,11 +471,12 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 
 		case kAudioUnitMigrateProperty_OldAutomation:
 		{
-			auto const pvt = static_cast<AudioUnitParameterValueTranslation*>(outData);
-			if ((pvt->otherDesc.format == kOtherPluginFormat_kVST) && (pvt->otherDesc.plugin.mSubType == PLUGIN_ID))
+			auto pvt = dfx::Enliven<AudioUnitParameterValueTranslation>(outData);
+			if ((pvt.otherDesc.format == kOtherPluginFormat_kVST) && (pvt.otherDesc.plugin.mSubType == PLUGIN_ID))
 			{
-				pvt->auParamID = pvt->otherParamID;
-				pvt->auValue = expandparametervalue(pvt->otherParamID, pvt->otherValue);
+				pvt.auParamID = pvt.otherParamID;
+				pvt.auValue = expandparametervalue(pvt.otherParamID, pvt.otherValue);
+				dfx::MemCpyObject(pvt, outData);
 			}
 			else
 			{
@@ -486,21 +488,21 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		// get parameter values (current, min, max, etc.) using specific variable types
 		case dfx::kPluginProperty_ParameterValue:
 		{
-			auto const request = static_cast<dfx::ParameterValueRequest*>(outData);
+			auto request = dfx::Enliven<dfx::ParameterValueRequest>(outData);
 		#if LOGIC_AU_PROPERTIES_AVAILABLE
 			if (isLogicNodeEndianReversed())
 			{
-				request->inValueItem = CFSwapInt32(request->inValueItem);
-				request->inValueType = CFSwapInt32(request->inValueType);
+				request.inValueItem = CFSwapInt32(request.inValueItem);
+				request.inValueType = CFSwapInt32(request.inValueType);
 			}
 		#endif
-			auto& value = request->value;
+			auto& value = request.value;
 			dfx::ParameterID const parameterID = inElement;
-			switch (request->inValueItem)
+			switch (request.inValueItem)
 			{
 				case dfx::ParameterValueItem::Current:
 				{
-					switch (request->inValueType)
+					switch (request.inValueType)
 					{
 						case DfxParam::ValueType::Float:
 							value.f = getparameter_f(parameterID);
@@ -520,7 +522,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				}
 				case dfx::ParameterValueItem::Default:
 				{
-					switch (request->inValueType)
+					switch (request.inValueType)
 					{
 						case DfxParam::ValueType::Float:
 							value.f = getparameterdefault_f(parameterID);
@@ -540,7 +542,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				}
 				case dfx::ParameterValueItem::Min:
 				{
-					switch (request->inValueType)
+					switch (request.inValueType)
 					{
 						case DfxParam::ValueType::Float:
 							value.f = getparametermin_f(parameterID);
@@ -561,7 +563,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				}
 				case dfx::ParameterValueItem::Max:
 				{
-					switch (request->inValueType)
+					switch (request.inValueType)
 					{
 						case DfxParam::ValueType::Float:
 							value.f = getparametermax_f(parameterID);
@@ -588,30 +590,31 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		#if LOGIC_AU_PROPERTIES_AVAILABLE
 			if (isLogicNodeEndianReversed())
 			{
-				request->value.i = CFSwapInt64(request->value.i);
+				request.value.i = CFSwapInt64(request.value.i);
 			}
 		#endif
+			dfx::MemCpyObject(request, outData);
 			break;
 		}
 
 		// expand or contract a parameter value
 		case dfx::kPluginProperty_ParameterValueConversion:
 		{
-			auto const request = static_cast<dfx::ParameterValueConversionRequest*>(outData);
+			auto request = dfx::Enliven<dfx::ParameterValueConversionRequest>(outData);
 		#if LOGIC_AU_PROPERTIES_AVAILABLE
 			if (isLogicNodeEndianReversed())
 			{
-				request->inConversionType = CFSwapInt32(request->inConversionType);
-				dfx::ReverseBytes(request->inValue);
+				request.inConversionType = CFSwapInt32(request.inConversionType);
+				dfx::ReverseBytes(request.inValue);
 			}
 		#endif
-			switch (request->inConversionType)
+			switch (request.inConversionType)
 			{
 				case dfx::ParameterValueConversionType::Expand:
-					request->outValue = expandparametervalue(inElement, request->inValue);
+					request.outValue = expandparametervalue(inElement, request.inValue);
 					break;
 				case dfx::ParameterValueConversionType::Contract:
-					request->outValue = contractparametervalue(inElement, request->inValue);
+					request.outValue = contractparametervalue(inElement, request.inValue);
 					break;
 				default:
 					assert(false);
@@ -621,30 +624,32 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		#if LOGIC_AU_PROPERTIES_AVAILABLE
 			if (isLogicNodeEndianReversed())
 			{
-				dfx::ReverseBytes(request->outValue);
+				dfx::ReverseBytes(request.outValue);
 			}
 		#endif
+			dfx::MemCpyObject(request, outData);
 			break;
 		}
 
 		// get parameter value strings
 		case dfx::kPluginProperty_ParameterValueString:
 		{
-			auto const request = static_cast<dfx::ParameterValueStringRequest*>(outData);
+			auto request = dfx::Enliven<dfx::ParameterValueStringRequest>(outData);
 		#if LOGIC_AU_PROPERTIES_AVAILABLE
 			if (isLogicNodeEndianReversed())
 			{
-				request->inStringIndex = CFSwapInt64(request->inStringIndex);
+				request.inStringIndex = CFSwapInt64(request.inStringIndex);
 			}
 		#endif
-			if (auto const valueString = getparametervaluestring(inElement, request->inStringIndex))
+			if (auto const valueString = getparametervaluestring(inElement, request.inStringIndex))
 			{
-				strlcpy(request->valueString, valueString->c_str(), std::size(request->valueString));
+				strlcpy(request.valueString, valueString->c_str(), std::size(request.valueString));
 			}
 			else
 			{
 				status = kAudio_ParamError;
 			}
+			dfx::MemCpyObject(request, outData);
 			break;
 		}
 
@@ -668,7 +673,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			}
 			else
 			{
-				*static_cast<DfxParam::ValueType*>(outData) = getparametervaluetype(inElement);
+				dfx::MemCpyObject(getparametervaluetype(inElement), outData);
 			}
 			break;
 
@@ -680,7 +685,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			}
 			else
 			{
-				*static_cast<DfxParam::Unit*>(outData) = getparameterunit(inElement);
+				dfx::MemCpyObject(getparameterunit(inElement), outData);
 			}
 			break;
 
@@ -691,7 +696,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			}
 			else
 			{
-				*static_cast<Boolean*>(outData) = getparameterusevaluestrings(inElement);
+				dfx::MemCpyObject(static_cast<Boolean>(getparameterusevaluestrings(inElement)), outData);
 			}
 			break;
 
@@ -702,7 +707,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			}
 			else
 			{
-				*static_cast<DfxParam::Attribute*>(outData) = getparameterattributes(inElement);
+				dfx::MemCpyObject(getparameterattributes(inElement), outData);
 			}
 			break;
 
@@ -715,7 +720,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			{
 				if (auto const groupIndex = getparametergroup(inElement))
 				{
-					*static_cast<size_t*>(outData) = *groupIndex;
+					dfx::MemCpyObject(*groupIndex, outData);
 				}
 				else
 				{
@@ -738,7 +743,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		case dfx::kPluginProperty_SmoothedAudioValueTime:
 			if (auto const value = getSmoothedAudioValueTime())
 			{
-				*static_cast<double*>(outData) = *value;
+				dfx::MemCpyObject(*value, outData);
 			}
 			else
 			{
@@ -748,42 +753,42 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 
 	#if DEBUG
 		case dfx::kPluginProperty_DfxPluginInstance:
-			*static_cast<DfxPlugin**>(outData) = this;
+			dfx::MemCpyObject(this, outData);
 			break;
 	#endif
 
 	#if TARGET_PLUGIN_USES_MIDI
 		// get the MIDI learn state
 		case dfx::kPluginProperty_MidiLearn:
-			*static_cast<Boolean*>(outData) = getmidilearning();
+			dfx::MemCpyObject(static_cast<Boolean>(getmidilearning()), outData);
 			break;
 		// get the current MIDI learner parameter
 		case dfx::kPluginProperty_MidiLearner:
-			*static_cast<uint32_t*>(outData) = getmidilearner();
+			dfx::MemCpyObject(static_cast<uint32_t>(getmidilearner()), outData);
 			break;
 		// get the MIDI assignment for a parameter
 		case dfx::kPluginProperty_ParameterMidiAssignment:
-			*static_cast<dfx::ParameterAssignment*>(outData) = getparametermidiassignment(inElement);
+			dfx::MemCpyObject(getparametermidiassignment(inElement), outData);
 			break;
 		case dfx::kPluginProperty_MidiAssignmentsUseChannel:
-			*static_cast<Boolean*>(outData) = getMidiAssignmentsUseChannel();
+			dfx::MemCpyObject(static_cast<Boolean>(getMidiAssignmentsUseChannel()), outData);
 			break;
 		case dfx::kPluginProperty_MidiAssignmentsSteal:
-			*static_cast<Boolean*>(outData) = getMidiAssignmentsSteal();
+			dfx::MemCpyObject(static_cast<Boolean>(getMidiAssignmentsSteal()), outData);
 			break;
 	#endif
 
 	#if LOGIC_AU_PROPERTIES_AVAILABLE
 		case kLogicAUProperty_NodeOperationMode:
-			*static_cast<UInt32*>(outData) = getSupportedLogicNodeOperationMode();
+			dfx::MemCpyObject(getSupportedLogicNodeOperationMode(), outData);
 			break;
 
 		case kLogicAUProperty_NodePropertyDescriptions:
 		{
-			auto const nodePropertyDescs = static_cast<LogicAUNodePropertyDescription*>(outData);
 			for (size_t i = 0; i < dfx_GetNumPluginProperties(); i++)
 			{
-				auto& nodePropertyDesc = nodePropertyDescs[i];
+				auto const nodePropertyDescAddress = static_cast<LogicAUNodePropertyDescription*>(outData) + i;
+				auto nodePropertyDesc = dfx::Enliven(nodePropertyDescAddress);
 				nodePropertyDesc.mPropertyID = dfx::kPluginProperty_StartID + i;
 				nodePropertyDesc.mEndianMode = kLogicAUNodePropertyEndianMode_DontTouch;
 				nodePropertyDesc.mFlags = kLogicAUNodePropertyFlag_Synchronous | kLogicAUNodePropertyFlag_NeedsInitialization;
@@ -833,6 +838,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 						break;
 					}
 				}
+				dfx::MemCpyObject(nodePropertyDesc, nodePropertyDescAddress);
 			}
 			break;
 		}
@@ -874,8 +880,8 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 	{
 		case kAudioUnitProperty_AUHostIdentifier:
 		{
-			auto const hostID = static_cast<AUHostVersionIdentifier const*>(inData);
-			if (!hostID->hostName)
+			auto const hostID = dfx::Enliven<AUHostVersionIdentifier>(inData);
+			if (!hostID.hostName)
 			{
 				status = kAudioUnitErr_InvalidPropertyValue;
 			}
@@ -883,8 +889,8 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			{
 #if 0
 				fprintf(stderr, "\tSetProperty(AUHostIdentifier)\n");
-				CFShow(hostID->hostName);
-				fprintf(stderr, "version: 0x%X\n", hostID->hostVersion);
+				CFShow(hostID.hostName);
+				fprintf(stderr, "version: 0x%X\n", hostID.hostVersion);
 #endif
 			}
 			break;
@@ -893,7 +899,7 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 	#if !TARGET_PLUGIN_IS_INSTRUMENT
 		case kAudioUnitProperty_InPlaceProcessing:
 			if ((!mInPlaceAudioProcessingAllowed || (getnuminputs() != getnumoutputs())) 
-				&& (*static_cast<UInt32 const*>(inData) != 0))
+				&& (dfx::Enliven<UInt32>(inData) != 0))
 			{
 				status = kAudioUnitErr_CannotDoInCurrentContext;
 			}
@@ -907,22 +913,22 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 		// set parameter values (current, min, max, etc.) using specific variable types
 		case dfx::kPluginProperty_ParameterValue:
 		{
-			auto const request = static_cast<dfx::ParameterValueRequest const*>(inData);
+			auto request = dfx::Enliven<dfx::ParameterValueRequest>(inData);
 		#if LOGIC_AU_PROPERTIES_AVAILABLE
 			if (isLogicNodeEndianReversed())
 			{
-				request->inValueItem = CFSwapInt32(request->inValueItem);
-				request->inValueType = CFSwapInt32(request->inValueType);
-				request->value.i = CFSwapInt64(request->value.i);
+				request.inValueItem = CFSwapInt32(request.inValueItem);
+				request.inValueType = CFSwapInt32(request.inValueType);
+				request.value.i = CFSwapInt64(request.value.i);
 			}
 		#endif
-			auto const& value = request->value;
+			auto const value = request.value;
 			dfx::ParameterID const parameterID = inElement;
-			switch (request->inValueItem)
+			switch (request.inValueItem)
 			{
 				case dfx::ParameterValueItem::Current:
 				{
-					switch (request->inValueType)
+					switch (request.inValueType)
 					{
 						case DfxParam::ValueType::Float:
 							setparameter_f(parameterID, value.f);
@@ -957,23 +963,6 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 		}
 
-		// set parameter value strings (WHY???)
-		case dfx::kPluginProperty_ParameterValueString:
-		{
-			auto const request = static_cast<dfx::ParameterValueStringRequest const*>(inData);
-		#if LOGIC_AU_PROPERTIES_AVAILABLE
-			if (isLogicNodeEndianReversed())
-			{
-				request->inStringIndex = CFSwapInt64(request->inStringIndex);
-			}
-		#endif
-			if (!setparametervaluestring(inElement, request->inStringIndex, request->valueString))
-			{
-				status = kAudio_ParamError;
-			}
-			break;
-		}
-
 		// randomize the parameters
 		case dfx::kPluginProperty_RandomizeParameter:
 			// when you "set" this "property", you send a bool to say whether or not to write automation data
@@ -995,14 +984,14 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			}
 			else
 			{
-				setSmoothedAudioValueTime(*static_cast<double const*>(inData));
+				setSmoothedAudioValueTime(dfx::Enliven<double>(inData));
 			}
 			break;
 
 	#if TARGET_PLUGIN_USES_MIDI
 		// set the MIDI learn state
 		case dfx::kPluginProperty_MidiLearn:
-			setmidilearning(*static_cast<Boolean const*>(inData));
+			setmidilearning(dfx::Enliven<Boolean>(inData));
 			break;
 		// clear MIDI parameter assignments
 		case dfx::kPluginProperty_ResetMidiLearn:
@@ -1011,23 +1000,23 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 		// set the current MIDI learner parameter
 		case dfx::kPluginProperty_MidiLearner:
-			setmidilearner(*static_cast<uint32_t const*>(inData));
+			setmidilearner(dfx::Enliven<uint32_t>(inData));
 			break;
 		// set the MIDI assignment for a parameter
 		case dfx::kPluginProperty_ParameterMidiAssignment:
-			setparametermidiassignment(inElement, *static_cast<dfx::ParameterAssignment const*>(inData));
+			setparametermidiassignment(inElement, dfx::Enliven<dfx::ParameterAssignment>(inData));
 			break;
 		case dfx::kPluginProperty_MidiAssignmentsUseChannel:
-			setMidiAssignmentsUseChannel(*static_cast<Boolean const*>(inData));
+			setMidiAssignmentsUseChannel(dfx::Enliven<Boolean>(inData));
 			break;
 		case dfx::kPluginProperty_MidiAssignmentsSteal:
-			setMidiAssignmentsSteal(*static_cast<Boolean const*>(inData));
+			setMidiAssignmentsSteal(dfx::Enliven<Boolean>(inData));
 			break;
 	#endif
 
 	#if LOGIC_AU_PROPERTIES_AVAILABLE
 		case kLogicAUProperty_NodeOperationMode:
-			setCurrentLogicNodeOperationMode(*static_cast<UInt32 const*>(inData));
+			setCurrentLogicNodeOperationMode(dfx::Enliven<UInt32>(inData));
 			break;
 	#endif
 
@@ -1705,7 +1694,7 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags
 		{
 			assert(srcAudioBuffer.mDataByteSize == inputBufferPtr->mBuffers[ch].mDataByteSize);
 			auto const numBytes = std::min(srcAudioBuffer.mDataByteSize, inputBufferPtr->mBuffers[ch].mDataByteSize);
-			memcpy(inputBufferPtr->mBuffers[ch].mData, srcAudioBuffer.mData, numBytes);
+			std::memcpy(inputBufferPtr->mBuffers[ch].mData, srcAudioBuffer.mData, numBytes);
 		}
 	}
 

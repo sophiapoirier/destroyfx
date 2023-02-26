@@ -102,7 +102,7 @@ size_t StrlCat(char* buf, std::string_view appendme, size_t maxlen)
 	// Bytes to copy, not including terminating nul.
 	size_t const copylen =
 		(appendlen < remaining) ? appendlen : (maxlen - 1);
-	memcpy(&buf[buflen], appendme.data(), copylen);
+	std::memcpy(&buf[buflen], appendme.data(), copylen);
 	buf[buflen + copylen] = '\0';
 	return buflen + appendlen;
 }
@@ -113,12 +113,12 @@ size_t StrLCpy(char* dst, std::string_view src, size_t maxlen)
 {
 	if ((src.size() + 1) < maxlen)
 	{
-		memcpy(dst, src.data(), src.size());
+		std::memcpy(dst, src.data(), src.size());
 		dst[src.size()] = '\0';
 	}
 	else if (maxlen != 0)
 	{
-		memcpy(dst, src.data(), maxlen - 1);
+		std::memcpy(dst, src.data(), maxlen - 1);
 		dst[maxlen - 1] = '\0';
 	}
 	return src.size();

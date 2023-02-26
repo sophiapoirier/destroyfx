@@ -76,6 +76,7 @@ This is our Destroy FX plugin data storage stuff
 #include <bit>
 #include <cstddef>
 #include <span>
+#include <type_traits>
 #include <vector>
 
 #include "dfx-base.h"
@@ -369,11 +370,18 @@ private:
 	// structure of an API-generic preset
 	struct GenPreset
 	{
-		char mName[dfx::kPresetNameMaxLength];  // must include null-terminator byte
-		float mParameterValues[1];  // can of course be more...
+		char mName[dfx::kPresetNameMaxLength] {};  // must include null-terminator byte
+		float mParameterValues[1] {};  // can of course be more...
 	};
 	static_assert(dfx::IsTriviallySerializable<GenPreset>);
 #pragma pack(pop)
+	// some extracted type definitions for convenience during byte meddling
+	using GenPresetNameT = decltype(GenPreset::mName);
+	using GenPresetNameElementT = std::remove_extent_t<GenPresetNameT>;
+	static_assert(!std::is_same_v<GenPresetNameT, GenPresetNameElementT>);
+	static_assert(sizeof(GenPresetNameElementT) == 1);  // allows assumption of no serialized memory alignment concerns
+	using GenPresetParameterValueT = std::remove_extent_t<decltype(GenPreset::mParameterValues)>;
+	static_assert(!std::is_same_v<decltype(GenPreset::mParameterValues), GenPresetParameterValueT>);
 
 	// reverse the byte order of data
 	[[nodiscard]] bool correctEndian(void* ioData, size_t inDataSize, bool inIsReversed, bool inIsPreset) const;

@@ -75,7 +75,7 @@ This library binary and source code are released under the terms of a <a href="b
 
 <!--
 <pre id="license_text" style="border: 1px dashed black ; padding: 0.45em">
-Copyright (C) 2003-2020  Sophia Poirier
+Copyright (C) 2003-2023  Sophia Poirier
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without 
@@ -428,11 +428,11 @@ Here's an example of how an AU View might use this function to load a preset fil
 </p>
 
 <pre class="codesnippet">
-CFBundleRef pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR("org.destroyfx.MegaEffect"));
+CFBundleRef const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR("org.destroyfx.MegaEffect"));
 if (pluginBundle != NULL)
 {
 	CFURLRef savedFileURL = NULL;
-	OSStatus status = SaveAUStateToPresetFile_Bundle(GetEditAudioUnit(), NULL, &amp;savedFileURL, pluginBundle);
+	OSStatus const status = SaveAUStateToPresetFile_Bundle(GetEditAudioUnit(), NULL, &amp;savedFileURL, pluginBundle);
 	if ((status == noErr) &amp;&amp; (savedFileURL != NULL))
 	{
 		CFShow(savedFileURL);	/* print info about the saved file's URL to stderr */
@@ -602,24 +602,34 @@ Here's an example recursive function that walks through the CFTree hierarchy, lo
 </p>
 
 <pre class="codesnippet">
-void showtree(CFTreeRef inTree)
+void ShowTree(CFTreeRef inTree)
 {
 	if (inTree == NULL)
+	{
 		fprintf(stderr, "tree is null!\n");
+	}
 	else
 	{
 		if (CFTreeGetChildCount(inTree) &gt; 0)
+		{
 			fprintf(stderr, "this tree node represents a sub-directory of preset files\n");
+		}
 		else
+		{
 			fprintf(stderr, "this tree node represents a preset file\n");
-		CFURLRef treeItemURL = GetCFURLFromFileURLsTreeNode(inTree);
+		}
+		CFURLRef const treeItemURL = GetCFURLFromFileURLsTreeNode(inTree);
 		CFShow(treeItemURL);
-		CFTreeRef child = CFTreeGetFirstChild(inTree);
+		CFTreeRef const child = CFTreeGetFirstChild(inTree);
 		if (child != NULL)
-			showtree(child);
-		CFTreeRef next = CFTreeGetNextSibling(inTree);
+		{
+			ShowTree(child);
+		}
+		CFTreeRef const next = CFTreeGetNextSibling(inTree);
 		if (next != NULL)
-			showtree(next);
+		{
+			ShowTree(next);
+		}
 	}
 }
 </pre>
@@ -630,19 +640,21 @@ And here's an example of using the above function to find all of the AU preset f
 </p>
 
 <pre class="codesnippet">
-CFTreeRef aupresetsTree;
-
 fprintf(stderr, "\n\tlooking in the user domain for preset files...\n");
-aupresetsTree = CFTreeCreateFromAUPresetFilesInDomain(someAUComponent, kDFXFileSystemDomain_User);
-showtree(aupresetsTree);
-if (aupresetsTree != NULL)
-	CFRelease(aupresetsTree);
+CFTreeRef auPresetsTree = CFTreeCreateFromAUPresetFilesInDomain(someAUComponent, kDFXFileSystemDomain_User);
+ShowTree(auPresetsTree);
+if (auPresetsTree != NULL)
+{
+	CFRelease(auPresetsTree);
+}
 
 fprintf(stderr, "\n\tlooking in the local domain for preset files...\n");
-aupresetsTree = CFTreeCreateFromAUPresetFilesInDomain(someAUComponent, kDFXFileSystemDomain_Local);
-showtree(aupresetsTree);
-if (aupresetsTree != NULL)
-	CFRelease(aupresetsTree);
+auPresetsTree = CFTreeCreateFromAUPresetFilesInDomain(someAUComponent, kDFXFileSystemDomain_Local);
+ShowTree(auPresetsTree);
+if (auPresetsTree != NULL)
+{
+	CFRelease(auPresetsTree);
+}
 </pre>
 
 
@@ -722,19 +734,23 @@ Here's an example that iterates through every sibling in one level of a preset f
 </p>
 
 <pre class="codesnippet">
-CFIndex numChildren = CFTreeGetChildCount(parentTree);
+CFIndex const numChildren = CFTreeGetChildCount(parentTree);
 SetControlMaximum(yourMenuControl, numChildren);
 CFTreeRef presetFileTreeNode = CFTreeGetFirstChild(parentTree);
 for (CFIndex i = 0; i &lt; numChildren; i++)
 {
-	CFURLRef theFile = GetCFURLFromFileURLsTreeNode(presetFileTreeNode);
+	CFURLRef const theFile = GetCFURLFromFileURLsTreeNode(presetFileTreeNode);
 	CFStringRef itemName = NULL;
 	/* it's a sub-directory of preset files */
 	if (CFTreeGetChildCount(presetFileTreeNode) &gt; 0)
+	{
 		itemName = CFURLCopyLastPathComponent(theFile);
+	}
 	/* it's a preset file */
 	else
+	{
 		itemName = CopyAUPresetNameFromCFURL(theFile);
+	}
 	if (itemName != NULL)
 	{
 		SetMenuItemTextWithCFString(yourMenu, i + 1, itemName);
@@ -787,12 +803,12 @@ The caller is responsible for releasing inAUPresetFileURL when done with it.  <a
 </p>
 
 <pre class="codesnippet">
-CFTreeRef aupresetsTree = CFTreeCreateFromAUPresetFilesInDomain(AudioComponentInstanceGetComponent(someAUInstance), kDFXFileSystemDomain_User);
+CFTreeRef const auPresetsTree = CFTreeCreateFromAUPresetFilesInDomain(AudioComponentInstanceGetComponent(someAUInstance), kDFXFileSystemDomain_User);
 /* ...do something here to present the tree to the user... */
 /* ...the user chooses a file... */
 /* ...get the tree node corresponding to that file... */
-CFURLRef theFile = GetCFURLFromFileURLsTreeNode(presetTreeNode);
-OSStatus status = RestoreAUStateFromPresetFile(someAUInstance, theFile);
+CFURLRef const theFile = GetCFURLFromFileURLsTreeNode(presetTreeNode);
+OSStatus const status = RestoreAUStateFromPresetFile(someAUInstance, theFile);
 </pre>
 
 
@@ -1074,28 +1090,32 @@ Here's an example implementation of an AUBase-derived AU's GetPresets() method:
 <pre class="codesnippet">
 OSStatus MegaEffect::GetPresets(CFArrayRef* outData) const
 {
-	if (outData == NULL)
+	// simply a query to see if the property is supported
+	if (!outData)
+	{
 		return noErr;
+	}
 
-	CFMutableArrayRef newArray = CFArrayCreateMutable(kCFAllocatorDefault, 2, &amp;kCFAUPresetArrayCallBacks);
-	if (newArray == NULL)
+	CFMutableArrayRef const presetsArray = CFArrayCreateMutable(kCFAllocatorDefault, 2, &amp;kCFAUPresetArrayCallBacks);
+	if (!presetsArray)
+	{
+		*outData = nullptr;
 		return coreFoundationUnknownErr;
-
-	CFAUPresetRef newPreset = CFAUPresetCreate(kCFAllocatorDefault, 1, CFSTR("a preset"));
-	if (newPreset != NULL)
-	{
-		CFArrayAppendValue(newArray, newPreset);
-		CFAUPresetRelease(newPreset);
 	}
 
-	newPreset = CFAUPresetCreate(kCFAllocatorDefault, 2, CFSTR("another preset"));
-	if (newPreset != NULL)
+	if (CFAUPresetRef const preset = CFAUPresetCreate(kCFAllocatorDefault, 1, CFSTR("a preset")))
 	{
-		CFArrayAppendValue(newArray, newPreset);
-		CFAUPresetRelease(newPreset);
+		CFArrayAppendValue(presetsArray, preset);
+		CFAUPresetRelease(preset);
 	}
 
-	*outData = (CFArrayRef)newArray;
+	if (CFAUPresetRef const preset = CFAUPresetCreate(kCFAllocatorDefault, 2, CFSTR("another preset")))
+	{
+		CFArrayAppendValue(presetsArray, preset);
+		CFAUPresetRelease(preset);
+	}
+
+	*outData = reinterpret_cast&lt;CFArrayRef&gt;(presetsArray);
 	return noErr;
 }
 </pre>
@@ -1391,25 +1411,25 @@ OSStatus MegaEffect::GetProperty(AudioUnitPropertyID inPropertyID,
 {
 	if (inPropertyID == kAudioUnitMigrateProperty_FromPlugin)
 	{
-		CFMutableArrayRef descsArray = CFArrayCreateMutable(kCFAllocatorDefault, 2, &amp;kCFAUOtherPluginDescArrayCallBacks);
-		if (descsArray == NULL)
+		CFMutableArrayRef const descsArray = CFArrayCreateMutable(kCFAllocatorDefault, 2, &amp;kCFAUOtherPluginDescArrayCallBacks);
+		if (!descsArray)
+		{
 			return coreFoundationUnknownErr;
+		}
 
-		CFAUOtherPluginDescRef otherPluginMigrateDesc = CFAUOtherPluginDescCreateVST(kCFAllocatorDefault, 'Plug');
-		if (otherPluginMigrateDesc != NULL)
+		if (CFAUOtherPluginDescRef const otherPluginMigrateDesc = CFAUOtherPluginDescCreateVST(kCFAllocatorDefault, 'Plug'))
 		{
 			CFArrayAppendValue(descsArray, otherPluginMigrateDesc);
 			CFAUOtherPluginDescRelease(otherPluginMigrateDesc);
 		}
 
-		otherPluginMigrateDesc = CFAUOtherPluginDescCreateMAS(kCFAllocatorDefault, 'Plug', 3, 'Acme');
-		if (otherPluginMigrateDesc != NULL)
+		if (CFAUOtherPluginDescRef const otherPluginMigrateDesc = CFAUOtherPluginDescCreateMAS(kCFAllocatorDefault, 'Plug', 3, 'Acme'))
 		{
 			CFArrayAppendValue(descsArray, otherPluginMigrateDesc);
 			CFAUOtherPluginDescRelease(otherPluginMigrateDesc);
 		}
 
-		*((CFArrayRef*)outData) = descsArray;
+		std::memcpy(outData, &amp;descsArray, sizeof(descsArray));
 		return noErr;
 	}
 
@@ -1651,8 +1671,8 @@ Here's an example of getting the name strings for an AU and outputting them to s
 </p>
 
 <pre class="codesnippet">
-CFStringRef nameString, manufacturerString;
-OSStatus error = CopyAUNameAndManufacturerStrings(someAUComponent, &amp;nameString, &amp;manufacturerString);
+CFStringRef nameString = NULL, manufacturerString = NULL;
+OSStatus const error = CopyAUNameAndManufacturerStrings(someAUComponent, &amp;nameString, &amp;manufacturerString);
 if (error == noErr)
 {
 	fprintf(stderr, "the name of this plugin is:  ");
@@ -1981,10 +2001,12 @@ Here's an example of sending change notifications for every parameter right afte
 <pre class="codesnippet">
 OSStatus MegaEffect::NewFactoryPresetSet(AUPreset const&amp; inNewFactoryPreset)
 {
-	/* ...do something to change load the factory preset settings... */
+	// ...do something to load the factory preset settings...
 
 	for (UInt32 i = 0; i &lt; yourNumParameters; i++)
+	{
 		AUParameterChange_TellListeners(GetComponentInstance(), yourParameterList[i]);
+	}
 
 	return noErr;
 }
@@ -2102,7 +2124,7 @@ September 18th 2003:
 <hr />
 
 <p class="footer">
-Copyright &copy; 2003-2020 Sophia Poirier
+Copyright &copy; 2003-2023 Sophia Poirier
 </p>
 <p class="footer">
 Permission is granted to copy, distribute and/or modify this document under the terms of the <a href="http://www.gnu.org/licenses/fdl.html">GNU Free Documentation License</a>, Version 1.2 or any later version published by the <a href="http://www.fsf.org/">Free Software Foundation</a>.  A copy of the license is included in the file &quot;fdl.txt&quot;.

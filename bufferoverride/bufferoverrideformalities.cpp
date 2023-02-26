@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -137,11 +137,7 @@ void BufferOverride::initialize()
 
 	std::for_each(mDecayFilters.begin(), mDecayFilters.end(), [this, numChannels](auto& filters)
 	{
-		filters.assign(numChannels, {});
-		std::for_each(filters.begin(), filters.end(), [this](auto& filter)
-		{
-			filter.setSampleRate(getsamplerate());
-		});
+		filters.assign(numChannels, dfx::IIRFilter(getsamplerate()));
 	});
 	mCurrentDecayFilters = mDecayFilters.front();
 	mPrevDecayFilters = mDecayFilters.back();
@@ -525,10 +521,10 @@ dfx::StatusCode BufferOverride::dfx_GetProperty(dfx::PropertyID inPropertyID, df
 	switch (inPropertyID)
 	{
 		case kBOProperty_LastViewDataTimestamp:
-			*static_cast<uint64_t*>(outData) = mViewDataCacheTimestamp.load(std::memory_order_relaxed);
+			dfx::MemCpyObject(mViewDataCacheTimestamp.load(std::memory_order_relaxed), outData);
 			return dfx::kStatus_NoError;
 		case kBOProperty_ViewData:
-			*static_cast<BufferOverrideViewData*>(outData) = mViewDataCache.load(std::memory_order_relaxed);
+			dfx::MemCpyObject(mViewDataCache.load(std::memory_order_relaxed), outData);
 			return dfx::kStatus_NoError;
 		default:
 			return DfxPlugin::dfx_GetProperty(inPropertyID, inScope, inItemIndex, outData);

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -297,6 +297,7 @@ public:
 	dfx::StatusCode dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
 									   void* outData, size_t& ioDataSize);
 	template <dfx::TriviallySerializable T>
+	requires std::is_default_constructible_v<T>
 	std::optional<T> dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned int inItemIndex = 0)
 	{
 		T value {};
@@ -455,6 +456,7 @@ private:
 	std::vector<short> mParameterHighlightColors;
 #endif
 };
+static_assert(std::has_virtual_destructor_v<DfxGuiEditor>);
 
 
 #pragma clang diagnostic pop

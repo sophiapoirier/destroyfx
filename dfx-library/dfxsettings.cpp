@@ -29,6 +29,7 @@ Welcome to our settings persistence mess.
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -103,63 +104,176 @@ DfxSettings::DfxSettings(uint32_t inMagic, DfxPlugin& inPlugin, size_t inSizeofE
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------
+template <typename FromT, typename ToT>
+requires (!std::is_const_v<ToT>)
+using CopyConstT = std::conditional_t<std::is_const_v<FromT>, std::add_const_t<ToT>, ToT>;
+
+//-----------------------------------------------------------------------------
+template <typename T>
+T* OffsetAddress(T* inAddress, ptrdiff_t inOffset) noexcept
+{
+	return reinterpret_cast<T*>(reinterpret_cast<CopyConstT<T, std::byte>*>(inAddress) + inOffset);
+}
+
+//-----------------------------------------------------------------------------
+template <typename T>
+T* OffsetAddressToType(CopyConstT<T, void>* inAddress, ptrdiff_t inOffset) noexcept
+{
+	return static_cast<T*>(OffsetAddress(inAddress, inOffset));
+}
+
+//-----------------------------------------------------------------------------
+template <dfx::TriviallySerializable T>
+class SerializedObject
+{
+public:
+	using difference_type = std::ptrdiff_t;
+	using value_type = T;
+	using reference = T&;
+	using iterator_category = std::input_iterator_tag;
+
+	template <typename ToT>
+	using CopyConstT = CopyConstT<T, ToT>;
+
+	explicit SerializedObject(CopyConstT<void>* inData) noexcept
+	:	mData(static_cast<T*>(inData))
+	{
+	}
+
+	auto operator*() const noexcept
+	requires (!std::is_const_v<T>)
+	{
+		return AssignmentWrapper(mData);
+	}
+	auto operator*() const noexcept
+	requires std::is_const_v<T>
+	{
+		return dfx::Enliven(mData);
+	}
+
+	auto operator[](std::size_t inIndex) const noexcept
+	requires (!std::is_const_v<T>)
+	{
+		return AssignmentWrapper(mData + inIndex);
+	}
+	[[nodiscard]] T operator[](std::size_t inIndex) const noexcept
+	requires std::is_const_v<T>
+	{
+		return dfx::Enliven(mData + inIndex);
+	}
+
+	SerializedObject begin() const noexcept
+	{
+		return *this;
+	}
+	SerializedObject& operator++() noexcept
+	{
+		this->offsetAddress(sizeof(T));
+		return *this;
+	}
+	SerializedObject operator++(int) noexcept
+	{
+		auto const entrySelf = *this;
+		operator++();
+		return entrySelf;
+	}
+
+	auto getByteAddress() const noexcept
+	{
+		return reinterpret_cast<CopyConstT<std::byte>*>(mData);
+	}
+
+	void offsetAddress(ptrdiff_t inOffset) noexcept
+	{
+		mData = OffsetAddress(mData, inOffset);
+	}
+
+	static constexpr auto sizeOfType() noexcept
+	{
+		return sizeof(T);
+	}
+
+private:
+	class AssignmentWrapper
+	{
+	public:
+		explicit AssignmentWrapper(T* inData) noexcept
+		requires (!std::is_const_v<T>)
+		:	mData(inData)
+		{
+		}
+		AssignmentWrapper& operator=(T const& inOther) noexcept
+		{
+			dfx::MemCpyObject(inOther, mData);
+			return *this;
+		}
+	private:
+		T* const mData;
+	};
+
+	T* mData;
+};
+
+#define GET_SERIALIZED_HEADER_FIELD(inData, inMemberName) \
+	dfx::Enliven(OffsetAddressToType<decltype(SettingsInfo::inMemberName)>(inData, offsetof(SettingsInfo, inMemberName)))
+
+//-----------------------------------------------------------------------------
 // this gets called when the host wants to save settings data, 
 // like when saving a session document or preset files
 std::vector<std::byte> DfxSettings::save(bool inIsPreset) const
 {
 	std::vector<std::byte> data(inIsPreset ? mSizeOfPresetChunk : mSizeOfChunk, std::byte{0});
-	auto const sharedChunk = reinterpret_cast<SettingsInfo*>(data.data());
+	SerializedObject<SettingsInfo> const sharedHeader(data.data());
 
-	// and a few pointers to elements within that data, just for ease of use
-	auto const firstSharedParameterID = reinterpret_cast<uint32_t*>(data.data() + sizeof(SettingsInfo));
-	auto const firstSharedPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(firstSharedParameterID) + mSizeOfParameterIDs);
+	// and a few references to elements within that data, just for ease of use
+	SerializedObject<uint32_t> const sharedParameterIDs(data.data() + sizeof(SettingsInfo));
+	auto const firstSharedPresetByteAddress = sharedParameterIDs.getByteAddress() + mSizeOfParameterIDs;
+	auto sharedPresetName = reinterpret_cast<GenPresetNameElementT*>(firstSharedPresetByteAddress + offsetof(GenPreset, mName));
+	SerializedObject<GenPresetParameterValueT> sharedPresetParameterValues(firstSharedPresetByteAddress + offsetof(GenPreset, mParameterValues));
 	// TODO C++23: integer literal suffix UZ
 	auto const savePresetCount = inIsPreset ? size_t(1) : mNumPresets;
-	auto const firstSharedParameterAssignment = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<std::byte*>(firstSharedPreset) + (mSizeOfPreset * savePresetCount));
+	SerializedObject<dfx::ParameterAssignment> const sharedParameterAssignments(firstSharedPresetByteAddress + (mSizeOfPreset * savePresetCount));
 
 	// first store the special chunk infos
-	sharedChunk->mMagic = mSettingsInfo.mMagic;
-	sharedChunk->mVersion = mSettingsInfo.mVersion;
-	sharedChunk->mLowestLoadableVersion = mSettingsInfo.mLowestLoadableVersion;
-	sharedChunk->mStoredHeaderSize = mSettingsInfo.mStoredHeaderSize;
-	sharedChunk->mNumStoredParameters = mSettingsInfo.mNumStoredParameters;
-	sharedChunk->mNumStoredPresets = inIsPreset ? 1 : mSettingsInfo.mNumStoredPresets;
-	sharedChunk->mStoredParameterAssignmentSize = mSettingsInfo.mStoredParameterAssignmentSize;
-	sharedChunk->mStoredExtendedDataSize = mSettingsInfo.mStoredExtendedDataSize;
-	sharedChunk->mGlobalBehaviorFlags = mSettingsInfo.mGlobalBehaviorFlags;
+	auto settingsInfoWithAdjustedPresetCount = mSettingsInfo;
+	if (inIsPreset)
+	{
+		settingsInfoWithAdjustedPresetCount.mNumStoredPresets = 1;
+	}
+	*sharedHeader = settingsInfoWithAdjustedPresetCount;
 
 	// store the parameters' IDs
-	std::copy(mParameterIDMap.cbegin(), mParameterIDMap.cend(), firstSharedParameterID);
+	std::copy(mParameterIDMap.cbegin(), mParameterIDMap.cend(), sharedParameterIDs.begin());
 
 	// store only one preset setting if inIsPreset is true
 	if (inIsPreset)
 	{
-		dfx::StrLCpy(firstSharedPreset->mName, mPlugin.getpresetname(mPlugin.getcurrentpresetnum()), std::size(firstSharedPreset->mName));
+		dfx::StrLCpy(sharedPresetName, mPlugin.getpresetname(mPlugin.getcurrentpresetnum()), std::extent_v<GenPresetNameT>);
 		for (dfx::ParameterID i = 0; i < mNumParameters; i++)
 		{
-			firstSharedPreset->mParameterValues[i] = mPlugin.getparameter_f(i);
+			sharedPresetParameterValues[i] = mPlugin.getparameter_f(i);
 		}
 	}
 	// otherwise store the entire bank of presets and the MIDI event assignments
 	else
 	{
-		auto tempSharedPresets = firstSharedPreset;
 		for (size_t j = 0; j < mNumPresets; j++)
 		{
 			// copy the preset name to the chunk
-			dfx::StrLCpy(tempSharedPresets->mName, mPlugin.getpresetname(j), std::size(tempSharedPresets->mName));
+			dfx::StrLCpy(sharedPresetName, mPlugin.getpresetname(j), std::extent_v<GenPresetNameT>);
 			// copy all of the parameters for this preset to the chunk
 			for (dfx::ParameterID i = 0; i < mNumParameters; i++)
 			{
-				tempSharedPresets->mParameterValues[i] = mPlugin.getpresetparameter_f(j, i);
+				sharedPresetParameterValues[i] = mPlugin.getpresetparameter_f(j, i);
 			}
 			// point to the next preset in the data array for the host
-			tempSharedPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(tempSharedPresets) + mSizeOfPreset);
+			sharedPresetName = OffsetAddress(sharedPresetName, mSizeOfPreset);
+			sharedPresetParameterValues.offsetAddress(mSizeOfPreset);
 		}
 	}
 
 	// store the parameters' MIDI event assignments
-	std::copy(mParameterAssignments.cbegin(), mParameterAssignments.cend(), firstSharedParameterAssignment);
+	std::copy(mParameterAssignments.cbegin(), mParameterAssignments.cend(), sharedParameterAssignments.begin());
 
 	// reverse the order of bytes in the data being sent to the host, if necessary
 	[[maybe_unused]] auto const endianSuccess = correctEndian(data.data(), data.size() - mSizeOfExtendedData, false, inIsPreset);
@@ -219,17 +333,23 @@ try
 		this->validateRange(incomingData_copy.get(), inDataSize, address, length, name);
 	};
 
-	// point to the start of the chunk data:  the SettingsInfo header
-	auto const newSettingsInfo = static_cast<SettingsInfo const*>(incomingData_copy.get());
-
-	// copies to make the values simpler to access (no need for newSettingsInfo-> so often)
-	auto const storedHeaderSize = newSettingsInfo->mStoredHeaderSize;
-	validateRange(newSettingsInfo, storedHeaderSize, "header");
+	// the start of the chunk data:  the SettingsInfo header
+	auto const storedHeaderSize = GET_SERIALIZED_HEADER_FIELD(incomingData_copy.get(), mStoredHeaderSize);
+	validateRange(incomingData_copy.get(), storedHeaderSize, "header");
 	require(storedHeaderSize >= kMinimumHeaderSize);
-	auto const numStoredParameters = newSettingsInfo->mNumStoredParameters;
-	auto const numStoredPresets = newSettingsInfo->mNumStoredPresets;
-	auto const storedParameterAssignmentSize = newSettingsInfo->mStoredParameterAssignmentSize;
-	auto const storedExtendedDataSize = newSettingsInfo->mStoredExtendedDataSize;
+	auto const storedMagic = GET_SERIALIZED_HEADER_FIELD(incomingData_copy.get(), mMagic);
+	auto const storedVersion = GET_SERIALIZED_HEADER_FIELD(incomingData_copy.get(), mVersion);
+	auto const storedLowestLoadableVersion = GET_SERIALIZED_HEADER_FIELD(incomingData_copy.get(), mLowestLoadableVersion);
+	auto const numStoredParameters = GET_SERIALIZED_HEADER_FIELD(incomingData_copy.get(), mNumStoredParameters);
+	auto const numStoredPresets = GET_SERIALIZED_HEADER_FIELD(incomingData_copy.get(), mNumStoredPresets);
+	auto const storedParameterAssignmentSize = GET_SERIALIZED_HEADER_FIELD(incomingData_copy.get(), mStoredParameterAssignmentSize);
+	auto const storedExtendedDataSize = GET_SERIALIZED_HEADER_FIELD(incomingData_copy.get(), mStoredExtendedDataSize);
+	std::optional<decltype(SettingsInfo::mGlobalBehaviorFlags)> storedGlobalBehaviorFlags;
+	// check for availability of later extensions to the header
+	if (storedHeaderSize >= (offsetof(SettingsInfo, mGlobalBehaviorFlags) + sizeof(SettingsInfo::mGlobalBehaviorFlags)))
+	{
+		storedGlobalBehaviorFlags = GET_SERIALIZED_HEADER_FIELD(incomingData_copy.get(), mGlobalBehaviorFlags);
+	}
 
 	// The following situations are basically considered to be 
 	// irrecoverable "crisis" situations.  Regardless of what 
@@ -238,15 +358,15 @@ try
 	// Incorrect magic signature basically means that these settings are 
 	// probably for some other plugin.  And the whole point of setting a 
 	// lowest loadable version value is that it should be taken seriously.
-	require(newSettingsInfo->mMagic == mSettingsInfo.mMagic);
-	require((newSettingsInfo->mVersion >= mSettingsInfo.mLowestLoadableVersion) && 
-			(mSettingsInfo.mVersion >= newSettingsInfo->mLowestLoadableVersion));  // TODO: does this second test make sense?
+	require(storedMagic == mSettingsInfo.mMagic);
+	require((storedVersion >= mSettingsInfo.mLowestLoadableVersion) &&
+			(mSettingsInfo.mVersion >= storedLowestLoadableVersion));  // TODO: does this second test make sense?
 
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 	// we started using hex format versions (like below) with the advent 
 	// of the glorious DfxPlugin
 	// versions lower than 0x00010000 indicate inferior settings
-	auto const oldVST = DFX_IsOldVstVersionNumber(newSettingsInfo->mVersion);
+	auto const oldVST = DFX_IsOldVstVersionNumber(storedVersion);
 #endif
 
 	// figure out how many presets we should try to load 
@@ -258,11 +378,11 @@ try
 
 	// check for conflicts and keep track of them
 	CrisisReasonFlags crisisFlags = kCrisisReasonFlag_None;
-	if (newSettingsInfo->mVersion < mSettingsInfo.mVersion)
+	if (storedVersion < mSettingsInfo.mVersion)
 	{
 		crisisFlags = crisisFlags | kCrisisReasonFlag_LowerVersion;
 	}
-	else if (newSettingsInfo->mVersion > mSettingsInfo.mVersion)
+	else if (storedVersion > mSettingsInfo.mVersion)
 	{
 		crisisFlags = crisisFlags | kCrisisReasonFlag_HigherVersion;
 	}
@@ -307,17 +427,19 @@ try
 	// handle the crisis situations (if any) and stop trying to load if we're told to
 	require(handleCrisis(crisisFlags) != CrisisError::QuitError);
 
-	// check for availability of later extensions to the header
-	if (storedHeaderSize >= (offsetof(SettingsInfo, mGlobalBehaviorFlags) + sizeof(mSettingsInfo.mGlobalBehaviorFlags)))
+	if (storedGlobalBehaviorFlags)
 	{
-		setUseChannel(newSettingsInfo->mGlobalBehaviorFlags & kGlobalBehaviorFlag_UseChannel);
-		setSteal(newSettingsInfo->mGlobalBehaviorFlags & kGlobalBehaviorFlag_StealAssignments);
+		setUseChannel(*storedGlobalBehaviorFlags & kGlobalBehaviorFlag_UseChannel);
+		setSteal(*storedGlobalBehaviorFlags & kGlobalBehaviorFlag_StealAssignments);
 	}
 
 	// point to the next data element after the chunk header:  the first parameter ID
-	auto const newParameterIDs = reinterpret_cast<uint32_t const*>(reinterpret_cast<std::byte const*>(newSettingsInfo) + storedHeaderSize);
-	size_t const sizeOfStoredParameterIDs = sizeof(*newParameterIDs) * numStoredParameters;
-	validateRange(newParameterIDs, sizeOfStoredParameterIDs, "parameter IDs");
+	SerializedObject<uint32_t const> const newParameterIDs(OffsetAddress(incomingData_copy.get(), storedHeaderSize));
+	size_t const sizeOfStoredParameterIDs = newParameterIDs.sizeOfType() * numStoredParameters;
+	validateRange(newParameterIDs.getByteAddress(), sizeOfStoredParameterIDs, "parameter IDs");
+	// XXX plain contiguous data container copy required for passing to getParameterIndexFromMap
+	std::vector<uint32_t> newParameterIDs_copy(numStoredParameters, dfx::kParameterID_Invalid);
+	std::copy_n(newParameterIDs.begin(), numStoredParameters, newParameterIDs_copy.begin());
 	// create a mapping table for corresponding the incoming parameters to the 
 	// destination parameters (in case the parameter IDs don't all match up)
 	//  [ the index of parameterMap is the same as our parameter tag/index and the value 
@@ -325,17 +447,27 @@ try
 	std::vector<dfx::ParameterID> parameterMap(mNumParameters, dfx::kParameterID_Invalid);
 	for (size_t i = 0; i < mParameterIDMap.size(); i++)
 	{
-		parameterMap[i] = getParameterIndexFromMap(mParameterIDMap[i], {newParameterIDs, numStoredParameters});
+		parameterMap[i] = getParameterIndexFromMap(mParameterIDMap[i], newParameterIDs_copy);
 	}
 
 	// point to the next data element after the parameter IDs:  the first preset name
-	auto newPreset = reinterpret_cast<GenPreset const*>(reinterpret_cast<std::byte const*>(newParameterIDs) + sizeOfStoredParameterIDs);
-	size_t const sizeOfStoredPreset = sizeOfGenPreset(numStoredParameters);
-	validateRange(newPreset, sizeOfStoredPreset * numStoredPresets, "presets");
-
-	auto const getPresetNameWithFallback = [](GenPreset const& preset) -> std::string_view
+	auto const firstNewPresetByteAddress = newParameterIDs.getByteAddress() + sizeOfStoredParameterIDs;
+	auto newPresetName = reinterpret_cast<GenPresetNameElementT const*>(firstNewPresetByteAddress + offsetof(GenPreset, mName));
+	SerializedObject<GenPresetParameterValueT const> newPresetParameterValues(firstNewPresetByteAddress + offsetof(GenPreset, mParameterValues));
+#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
+	if (oldVST)
 	{
-		return preset.mName[0] ? preset.mName : "(unnamed)";
+		newPresetParameterValues.offsetAddress(dfx::math::ToSigned(kDfxOldPresetNameMaxLength) - dfx::math::ToSigned(dfx::kPresetNameMaxLength));
+	}
+	size_t const sizeOfStoredPreset = sizeOfGenPreset(numStoredParameters) + (oldVST ? kDfxOldPresetNameMaxLength : 0) - (oldVST ? dfx::kPresetNameMaxLength : 0);
+#else
+	auto const sizeOfStoredPreset = sizeOfGenPreset(numStoredParameters);
+#endif
+	validateRange(firstNewPresetByteAddress, sizeOfStoredPreset * numStoredPresets, "presets");
+
+	auto const getPresetNameWithFallback = [](std::string_view presetName) -> std::string_view
+	{
+		return presetName.empty() ? "(unnamed)" : presetName;
 	};
 
 	// the chunk being received only contains one preset
@@ -346,15 +478,8 @@ try
 		// we are restoring the last user state
 		#ifndef TARGET_API_AUDIOUNIT
 		// copy the preset name from the chunk
-		mPlugin.setpresetname(mPlugin.getcurrentpresetnum(), getPresetNameWithFallback(*newPreset));
+		mPlugin.setpresetname(mPlugin.getcurrentpresetnum(), getPresetNameWithFallback(newPresetName));
 		#endif
-	#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-		// back up the pointer to account for shorter preset names
-		if (oldVST)
-		{
-			newPreset = reinterpret_cast<GenPreset const*>(reinterpret_cast<std::byte const*>(newPreset) + kDfxOldPresetNameMaxLength - dfx::kPresetNameMaxLength);
-		}
-	#endif
 		// copy all of the parameters that we can for this preset from the chunk
 		for (dfx::ParameterID i = 0; i < parameterMap.size(); i++)
 		{
@@ -365,19 +490,20 @@ try
 				// handle old-style generic VST 0-to-1 normalized parameter values
 				if (oldVST)
 				{
-					mPlugin.setparameter_gen(i, newPreset->mParameterValues[mappedParameterID]);
+					mPlugin.setparameter_gen(i, newPresetParameterValues[mappedParameterID]);
 				}
 				else
 			#endif
 				{
-					mPlugin.setparameter_f(i, newPreset->mParameterValues[mappedParameterID]);
+					mPlugin.setparameter_f(i, newPresetParameterValues[mappedParameterID]);
 				}
 				// allow for additional tweaking of the stored parameter setting
-				mPlugin.settings_doChunkRestoreSetParameterStuff(i, newPreset->mParameterValues[mappedParameterID], newSettingsInfo->mVersion, {});
+				mPlugin.settings_doChunkRestoreSetParameterStuff(i, newPresetParameterValues[mappedParameterID], storedVersion, {});
 			}
 		}
 		// point past the preset
-		newPreset = reinterpret_cast<GenPreset const*>(reinterpret_cast<std::byte const*>(newPreset) + sizeOfStoredPreset);
+		newPresetName = OffsetAddress(newPresetName, sizeOfStoredPreset);
+		newPresetParameterValues.offsetAddress(sizeOfStoredPreset);
 	}
 	// the chunk being received has all of the presets plus the MIDI event assignments
 	else
@@ -387,14 +513,7 @@ try
 		for (size_t j = 0; j < copyPresets; j++)
 		{
 			// copy the preset name from the chunk
-			mPlugin.setpresetname(j, getPresetNameWithFallback(*newPreset));
-		#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-			// back up the pointer to account for shorter preset names
-			if (oldVST)
-			{
-				newPreset = reinterpret_cast<GenPreset const*>(reinterpret_cast<std::byte const*>(newPreset) + kDfxOldPresetNameMaxLength - dfx::kPresetNameMaxLength);
-			}
-		#endif
+			mPlugin.setpresetname(j, getPresetNameWithFallback(newPresetName));
 			// copy all of the parameters that we can for this preset from the chunk
 			for (dfx::ParameterID i = 0; i < parameterMap.size(); i++)
 			{
@@ -405,25 +524,26 @@ try
 					// handle old-style generic VST 0-to-1 normalized parameter values
 					if (oldVST)
 					{
-						mPlugin.setpresetparameter_gen(j, i, newPreset->mParameterValues[mappedParameterID]);
+						mPlugin.setpresetparameter_gen(j, i, newPresetParameterValues[mappedParameterID]);
 					}
 					else
 				#endif
 					{
-						mPlugin.setpresetparameter_f(j, i, newPreset->mParameterValues[mappedParameterID]);
+						mPlugin.setpresetparameter_f(j, i, newPresetParameterValues[mappedParameterID]);
 					}
 					// allow for additional tweaking of the stored parameter setting
-					mPlugin.settings_doChunkRestoreSetParameterStuff(i, newPreset->mParameterValues[mappedParameterID], newSettingsInfo->mVersion, j);
+					mPlugin.settings_doChunkRestoreSetParameterStuff(i, newPresetParameterValues[mappedParameterID], storedVersion, j);
 				}
 			}
 			// point to the next preset in the received data array
-			newPreset = reinterpret_cast<GenPreset const*>(reinterpret_cast<std::byte const*>(newPreset) + sizeOfStoredPreset);
+			newPresetName = OffsetAddress(newPresetName, sizeOfStoredPreset);
+			newPresetParameterValues.offsetAddress(sizeOfStoredPreset);
 		}
 	}
 
 	// point to the last chunk data element, the MIDI event assignment array
 	// (offset by the number of stored presets that were skipped, if any)
-	auto const newParameterAssignments = reinterpret_cast<std::byte const*>(newPreset) + ((numStoredPresets - copyPresets) * sizeOfStoredPreset);
+	auto const newParameterAssignments = firstNewPresetByteAddress + (numStoredPresets * sizeOfStoredPreset);
 	size_t sizeOfStoredParameterAssignments = 0;  // until we establish that they are present
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 	if (!(oldVST && inIsPreset))
@@ -453,7 +573,7 @@ try
 	{
 		auto const newExtendedData = newParameterAssignments + sizeOfStoredParameterAssignments;
 		validateRange(newExtendedData, storedExtendedDataSize, "extended data");
-		mPlugin.settings_restoreExtendedData(newExtendedData, storedExtendedDataSize, newSettingsInfo->mVersion, inIsPreset);
+		mPlugin.settings_restoreExtendedData(newExtendedData, storedExtendedDataSize, storedVersion, inIsPreset);
 	}
 
 	return true;
@@ -508,13 +628,13 @@ void blah(long long x)
 	}
 
 	// start by looking at the header info
-	auto const dataHeader = static_cast<SettingsInfo*>(ioData);
+	auto const dataHeaderAddress = ioData;
 	// we need to know how big the header is before dealing with it
-	auto storedVersion = dataHeader->mVersion;
-	auto storedHeaderSize = dataHeader->mStoredHeaderSize;
-	auto numStoredParameters = dataHeader->mNumStoredParameters;
-	auto numStoredPresets = dataHeader->mNumStoredPresets;
-	auto storedParameterAssignmentSize = dataHeader->mStoredParameterAssignmentSize;
+	auto storedVersion = GET_SERIALIZED_HEADER_FIELD(dataHeaderAddress, mVersion);
+	auto storedHeaderSize = GET_SERIALIZED_HEADER_FIELD(dataHeaderAddress, mStoredHeaderSize);
+	auto numStoredParameters = GET_SERIALIZED_HEADER_FIELD(dataHeaderAddress, mNumStoredParameters);
+	auto numStoredPresets = GET_SERIALIZED_HEADER_FIELD(dataHeaderAddress, mNumStoredPresets);
+	auto storedParameterAssignmentSize = GET_SERIALIZED_HEADER_FIELD(dataHeaderAddress, mStoredParameterAssignmentSize);
 	// correct the values' endian byte order order if the data was received byte-swapped
 	if (inIsReversed)
 	{
@@ -531,29 +651,29 @@ void blah(long long x)
 	};
 
 	// reverse the order of bytes of the header values
-	validateRange(dataHeader, storedHeaderSize, "header");
-	constexpr auto headerItemSize = sizeof(dataHeader->mMagic);
+	validateRange(dataHeaderAddress, storedHeaderSize, "header");
+	constexpr auto headerItemSize = sizeof(SettingsInfo::mMagic);
 	if ((storedHeaderSize % headerItemSize) != 0)
 	{
 		debugAlertCorruptData("header divisibility", storedHeaderSize, inDataSize);
 		return false;
 	}
-	dfx::ReverseBytes(dataHeader, headerItemSize, storedHeaderSize / headerItemSize);
+	dfx::ReverseBytes(dataHeaderAddress, headerItemSize, storedHeaderSize / headerItemSize);
 
 	// reverse the byte order for each of the parameter IDs
-	auto const dataParameterIDs = reinterpret_cast<uint32_t*>(static_cast<std::byte*>(ioData) + storedHeaderSize);
+	auto const dataParameterIDs = OffsetAddressToType<uint32_t>(dataHeaderAddress, storedHeaderSize);
 	validateRange(dataParameterIDs, sizeof(*dataParameterIDs) * numStoredParameters, "parameter IDs");
 	dfx::ReverseBytes(dataParameterIDs, numStoredParameters);
 
 	// reverse the order of bytes for each parameter value, 
 	// but no need to mess with the preset names since they are char arrays
-	auto dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataParameterIDs) + (sizeof(*dataParameterIDs) * numStoredParameters));
-	size_t sizeOfStoredPreset = sizeOfGenPreset(numStoredParameters);
+	auto dataPresets = OffsetAddressToType<GenPreset>(dataParameterIDs, sizeof(*dataParameterIDs) * numStoredParameters);
+	auto sizeOfStoredPreset = sizeOfGenPreset(numStoredParameters);
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 	if (DFX_IsOldVstVersionNumber(storedVersion))
 	{
 		// back up the pointer to account for shorter preset names
-		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataPresets) + kDfxOldPresetNameMaxLength - dfx::kPresetNameMaxLength);
+		dataPresets = OffsetAddress(dataPresets, dfx::math::ToSigned(kDfxOldPresetNameMaxLength) - dfx::math::ToSigned(dfx::kPresetNameMaxLength));
 		// and shrink the size to account for shorter preset names
 		if (sizeOfStoredPreset < dfx::kPresetNameMaxLength)
 		{
@@ -569,13 +689,13 @@ void blah(long long x)
 	{
 		dfx::ReverseBytes(dataPresets->mParameterValues, numStoredParameters);
 		// point to the next preset in the data array
-		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataPresets) + sizeOfStoredPreset);
+		dataPresets = OffsetAddress(dataPresets, sizeOfStoredPreset);
 	}
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 	if (DFX_IsOldVstVersionNumber(storedVersion))
 	{
 		// advance the pointer to compensate for backing up earlier
-		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataPresets) + dfx::kPresetNameMaxLength - kDfxOldPresetNameMaxLength);
+		dataPresets = OffsetAddress(dataPresets, dfx::math::ToSigned(dfx::kPresetNameMaxLength) - dfx::math::ToSigned(kDfxOldPresetNameMaxLength));
 	}
 #endif
 
@@ -601,7 +721,7 @@ void blah(long long x)
 			dfx::ReverseBytes(pa.mDataFloat1);
 			dfx::ReverseBytes(pa.mDataFloat2);
 			std::memcpy(dataParameterAssignment, &pa, copyParameterAssignmentSize);
-			dataParameterAssignment = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<std::byte*>(dataParameterAssignment) + storedParameterAssignmentSize);
+			dataParameterAssignment = OffsetAddress(dataParameterAssignment, storedParameterAssignmentSize);
 		}
 	}
 

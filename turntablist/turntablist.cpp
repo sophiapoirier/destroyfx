@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2022 Sophia Poirier
+Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2023 Sophia Poirier
 All rights reserved.
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. 
@@ -364,7 +364,7 @@ OSStatus Turntablist::RestoreState(CFPropertyListRef inData)
 				if (aliasData && (aliasDataSize > 0))
 				{
 					AliasHandle aliasHandle = nullptr;
-					auto aliasError = PtrToHand(aliasData, (Handle*)(&aliasHandle), aliasDataSize);
+					auto aliasError = PtrToHand(aliasData, reinterpret_cast<Handle*>(&aliasHandle), aliasDataSize);
 					if ((aliasError == noErr) && aliasHandle)
 					{
 						FSRef audioFileRef;
@@ -474,7 +474,7 @@ dfx::StatusCode Turntablist::dfx_GetProperty(dfx::PropertyID inPropertyID,
 	switch (inPropertyID)
 	{
 		case kTurntablistProperty_Play:
-			*static_cast<Boolean*>(outData) = m_bPlay;
+			dfx::MemCpyObject(static_cast<Boolean>(m_bPlay), outData);
 			return dfx::kStatus_NoError;
 
 		case kTurntablistProperty_AudioFile:
@@ -486,7 +486,7 @@ dfx::StatusCode Turntablist::dfx_GetProperty(dfx::PropertyID inPropertyID,
 			AliasHandle alias = nullptr;
 			Size aliasSize = 0;
 			AUSDK_Require_noerr(createAudioFileAlias(&alias, &aliasSize));
-			memcpy(outData, *alias, aliasSize);
+			std::memcpy(outData, *alias, aliasSize);
 			DisposeHandle(reinterpret_cast<Handle>(alias));
 			return dfx::kStatus_NoError;
 		}
@@ -504,14 +504,14 @@ dfx::StatusCode Turntablist::dfx_SetProperty(dfx::PropertyID inPropertyID,
 	switch (inPropertyID)
 	{
 		case kTurntablistProperty_Play:
-			m_bPlay = *static_cast<Boolean const*>(inData);
+			m_bPlay = dfx::Enliven<Boolean>(inData);
 			playNote(m_bPlay);
 			return dfx::kStatus_NoError;
 
 		case kTurntablistProperty_AudioFile:
 		{
 			AliasHandle alias = nullptr;
-			AUSDK_Require_noerr(PtrToHand(inData, (Handle*)(&alias), inDataSize));
+			AUSDK_Require_noerr(PtrToHand(inData, reinterpret_cast<Handle*>(&alias), inDataSize));
 			if (!alias)
 			{
 				return memFullErr;

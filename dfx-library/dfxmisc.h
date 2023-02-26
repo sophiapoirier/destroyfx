@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -30,6 +30,7 @@ These are some generally useful functions.
 #include <array>
 #include <cassert>
 #include <concepts>
+#include <cstring>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -93,6 +94,34 @@ template <typename T>
 inline constexpr bool IsTriviallySerializable = std::is_trivially_copyable_v<T> && std::is_standard_layout_v<T>;
 template <typename T>
 concept TriviallySerializable = IsTriviallySerializable<T>;
+
+//-----------------------------------------------------------------------------
+template <TriviallySerializable SourceT, typename DestinationT>
+requires ((std::is_same_v<std::decay_t<SourceT>, std::decay_t<DestinationT>> || std::is_void_v<DestinationT>) &&
+		  !std::is_const_v<DestinationT>)
+void MemCpyObject(SourceT const& inSource, DestinationT* outDestination) noexcept
+{
+	std::memcpy(outDestination, &inSource, sizeof(SourceT));
+}
+
+//-----------------------------------------------------------------------------
+// take a pointer to byte-serialized data and copy it to an aligned and valid-object-lifetime-having instance
+// (dereferencing such pointers is undefined behavior)
+template <TriviallySerializable T>
+requires std::is_nothrow_default_constructible_v<T>
+T Enliven(T const* inData) noexcept
+{
+	T result {};
+	std::memcpy(&result, inData, sizeof(T));
+	return result;
+}
+//-----------------------------------------------------------------------------
+template <TriviallySerializable T>
+requires std::is_nothrow_default_constructible_v<T>
+T Enliven(void const* inData) noexcept
+{
+	return Enliven(static_cast<T const*>(inData));
+}
 
 //-----------------------------------------------------------------------------
 void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount);

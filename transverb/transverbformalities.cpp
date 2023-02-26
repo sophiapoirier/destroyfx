@@ -526,7 +526,7 @@ dfx::StatusCode Transverb::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Sc
 {
   if (isSpeedModePropertyID(inPropertyID))
   {
-    *static_cast<uint8_t*>(outData) = static_cast<uint8_t>(speedModeStateFromPropertyID(inPropertyID));
+    dfx::MemCpyObject(static_cast<uint8_t>(speedModeStateFromPropertyID(inPropertyID)), outData);
     return dfx::kStatus_NoError;
   }
   return DfxPlugin::dfx_GetProperty(inPropertyID, inScope, inItemIndex, outData);
@@ -537,7 +537,7 @@ dfx::StatusCode Transverb::dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Sc
 {
   if (isSpeedModePropertyID(inPropertyID))
   {
-    speedModeStateFromPropertyID(inPropertyID) = *static_cast<uint8_t const*>(inData);
+    speedModeStateFromPropertyID(inPropertyID) = dfx::Enliven<uint8_t>(inData);
 #ifdef TARGET_API_AUDIOUNIT
     PropertyChanged(inPropertyID, inScope, inItemIndex);
 #endif
@@ -559,7 +559,7 @@ void Transverb::settings_saveExtendedData(void* outData, bool /*isPreset*/) cons
   {
     dfx::ReverseBytes(speedModeStatesSerialization.data(), speedModeStatesSerialization.size());
   }
-  memcpy(outData, speedModeStatesSerialization.data(), settings_sizeOfExtendedData());
+  std::memcpy(outData, speedModeStatesSerialization.data(), settings_sizeOfExtendedData());
 }
 
 void Transverb::settings_restoreExtendedData(void const* inData, size_t storedExtendedDataSize,
@@ -567,7 +567,7 @@ void Transverb::settings_restoreExtendedData(void const* inData, size_t storedEx
 {
   if (storedExtendedDataSize >= settings_sizeOfExtendedData())
   {
-    memcpy(speedModeStates.data(), inData, settings_sizeOfExtendedData());
+    std::memcpy(speedModeStates.data(), inData, settings_sizeOfExtendedData());
     if constexpr (!DfxSettings::serializationIsNativeEndian())
     {
       dfx::ReverseBytes(speedModeStates.data(), speedModeStates.size());

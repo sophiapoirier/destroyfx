@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2022  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2023  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -37,6 +37,7 @@ Featuring the Super Destroy FX Windowing System!
 #include <string>
 
 #include "dfxmath.h"
+#include "dfxmisc.h"
 
 /* this macro does boring entry point stuff for us */
 DFX_EFFECT_ENTRY(Geometer)
@@ -212,11 +213,11 @@ dfx::StatusCode PLUGIN::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope
   switch (inPropertyID)
   {
     case PROP_LAST_WINDOW_TIMESTAMP:
-      *static_cast<uint64_t*>(outData) = lastwindowtimestamp.load(std::memory_order_relaxed);
+      dfx::MemCpyObject(lastwindowtimestamp.load(std::memory_order_relaxed), outData);
       return dfx::kStatus_NoError;
     case PROP_WAVEFORM_DATA: {
       std::lock_guard const guard(windowcachelock);
-      *static_cast<GeometerViewData*>(outData) = *windowcache_reader;
+      dfx::MemCpyObject(*windowcache_reader, outData);
       return dfx::kStatus_NoError;
     }
     default:
