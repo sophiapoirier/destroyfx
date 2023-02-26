@@ -27,7 +27,6 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <cassert>
 #include <cmath>
 #include <cstdio>
-#include <cstring>
 #include <sstream>
 #include <string_view>
 
@@ -53,23 +52,19 @@ static constexpr VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAli
 }
 
 //-----------------------------------------------------------------------------
-static bool DFXGUI_IsBitmapFont(char const* inFontName) noexcept
+static bool DFXGUI_IsBitmapFont(std::string_view inFontName) noexcept
 {
-	if (inFontName)
+	if (inFontName.compare(dfx::kFontName_Snooty10px) == 0)
 	{
-		std::string_view const fontNameView(inFontName);
-		if (fontNameView.compare(dfx::kFontName_Snooty10px) == 0)
-		{
-			return true;
-		}
-		if (fontNameView.compare(dfx::kFontName_Pasement9px) == 0)
-		{
-			return true;
-		}
-		if (fontNameView.compare(dfx::kFontName_Wetar16px) == 0)
-		{
-			return true;
-		}
+		return true;
+	}
+	if (inFontName.compare(dfx::kFontName_Pasement9px) == 0)
+	{
+		return true;
+	}
+	if (inFontName.compare(dfx::kFontName_Wetar16px) == 0)
+	{
+		return true;
 	}
 	return false;
 }
@@ -299,7 +294,7 @@ void DGTextDisplay::refreshText()
 //-----------------------------------------------------------------------------
 bool DGTextDisplay::valueToTextProc_Generic(float inValue, char outTextUTF8[], void* /*inUserData*/)
 {
-	return snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "%.2f", inValue) > 0;
+	return std::snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "%.2f", inValue) > 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -308,7 +303,7 @@ bool DGTextDisplay::valueToTextProc_LinearToDb(float inValue, char outTextUTF8[]
 	constexpr auto units = "dB";
 	if (inValue <= 0.0f)
 	{
-		return snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "-%s %s", dfx::kInfinityUTF8, units) > 0;
+		return std::snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "-%s %s", dfx::kInfinityUTF8, units) > 0;
 	}
 
 	auto const decibelValue = dfx::math::Linear2dB(inValue);
@@ -317,14 +312,14 @@ bool DGTextDisplay::valueToTextProc_LinearToDb(float inValue, char outTextUTF8[]
 	auto const prefix = (decibelValue >= (0.01f / std::pow(10.f, precisionOffset))) ? "+" : "";
 	int precision = (std::fabs(decibelValue) >= 100.0f) ? 0 : ((std::fabs(decibelValue) >= 10.0f) ? 1 : 2);
 	precision = std::max(precision + static_cast<int>(precisionOffset), 0);
-	return snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "%s%.*f %s", prefix, precision, decibelValue, units) > 0;
+	return std::snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "%s%.*f %s", prefix, precision, decibelValue, units) > 0;
 }
 
 //-----------------------------------------------------------------------------
 bool DGTextDisplay::valueToTextProc_Percent(float inValue, char outTextUTF8[], void* /*inUserData*/)
 {
 	int const precision = ((inValue >= 0.1f) && (inValue <= 99.9f)) ? 1 : 0;
-	return snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "%.*f%%", precision, inValue) > 0;
+	return std::snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "%.*f%%", precision, inValue) > 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -348,14 +343,11 @@ std::optional<float> DGTextDisplay::textToValueProc_DbToLinear(std::string const
 	{
 		return {};
 	}
-	if (inText.front() == '-')
+	if (inText.starts_with('-'))
 	{
-		auto const beginsWith = [&inText](auto const& matchText)
-		{
-			constexpr size_t offset = 1;
-			return (inText.length() >= (strlen(matchText) + offset)) && (inText.compare(offset, strlen(matchText), matchText) == 0);
-		};
-		if (beginsWith(dfx::kInfinityUTF8) || beginsWith("inf") || beginsWith("Inf") || beginsWith("INF"))
+		constexpr size_t signOffset = 1;
+		auto const unsignedText = std::string_view(inText).substr(signOffset);
+		if (unsignedText.starts_with(dfx::kInfinityUTF8) || unsignedText.starts_with("inf") || unsignedText.starts_with("Inf") || unsignedText.starts_with("INF"))
 		{
 			return 0.0f;
 		}
