@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -123,8 +123,8 @@ bool DfxPlugin::getInputProperties(VstInt32 index, VstPinProperties* properties)
 {
 	if ((index >= 0) && (dfx::math::ToIndex(index) < getnuminputs()) && properties)
 	{
-		snprintf(properties->label, kVstMaxLabelLen, "%s input %d", PLUGIN_NAME_STRING, index + 1);
-		snprintf(properties->shortLabel, kVstMaxShortLabelLen, "in %d", index + 1);
+		std::snprintf(properties->label, kVstMaxLabelLen, "%s input %d", PLUGIN_NAME_STRING, index + 1);
+		std::snprintf(properties->shortLabel, kVstMaxShortLabelLen, "in %d", index + 1);
 		properties->flags = kVstPinIsActive;
 		if (getnuminputs() == 2)
 		{
@@ -140,8 +140,8 @@ bool DfxPlugin::getOutputProperties(VstInt32 index, VstPinProperties* properties
 {
 	if ((index >= 0) && (dfx::math::ToIndex(index) < getnumoutputs()) && properties)
 	{
-		snprintf(properties->label, kVstMaxLabelLen, "%s output %d", PLUGIN_NAME_STRING, index + 1);
-		snprintf(properties->shortLabel, kVstMaxShortLabelLen, "out %d", index + 1);
+		std::snprintf(properties->label, kVstMaxLabelLen, "%s output %d", PLUGIN_NAME_STRING, index + 1);
+		std::snprintf(properties->shortLabel, kVstMaxShortLabelLen, "out %d", index + 1);
 		properties->flags = kVstPinIsActive;
 		if (getnumoutputs() == 2)
 		{
@@ -303,7 +303,7 @@ bool DfxPlugin::getProgramNameIndexed(VstInt32 /*inCategory*/, VstInt32 inIndex,
 		}
 		else
 		{
-			snprintf(outText, kVstMaxProgNameLen + 1, "default %" PRIi32, inIndex + 1);
+			std::snprintf(outText, kVstMaxProgNameLen + 1, "default %" PRIi32, inIndex + 1);
 		}
 		return true;
 	}
@@ -405,10 +405,10 @@ void DfxPlugin::getParameterDisplay(VstInt32 index, char* text)
 	switch (getparametervaluetype(parameterID))
 	{
 		case DfxParam::ValueType::Float:
-			snprintf(text, kVstMaxParamStrLen + 1, "%.3f", getparameter_f(parameterID));
+			std::snprintf(text, kVstMaxParamStrLen + 1, "%.3f", getparameter_f(parameterID));
 			break;
 		case DfxParam::ValueType::Int:
-			snprintf(text, kVstMaxParamStrLen + 1, "%" PRIi64, getparameter_i(parameterID));
+			std::snprintf(text, kVstMaxParamStrLen + 1, "%" PRIi64, getparameter_i(parameterID));
 			break;
 		case DfxParam::ValueType::Boolean:
 			vst_strncpy(text, getparameter_b(parameterID) ? "on" : "off", kVstMaxParamStrLen);
@@ -586,7 +586,7 @@ VstInt32 DfxPlugin::processEvents(VstEvents* events)
 		}
 
 		// cast the incoming event as a VstMidiEvent
-		auto const midiEvent = reinterpret_cast<VstMidiEvent*>(events->events[i]);
+		auto const midiEvent = reinterpret_cast<VstMidiEvent const*>(events->events[i]);
 		// address the midiData[4] string from the event to this temp data pointer
 		auto const midiData = midiEvent->midiData;
 

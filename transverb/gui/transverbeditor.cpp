@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2023  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -105,11 +105,11 @@ static bool bsizeDisplayProcedure(float inValue, char* outText, void*)
 	bool success = false;
 	if (thousands > 0)
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%d,%05.1f", thousands, remainder) > 0;
+		success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%d,%05.1f", thousands, remainder) > 0;
 	}
 	else
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
+		success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
 	}
 	dfx::StrlCat(outText, " ms", DGTextDisplay::kTextMaxLength);
 
@@ -124,7 +124,7 @@ static bool speedDisplayProcedure(float inValue, char* outText, void*)
 	float semitones = remainder * kSemitonesPerOctave;
 	// make sure that these float crap doesn't result in wacky stuff
 	// like displays that say "-1 octave & 12.00 semitones"
-	snprintf(semitonesString.data(), semitonesString.size(), "%.3f", semitones);
+	std::snprintf(semitonesString.data(), semitonesString.size(), "%.3f", semitones);
 	std::string const semitonesStdString(semitonesString.data());
 	if ((semitonesStdString == "12.000") || (semitonesStdString == "-12.000"))
 	{
@@ -144,19 +144,19 @@ static bool speedDisplayProcedure(float inValue, char* outText, void*)
 	{
 		if (octaves == 0)
 		{
-			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s%.2f semitones", (semitones < 0.000003f) ? "" : "+", semitones) > 0;
+			return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%s%.2f semitones", (semitones < 0.000003f) ? "" : "+", semitones) > 0;
 		}
 		auto const octavesSuffix = (octaves == 1) ? "" : "s";
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "+%d octave%s & %.2f semitones", octaves, octavesSuffix, semitones) > 0;
+		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "+%d octave%s & %.2f semitones", octaves, octavesSuffix, semitones) > 0;
 	}
 	else if (octaves == 0)
 	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "-%.2f semitones", semitones) > 0;
+		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "-%.2f semitones", semitones) > 0;
 	}
 	else
 	{
 		auto const octavesSuffix = (octaves == -1) ? "" : "s";
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%d octave%s & %.2f semitones", octaves, octavesSuffix, semitones) > 0;
+		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%d octave%s & %.2f semitones", octaves, octavesSuffix, semitones) > 0;
 	}
 }
 
@@ -197,7 +197,7 @@ static std::optional<float> speedTextConvertProcedure(std::string const& inText,
 
 static bool feedbackDisplayProcedure(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%d%%", static_cast<int>(inValue)) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%d%%", static_cast<int>(inValue)) > 0;
 }
 
 static bool distDisplayProcedure(float inValue, char* outText, void* inEditor)
@@ -209,11 +209,11 @@ static bool distDisplayProcedure(float inValue, char* outText, void* inEditor)
 	bool success = false;
 	if (thousands > 0)
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%d,%06.2f", thousands, remainder) > 0;
+		success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%d,%06.2f", thousands, remainder) > 0;
 	}
 	else
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", distance) > 0;
+		success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", distance) > 0;
 	}
 	dfx::StrlCat(outText, " ms", DGTextDisplay::kTextMaxLength);
 

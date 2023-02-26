@@ -24,6 +24,8 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstdio>
+#include <cstring>
 
 #include "dfxmath.h"
 #include "dfxmisc.h"
@@ -121,7 +123,7 @@ static bool rateGenDisplayProc(float inValue, dfx::ParameterID inSyncParameterID
 	}
 	else
 	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f%s", inValue, inShowUnits ? " Hz" : "") > 0;
+		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f%s", inValue, inShowUnits ? " Hz" : "") > 0;
 	}
 	return false;
 }
@@ -138,16 +140,16 @@ static bool rateRandMinDisplayProc(float inValue, char* outText, void* inEditor)
 
 static bool slopeDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f ms", inValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f ms", inValue) > 0;
 }
 
 static bool crossoverDisplayProc(float inValue, char* outText, void*)
 {
 	if (inValue >= 1'000.f)
 	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f kHz", inValue / 1'000.f) > 0;
+		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f kHz", inValue / 1'000.f) > 0;
 	}
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f Hz", inValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f Hz", inValue) > 0;
 }
 
 static std::optional<float> crossoverTextToValueProc(std::string const& inText, DGTextDisplay* inTextDisplay)
@@ -166,7 +168,7 @@ static bool gainRandMinDisplayProc(float inValue, char* outText, void* inUserDat
 	if (success)
 	{
 		// truncate units or any suffix beyond the numerical value
-		std::transform(outText, outText + strlen(outText), outText, [](auto character)
+		std::transform(outText, outText + std::strlen(outText), outText, [](auto character)
 		{
 			return std::isspace(character) ? '\0' : character;
 		});
@@ -176,7 +178,7 @@ static bool gainRandMinDisplayProc(float inValue, char* outText, void* inUserDat
 
 static bool tempoDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f bpm", inValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f bpm", inValue) > 0;
 }
 
 

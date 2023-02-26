@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2022  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2023  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include <algorithm>
 #include <cassert>
+#include <cstdio>
 #include <sstream>
 
 #include "geometer-base.h"
@@ -265,7 +266,7 @@ void GeometerEditor::OpenEditor() {
 
     // value display
     auto const geometerDisplayProc = [](float value, char * outText, void *) -> bool {
-      return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.7f", value) > 0;
+      return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.7f", value) > 0;
     };
     displays[i] = emplaceControl<DGTextDisplay>(this, param, dpos, geometerDisplayProc,
                                                 nullptr, nullptr, dfx::TextAlignment::Right, dfx::kFontSize_Snooty10px,

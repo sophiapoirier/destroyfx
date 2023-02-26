@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -299,9 +299,9 @@ void Scrubby::generateNewTarget(size_t channel)
 		mPortamentoStep[channel] = std::pow(std::fabs(targetReadStep) / oldReadStep, 1.0 / static_cast<double>(mMoveCount[channel]));
 		mPortamentoStep[channel] = std::fabs(mPortamentoStep[channel]);
 //auto const ktest = static_cast<long>(std::fabs((targetReadStep * static_cast<double>(mMoveCount[channel])) / std::log(std::fabs(targetReadStep / oldReadStep))));
-//printf("oldReadStep = %.6f\nreadStep = %.6f\ntargetReadStep = %.6f\nportamentoStep = %.6f\nmovecount = %ld\ntargetDistance = %ld\nktest = %ld\n\n", oldReadStep, newReadStep, targetReadStep, mPortamentoStep[channel], mMoveCount[channel], targetDistance, ktest);
-//printf("a = %.3f,\tb = %.3f,\tn = %ld,\tk = %ld\tportamentoStep = %.6f\n", oldReadStep, targetReadStep, mMoveCount[channel], targetDistance, mPortamentoStep[channel]);
-//printf("\noldReadStep = %.6f\treadStep = %.6f\ttargetReadStep = %.6f\tportamentoStep = %.6f\n", oldReadStep, newReadStep, targetReadStep, mPortamentoStep[channel]);
+//std::printf("oldReadStep = %.6f\nreadStep = %.6f\ntargetReadStep = %.6f\nportamentoStep = %.6f\nmovecount = %ld\ntargetDistance = %ld\nktest = %ld\n\n", oldReadStep, newReadStep, targetReadStep, mPortamentoStep[channel], mMoveCount[channel], targetDistance, ktest);
+//std::printf("a = %.3f,\tb = %.3f,\tn = %ld,\tk = %ld\tportamentoStep = %.6f\n", oldReadStep, targetReadStep, mMoveCount[channel], targetDistance, mPortamentoStep[channel]);
+//std::printf("\noldReadStep = %.6f\treadStep = %.6f\ttargetReadStep = %.6f\tportamentoStep = %.6f\n", oldReadStep, newReadStep, targetReadStep, mPortamentoStep[channel]);
 
 #endif
 		newReadStep = oldReadStep;

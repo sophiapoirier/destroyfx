@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2022  Tom Murphy 7
+Copyright (C) 2002-2023  Tom Murphy 7
 
 This file is part of Windowingstub.
 
@@ -47,9 +47,9 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   for (long i = 0; i < BUFFERSIZESSIZE; i++) {
     std::array<char, 64> bufstr {};
     if (buffersizes[i] > 1000)
-      snprintf(bufstr.data(), bufstr.size(), "%ld,%03ld", buffersizes[i] / 1000, buffersizes[i] % 1000);
+      std::snprintf(bufstr.data(), bufstr.size(), "%ld,%03ld", buffersizes[i] / 1000, buffersizes[i] % 1000);
     else
-      snprintf(bufstr.data(), bufstr.size(), "%ld", buffersizes[i]);
+      std::snprintf(bufstr.data(), bufstr.size(), "%ld", buffersizes[i]);
     setparametervaluestring(P_BUFSIZE, i, bufstr.data());
   }
 

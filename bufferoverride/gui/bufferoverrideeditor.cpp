@@ -25,6 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <cstdio>
 #include <functional>
 
 #include "bufferoverride-base.h"
@@ -182,7 +183,7 @@ static bool divisorDisplayProc(float inValue, char* outText, void*)
 {
 	int const precision = (inValue <= 99.99f) ? 2 : 1;
 	float const effectiveValue = (inValue < 2.0f) ? 1.0f : inValue;
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.*f", precision, effectiveValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.*f", precision, effectiveValue) > 0;
 }
 
 static bool bufferSizeDisplayProc(float inValue, char* outText, void* inEditor)
@@ -198,7 +199,7 @@ static bool bufferSizeDisplayProc(float inValue, char* outText, void* inEditor)
 	}
 	else
 	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
+		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
 	}
 }
 
@@ -211,13 +212,13 @@ static bool lfoRateGenDisplayProc(float inValue, char* outText, void* inEditor, 
 	{
 		if (std::optional<std::string> const valueString = dgEditor->getparametervaluestring(rateSyncParameterID))
 		{
-			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s / beat", valueString->c_str()) > 0;
+			return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%s / beat", valueString->c_str()) > 0;
 		}
 		return false;
 	}
 
 	int const precision = (inValue <= 9.99f) ? 2 : 1;
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.*f Hz", precision, inValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.*f Hz", precision, inValue) > 0;
 }
 
 static bool divisorLFORateDisplayProc(float inValue, char* outText, void* inEditor)
@@ -232,23 +233,23 @@ static bool bufferLFORateDisplayProc(float inValue, char* outText, void* inEdito
 
 static bool lfoDepthDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
 }
 
 static bool dryWetMixDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
 }
 
 static bool pitchBendRangeDisplayProc(float inValue, char* outText, void*)
 {
 	int const precision = (inValue <= 9.99f) ? 2 : 1;
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s %.*f", dfx::kPlusMinusUTF8, precision, inValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%s %.*f", dfx::kPlusMinusUTF8, precision, inValue) > 0;
 }
 
 static bool tempoDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", inValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", inValue) > 0;
 }
 
 

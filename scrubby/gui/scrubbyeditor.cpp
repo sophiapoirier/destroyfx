@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include <algorithm>
 #include <cassert>
+#include <cstdio>
 
 #include "dfxmisc.h"
 #include "scrubby.h"
@@ -153,7 +154,7 @@ enum : size_t
 
 static bool seekRangeDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f ms", inValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f ms", inValue) > 0;
 }
 
 static bool seekRateGenDisplayProc(float inValue, dfx::ParameterID inParameterID, char* outText, DfxGuiEditor* inEditor)
@@ -162,12 +163,12 @@ static bool seekRateGenDisplayProc(float inValue, dfx::ParameterID inParameterID
 	{
 		if (auto const valueString = inEditor->getparametervaluestring(inParameterID)) //&& (valueString->length() <= 3)
 		{
-			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s cycles/beat", valueString->c_str()) > 0;
+			return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%s cycles/beat", valueString->c_str()) > 0;
 		}
 	}
 	else
 	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f Hz", inValue) > 0;
+		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f Hz", inValue) > 0;
 	}
 	return false;
 }
@@ -189,7 +190,7 @@ static bool octaveMinDisplayProc(float inValue, char* outText, void*)
 	{
 		return dfx::StrLCpy(outText, "no min", DGTextDisplay::kTextMaxLength) > 0;
 	}
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld", octaves) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld", octaves) > 0;
 }
 
 static bool octaveMaxDisplayProc(float inValue, char* outText, void*)
@@ -201,19 +202,19 @@ static bool octaveMaxDisplayProc(float inValue, char* outText, void*)
 	}
 	if (octaves == 0)
 	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "0") > 0;
+		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "0") > 0;
 	}
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%+ld", octaves) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%+ld", octaves) > 0;
 }
 
 static bool tempoDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f bpm", inValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f bpm", inValue) > 0;
 }
 
 static bool predelayDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
 }
 
 

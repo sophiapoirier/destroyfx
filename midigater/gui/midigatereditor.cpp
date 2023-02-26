@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "midigatereditor.h"
 
 #include <cmath>
+#include <cstdio>
 
 #include "dfxmath.h"
 #include "dfxmisc.h"
@@ -76,11 +77,11 @@ static bool envelopeDisplayProc(float inValue, char* outText, void*)
 	bool success = false;
 	if (thousands > 0)
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%d,%05.1f", thousands, remainder) > 0;
+		success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%d,%05.1f", thousands, remainder) > 0;
 	}
 	else
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
+		success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
 	}
 	dfx::StrlCat(outText, " ms", DGTextDisplay::kTextMaxLength);
 

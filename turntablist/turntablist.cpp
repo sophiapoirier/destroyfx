@@ -27,6 +27,7 @@ To contact the developer, use the contact form at http://destroyfx.org
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstdio>
 #include <mutex>
 #include <optional>
 
@@ -257,8 +258,8 @@ void Turntablist::processparameters()
 #pragma mark -
 #pragma mark plugin state
 
-static const CFStringRef kTurntablistPreset_AudioFileReferenceKey = CFSTR("audiofile");
-static const CFStringRef kTurntablistPreset_AudioFileAliasKey = CFSTR("DestroyFX-audiofile-alias");
+static CFStringRef const kTurntablistPreset_AudioFileReferenceKey = CFSTR("audiofile");
+static CFStringRef const kTurntablistPreset_AudioFileAliasKey = CFSTR("DestroyFX-audiofile-alias");
 
 //-----------------------------------------------------------------------------------------
 OSStatus Turntablist::SaveState(CFPropertyListRef* outData)
@@ -334,7 +335,7 @@ OSStatus Turntablist::RestoreState(CFPropertyListRef inData)
 			auto const audioFileUrl = dfx::MakeUniqueCFType(CFURLCreateWithFileSystemPath(kCFAllocatorDefault, audioFileUrlString, kCFURLPOSIXPathStyle, false));
 			if (audioFileUrl)
 			{
-				FSRef audioFileRef;
+				FSRef audioFileRef {};
 				if (CFURLGetFSRef(audioFileUrl.get(), &audioFileRef))
 				{
 					loadAudioFile(audioFileRef);
@@ -367,8 +368,8 @@ OSStatus Turntablist::RestoreState(CFPropertyListRef inData)
 					auto aliasError = PtrToHand(aliasData, reinterpret_cast<Handle*>(&aliasHandle), aliasDataSize);
 					if ((aliasError == noErr) && aliasHandle)
 					{
-						FSRef audioFileRef;
-						Boolean wasChanged;
+						FSRef audioFileRef {};
+						Boolean wasChanged {};
 						aliasError = FSResolveAlias(nullptr, aliasHandle, &audioFileRef, &wasChanged);
 						if (aliasError == noErr)
 						{
@@ -658,8 +659,8 @@ OSStatus Turntablist::createAudioFileAlias(AliasHandle* outAlias, Size* outDataS
 //-----------------------------------------------------------------------------
 OSStatus Turntablist::resolveAudioFileAlias(AliasHandle const inAlias)
 {
-	FSRef audioFileRef;
-	Boolean wasChanged;
+	FSRef audioFileRef {};
+	Boolean wasChanged {};
 	auto status = FSResolveAlias(nullptr, inAlias, &audioFileRef, &wasChanged);
 	if (status == noErr)
 	{
@@ -709,7 +710,7 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 	if (audioFileNumFrames_temp != static_cast<UInt32>(audioFileNumFrames))  // XXX do something?
 	{
 		// XXX error?
-		fprintf(stderr, PLUGIN_NAME_STRING ":  audio data size mismatch!\nsize requested: %ld, size read: %u\n\n", static_cast<long>(audioFileNumFrames), static_cast<unsigned int>(audioFileNumFrames_temp));
+		std::fprintf(stderr, PLUGIN_NAME_STRING ":  audio data size mismatch!\nsize requested: %ld, size read: %u\n\n", static_cast<long>(audioFileNumFrames), static_cast<unsigned int>(audioFileNumFrames_temp));
 	}
 
 	status = ExtAudioFileDispose(audioFileRef);
@@ -731,7 +732,7 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 #else
 	UInt8 file[2048] {};
 	AUSDK_Require_noerr(FSRefMakePath(&inFileRef, file, std::size(file)));
-//fprintf(stderr, PLUGIN_NAME_STRING " audio file:  %s\n", file);
+//std::fprintf(stderr, PLUGIN_NAME_STRING " audio file:  %s\n", file);
 
 	SF_INFO sfInfo {};
 	SNDFILE* const sndFile = sf_open(reinterpret_cast<char const*>(file), SFM_READ, &sfInfo);
@@ -741,18 +742,18 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 		// print error
 		char buffer[256] {};
 		sf_error_str(sndFile, buffer, std::size(buffer) - 1);
-		fprintf(stderr, "\n" PLUGIN_NAME_STRING " could not open the audio file:  %s\nlibsndfile error message:  %s\n", file, buffer);
+		std::fprintf(stderr, "\n" PLUGIN_NAME_STRING " could not open the audio file:  %s\nlibsndfile error message:  %s\n", file, buffer);
 		return sf_error(sndFile);
 	}
 
 #if 0
-	fprintf(stderr, "**** SF_INFO dump for:  %s\n", file);
-	fprintf(stderr, "     samplerate:  %d\n", sfInfo.samplerate);
-	fprintf(stderr, "     frames:  %d (0x%08x)\n", sfInfo.frames, sfInfo.frames);
-	fprintf(stderr, "     channels:  %d\n", sfInfo.channels);
-	fprintf(stderr, "     format:  %d\n", sfInfo.format);
-	fprintf(stderr, "     sections:  %d\n", sfInfo.sections);
-	fprintf(stderr, "     seekable:  %d\n", sfInfo.seekable);
+	std::fprintf(stderr, "**** SF_INFO dump for:  %s\n", file);
+	std::fprintf(stderr, "     samplerate:  %d\n", sfInfo.samplerate);
+	std::fprintf(stderr, "     frames:  %d (0x%08x)\n", sfInfo.frames, sfInfo.frames);
+	std::fprintf(stderr, "     channels:  %d\n", sfInfo.channels);
+	std::fprintf(stderr, "     format:  %d\n", sfInfo.format);
+	std::fprintf(stderr, "     sections:  %d\n", sfInfo.sections);
+	std::fprintf(stderr, "     seekable:  %d\n", sfInfo.seekable);
 #endif
 
 	sf_command(sndFile, SFC_SET_NORM_FLOAT, nullptr, SF_TRUE);
@@ -784,7 +785,7 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 	if (sizeout != sizein)
 	{
 		// XXX error?
-		fprintf(stderr, PLUGIN_NAME_STRING ":  audio data size mismatch!\nsize-in: %ld, size-out: %ld\n\n", static_cast<long>(sizein), static_cast<long>(sizeout));
+		std::fprintf(stderr, PLUGIN_NAME_STRING ":  audio data size mismatch!\nsize-in: %ld, size-out: %ld\n\n", static_cast<long>(sizein), static_cast<long>(sizeout));
 	}
 
 	if (m_nNumChannels >= 2)
@@ -1006,7 +1007,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 						#ifdef USE_LIBSNDFILE
 							auto const output = (ch == 0) ? m_fLeft : m_fRight;
 						#else
-							AudioBufferList& abl = m_auBufferList.GetBufferList();
+							AudioBufferList const& abl = m_auBufferList.GetBufferList();
 							size_t ablChannel = ch;
 							if (ch >= abl.mNumberBuffers)
 							{
@@ -1017,7 +1018,7 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 									break;
 								}
 							}
-							auto const output = static_cast<float*>(abl.mBuffers[ablChannel].mData);
+							auto const output = static_cast<float const*>(abl.mBuffers[ablChannel].mData);
 						#endif
 
 #ifdef NO_INTERPOLATION

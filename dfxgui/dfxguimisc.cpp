@@ -96,7 +96,7 @@ DGColor DGColor::getSystem(System inSystemColorID)
 			auto const rgbColor = [inColor colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
 			if (rgbColor)
 			{
-//printf("%lf %lf %lf %lf\n", rgbColor.redComponent * 255., rgbColor.greenComponent * 255., rgbColor.blueComponent * 255., rgbColor.alphaComponent);
+//std::printf("%lf %lf %lf %lf\n", rgbColor.redComponent * 255., rgbColor.greenComponent * 255., rgbColor.blueComponent * 255., rgbColor.alphaComponent);
 				return DGColor(static_cast<float>(rgbColor.redComponent), static_cast<float>(rgbColor.greenComponent), 
 							   static_cast<float>(rgbColor.blueComponent), static_cast<float>(rgbColor.alphaComponent));
 			}

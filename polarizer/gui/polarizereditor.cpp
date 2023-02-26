@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "polarizereditor.h"
 
 #include <cmath>
+#include <cstdio>
 
 #include "dfxmisc.h"
 #include "polarizer.h"
@@ -60,7 +61,7 @@ constexpr float kValueTextSize = 16.8f;
 static bool leapDisplayProc(float inValue, char* outText, void*)
 {
 	auto const value_i = static_cast<long>(inValue);
-	bool const success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld sample", value_i) > 0;
+	bool const success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld sample", value_i) > 0;
 	if (success && (std::abs(value_i) > 1))
 	{
 		dfx::StrlCat(outText, "s", DGTextDisplay::kTextMaxLength);
@@ -70,7 +71,7 @@ static bool leapDisplayProc(float inValue, char* outText, void*)
 
 static bool amountDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue * 10.0f) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue * 10.0f) > 0;
 }
 
 static float amountValueFromTextConvertProc(float inValue, DGTextDisplay*)

@@ -21,6 +21,8 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include "eqsynceditor.h"
 
+#include <cstdio>
+
 #include "dfxmisc.h"
 #include "eqsync.h"
 #include "temporatetable.h"
@@ -215,14 +217,14 @@ void EQSyncEditor::OpenEditor()
 		{
 			textProc = [](float inValue, char* outText, void*)
 			{
-				return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f%%", inValue) > 0;
+				return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f%%", inValue) > 0;
 			};
 		}
 		else if (i == kTempo)
 		{
 			textProc = [](float inValue, char* outText, void*)
 			{
-				return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
+				return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
 			};
 		}
 		pos.set(wideFaderX + kDisplayOffsetX, wideFaderY + kDisplayOffsetY + (kWideFaderInc * i), kDisplayWidth, kDisplayHeight);

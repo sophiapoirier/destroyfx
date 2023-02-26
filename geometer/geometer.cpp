@@ -31,6 +31,7 @@ Featuring the Super Destroy FX Windowing System!
 #include <cassert>
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
 #include <mutex>
 #include <numbers>
 #include <numeric>
@@ -112,9 +113,9 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
     std::array<char, dfx::kParameterValueStringMaxLength> bufstr {};
     constexpr int thousand = 1000;
     if (buffersizes[i] >= thousand) {
-      snprintf(bufstr.data(), bufstr.size(), "%d,%03d", buffersizes[i] / thousand, buffersizes[i] % thousand);
+      std::snprintf(bufstr.data(), bufstr.size(), "%d,%03d", buffersizes[i] / thousand, buffersizes[i] % thousand);
     } else {
-      snprintf(bufstr.data(), bufstr.size(), "%d", buffersizes[i]);
+      std::snprintf(bufstr.data(), bufstr.size(), "%d", buffersizes[i]);
     }
     setparametervaluestring(P_BUFSIZE, static_cast<long>(i), bufstr.data());
   }

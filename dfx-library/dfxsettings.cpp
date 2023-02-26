@@ -32,6 +32,7 @@ Welcome to our settings persistence mess.
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <numeric>
@@ -465,7 +466,7 @@ try
 #endif
 	validateRange(firstNewPresetByteAddress, sizeOfStoredPreset * numStoredPresets, "presets");
 
-	auto const getPresetNameWithFallback = [](std::string_view presetName) -> std::string_view
+	constexpr auto getPresetNameWithFallback = [](std::string_view presetName) -> std::string_view
 	{
 		return presetName.empty() ? "(unnamed)" : presetName;
 	};
@@ -1641,10 +1642,10 @@ void DfxSettings::debugAlertCorruptData(char const* inDataItemName, size_t inDat
 	}
 #elif TARGET_OS_WIN32
 	std::array<char, 512> msg {};
-	snprintf(msg.data(), msg.size(),
-			 "Something is wrong with the settings data! "
-			 "Info for bug reports: name: %s size: %zu total: %zu",
-			 inDataItemName, inDataItemSize, inDataTotalSize);
+	std::snprintf(msg.data(), msg.size(),
+				  "Something is wrong with the settings data! "
+				  "Info for bug reports: name: %s size: %zu total: %zu",
+				  inDataItemName, inDataItemSize, inDataTotalSize);
 	MessageBoxA(nullptr, msg.data(), "DFX Error!", 0);
 #else
 	#warning "implementation missing"

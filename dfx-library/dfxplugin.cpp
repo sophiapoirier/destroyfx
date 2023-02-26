@@ -1786,7 +1786,7 @@ void DfxPlugin::processtimeinfo()
 	if (status == noErr)
 	{
 #ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
-fprintf(stderr, "\ntempo = %.2f\nbeat = %.2f\n", tempo, beat);
+std::fprintf(stderr, "\ntempo = %.2f\nbeat = %.2f\n", tempo, beat);
 #endif
 		mTimeInfo.mTempoBPS = bpmToBPS(tempo);
 		mTimeInfo.mBeatPos = beat;
@@ -1794,7 +1794,7 @@ fprintf(stderr, "\ntempo = %.2f\nbeat = %.2f\n", tempo, beat);
 		mHostCanDoTempo = true;
 	}
 #ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
-else fprintf(stderr, "CallHostBeatAndTempo() error %ld\n", status);
+else std::fprintf(stderr, "CallHostBeatAndTempo() error %ld\n", status);
 #endif
 
 	// the number of samples until the next beat from the start sample of the current rendering buffer
@@ -1811,7 +1811,7 @@ else fprintf(stderr, "CallHostBeatAndTempo() error %ld\n", status);
 		// get the song beat position of the beginning of the current measure
 		mTimeInfo.mBarPos = currentMeasureDownBeat;
 #ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
-fprintf(stderr, "time sig = %.0f/%lu\nmeasure beat = %.2f\n", timeSigNumerator, timeSigDenominator, currentMeasureDownBeat);
+std::fprintf(stderr, "time sig = %.0f/%lu\nmeasure beat = %.2f\n", timeSigNumerator, timeSigDenominator, currentMeasureDownBeat);
 #endif
 		// get the numerator of the time signature - this is the number of beats per measure
 		mTimeInfo.mTimeSignature =
@@ -1821,7 +1821,7 @@ fprintf(stderr, "time sig = %.0f/%lu\nmeasure beat = %.2f\n", timeSigNumerator, 
 		};
 	}
 #ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
-else fprintf(stderr, "CallHostMusicalTimeLocation() error %ld\n", status);
+else std::fprintf(stderr, "CallHostMusicalTimeLocation() error %ld\n", status);
 #endif
 
 	Boolean isPlaying {};
@@ -1834,13 +1834,13 @@ else fprintf(stderr, "CallHostMusicalTimeLocation() error %ld\n", status);
 	if (status == noErr)
 	{
 #ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
-fprintf(stderr, "is playing = %s\ntransport changed = %s\n", isPlaying ? "true" : "false", transportStateChanged ? "true" : "false");
+std::fprintf(stderr, "is playing = %s\ntransport changed = %s\n", isPlaying ? "true" : "false", transportStateChanged ? "true" : "false");
 #endif
 		mTimeInfo.mPlaybackChanged = transportStateChanged;
 		mTimeInfo.mPlaybackIsOccurring = isPlaying;
 	}
 #ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
-else fprintf(stderr, "CallHostTransportState() error %ld\n", status);
+else std::fprintf(stderr, "CallHostTransportState() error %ld\n", status);
 #endif
 #endif
 // TARGET_API_AUDIOUNIT
@@ -2060,7 +2060,7 @@ DfxPluginCore* DfxPlugin::getplugincore(size_t inChannel) const
 void DfxPlugin::handlemidi_noteon(int inChannel, int inNote, int inVelocity, size_t inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "note on:  note = %d, velocity = %d, channel = %d, sample offset = %zu\n", inNote, inVelocity, inChannel, inOffsetFrames);
+std::fprintf(stderr, "note on:  note = %d, velocity = %d, channel = %d, sample offset = %zu\n", inNote, inVelocity, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleNoteOn(inChannel, inNote, inVelocity, inOffsetFrames);
 	mDfxSettings->handleNoteOn(inChannel, inNote, inVelocity, inOffsetFrames);
@@ -2070,7 +2070,7 @@ fprintf(stderr, "note on:  note = %d, velocity = %d, channel = %d, sample offset
 void DfxPlugin::handlemidi_noteoff(int inChannel, int inNote, int inVelocity, size_t inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "note off:  note = %d, velocity = %d, channel = %d, sample offset = %zu\n", inNote, inVelocity, inChannel, inOffsetFrames);
+std::fprintf(stderr, "note off:  note = %d, velocity = %d, channel = %d, sample offset = %zu\n", inNote, inVelocity, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleNoteOff(inChannel, inNote, inVelocity, inOffsetFrames);
 	mDfxSettings->handleNoteOff(inChannel, inNote, inVelocity, inOffsetFrames);
@@ -2080,7 +2080,7 @@ fprintf(stderr, "note off:  note = %d, velocity = %d, channel = %d, sample offse
 void DfxPlugin::handlemidi_allnotesoff(int inChannel, size_t inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "all notes off:  channel = %d, sample offset = %zu\n", inChannel, inOffsetFrames);
+std::fprintf(stderr, "all notes off:  channel = %d, sample offset = %zu\n", inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleAllNotesOff(inChannel, inOffsetFrames);
 	mDfxSettings->handleAllNotesOff(inChannel, inOffsetFrames);
@@ -2090,7 +2090,7 @@ fprintf(stderr, "all notes off:  channel = %d, sample offset = %zu\n", inChannel
 void DfxPlugin::handlemidi_channelaftertouch(int inChannel, int inValue, size_t inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "channel aftertouch:  value = %d, channel = %d, sample offset = %zu\n", inValue, inChannel, inOffsetFrames);
+std::fprintf(stderr, "channel aftertouch:  value = %d, channel = %d, sample offset = %zu\n", inValue, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleChannelAftertouch(inChannel, inValue, inOffsetFrames);
 	mDfxSettings->handleChannelAftertouch(inChannel, inValue, inOffsetFrames);
@@ -2100,7 +2100,7 @@ fprintf(stderr, "channel aftertouch:  value = %d, channel = %d, sample offset = 
 void DfxPlugin::handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "pitchbend:  LSB = %d, MSB = %d, channel = %d, sample offset = %zu\n", inValueLSB, inValueMSB, inChannel, inOffsetFrames);
+std::fprintf(stderr, "pitchbend:  LSB = %d, MSB = %d, channel = %d, sample offset = %zu\n", inValueLSB, inValueMSB, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handlePitchBend(inChannel, inValueLSB, inValueMSB, inOffsetFrames);
 	mDfxSettings->handlePitchBend(inChannel, inValueLSB, inValueMSB, inOffsetFrames);
@@ -2110,7 +2110,7 @@ fprintf(stderr, "pitchbend:  LSB = %d, MSB = %d, channel = %d, sample offset = %
 void DfxPlugin::handlemidi_cc(int inChannel, int inControllerNum, int inValue, size_t inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "MIDI CC:  controller = 0x%02X, value = %d, channel = %d, sample offset = %zu\n", inControllerNum, inValue, inChannel, inOffsetFrames);
+std::fprintf(stderr, "MIDI CC:  controller = 0x%02X, value = %d, channel = %d, sample offset = %zu\n", inControllerNum, inValue, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleCC(inChannel, inControllerNum, inValue, inOffsetFrames);
 	mDfxSettings->handleCC(inChannel, inControllerNum, inValue, inOffsetFrames);
@@ -2120,7 +2120,7 @@ fprintf(stderr, "MIDI CC:  controller = 0x%02X, value = %d, channel = %d, sample
 void DfxPlugin::handlemidi_programchange(int inChannel, int inProgramNum, size_t inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "program change:  program num = %d, channel = %d, sample offset = %zu\n", inProgramNum, inChannel, inOffsetFrames);
+std::fprintf(stderr, "program change:  program num = %d, channel = %d, sample offset = %zu\n", inProgramNum, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleProgramChange(inChannel, inProgramNum, inOffsetFrames);
 }

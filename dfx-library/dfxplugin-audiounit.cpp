@@ -888,9 +888,9 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			else
 			{
 #if 0
-				fprintf(stderr, "\tSetProperty(AUHostIdentifier)\n");
+				std::fprintf(stderr, "\tSetProperty(AUHostIdentifier)\n");
 				CFShow(hostID.hostName);
-				fprintf(stderr, "version: 0x%X\n", hostID.hostVersion);
+				std::fprintf(stderr, "version: 0x%X\n", hostID.hostVersion);
 #endif
 			}
 			break;
@@ -1550,8 +1550,8 @@ OSStatus DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitElement 
 									   AudioStreamBasicDescription const& inPrevFormat, 
 									   AudioStreamBasicDescription const& inNewFormat)
 {
-//fprintf(stderr, "\nDfxPlugin::ChangeStreamFormat, new sr = %.3lf, old sr = %.3lf\n\n", inNewFormat.mSampleRate, inPrevFormat.mSampleRate);
-//fprintf(stderr, "\nDfxPlugin::ChangeStreamFormat, new num channels = %lu, old num channels = %lu\n\n", inNewFormat.mChannelsPerFrame, inPrevFormat.mChannelsPerFrame);
+//std::fprintf(stderr, "\nDfxPlugin::ChangeStreamFormat, new sr = %.3lf, old sr = %.3lf\n\n", inNewFormat.mSampleRate, inPrevFormat.mSampleRate);
+//std::fprintf(stderr, "\nDfxPlugin::ChangeStreamFormat, new num channels = %lu, old num channels = %lu\n\n", inNewFormat.mChannelsPerFrame, inPrevFormat.mChannelsPerFrame);
 	// if this AU supports only specific I/O channel count configs, 
 	// then check whether the incoming format is allowed
 	if (!mChannelConfigs.empty())

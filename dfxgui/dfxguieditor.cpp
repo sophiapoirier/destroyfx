@@ -27,6 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 #include <exception>
 #include <functional>
@@ -769,11 +770,11 @@ void DfxGuiEditor::TextEntryForParameterValue(dfx::ParameterID inParameterID)
 		std::array<char, dfx::kParameterValueStringMaxLength> textValue {};
 		if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
 		{
-			snprintf(textValue.data(), textValue.size(), "%.6lf", getparameter_f(inParameterID));
+			std::snprintf(textValue.data(), textValue.size(), "%.6lf", getparameter_f(inParameterID));
 		}
 		else
 		{
-			snprintf(textValue.data(), textValue.size(), "%ld", getparameter_i(inParameterID));
+			std::snprintf(textValue.data(), textValue.size(), "%ld", getparameter_i(inParameterID));
 		}
 		mTextEntryDialog->setText(textValue.data());
 
@@ -1891,7 +1892,7 @@ void DfxGuiEditor::TextEntryForParameterMidiCC(dfx::ParameterID inParameterID)
 		auto const currentParameterAssignment = getparametermidiassignment(inParameterID);
 		if (currentParameterAssignment.mEventType == dfx::MidiEventType::CC)
 		{
-			snprintf(initialText.data(), initialText.size(), "%d", currentParameterAssignment.mEventNum);
+			std::snprintf(initialText.data(), initialText.size(), "%d", currentParameterAssignment.mEventNum);
 		}
 		mTextEntryDialog->setText(initialText.data());
 
@@ -2776,7 +2777,7 @@ void DfxGuiEditor::ShowMessage(std::string const& inMessage)
 	}
 	if (!shown)
 	{
-		fprintf(stderr, "%s\n", inMessage.c_str());
+		std::fprintf(stderr, "%s\n", inMessage.c_str());
 	}
 }
 

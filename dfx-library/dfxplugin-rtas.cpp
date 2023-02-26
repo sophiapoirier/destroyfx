@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2022  Sophia Poirier
+Copyright (C) 2009-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -29,6 +29,7 @@ This is where we connect the RTAS/AudioSuite API to our DfxPlugin system.
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 
 #include "CEffectTypeAS.h"
 #include "CEffectTypeRTAS.h"
@@ -94,7 +95,7 @@ ComponentResult bypassResult = GetMasterBypassControl(&bypassControlIndex);
 CPluginControl_Discrete* bypassControl = dynamic_cast<CPluginControl_Discrete*>( GetControl(bypassControlIndex) );
 char bypassName[32] {};
 bypassControl->GetNameOfLength(bypassName, std::size(bypassName) - 1, 0);
-fprintf(stderr, "%s IsAutomatable() = %s (error = %ld)\n", bypassName, bypassControl->IsAutomatable() ? "true" : "false", bypassResult);
+std::fprintf(stderr, "%s IsAutomatable() = %s (error = %ld)\n", bypassName, bypassControl->IsAutomatable() ? "true" : "false", bypassResult);
 */
 }
 
@@ -307,7 +308,7 @@ ComponentResult DfxPlugin::GetValueString(long inParameterIndex, long inValue, S
 		if (shortValueString != nullptr)
 		{
 			strlcpy((char*)(outValueString + 1), shortValueString, inMaxLength + 1);
-			outValueString[0] = ((signed)strlen(shortValueString) > inMaxLength) ? inMaxLength : strlen(shortValueString);
+			outValueString[0] = (static_cast<long>(std::strlen(shortValueString)) > inMaxLength) ? inMaxLength : std::strlen(shortValueString);
 			return noErr;
 		}
 	}
@@ -681,14 +682,14 @@ CPlugInView* DfxPlugin::CreateCPlugInView()
 
 #else
 	OSType meterFourCharID = 0;
-	OSType meterIDs[EffectLayerDef::MAX_NUM_CONNECTIONS];
+	OSType meterIDs[EffectLayerDef::MAX_NUM_CONNECTIONS] {};
 	for (UInt32 i = 0; i < EffectLayerDef::MAX_NUM_CONNECTIONS; i++)
 	{
 		meterFourCharID = DFX_IterateAlphaNumericFourCharCode(meterFourCharID);
 		meterIDs[i] = meterFourCharID;
 	}
 
-	OSType clipIDs[EffectLayerDef::MAX_NUM_CONNECTIONS];
+	OSType clipIDs[EffectLayerDef::MAX_NUM_CONNECTIONS] {};
 	for (UInt32 i = 0; i < EffectLayerDef::MAX_NUM_CONNECTIONS; i++)
 	{
 		meterFourCharID = DFX_IterateAlphaNumericFourCharCode(meterFourCharID);

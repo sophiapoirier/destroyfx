@@ -21,6 +21,8 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include "monomakereditor.h"
 
+#include <cstdio>
+
 #include "monomaker.h"
 
 
@@ -65,13 +67,13 @@ constexpr float kUnusedControlAlpha = 0.36f;
 
 static bool monomergeDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, " %.1f%%", inValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, " %.1f%%", inValue) > 0;
 }
 
 static bool panDisplayProc(float inValue, char* outText, void*)
 {
 	char const* const prefix = (inValue >= 0.0005f) ? "+" : "";
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, " %s%.1f%%", prefix, inValue * 100.0f) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, " %s%.1f%%", prefix, inValue * 100.0f) > 0;
 }
 
 

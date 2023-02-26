@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include <cassert>
 #include <cmath>
+#include <cstdio>
 #include <map>
 
 #include "dfxmath.h"
@@ -111,7 +112,7 @@ constexpr float kUnusedControlAlpha = 0.39f;
 
 static bool bandwidthAmountDisplayProc(float inValue, char* outText, void* inEditor)
 {
-	auto const success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
+	auto const success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
 	if (static_cast<DfxGuiEditor*>(inEditor)->getparameter_i(kBandwidthMode) == kBandwidthMode_Hz)
 	{
 		dfx::StrlCat(outText, " Hz", DGTextDisplay::kTextMaxLength);
@@ -125,18 +126,18 @@ static bool bandwidthAmountDisplayProc(float inValue, char* outText, void* inEdi
 
 static bool numBandsDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f", inValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f", inValue) > 0;
 }
 
 static bool sepAmountDisplayProc(float inValue, char* outText, void* inEditor)
 {
 	if (static_cast<DfxGuiEditor*>(inEditor)->getparameter_i(kSepMode) == kSeparationMode_Octaval)
 	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f semitones", inValue) > 0;
+		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f semitones", inValue) > 0;
 	}
 	else  // linear values
 	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f x", inValue) > 0;
+		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f x", inValue) > 0;
 	}
 }
 
@@ -148,11 +149,11 @@ static bool attackDecayReleaseDisplayProc(float inValue, char* outText, void*)
 	bool success = false;
 	if (thousands > 0)
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%d,%05.1f", thousands, remainder) > 0;
+		success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%d,%05.1f", thousands, remainder) > 0;
 	}
 	else
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
+		success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
 	}
 	dfx::StrlCat(outText, " ms", DGTextDisplay::kTextMaxLength);
 
@@ -161,7 +162,7 @@ static bool attackDecayReleaseDisplayProc(float inValue, char* outText, void*)
 
 static bool percentGenDisplayProc(float inValue, char* outText, int inPrecision)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.*f%%", inPrecision, inValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.*f%%", inPrecision, inValue) > 0;
 }
 
 static bool percentDisplayProc(float inValue, char* outText, void*)
@@ -178,12 +179,12 @@ static bool sustainDisplayProc(float inValue, char* outText, void*)
 
 static bool velocityCurveDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
 }
 
 static bool pitchBendDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s%.2f semitones", dfx::kPlusMinusUTF8, inValue) > 0;
+	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%s%.2f semitones", dfx::kPlusMinusUTF8, inValue) > 0;
 }
 
 

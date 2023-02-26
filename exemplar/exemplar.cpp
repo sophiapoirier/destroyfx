@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2006-2022  Tom Murphy 7
+Copyright (C) 2006-2023  Tom Murphy 7
 
 This file is part of Exemplar.
 
@@ -67,9 +67,9 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   std::array<char, 64> bufstr {};
   for (long i=0; i < BUFFERSIZESSIZE; i++) {
     if (buffersizes[i] > 1000)
-      snprintf(bufstr.data(), bufstr.size(), "%ld,%03ld", buffersizes[i]/1000, buffersizes[i]%1000);
+      std::snprintf(bufstr.data(), bufstr.size(), "%ld,%03ld", buffersizes[i]/1000, buffersizes[i]%1000);
     else
-      snprintf(bufstr.data(), bufstr.size(), "%ld", buffersizes[i]);
+      std::snprintf(bufstr.data(), bufstr.size(), "%ld", buffersizes[i]);
     setparametervaluestring(P_BUFSIZE, i, bufstr.data());
   }
 
@@ -151,9 +151,9 @@ void PLUGINCORE::reset() {
       }
 
       nntree = std::make_unique<ANNkd_tree>(cap_point, npoints, DIMENSION);
-      char msg[512];
-      // sprintf(msg, "ok %p", this);
-      // MessageBoxA(0, "match mode", msg, MB_OK);
+      std::array<char, 512> msg {};
+      // std::snprintf(msg.data(), msg.size(), "ok %p", this);
+      // MessageBoxA(0, "match mode", msg.data(), MB_OK);
       #if 0
       std::ofstream f;
       f.open("c:\\code\\vstplugins\\exemplar\\dump.ann");
