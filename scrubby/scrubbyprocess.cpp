@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstdlib>
 #include <numbers>
 
 #include "dfxmath.h"
@@ -351,18 +352,17 @@ double Scrubby::processPitchConstraint(double readStep) const
 	auto semitone = static_cast<long>(semitone_f + 0.1);  // add a little bit to prevent any float truncation errors
 
 	// . . . search for a possible active note to constrain to . . .
-	long octave = semitone / 12;  // the octave transposition
-	long remainder = semitone % 12;  // the semitone transposition
+	auto octave = std::div(semitone, 12L);  // the octave and semitone transposition
 	// remainder will be used as the index to the mPitchSteps array,
 	// so it must be positive, and we compensate for adding 12 to it
-	// by subtracting 1 octave, so it all evens out
-	if (remainder < 0)
+	// by subtracting an octave, so it all evens out
+	if (octave.rem < 0)
 	{
-		remainder += 12;
-		octave -= 1;
+		octave.rem += 12;
+		octave.quot -= 1;
 	}
 	// just in case it fails both searches, which shouldn't happen
-	semitone = remainder;
+	semitone = octave.rem;
 	// if no notes are active, then don't play back anything (this basically means silence)
 	if (!notesActive)
 	{
@@ -373,7 +373,7 @@ double Scrubby::processPitchConstraint(double readStep) const
 	{
 		// start searching for an active pitchStep with the current pitchStep (remainder)
 		// and then all those below it
-		auto i = remainder;
+		auto i = octave.rem;
 		do
 		{
 			// we found the pitchstep that we will use, store it and exit this loop
@@ -389,21 +389,21 @@ double Scrubby::processPitchConstraint(double readStep) const
 				// didn't find an active one yet, so wrap around to the top of the pitchStep array
 				i = kNumPitchSteps - 1;
 				// and compensate for that by subtracting an octave
-				octave--;
+				octave.quot--;
 			}
-		} while (i != remainder);
+		} while (i != octave.rem);
 	}
 	// constrain to octaves range, if we're doing that
-	if ((mOctaveMin > kOctave_MinValue) && (octave < mOctaveMin))
+	if ((mOctaveMin > kOctave_MinValue) && (octave.quot < mOctaveMin))
 	{
-		octave = mOctaveMin;
+		octave.quot = mOctaveMin;
 	}
-	else if ((mOctaveMax < kOctave_MaxValue) && (octave > mOctaveMax))
+	else if ((mOctaveMax < kOctave_MaxValue) && (octave.quot > mOctaveMax))
 	{
-		octave = mOctaveMax;
+		octave.quot = mOctaveMax;
 	}
 	// add the octave transposition back in to get the correct semitone transposition
-	semitone += (octave * 12);
+	semitone += (octave.quot * 12);
 
 	// return the transposition converted to a playback speed scalar, with direction restored
 	return std::pow(2.0, static_cast<double>(semitone) / 12.0) * direction_f;
