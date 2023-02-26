@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -27,6 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <cstring>
 #include <exception>
 #include <functional>
 #include <locale>
@@ -1535,6 +1536,15 @@ dfx::StatusCode DfxGuiEditor::dfxgui_SetProperty(dfx::PropertyID inPropertyID, d
 }
 
 //-----------------------------------------------------------------------------
+static auto DFXGUI_PathToCFURL(VSTGUI::UTF8StringPtr inFilePath)
+{
+	return dfx::MakeUniqueCFType(CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault,
+																		 reinterpret_cast<UInt8 const*>(inFilePath),
+																		 static_cast<CFIndex>(std::strlen(inFilePath)),
+																		 false));
+}
+
+//-----------------------------------------------------------------------------
 void DfxGuiEditor::LoadPresetFile()
 {
 	try
@@ -1567,7 +1577,7 @@ void DfxGuiEditor::LoadPresetFile()
 				try
 				{
 #ifdef TARGET_API_AUDIOUNIT
-					auto const fileURL = dfx::MakeUniqueCFType(CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false));
+					auto const fileURL = DFXGUI_PathToCFURL(filePath);
 					Require(fileURL.get(), "failed to create file URL");
 					RestoreAUStateFromPresetFile(dfxgui_GetEffectInstance(), fileURL.get());
 #elif defined(TARGET_API_VST)
@@ -1649,7 +1659,7 @@ void DfxGuiEditor::SavePresetFile()
 							{
 								try
 								{
-									auto const fileURL = dfx::MakeUniqueCFType(CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false));
+									auto const fileURL = DFXGUI_PathToCFURL(filePath);
 									Require(fileURL.get(), "could not create platform representation of preset file location");
 									auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 									assert(pluginBundle);
