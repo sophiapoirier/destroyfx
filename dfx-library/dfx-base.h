@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -25,8 +25,8 @@ These are our general global defines and constants, to be included
 somewhere in the include tree for every file for a DfxPlugin.
 ------------------------------------------------------------------------*/
 
-#ifndef _DFX_BASE_H
-#define _DFX_BASE_H
+#ifndef DFX_BASE_H
+#define DFX_BASE_H
 
 
 
@@ -120,4 +120,4 @@ namespace dfx
 
 
 
-#endif  /* _DFX_BASE_H */
+#endif  /* DFX_BASE_H */
