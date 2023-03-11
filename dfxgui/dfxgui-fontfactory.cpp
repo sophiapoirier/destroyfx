@@ -1,7 +1,7 @@
  /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier and Tom Murphy VII
+Copyright (C) 2002-2023  Sophia Poirier and Tom Murphy VII
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -32,7 +32,6 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <vector>
 
 #include "dfx-base.h"
-#include "dfxgui-base.h"
 #include "dfxmisc.h"
 
 #if TARGET_OS_WIN32
@@ -143,7 +142,7 @@ std::optional<std::string> InstallFontWin32(const char *resource_name) {
     return {};
   }
 
-  return {(std::string)temp_filename};
+  return {std::string(temp_filename)};
 }
 #endif  // TARGET_OS_WIN32
 
@@ -162,7 +161,7 @@ std::optional<std::string> InstallFontWin32(const char *resource_name) {
 #if TARGET_OS_WIN32
 struct InstalledFontResource {
 public:
-  InstalledFontResource(const std::string &tempfile) : tempfile(tempfile) {}
+  explicit InstalledFontResource(const std::string &tempfile) : tempfile(tempfile) {}
   ~InstalledFontResource() {
     if (!RemoveFontResourceExA(tempfile.c_str(), FONT_RESOURCE_FLAGS, 0)) {
       // Failed, but still try to remove the temp file...
@@ -182,10 +181,9 @@ public:
     }
   }
 
+private:
   const std::string tempfile;
 };
-#else
-using InstalledFontResource = int;
 #endif
 
 class FFImpl : public FontFactory {
@@ -297,7 +295,8 @@ public:
     if (inFontName) {
       return VSTGUI::makeOwned<VSTGUI::CFontDesc>(inFontName, inFontSize);
     } else {
-      auto fontDesc = VSTGUI::makeOwned<VSTGUI::CFontDesc>(VSTGUI::kSystemFont->getName(), inFontSize);
+      auto fontDesc = VSTGUI::makeOwned<VSTGUI::CFontDesc>(*VSTGUI::kSystemFont);
+      fontDesc->setSize(inFontSize);
 #if TARGET_OS_MAC
       if (auto const fontName = [NSFont systemFontOfSize:NSFont.systemFontSize].displayName) {
         fontDesc->setName(fontName.UTF8String);
@@ -307,10 +306,10 @@ public:
     }
   }
 
-  std::mutex m;
-  bool did_installation = false;
-  [[maybe_unused]]
+private:
+#if TARGET_OS_WIN32
   std::vector<std::unique_ptr<InstalledFontResource>> installed;
+#endif
 };
 
 }  // namespace
