@@ -1301,8 +1301,16 @@ void DfxSettings::assignParameter(dfx::ParameterID inParameterID, dfx::MidiEvent
 	{
 		return;
 	}
-	// bail if inEventNum is not a valid MIDI value
+	// bail if MIDI input values are not in valid MIDI range
 	if ((inEventNum < 0) || (inEventNum > DfxMidi::kMaxValue))
+	{
+		return;
+	}
+	if ((inEventNum2 < 0) || (inEventNum2 > DfxMidi::kMaxValue))
+	{
+		return;
+	}
+	if ((inEventChannel < 0) || (inEventChannel > DfxMidi::kMaxChannelValue))
 	{
 		return;
 	}
@@ -1315,7 +1323,7 @@ void DfxSettings::assignParameter(dfx::ParameterID inParameterID, dfx::MidiEvent
 
 	// first unassign the MIDI event from any other previous 
 	// parameter assignment(s) if using stealing
-	if (mStealAssignments)
+	if (mStealAssignments && (inEventType != dfx::MidiEventType::None))
 	{
 		for (dfx::ParameterID i = 0; i < mNumParameters; i++)
 		{

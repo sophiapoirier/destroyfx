@@ -346,6 +346,7 @@ public:
 	void setMidiAssignmentsSteal(bool inEnable);
 	bool getMidiAssignmentsSteal();
 	void TextEntryForParameterMidiCC(dfx::ParameterID inParameterID);
+	void TextEntryForParameterMidiChannel(dfx::ParameterID inParameterID);
 	void HandleMidiLearnChange();
 	void HandleMidiLearnerChange();
 	virtual void midiLearningChanged(bool inLearnMode) {}

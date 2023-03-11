@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -20,7 +20,7 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org
 
-Sophia's Destroy FX MIDI stuff
+This is our MIDI stuff.
 ---------------------------------------------------------------*/
 
 #pragma once
@@ -42,6 +42,7 @@ public:
 	static constexpr int kNumNotesWithLegatoVoice = kNumNotes + 1;
 	static constexpr int kLegatoVoiceNoteIndex = kNumNotesWithLegatoVoice - 1;
 	static constexpr int kMaxValue = 0x7F;
+	static constexpr int kMaxChannelValue = 0x0F;
 	static constexpr int kMidpointValue = 64;
 	static constexpr float kValueScalar = 1.0f / static_cast<float>(kMaxValue);
 	static constexpr int kPitchBendMidpointValue = 0x2000;

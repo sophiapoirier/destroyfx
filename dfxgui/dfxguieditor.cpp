@@ -41,6 +41,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "dfxguibutton.h"
 #include "dfxguidialog.h"
 #include "dfxmath.h"
+#include "dfxmidi.h"
 #include "dfxmisc.h"
 #include "idfxguicontrol.h"
 #include "lib/vstguiinit.h"
@@ -669,7 +670,7 @@ std::optional<double> DfxGuiEditor::dfxgui_GetParameterValueFromString_f(dfx::Pa
 	if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
 	{
 		double value {};
-		auto const readCount = sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%lf", &value);
+		auto const readCount = std::sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%lf", &value);
 		if ((readCount >= 1) && (readCount != EOF))
 		{
 			return value;
@@ -703,7 +704,7 @@ std::optional<long> DfxGuiEditor::dfxgui_GetParameterValueFromString_i(dfx::Para
 	else
 	{
 		long value {};
-		auto const readCount = sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%ld", &value);
+		auto const readCount = std::sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%ld", &value);
 		if ((readCount >= 1) && (readCount != EOF))
 		{
 			return value;
@@ -764,7 +765,6 @@ void DfxGuiEditor::TextEntryForParameterValue(dfx::ParameterID inParameterID)
 	}
 
 	mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>(inParameterID, getparametername(inParameterID), "enter value:");
-	assert(mTextEntryDialog.get());
 	if (mTextEntryDialog)
 	{
 		std::array<char, dfx::kParameterValueStringMaxLength> textValue {};
@@ -1614,7 +1614,6 @@ void DfxGuiEditor::SavePresetFile()
 		mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>("Save preset file", "save as:", 
 																DGDialog::kButtons_OKCancelOther, 
 																"Save", nullptr, "Choose custom location...");
-		Require(mTextEntryDialog, "could not create save preset dialog");
 		if (auto const button = mTextEntryDialog->getButton(DGDialog::Selection::kSelection_Other))
 		{
 			constexpr char const* const helpText = "choose a specific location in which to save rather than the standard location (note:  this means that your presets will not be easily accessible in other host applications)";
@@ -1884,17 +1883,14 @@ void DfxGuiEditor::TextEntryForParameterMidiCC(dfx::ParameterID inParameterID)
 	}
 
 	mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>(inParameterID, getparametername(inParameterID), "enter value:");
-	assert(mTextEntryDialog.get());
 	if (mTextEntryDialog)
 	{
 		// initialize the text with the current CC assignment, if there is one
-		std::array<char, dfx::kParameterValueStringMaxLength> initialText {};
 		auto const currentParameterAssignment = getparametermidiassignment(inParameterID);
 		if (currentParameterAssignment.mEventType == dfx::MidiEventType::CC)
 		{
-			std::snprintf(initialText.data(), initialText.size(), "%d", currentParameterAssignment.mEventNum);
+			mTextEntryDialog->setText(std::to_string(currentParameterAssignment.mEventNum));
 		}
-		mTextEntryDialog->setText(initialText.data());
 
 		auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
 		{
@@ -1902,15 +1898,57 @@ void DfxGuiEditor::TextEntryForParameterMidiCC(dfx::ParameterID inParameterID)
 			assert(textEntryDialog);
 			if (textEntryDialog && (inSelection == DGDialog::kSelection_OK))
 			{
-				int newValue {};
-				auto const scanCount = sscanf(textEntryDialog->getText().c_str(), "%d", &newValue);
-				if ((scanCount > 0) && (scanCount != EOF))
+				int value {};
+				auto const scanCount = std::sscanf(textEntryDialog->getText().c_str(), "%d", &value);
+				if ((scanCount > 0) && (scanCount != EOF) && (value >= 0) && (value <= DfxMidi::kMaxValue))
 				{
-					dfx::ParameterAssignment newParameterAssignment;
-					newParameterAssignment.mEventType = dfx::MidiEventType::CC;
-					newParameterAssignment.mEventChannel = 0;  // XXX not currently implemented
-					newParameterAssignment.mEventNum = newValue;
-					setparametermidiassignment(textEntryDialog->getParameterID(), newParameterAssignment);
+					auto const parameterID = textEntryDialog->getParameterID();
+					dfx::ParameterAssignment parameterAssignment;
+					parameterAssignment.mEventType = dfx::MidiEventType::CC;
+					parameterAssignment.mEventChannel = getparametermidiassignment(parameterID).mEventChannel;  // persist any existing choice
+					parameterAssignment.mEventNum = value;
+					setparametermidiassignment(parameterID, parameterAssignment);
+					return true;
+				}
+				return false;
+			}
+			return true;
+		};
+		if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
+		{
+			ShowMessage("could not display text entry dialog");
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::TextEntryForParameterMidiChannel(dfx::ParameterID inParameterID)
+{
+	if (!getFrame())
+	{
+		return;
+	}
+
+	mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>(inParameterID, getparametername(inParameterID), "enter value:");
+	if (mTextEntryDialog)
+	{
+		mTextEntryDialog->setText(std::to_string(getparametermidiassignment(inParameterID).mEventChannel + 1));
+
+		auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
+		{
+			auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog);
+			assert(textEntryDialog);
+			if (textEntryDialog && (inSelection == DGDialog::kSelection_OK))
+			{
+				int value {};
+				auto const scanCount = std::sscanf(textEntryDialog->getText().c_str(), "%d", &value);
+				value -= 1;  // transform from display value to zero-based index as used by MIDI
+				if ((scanCount > 0) && (scanCount != EOF) && (value >= 0) && (value <= DfxMidi::kMaxChannelValue))
+				{
+					auto const parameterID = textEntryDialog->getParameterID();
+					auto parameterAssignment = getparametermidiassignment(parameterID);
+					parameterAssignment.mEventChannel = value;
+					setparametermidiassignment(parameterID, parameterAssignment);
 					return true;
 				}
 				return false;
@@ -1987,7 +2025,6 @@ void DfxGuiEditor::TextEntryForSmoothedAudioValueTime()
 	}
 
 	mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>("parameter value smoothing time", "enter seconds:");
-	assert(mTextEntryDialog.get());
 	if (mTextEntryDialog)
 	{
 		mTextEntryDialog->setText(std::to_string(*currentValue));
@@ -1999,7 +2036,7 @@ void DfxGuiEditor::TextEntryForSmoothedAudioValueTime()
 			if (textEntryDialog && (inSelection == DGDialog::kSelection_OK))
 			{
 				double value {};
-				auto const readCount = sscanf(dfx::SanitizeNumericalInput(textEntryDialog->getText()).c_str(), "%lf", &value);
+				auto const readCount = std::sscanf(dfx::SanitizeNumericalInput(textEntryDialog->getText()).c_str(), "%lf", &value);
 				if ((readCount >= 1) && (readCount != EOF) && (value >= 0.))
 				{
 					setSmoothedAudioValueTime(value);
@@ -2168,7 +2205,6 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 	assert(dfxgui_IsValidParameterID(inParameterID));
 
 	auto resultMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
-	assert(resultMenu.get());
 	resultMenu->setStyle(kDfxGui_ContextualMenuStyle);
 
 	resultMenu->addSeparator();
@@ -2178,7 +2214,6 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 	if (GetParameterUseValueStrings(inParameterID))
 	{
 		auto const valueStringsSubMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
-		assert(valueStringsSubMenu.get());
 		valueStringsSubMenu->setStyle(kDfxGui_ContextualMenuStyle);
 		auto const currentValue = getparameter_i(inParameterID);
 		auto const minValue = std::lround(GetParameter_minValue(inParameterID));
@@ -2216,13 +2251,13 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 
 #if TARGET_PLUGIN_USES_MIDI
 	resultMenu->addSeparator();
+	auto const currentParameterAssignment = getparametermidiassignment(inParameterID);
 	DFX_AppendCommandItemToMenu(*resultMenu, "MIDI learner", 
 								std::bind(&DfxGuiEditor::setmidilearner, this, 
 										  ismidilearner(inParameterID) ? dfx::kParameterID_Invalid : inParameterID), 
 								true, ismidilearner(inParameterID));
 	{
 		VSTGUI::UTF8String menuItemText = "Unassign MIDI control";
-		auto const currentParameterAssignment = getparametermidiassignment(inParameterID);
 		bool const enableItem = (currentParameterAssignment.mEventType != dfx::MidiEventType::None);
 		// append the current MIDI assignment, if there is one, to the menu item text
 		if (enableItem)
@@ -2256,6 +2291,9 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 	}
 	DFX_AppendCommandItemToMenu(*resultMenu, "Enter a MIDI CC assignment...", 
 								std::bind(&DfxGuiEditor::TextEntryForParameterMidiCC, this, inParameterID));
+	DFX_AppendCommandItemToMenu(*resultMenu, "Enter a MIDI channel assignment...",
+								std::bind(&DfxGuiEditor::TextEntryForParameterMidiChannel, this, inParameterID),
+								getMidiAssignmentsUseChannel() && (currentParameterAssignment.mEventType != dfx::MidiEventType::None));
 #endif
 
 	return resultMenu;
@@ -2271,7 +2309,6 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParametersContext
 	}
 
 	auto const resultMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
-	assert(resultMenu.get());
 	resultMenu->setStyle(kDfxGui_ContextualMenuStyle);
 	std::map<size_t, VSTGUI::COptionMenu&> groupSubMenus;
 
@@ -2291,7 +2328,6 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParametersContext
 				if (groupKeyValue == groupSubMenus.cend())
 				{
 					auto const groupSubMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
-					assert(groupSubMenu.get());
 					groupSubMenu->setStyle(kDfxGui_ContextualMenuStyle);
 					[[maybe_unused]] bool itemAdded {};
 					std::tie(groupKeyValue, itemAdded) = groupSubMenus.emplace(*groupIndex, *groupSubMenu);
@@ -2769,7 +2805,6 @@ void DfxGuiEditor::ShowMessage(std::string const& inMessage)
 {
 	bool shown = false;
 	mErrorDialog = VSTGUI::makeOwned<DGDialog>(DGRect(0, 0, 300, 120), inMessage);
-	assert(mErrorDialog.get());
 	if (mErrorDialog)
 	{
 		shown = mErrorDialog->runModal(getFrame());
@@ -2819,7 +2854,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 	try
 	{
 		mAcknowledgementsDialog = VSTGUI::makeOwned<DGTextScrollDialog>(DGRect(0., 0., GetWidth(), GetHeight()), message);
-		Require(mAcknowledgementsDialog, "could not create acknowledgements dialog");
 		auto const success = mAcknowledgementsDialog->runModal(getFrame());
 		Require(success, "could not display acknowledgements dialog");
 	}
