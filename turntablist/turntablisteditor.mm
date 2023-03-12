@@ -800,15 +800,9 @@ OSStatus TurntablistEditor::NotifyAudioFileLoadError(OSStatus inErrorCode, FSRef
 	return noErr;
 #if 0
 	auto const titleCString = dfx::CreateCStringFromCFString(titleString.get());
-	if (auto const dialog = makeOwned<DGDialog>(DGRect(0.0, 0.0, 200.0, 100.0), titleCString.get()))
-	{
-		auto const success = dialog->runModal(getFrame(), [](DGDialog*, DGDialog::Selection){});
-		return success ? noErr : -1;
-	}
-	else
-	{
-		return memFullErr;
-	}
+	auto const dialog = VSTGUI::makeOwned<DGDialog>(DGRect(0, 0, 200, 100), titleCString.get());
+	auto const success = dialog->runModal(getFrame());
+	return success ? noErr : -1;
 #endif
 }
 

@@ -778,15 +778,9 @@ void DfxGuiEditor::TextEntryForParameterValue(dfx::ParameterID inParameterID)
 		}
 		mTextEntryDialog->setText(textValue.data());
 
-		auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
+		auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID inParameterID)
 		{
-			auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog);
-			assert(textEntryDialog);
-			if (textEntryDialog && (inSelection == DGDialog::kSelection_OK))
-			{
-				return dfxgui_SetParameterValueWithString(textEntryDialog->getParameterID(), textEntryDialog->getText());
-			}
-			return true;
+			return dfxgui_SetParameterValueWithString(inParameterID, inText);
 		};
 		if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
 		{
@@ -1619,21 +1613,19 @@ void DfxGuiEditor::SavePresetFile()
 			constexpr char const* const helpText = "choose a specific location in which to save rather than the standard location (note:  this means that your presets will not be easily accessible in other host applications)";
 			button->setTooltipText(helpText);
 		}
-		auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
+		auto const textEntryCallback = [this](DGDialog::Selection inSelection, std::string const& inText, dfx::ParameterID)
 		{
 			try
 			{
-				auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog);
-				assert(textEntryDialog);
 				switch (inSelection)
 				{
 					case DGDialog::kSelection_OK:
 					{
-						if (textEntryDialog->getText().empty())
+						if (inText.empty())
 						{
 							return false;
 						}
-						auto const cfText = dfx::MakeUniqueCFType(CFStringCreateWithCString(kCFAllocatorDefault, textEntryDialog->getText().c_str(), kCFStringEncodingUTF8));
+						auto const cfText = dfx::MakeUniqueCFType(CFStringCreateWithCString(kCFAllocatorDefault, inText.c_str(), kCFStringEncodingUTF8));
 						Require(cfText.get(), "could not create platform representation of text input");
 						auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 						assert(pluginBundle);
@@ -1651,9 +1643,9 @@ void DfxGuiEditor::SavePresetFile()
 						Require(fileSelector, "could not create save file dialog");
 						fileSelector->setTitle("Save");
 						fileSelector->setDefaultExtension(kDfxGui_AUPresetFileExtension);
-						if (!textEntryDialog->getText().empty())
+						if (!inText.empty())
 						{
-							fileSelector->setDefaultSaveName(textEntryDialog->getText());
+							fileSelector->setDefaultSaveName(inText.c_str());
 						}
 						fileSelector->run([this](VSTGUI::CNewFileSelector* inFileSelector)
 						{
@@ -1892,26 +1884,19 @@ void DfxGuiEditor::TextEntryForParameterMidiCC(dfx::ParameterID inParameterID)
 			mTextEntryDialog->setText(std::to_string(currentParameterAssignment.mEventNum));
 		}
 
-		auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
+		auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID inParameterID)
 		{
-			auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog);
-			assert(textEntryDialog);
-			if (textEntryDialog && (inSelection == DGDialog::kSelection_OK))
+			int value {};
+			auto const readCount = std::sscanf(inText.c_str(), "%d", &value);
+			if ((readCount < 1) || (readCount == EOF) || (value < 0) || (value > DfxMidi::kMaxValue))
 			{
-				int value {};
-				auto const scanCount = std::sscanf(textEntryDialog->getText().c_str(), "%d", &value);
-				if ((scanCount > 0) && (scanCount != EOF) && (value >= 0) && (value <= DfxMidi::kMaxValue))
-				{
-					auto const parameterID = textEntryDialog->getParameterID();
-					dfx::ParameterAssignment parameterAssignment;
-					parameterAssignment.mEventType = dfx::MidiEventType::CC;
-					parameterAssignment.mEventChannel = getparametermidiassignment(parameterID).mEventChannel;  // persist any existing choice
-					parameterAssignment.mEventNum = value;
-					setparametermidiassignment(parameterID, parameterAssignment);
-					return true;
-				}
 				return false;
 			}
+			dfx::ParameterAssignment parameterAssignment;
+			parameterAssignment.mEventType = dfx::MidiEventType::CC;
+			parameterAssignment.mEventChannel = getparametermidiassignment(inParameterID).mEventChannel;  // persist any existing choice
+			parameterAssignment.mEventNum = value;
+			setparametermidiassignment(inParameterID, parameterAssignment);
 			return true;
 		};
 		if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
@@ -1934,25 +1919,18 @@ void DfxGuiEditor::TextEntryForParameterMidiChannel(dfx::ParameterID inParameter
 	{
 		mTextEntryDialog->setText(std::to_string(getparametermidiassignment(inParameterID).mEventChannel + 1));
 
-		auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
+		auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID inParameterID)
 		{
-			auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog);
-			assert(textEntryDialog);
-			if (textEntryDialog && (inSelection == DGDialog::kSelection_OK))
+			int value {};
+			auto const readCount = std::sscanf(inText.c_str(), "%d", &value);
+			value -= 1;  // transform from display value to zero-based index as used by MIDI
+			if ((readCount < 1) || (readCount == EOF) || (value < 0) || (value > DfxMidi::kMaxChannelValue))
 			{
-				int value {};
-				auto const scanCount = std::sscanf(textEntryDialog->getText().c_str(), "%d", &value);
-				value -= 1;  // transform from display value to zero-based index as used by MIDI
-				if ((scanCount > 0) && (scanCount != EOF) && (value >= 0) && (value <= DfxMidi::kMaxChannelValue))
-				{
-					auto const parameterID = textEntryDialog->getParameterID();
-					auto parameterAssignment = getparametermidiassignment(parameterID);
-					parameterAssignment.mEventChannel = value;
-					setparametermidiassignment(parameterID, parameterAssignment);
-					return true;
-				}
 				return false;
 			}
+			auto parameterAssignment = getparametermidiassignment(inParameterID);
+			parameterAssignment.mEventChannel = value;
+			setparametermidiassignment(inParameterID, parameterAssignment);
 			return true;
 		};
 		if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
@@ -2029,21 +2007,15 @@ void DfxGuiEditor::TextEntryForSmoothedAudioValueTime()
 	{
 		mTextEntryDialog->setText(std::to_string(*currentValue));
 
-		auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
+		auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID)
 		{
- 			auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog);
-			assert(textEntryDialog);
-			if (textEntryDialog && (inSelection == DGDialog::kSelection_OK))
+			double value {};
+			auto const readCount = std::sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%lf", &value);
+			if ((readCount < 1) || (readCount == EOF) || (value < 0.))
 			{
-				double value {};
-				auto const readCount = std::sscanf(dfx::SanitizeNumericalInput(textEntryDialog->getText()).c_str(), "%lf", &value);
-				if ((readCount >= 1) && (readCount != EOF) && (value >= 0.))
-				{
-					setSmoothedAudioValueTime(value);
-					return true;
-				}
 				return false;
 			}
+			setSmoothedAudioValueTime(value);
 			return true;
 		};
 		if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))

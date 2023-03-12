@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2015-2022  Sophia Poirier
+Copyright (C) 2015-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -54,9 +54,9 @@ class DGDialog : public VSTGUI::CViewContainer, public VSTGUI::IControlListener
 {
 public:
 	using Buttons = unsigned int;
-	static const Buttons kButtons_OK;
-	static const Buttons kButtons_OKCancel;
-	static const Buttons kButtons_OKCancelOther;
+	static Buttons const kButtons_OK;
+	static Buttons const kButtons_OKCancel;
+	static Buttons const kButtons_OKCancelOther;
 
 	enum Selection
 	{
@@ -65,14 +65,7 @@ public:
 		kSelection_Other,
 	};
 
-	using DialogChoiceSelectedCallback = std::function<bool(DGDialog*, Selection)>;
-
-	class Listener
-	{
-	public:
-		virtual ~Listener() = default;
-		virtual bool dialogChoiceSelected(DGDialog* inDialog, Selection inSelection) = 0;
-	};
+	using DialogChoiceSelectedCallback = std::function<bool(Selection)>;
 
 	DGDialog(DGRect const& inRegion, std::string const& inMessage, Buttons inButtons = kButtons_OK, 
 			 char const* inOkButtonTitle = nullptr, char const* inCancelButtonTitle = nullptr, char const* inOtherButtonTitle = nullptr);
@@ -87,10 +80,8 @@ public:
 	// IControlListener override
 	void valueChanged(VSTGUI::CControl* inControl) override;
 
-	bool runModal(VSTGUI::CFrame* inFrame, Listener* inListener);
 	bool runModal(VSTGUI::CFrame* inFrame, DialogChoiceSelectedCallback&& inCallback);
 	bool runModal(VSTGUI::CFrame* inFrame);
-	void close();
 
 	VSTGUI::CTextButton* getButton(Selection inSelection) const;
 
@@ -104,9 +95,9 @@ private:
 		kButtons_OtherBit = 1 << kSelection_Other,
 	};
 
-	Listener* mListener = nullptr;
-	DialogChoiceSelectedCallback mDialogChoiceSelectedCallback;
+	void close();
 
+	DialogChoiceSelectedCallback mDialogChoiceSelectedCallback;
 	std::optional<detail::DGModalSession> mModalSession;
 };
 
@@ -129,6 +120,10 @@ public:
 	std::string getText() const;
 
 	dfx::ParameterID getParameterID() const noexcept;
+
+	bool runModal(VSTGUI::CFrame* inFrame, std::function<bool(Selection, std::string const&, dfx::ParameterID)>&& inCallback);
+	// callback only invoked when text entry submitted with OK button
+	bool runModal(VSTGUI::CFrame* inFrame, std::function<bool(std::string const&, dfx::ParameterID)>&& inCallback);
 
 	CLASS_METHODS(DGTextEntryDialog, DGDialog)
 

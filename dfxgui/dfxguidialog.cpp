@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2015-2022  Sophia Poirier
+Copyright (C) 2015-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -257,9 +257,9 @@ public:
 //-----------------------------------------------------------------------------
 // Dialog base class
 //-----------------------------------------------------------------------------
-const DGDialog::Buttons DGDialog::kButtons_OK = kButtons_OKBit;
-const DGDialog::Buttons DGDialog::kButtons_OKCancel = kButtons_OKBit | kButtons_CancelBit;
-const DGDialog::Buttons DGDialog::kButtons_OKCancelOther = kButtons_OKBit | kButtons_CancelBit | kButtons_OtherBit;
+DGDialog::Buttons const DGDialog::kButtons_OK = kButtons_OKBit;
+DGDialog::Buttons const DGDialog::kButtons_OKCancel = kButtons_OKBit | kButtons_CancelBit;
+DGDialog::Buttons const DGDialog::kButtons_OKCancelOther = kButtons_OKBit | kButtons_CancelBit | kButtons_OtherBit;
 
 //-----------------------------------------------------------------------------
 DGDialog::DGDialog(DGRect const& inRegion, 
@@ -455,28 +455,16 @@ void DGDialog::valueChanged(VSTGUI::CControl* inControl)
 	auto const button = dynamic_cast<DGDialogButton*>(inControl);
 	if (button && (button->getValue() > button->getMin()))
 	{
-		bool completed = true;  // default to yes in case there are no handlers, we are not trapped in this dialog
+		bool completed = true;  // default to yes in case there is no handler, we are not trapped in this dialog
 		if (mDialogChoiceSelectedCallback)
 		{
-			completed = mDialogChoiceSelectedCallback(this, button->getSelection());
-		}
-		else if (mListener)
-		{
-			completed = mListener->dialogChoiceSelected(this, button->getSelection());
+			completed = mDialogChoiceSelectedCallback(button->getSelection());
 		}
 		if (completed)
 		{
 			close();
 		}
 	}
-}
-
-//-----------------------------------------------------------------------------
-bool DGDialog::runModal(VSTGUI::CFrame* inFrame, Listener* inListener)
-{
-	assert(inListener);
-	mListener = inListener;
-	return runModal(inFrame);
 }
 
 //-----------------------------------------------------------------------------
@@ -496,7 +484,6 @@ bool DGDialog::runModal(VSTGUI::CFrame* inFrame)
 //-----------------------------------------------------------------------------
 void DGDialog::close()
 {
-	mListener = nullptr;
 	mDialogChoiceSelectedCallback = nullptr;
 
 	mModalSession.reset();
@@ -612,6 +599,32 @@ std::string DGTextEntryDialog::getText() const
 dfx::ParameterID DGTextEntryDialog::getParameterID() const noexcept
 {
 	return mParameterID;
+}
+
+//-----------------------------------------------------------------------------
+bool DGTextEntryDialog::runModal(VSTGUI::CFrame* inFrame,
+								 std::function<bool(Selection, std::string const&, dfx::ParameterID)>&& inCallback)
+{
+	assert(inCallback);
+	return DGDialog::runModal(inFrame, [this, callback = std::move(inCallback)](DGDialog::Selection inSelection)
+	{
+		return callback(inSelection, getText(), getParameterID());
+	});
+}
+
+//-----------------------------------------------------------------------------
+bool DGTextEntryDialog::runModal(VSTGUI::CFrame* inFrame,
+								 std::function<bool(std::string const&, dfx::ParameterID)>&& inCallback)
+{
+	assert(inCallback);
+	return DGDialog::runModal(inFrame, [this, callback = std::move(inCallback)](DGDialog::Selection inSelection)
+	{
+		if (inSelection == DGDialog::kSelection_OK)
+		{
+			return callback(getText(), getParameterID());
+		}
+		return true;
+	});
 }
 
 
