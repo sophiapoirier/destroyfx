@@ -29,7 +29,6 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <concepts>
 #include <cstdint>
 #include <cstdio>
-#include <string_view>
 
 #include "dfxmath.h"
 #include "dfxmisc.h"
@@ -170,7 +169,7 @@ static std::optional<float> speedTextConvertProcedure(std::string const& inText,
 	});
 
 	float octaves = 0.0f, semitones = 0.0f;
-	auto const scanCount = sscanf(filteredText.c_str(), "%f%f", &octaves, &semitones);
+	auto const scanCount = std::sscanf(filteredText.c_str(), "%f%f", &octaves, &semitones);
 	if ((scanCount > 0) && (scanCount != EOF))
 	{
 		// the user only entered one number, which is for octaves,
@@ -179,9 +178,8 @@ static std::optional<float> speedTextConvertProcedure(std::string const& inText,
 		{
 			// unless we find the one number labeled as semitones, in which case treat as those
 			std::vector<char> word(inText.size() + 1, '\0');
-			auto const wordScanCount = sscanf(inText.c_str(), "%*f%s", word.data());
-			constexpr std::string_view wordCompare("semi");
-			if ((wordScanCount > 0) && (wordScanCount != EOF) && !strncasecmp(word.data(), wordCompare.data(), wordCompare.size()))
+			auto const wordScanCount = std::sscanf(inText.c_str(), "%*f%s", word.data());
+			if ((wordScanCount > 0) && (wordScanCount != EOF) && dfx::ToLower(word.data()).starts_with("semi"))
 			{
 				return octaves / kSemitonesPerOctave;
 			}
