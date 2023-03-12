@@ -52,21 +52,24 @@ static constexpr VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAli
 }
 
 //-----------------------------------------------------------------------------
-static bool DFXGUI_IsBitmapFont(std::string_view inFontName) noexcept
+static bool DFXGUI_IsBitmapFont(char const* inFontName) noexcept
 {
-	if (inFontName.compare(dfx::kFontName_Snooty10px) == 0)
+	return [](std::string_view fontName)
 	{
-		return true;
-	}
-	if (inFontName.compare(dfx::kFontName_Pasement9px) == 0)
-	{
-		return true;
-	}
-	if (inFontName.compare(dfx::kFontName_Wetar16px) == 0)
-	{
-		return true;
-	}
-	return false;
+		if (fontName.compare(dfx::kFontName_Snooty10px) == 0)
+		{
+			return true;
+		}
+		if (fontName.compare(dfx::kFontName_Pasement9px) == 0)
+		{
+			return true;
+		}
+		if (fontName.compare(dfx::kFontName_Wetar16px) == 0)
+		{
+			return true;
+		}
+		return false;
+	}(inFontName ? inFontName : std::string_view{});
 }
 
 //-----------------------------------------------------------------------------
