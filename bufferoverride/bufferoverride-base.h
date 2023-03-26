@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier and Tom Murphy VII
+Copyright (C) 2001-2023  Sophia Poirier and Tom Murphy VII
 
 This file is part of Buffer Override.
 
@@ -85,6 +85,7 @@ enum
 	kDecayMode_Gain,
 	kDecayMode_Lowpass,
 	kDecayMode_Highpass,
+	kDecayMode_HP_To_LP,
 	kDecayMode_LP_HP_Alternating,
 	kDecayModeCount
 };
@@ -148,12 +149,12 @@ T GetBufferDecay(T normalizedPosition, T depth, DecayShape shape, dfx::math::Ran
 	constexpr T maxValue = 1;
 	assert(normalizedPosition >= T(0));
 	assert(normalizedPosition <= maxValue);
-	auto const negativeDepth = std::signbit(depth);
+	auto const invertedDepth = std::signbit(depth);
 	switch (shape)
 	{
 		case kDecayShape_Ramp:
-			return std::lerp(maxValue - std::abs(depth), maxValue,
-							 negativeDepth ? normalizedPosition : (maxValue - normalizedPosition));
+			return std::lerp(maxValue - std::fabs(depth), maxValue,
+							 invertedDepth ? normalizedPosition : (maxValue - normalizedPosition));
 		case kDecayShape_Oscillate:
 		{
 			auto const oscillatingPosition = T(1) - std::fabs(T(1) - (normalizedPosition * T(2)));
@@ -162,13 +163,13 @@ T GetBufferDecay(T normalizedPosition, T depth, DecayShape shape, dfx::math::Ran
 		case kDecayShape_Random:
 			// always maintain full level for the first minibuffer iteration
 			// (like accent on the downbeat) when depth is nonnegative
-			if (!negativeDepth && (normalizedPosition <= T(0)))
+			if (!invertedDepth && (normalizedPosition <= T(0)))
 			{
 				return maxValue;
 			}
-			return randomEngine.next(maxValue - std::abs(depth), maxValue);
+			return randomEngine.next(maxValue - std::fabs(depth), maxValue);
 		default:
-			assert(false);
+			assert(false);  // TODO C++23: std::unreachable
 			return maxValue;
 	}
 }

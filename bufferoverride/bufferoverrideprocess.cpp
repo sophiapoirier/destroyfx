@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -232,7 +232,7 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 	auto& firstFilter = mCurrentDecayFilters.front();
 
 	auto const positionNormalized = static_cast<float>(mWritePos) / static_cast<float>(mCurrentForcedBufferSize);
-	auto const decay = GetBufferDecay(positionNormalized, mDecayDepth, mDecayShape, mRandomEngine);
+	auto decay = GetBufferDecay(positionNormalized, mDecayDepth, mDecayShape, mRandomEngine);
 	if (mDecayMode == kDecayMode_Gain)
 	{
 		mMinibufferDecayGain = decay * decay;
@@ -241,7 +241,22 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 	else
 	{
 		mMinibufferDecayGain = 1.f;
-		mDecayFilterIsLowpass = [this]
+		constexpr float decayMax = 1.f;
+		auto const decayMin = decayMax - std::fabs(mDecayDepth);
+		auto const decayReachedMidpoint = decay <= std::midpoint(decayMin, decayMax);
+		// special decay value mapping fix-up for this mode (bifurcated value range)
+		if ((mDecayMode == kDecayMode_HP_To_LP) && (mDecayShape != kDecayShape_Random))
+		{
+			if (decayReachedMidpoint)  // LP portion
+			{
+				decay = ((decay - decayMin) * 2.f) + decayMin;
+			}
+			else  // HP portion
+			{
+				decay = ((decayMax - decay) * 2.f) + decayMin;
+			}
+		}
+		mDecayFilterIsLowpass = [this, positionNormalized, decayReachedMidpoint]
 		{
 			switch (mDecayMode)
 			{
@@ -249,14 +264,21 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 					return true;
 				case kDecayMode_Highpass:
 					return false;
+				case kDecayMode_HP_To_LP:
+					if (mDecayShape == kDecayShape_Random)
+					{
+						bool const positionReachedMidpoint = positionNormalized >= 0.5f;
+						auto const invertedDepth = std::signbit(mDecayDepth);
+						return invertedDepth ? !positionReachedMidpoint : positionReachedMidpoint;
+					}
+					return decayReachedMidpoint;
 				case kDecayMode_LP_HP_Alternating:
 					return !mDecayFilterIsLowpass;
 				default:
-					assert(false);
+					assert(false);  // TODO C++23: std::unreachable
 					return false;
 			}
 		}();
-		constexpr float decayMax = 1.f;
 		if (decay >= decayMax)
 		{
 			firstFilter.setCoefficients(dfx::IIRFilter::kUnityCoeff);

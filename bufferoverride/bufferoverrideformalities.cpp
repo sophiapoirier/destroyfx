@@ -94,6 +94,7 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparametervaluestring(kDecayMode, kDecayMode_Gain, "gain");
 	setparametervaluestring(kDecayMode, kDecayMode_Lowpass, "low-pass");
 	setparametervaluestring(kDecayMode, kDecayMode_Highpass, "high-pass");
+	setparametervaluestring(kDecayMode, kDecayMode_HP_To_LP, "HP to LP");
 	setparametervaluestring(kDecayMode, kDecayMode_LP_HP_Alternating, "LP/HP ping pong");
 	// decay shape value strings
 	setparametervaluestring(kDecayShape, kDecayShape_Ramp, "ramp");
