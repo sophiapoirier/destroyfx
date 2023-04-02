@@ -47,7 +47,7 @@ DFX_CORE_ENTRY(PLUGINCORE)
 PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   : DfxPlugin(inInstance, NUM_PARAMS, NUM_PRESETS) {
 
-  initparameter_list(P_BUFSIZE, {"wsize", "WSiz"}, 9, 9, BUFFERSIZESSIZE, DfxParam::Unit::Samples);
+  initparameter_list(P_BUFSIZE, {"wsize", "WSiz"}, 9, 9, std::ssize(buffersizes), DfxParam::Unit::Samples);
   initparameter_list(P_SHAPE, {"wshape", "WShp"}, WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
 
   initparameter_list(P_POINTSTYLE, {"points where", "PntWher", "PWhere", "PWhr"}, POINT_EXTNCROSS, POINT_EXTNCROSS, MAX_POINTSTYLES);

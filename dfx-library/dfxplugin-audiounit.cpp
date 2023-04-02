@@ -1472,7 +1472,7 @@ OSStatus DfxPlugin::SaveState(CFPropertyListRef* outData)
 		// create a CF data storage thingy filled with our special data
 		auto const cfData = dfx::MakeUniqueCFType(CFDataCreate(kCFAllocatorDefault, 
 															   reinterpret_cast<const UInt8*>(dfxData.data()), 
-															   static_cast<CFIndex>(dfxData.size())));
+															   std::ssize(dfxData)));
 		if (cfData)
 		{
 			// put the CF data storage thingy into the dfx-data section of the CF dictionary

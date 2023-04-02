@@ -40,17 +40,17 @@ DFX_CORE_ENTRY(WindowingstubDSP);
 PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   : DfxPlugin(inInstance, NUM_PARAMS, NUM_PRESETS) {
 
-  initparameter_indexed(P_BUFSIZE, {"wsize"}, 9, 9, BUFFERSIZESSIZE, kDfxParamUnit_samples);
+  initparameter_indexed(P_BUFSIZE, {"wsize"}, 9, 9, std::ssize(buffersizes), kDfxParamUnit_samples);
   initparameter_indexed(P_SHAPE, {"wshape"}, WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
 
   /* set up values for windowing */
-  for (long i = 0; i < BUFFERSIZESSIZE; i++) {
+  for (size_t i = 0; i < buffersizes.size(); i++) {
     std::array<char, 64> bufstr {};
     if (buffersizes[i] > 1000)
       std::snprintf(bufstr.data(), bufstr.size(), "%ld,%03ld", buffersizes[i] / 1000, buffersizes[i] % 1000);
     else
       std::snprintf(bufstr.data(), bufstr.size(), "%ld", buffersizes[i]);
-    setparametervaluestring(P_BUFSIZE, i, bufstr.data());
+    setparametervaluestring(P_BUFSIZE, static_cast<long>(i), bufstr.data());
   }
 
   setparametervaluestring(P_SHAPE, WINDOW_TRIANGLE, "linear");
@@ -60,7 +60,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   for (int i = NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
     setparametervaluestring(P_SHAPE, i, "???");
 
-  auto const delay_samples = dfx::math::ToUnsigned(buffersizes[getparameter_i(P_BUFSIZE)]);
+  auto const delay_samples = dfx::math::ToUnsigned(buffersizes.at(getparameter_i(P_BUFSIZE)));
   setlatency_samples(delay_samples);
   settailsize_samples(delay_samples);
 
@@ -79,7 +79,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 PLUGINCORE::PLUGINCORE(DfxPlugin& inInstance)
   : DfxPluginCore(inInstance) {
   /* determine the size of the largest window size */
-  constexpr auto maxframe = *std::max_element(std::cbegin(buffersizes), std::cend(buffersizes));
+  constexpr auto maxframe = *std::max_element(buffersizes.cbegin(), buffersizes.cend());
 
   /* add some leeway? */
   in0.assign(maxframe, 0.f);
@@ -91,7 +91,7 @@ PLUGINCORE::PLUGINCORE(DfxPlugin& inInstance)
 
 void PLUGINCORE::reset() {
 
-  framesize = buffersizes[getparameter_i(P_BUFSIZE)];
+  framesize = buffersizes.at(getparameter_i(P_BUFSIZE));
   third = framesize / 2;
   bufsize = third * 3;
 

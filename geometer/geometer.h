@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2022  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2023  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -39,12 +39,10 @@ Geometer, starring the Super Destroy FX Windowing System!
 
 class PLUGIN final : public DfxPlugin {
 public:
-  static constexpr long BUFFERSIZESSIZE = 14;
-
-  static constexpr std::array<int, BUFFERSIZESSIZE> buffersizes {{
+  static constexpr std::array buffersizes {
     4, 8, 16, 32, 64, 128, 256, 512,
     1024, 2048, 4096, 8192, 16384, 32768,
-  }};
+  };
 
   explicit PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 

@@ -1375,7 +1375,7 @@ void TurntablistEditor::HandleParameterChange(dfx::ParameterID inParameterID, fl
 			if (inValue <= 0.0f)
 			{
 				constexpr UniChar minusInfinity[] = { '-', 0x221E, ' ', ' ', 'd', 'B' };
-				universalDisplayText.reset(CFStringCreateWithCharacters(cfAllocator, minusInfinity, std::size(minusInfinity)));
+				universalDisplayText.reset(CFStringCreateWithCharacters(cfAllocator, minusInfinity, std::ssize(minusInfinity)));
 			}
 			else
 			{

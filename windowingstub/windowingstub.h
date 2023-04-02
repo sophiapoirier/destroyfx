@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2022  Tom Murphy 7
+Copyright (C) 2002-2023  Tom Murphy 7
 
 This file is part of Windowingstub.
 
@@ -25,6 +25,7 @@ Windowingstub, starring the Super Destroy FX Windowing System!
 
 #include "dfxplugin.h"
 
+#include <array>
 #include <vector>
 
 /* change these for your plugins */
@@ -32,11 +33,10 @@ Windowingstub, starring the Super Destroy FX Windowing System!
 #define PLUGINCORE WindowingstubDSP
 
 
-static constexpr long buffersizes[] = {
+static constexpr std::array buffersizes {
   4, 8, 16, 32, 64, 128, 256, 512, 
   1024, 2048, 4096, 8192, 16384, 32768, 
 };
-static constexpr long BUFFERSIZESSIZE = std::size(buffersizes);
 
 /* the types of window shapes available for smoothity */
 enum { WINDOW_TRIANGLE, 

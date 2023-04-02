@@ -467,9 +467,8 @@ void BufferOverrideEditor::OpenEditor()
 	pos.set(0, GetHeight() - 64, GetWidth(), 64);
 	emplaceControl<DGNullControl>(this, pos)->setBackgroundColor(backgroundColor);
 
-	auto const appendixY = kHelpDisplayY + (kHelpDisplayHeight * mHelpDisplays.size()) + kHelpDisplayLineSpacing;
+	auto const appendixY = kHelpDisplayY + (kHelpDisplayHeight * std::ssize(mHelpDisplays)) + kHelpDisplayLineSpacing;
 	constexpr int spacingX = 16;
-	auto const valueFont = CreateVstGuiFont(kValueDisplayFontSize, kValueDisplayFont);
 
 	pos.set(spacingX, appendixY, kDryWetSliderWidth, kSliderHeight);
 	auto const minibufferPortionSlider = emplaceControl<DGRangeSlider>(this, kMinibufferPortionRandomMin, kMinibufferPortion, pos, sliderHandleImage, sliderHandleImage, GetBackgroundImage(), DGRangeSlider::PushStyle::Upper);

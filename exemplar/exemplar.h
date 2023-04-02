@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2006-2022  Tom Murphy 7
+Copyright (C) 2006-2023  Tom Murphy 7
 
 This file is part of Exemplar.
 
@@ -24,6 +24,7 @@ DFX Exemplar, starring the Super Destroy FX Windowing System!
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <memory>
 #include <vector>
 
@@ -35,11 +36,10 @@ DFX Exemplar, starring the Super Destroy FX Windowing System!
 /* change these for your plugins */
 #define PLUGIN Exemplar
 
-static constexpr long buffersizes[] = {
+static constexpr std::array buffersizes {
   4, 8, 16, 32, 64, 128, 256, 512, 
   1024, 2048, 4096, 8192, 16384, 32768, 
 };
-static constexpr long BUFFERSIZESSIZE = std::size(buffersizes);
 
 
 // PLUGIN ## DSP
@@ -159,6 +159,6 @@ private:
   dfx::UniqueOpaqueType<rfftw_plan, rfftw_destroy_plan> plan, rplan;
 
   /* result of ffts ( */
-  float fftr[*std::max_element(std::cbegin(buffersizes), std::cend(buffersizes))] {};
+  float fftr[*std::max_element(buffersizes.cbegin(), buffersizes.cend())] {};
 
 };

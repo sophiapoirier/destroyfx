@@ -526,7 +526,7 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 		}
 		else
 		{
-			assert(mInputOutOfPlaceAudioBuffers.front().size() >= static_cast<size_t>(sampleFrames));
+			assert(std::ssize(mInputOutOfPlaceAudioBuffers.front()) >= sampleFrames);
 			std::copy_n(inputs[ch], dfx::math::ToUnsigned(sampleFrames), mInputOutOfPlaceAudioBuffers[ch].data());
 		}
 	}
@@ -548,7 +548,7 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 			{
 				if (ch == 0)
 				{
-					assert(mAsymmetricalInputAudioBuffer.size() >= static_cast<size_t>(sampleFrames));
+					assert(std::ssize(mAsymmetricalInputAudioBuffer) >= sampleFrames);
 					std::copy_n(mInputAudioStreams[ch], dfx::math::ToUnsigned(sampleFrames), mAsymmetricalInputAudioBuffer.data());
 				}
 				inputAudio = std::span(mAsymmetricalInputAudioBuffer).subspan(0, dfx::math::ToUnsigned(sampleFrames));

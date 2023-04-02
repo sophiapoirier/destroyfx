@@ -356,7 +356,7 @@ OSStatus RMSBuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope 
 				if (parameterValue <= mMinMeterValueDb)
 				{
 					constexpr UniChar minusInfinity[] = { '-', 0x221E };
-					return CFStringCreateWithCharacters(kCFAllocatorDefault, minusInfinity, std::size(minusInfinity));
+					return CFStringCreateWithCharacters(kCFAllocatorDefault, minusInfinity, std::ssize(minusInfinity));
 				}
 				return nullptr;
 			}();
