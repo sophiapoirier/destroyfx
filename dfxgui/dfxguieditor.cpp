@@ -37,6 +37,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <numeric>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 
 #include "dfxguibutton.h"
 #include "dfxguidialog.h"

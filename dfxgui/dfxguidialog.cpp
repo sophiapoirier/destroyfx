@@ -27,6 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <cmath>
 #include <cstring>
 #include <optional>
+#include <utility>
 #include <vector>
 
 #include "dfxplugin-base.h"
