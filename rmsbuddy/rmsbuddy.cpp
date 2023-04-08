@@ -360,6 +360,7 @@ OSStatus RMSBuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope 
 				}
 				return nullptr;
 			}();
+			std::memcpy(outData, &parameterStringFromValue, sizeof(parameterStringFromValue));
 			return noErr;
 		}
 
