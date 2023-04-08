@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2022  Sophia Poirier
+	Copyright (C) 2003-2023  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -218,7 +218,7 @@ void CFAUPresetArrayCallBacks_Init(CFArrayCallBacks* outArrayCallBacks)
 #ifdef __GNUC__
 CFArrayCallBacks const kCFAUPresetArrayCallBacks;
 static void kCFAUPresetArrayCallBacks_constructor(void) __attribute__((constructor));
-static void kCFAUPresetArrayCallBacks_constructor()
+static void kCFAUPresetArrayCallBacks_constructor(void)
 {
 	CFAUPresetArrayCallBacks_Init((CFArrayCallBacks*)&kCFAUPresetArrayCallBacks);
 }
@@ -452,7 +452,7 @@ void CFAUOtherPluginDescArrayCallBacks_Init(CFArrayCallBacks* outArrayCallBacks)
 #ifdef __GNUC__
 CFArrayCallBacks const kCFAUOtherPluginDescArrayCallBacks;
 static void kCFAUOtherPluginDescArrayCallBacks_constructor(void) __attribute__((constructor));
-static void kCFAUOtherPluginDescArrayCallBacks_constructor()
+static void kCFAUOtherPluginDescArrayCallBacks_constructor(void)
 {
 	CFAUOtherPluginDescArrayCallBacks_Init((CFArrayCallBacks*)&kCFAUOtherPluginDescArrayCallBacks);
 }
