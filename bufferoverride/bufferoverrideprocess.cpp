@@ -289,8 +289,7 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 		}
 		else
 		{
-			auto const cutoff = DfxParam::expand(decayMax - decay, 20., 20'000., DfxParam::Curve::Log);
-			firstFilter.setHighpassCoefficients(cutoff);
+			firstFilter.setHighpassGateCoefficients(decay);
 		}
 	}
 	auto const filterCoefficients = firstFilter.getCoefficients();

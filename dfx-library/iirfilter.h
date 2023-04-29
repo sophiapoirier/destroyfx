@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -83,6 +83,7 @@ public:
 	Coefficients const& setLowpassCoefficients(double inCutoffFrequency);
 	Coefficients const& setLowpassGateCoefficients(double inLevel);
 	Coefficients const& setHighpassCoefficients(double inCutoffFrequency);
+	Coefficients const& setHighpassGateCoefficients(double inLevel);
 	Coefficients const& setBandpassCoefficients(double inCenterFrequency, double inQ);
 	void copyCoefficients(IIRFilter const& inSourceFilter) noexcept;
 	auto getCoefficients() const noexcept { return mCoeff; }

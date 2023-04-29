@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -39,6 +39,8 @@ Welcome to our Infinite Impulse Response filter.
 //------------------------------------------------------------------------
 constexpr double kDefaultQ_LP_HP = std::numbers::sqrt2_v<double> / 2.; 
 constexpr double kUnityGain = 1.;
+constexpr double kGateFrequencyMin = 20.;
+constexpr double kGateFrequencyMax = 20'000.;
 
 //------------------------------------------------------------------------
 struct PreCoeff
@@ -242,32 +244,37 @@ dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setLowpassCoefficients(doubl
 }
 
 //------------------------------------------------------------------------
+static void ApplyGateFadeOut(dfx::IIRFilter::Coefficients& ioCoefficients, double inLevel)
+{
+	// level below which the low-pass or high-pass gate begins gain-fading filter coefficients
+	constexpr double levelFadeOutThreshold = 0.1;
+	constexpr double levelFadeOutThresholdInverse = 1. / levelFadeOutThreshold;
+
+	if (inLevel < levelFadeOutThreshold)
+	{
+		auto const fadeGain = static_cast<float>(inLevel * levelFadeOutThresholdInverse);
+		ioCoefficients.mIn *= fadeGain;
+		ioCoefficients.mPrevIn *= fadeGain;
+		ioCoefficients.mPrevPrevIn *= fadeGain;
+	}
+}
+
+//------------------------------------------------------------------------
 dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setLowpassGateCoefficients(double inLevel)
 {
 	assert(inLevel >= 0.);
 	assert(inLevel <= 1.);
 
-	constexpr double minFreq = 20.;
-	constexpr double maxFreq = 20'000.;
-	auto const cutoffFreq = DfxParam::expand(inLevel, minFreq, maxFreq, DfxParam::Curve::Log);
+	auto const cutoffFrequency = DfxParam::expand(inLevel, kGateFrequencyMin, kGateFrequencyMax, DfxParam::Curve::Log);
 	auto const nyquist = mSampleRate * 0.5;
-	if (cutoffFreq >= std::min(nyquist, maxFreq))
+	if (cutoffFrequency >= std::min(nyquist, kGateFrequencyMax))
 	{
 		return kUnityCoeff;
 	}
 
-	setLowpassCoefficients(cutoffFreq);
+	setLowpassCoefficients(cutoffFrequency);
+	ApplyGateFadeOut(mCoeff, inLevel);
 
-	// level below which the low-pass gate begins gain-fading filter coefficients
-	constexpr double levelFadeOutThreshold = 0.1;
-	constexpr double levelFadeOutThresholdInverse = 1. / levelFadeOutThreshold;
-	if (inLevel < levelFadeOutThreshold)
-	{
-		auto const fadeGain = static_cast<float>(inLevel * levelFadeOutThresholdInverse);
-		mCoeff.mIn *= fadeGain;
-		mCoeff.mPrevIn *= fadeGain;
-		mCoeff.mPrevPrevIn *= fadeGain;
-	}
 	return mCoeff;
 }
 
@@ -276,6 +283,25 @@ dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setHighpassCoefficients(doub
 {
 	assert(inCutoffFrequency <= mSampleRate);
 	return setCoefficients(FilterType::Highpass, inCutoffFrequency, kDefaultQ_LP_HP);
+}
+
+//------------------------------------------------------------------------
+dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setHighpassGateCoefficients(double inLevel)
+{
+	assert(inLevel >= 0.);
+	assert(inLevel <= 1.);
+
+	if (inLevel >= 1.)
+	{
+		return kUnityCoeff;
+	}
+
+	auto const cutoffFrequency = DfxParam::expand(1. - inLevel, kGateFrequencyMin, kGateFrequencyMax, DfxParam::Curve::Log);
+	auto const nyquist = mSampleRate * 0.5;
+	setHighpassCoefficients(std::min(cutoffFrequency, nyquist));
+	ApplyGateFadeOut(mCoeff, inLevel);
+
+	return mCoeff;
 }
 
 //------------------------------------------------------------------------
