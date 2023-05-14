@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -20,6 +20,8 @@ To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "midigater.h"
+
+#include <algorithm>
 
 #include "dfxmath.h"
 #include "dfxmisc.h"
@@ -182,7 +184,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 				float postFilterAmp = 1.f;
 				for (size_t sampleIndex = currentBlockPosition; sampleIndex < (numFramesToProcess + currentBlockPosition); sampleIndex++)
 				{
-					float noteAmp = getmidistate().getNoteState(noteCount).mNoteAmp.getValue();  // key velocity
+					float noteAmp = getmidistate().getNoteAmplitude(noteCount);  // key velocity
 					noteAmp *= 1.0f - mFloor.getValue();  // maximum note amplitude is scaled by what is above the floor
 					if (mGateMode == kGateMode_Lowpass)
 					{
