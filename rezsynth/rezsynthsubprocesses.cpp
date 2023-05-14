@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Rez Synth.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "rezsynth.h"
@@ -180,7 +180,7 @@ void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outA
 	// here we do the resonant filter equation using our filter coefficients, and related stuff
 	for (size_t sampleIndex = sampleFrameOffset; sampleIndex < (sampleFrames + sampleFrameOffset); sampleIndex++)
 	{
-		auto const noteAmp = getmidistate().getNoteState(currentNote).mNoteAmp.getValue();
+		auto const noteAmp = getmidistate().getNoteAmplitude(currentNote);
 		auto const ampEvener = mAmpEvener[currentNote].getValue();
 		// see whether attack or release are active and fetch the output scalar
 		if (mFadeType == kCurveType_Lowpass)

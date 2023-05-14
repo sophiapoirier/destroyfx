@@ -189,12 +189,6 @@ DfxMidi::MusicNote& DfxMidi::getNoteStateMutable(int inMidiNote)
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::setNoteState(int inMidiNote, MusicNote const& inNoteState)
-{
-	getNoteStateMutable(inMidiNote) = inNoteState;
-}
-
-//-----------------------------------------------------------------------------
 // this function inserts a new note into the beginning of the active notes queue
 void DfxMidi::insertNote(int inMidiNote)
 {
@@ -457,6 +451,12 @@ double DfxMidi::getNoteFrequency(int inNote) const
 		return mNoteFrequencyTable.at(dfx::math::ToIndex(inNote));
 	}
 	return 0.0;
+}
+
+//-----------------------------------------------------------------------------
+float DfxMidi::getNoteAmplitude(int inNote) const
+{
+	return getNoteState(inNote).mNoteAmp.getValue();
 }
 
 //-------------------------------------------------------------------------

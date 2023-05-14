@@ -136,41 +136,6 @@ public:
 		kCC_PolyModeOn = 0x7F  // 0 only
 	};
 
-	//----------------------------------------------------------------------------- 
-	// this holds MIDI event information
-	struct Event
-	{
-		int mStatus = 0;  // the event status MIDI byte
-		int mByte1 = 0;  // the first MIDI data byte
-		int mByte2 = 0;  // the second MIDI data byte
-		int mChannel = 0;  // the MIDI channel
-		size_t mOffsetFrames = 0;  // the delta offset (the sample position in the current block where the event occurs)
-	};
-
-	//-----------------------------------------------------------------------------
-	// this holds information for each MIDI note
-	struct MusicNote
-	{
-		int mVelocity = 0;  // note velocity (7-bit MIDI value)
-		dfx::SmoothedValue<float> mNoteAmp {0.0};  // the gain for the note, scaled with velocity, curve, and influence
-		DfxEnvelope mEnvelope;
-	};
-
-	struct MusicNoteAudio
-	{
-		MusicNoteAudio() = default;
-		~MusicNoteAudio() = default;
-		// deleting copy operations to prevent accidental dynamic allocation in realtime context
-		MusicNoteAudio(MusicNoteAudio const&) = delete;
-		MusicNoteAudio& operator=(MusicNoteAudio const&) = delete;
-		MusicNoteAudio(MusicNoteAudio&&) = default;
-		MusicNoteAudio& operator=(MusicNoteAudio&&) = default;
-
-		std::vector<float> mLastOutValue;  // capture the most recent output value of each audio channel for smoothing, if necessary
-		size_t mSmoothSamples = 0;  // counter for quickly fading cut-off notes, for smoothity
-		std::vector<std::vector<float>> mTails;  // per-channel little buffer of output samples for smoothing a cut-off note
-	};
-
 	DfxMidi();
 
 	void reset();  // resets the variables
@@ -211,9 +176,6 @@ public:
 	}
 
 	bool isNoteActive(int inMidiNote) const;
-	MusicNote const& getNoteState(int inMidiNote) const;
-	// XXX TODO: this is a hack just for Rez Synth, maybe should rethink
-	void setNoteState(int inMidiNote, MusicNote const& inNoteState);
 
 	// manage the ordered queue of active MIDI notes
 	void insertNote(int inMidiNote);
@@ -236,6 +198,8 @@ public:
 	}
 
 	double getNoteFrequency(int inNote) const;
+	// the gain for the note, scaled with velocity, curve, and influence
+	float getNoteAmplitude(int inNote) const;
 
 	auto getPitchBend() const noexcept
 	{
@@ -270,10 +234,48 @@ private:
 	static constexpr size_t kEventQueueSize = 12000;
 	static constexpr int kInvalidValue = -1;  // sentinel for any MIDI value type
 
+	//-----------------------------------------------------------------------------
+	// this holds MIDI event information
+	struct Event
+	{
+		int mStatus = 0;  // the event status MIDI byte
+		int mByte1 = 0;  // the first MIDI data byte
+		int mByte2 = 0;  // the second MIDI data byte
+		int mChannel = 0;  // the MIDI channel
+		size_t mOffsetFrames = 0;  // the delta offset (the sample position in the current block where the event occurs)
+		size_t mOrderOfArrival = 0;  // the sequence within the current block in which the event arrived (hack to achieve stable sort)
+	};
+
+	//-----------------------------------------------------------------------------
+	// this holds information for each MIDI note
+	struct MusicNote
+	{
+		int mVelocity = 0;  // note velocity (7-bit MIDI value)
+		dfx::SmoothedValue<float> mNoteAmp {0.0};  // the gain for the note, scaled with velocity, curve, and influence
+		DfxEnvelope mEnvelope;
+	};
+
+	//-----------------------------------------------------------------------------
+	struct MusicNoteAudio
+	{
+		MusicNoteAudio() = default;
+		~MusicNoteAudio() = default;
+		// deleting copy operations to prevent accidental dynamic allocation in realtime context
+		MusicNoteAudio(MusicNoteAudio const&) = delete;
+		MusicNoteAudio& operator=(MusicNoteAudio const&) = delete;
+		MusicNoteAudio(MusicNoteAudio&&) = default;
+		MusicNoteAudio& operator=(MusicNoteAudio&&) = default;
+
+		std::vector<float> mLastOutValue;  // capture the most recent output value of each audio channel for smoothing, if necessary
+		size_t mSmoothSamples = 0;  // counter for quickly fading cut-off notes, for smoothity
+		std::vector<std::vector<float>> mTails;  // per-channel little buffer of output samples for smoothing a cut-off note
+	};
+
 	void fillFrequencyTable();
 
 	bool incNumEvents();  // increment the block events counter, safely
 
+	MusicNote const& getNoteState(int inMidiNote) const;
 	MusicNote& getNoteStateMutable(int inMidiNote);
 	void turnOffNote(int inMidiNote);
 
