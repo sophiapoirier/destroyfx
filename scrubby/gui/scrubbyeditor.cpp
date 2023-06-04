@@ -766,7 +766,8 @@ Then CCs will not affect any parameters and you can start over if you want.)DELI
 	constexpr auto notesHelpText = R"DELIM(notes:  - only for robot mode with pitch constraint turned on -
 You can choose which semitone steps within an octave are allowable when
 pitch constraint mode is on.  There are preset and transposition buttons, too.)DELIM";
-	if (std::find(mNotesButtons.cbegin(), mNotesButtons.cend(), inControl) != mNotesButtons.cend())
+	// TODO C++23: std::ranges::contains
+	if (std::ranges::find(mNotesButtons, inControl) != mNotesButtons.cend())
 	{
 		return notesHelpText;
 	}

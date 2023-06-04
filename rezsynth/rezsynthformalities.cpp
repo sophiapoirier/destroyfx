@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -98,7 +98,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	registerSmoothedAudioValue(mBetweenGain);
 	registerSmoothedAudioValue(mDryGain);
 	registerSmoothedAudioValue(mWetGain);
-	std::for_each(mAmpEvener.begin(), mAmpEvener.end(), [this](auto& value){ registerSmoothedAudioValue(value); });
+	std::ranges::for_each(mAmpEvener, [this](auto& value){ registerSmoothedAudioValue(value); });
 
 	for (size_t noteIndex = 0; noteIndex < mBaseFreq.size(); noteIndex++)
 	{
@@ -106,12 +106,12 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 		auto const noteToQuery = (static_cast<int>(noteIndex) == DfxMidi::kLegatoVoiceNoteIndex) ? (DfxMidi::kNumNotes / 2) : static_cast<int>(noteIndex);
 		mBaseFreq[noteIndex].setValueNow(getmidistate().getNoteFrequency(noteToQuery));
 
-		std::for_each(mBandCenterFreq[noteIndex].begin(), mBandCenterFreq[noteIndex].end(), [this, noteIndex](auto& value)
+		std::ranges::for_each(mBandCenterFreq[noteIndex], [this, noteIndex](auto& value)
 		{
 			registerSmoothedAudioValue(value);
 			value.setValueNow(mBaseFreq[noteIndex].getValue());
 		});
-		std::for_each(mBandBandwidth[noteIndex].begin(), mBandBandwidth[noteIndex].end(), [this, noteIndex](auto& value)
+		std::ranges::for_each(mBandBandwidth[noteIndex], [this, noteIndex](auto& value)
 		{
 			registerSmoothedAudioValue(value);
 			value.setValueNow(getBandwidthForFreq(mBaseFreq[noteIndex].getValue()));
@@ -139,8 +139,7 @@ void RezSynth::initialize()
 	mPrevInValue.assign(numChannels, {});
 	mPrevPrevInValue.assign(numChannels, {});
 
-	std::fill(mLowpassGateFilters.begin(), mLowpassGateFilters.end(),
-			  decltype(mLowpassGateFilters)::value_type(numChannels, dfx::IIRFilter(getsamplerate())));
+	std::ranges::fill(mLowpassGateFilters, decltype(mLowpassGateFilters)::value_type(numChannels, dfx::IIRFilter(getsamplerate())));
 }
 
 //-----------------------------------------------------------------------------------------
@@ -151,7 +150,7 @@ void RezSynth::cleanup()
 	mPrevInValue = {};
 	mPrevPrevInValue = {};
 
-	std::fill(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), decltype(mLowpassGateFilters)::value_type{});
+	std::ranges::fill(mLowpassGateFilters, decltype(mLowpassGateFilters)::value_type{});
 }
 
 //-----------------------------------------------------------------------------------------
@@ -287,8 +286,8 @@ void RezSynth::clearFilterOutputForBands(int bandIndexBegin)
 //-----------------------------------------------------------------------------------------
 void RezSynth::clearLowpassGateFilters()
 {
-	std::for_each(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), [](auto& channelFilters)
+	std::ranges::for_each(mLowpassGateFilters, [](auto& channelFilters)
 	{
-		std::for_each(channelFilters.begin(), channelFilters.end(), [](auto& filter){ filter.reset(); });
+		std::ranges::for_each(channelFilters, [](auto& filter){ filter.reset(); });
 	});
 }

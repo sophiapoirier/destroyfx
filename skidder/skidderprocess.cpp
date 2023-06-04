@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2022  Sophia Poirier
+Copyright (C) 2000-2023  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -288,8 +288,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 	auto const numOutputs = getnumoutputs();
 	float const channelScalar = 1.0f / static_cast<float>(numOutputs);
 	auto const filterSmoothingStride = dfx::math::GetFrequencyBasedSmoothingStride(getsamplerate());
-	assert(std::all_of(mEffectualInputAudioBuffers.cbegin(), mEffectualInputAudioBuffers.cend(),
-					   [inNumFrames](auto const& buffer){ return buffer.size() >= inNumFrames; }));
+	assert(std::ranges::all_of(mEffectualInputAudioBuffers, [inNumFrames](auto const& buffer){ return buffer.size() >= inNumFrames; }));
 
 	auto const entryCrossoverFrequency = mCrossoverFrequency_gen;
 	mCrossover->setFrequency(getCrossoverFrequency());
@@ -341,7 +340,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 			// by repeating the mono-input to multiple (faked) input channels
 			// (copying to an intermediate input buffer in case processing in-place)
 			std::copy_n(mEffectualInputAudioBuffers[ch].cbegin(), inNumFrames, mAsymmetricalInputAudioBuffer.begin());
-			std::fill(mInputAudio.begin(), mInputAudio.end(), mAsymmetricalInputAudioBuffer.data());
+			std::ranges::fill(mInputAudio, mAsymmetricalInputAudioBuffer.data());
 		}
 	}
 

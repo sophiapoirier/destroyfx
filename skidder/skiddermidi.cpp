@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2022  Sophia Poirier
+Copyright (C) 2000-2023  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -189,7 +189,7 @@ void Skidder::noteOff()
 //-----------------------------------------------------------------------------
 bool Skidder::isAnyNoteOn() const
 {
-	return std::any_of(mNoteTable.cbegin(), mNoteTable.cend(), [](auto const& velocity){ return (velocity > 0); });
+	return std::ranges::any_of(mNoteTable, [](auto const& velocity){ return (velocity > 0); });
 }
 
 

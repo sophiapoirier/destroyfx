@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -159,7 +159,7 @@ void Scrubby::initialize()
 	mNeedResync.assign(numChannels, false);
 
 	mHighpassFilters.assign(numChannels, {});
-	std::for_each(mHighpassFilters.begin(), mHighpassFilters.end(), [this](auto& filter)
+	std::ranges::for_each(mHighpassFilters, [this](auto& filter)
 	{
 		filter.setSampleRate(getsamplerate());
 		filter.setHighpassCoefficients(kHighpassFilterCutoff);
@@ -187,21 +187,22 @@ void Scrubby::reset()
 	// clear out the buffers
 	for (auto& buffer : mAudioBuffers)
 	{
-		std::fill(buffer.begin(), buffer.end(), 0.0f);
+		std::ranges::fill(buffer, 0.f);
 	}
-	std::fill(mReadPos.begin(), mReadPos.end(), 0.001);
-	std::fill(mReadStep.begin(), mReadStep.end(), 1.0);
+	std::ranges::fill(mReadPos, 0.001);
+	std::ranges::fill(mReadStep, 1.);
 #if USE_LINEAR_ACCELERATION
-	std::fill(mPortamentoStep.begin(), mPortamentoStep.end(), 0.0);
+	std::ranges::fill(mPortamentoStep, 0.);
 #else
-	std::fill(mPortamentoStep.begin(), mPortamentoStep.end(), 1.0);
+	std::ranges::fill(mPortamentoStep, 1.);
 #endif
-	std::fill(mMoveCount.begin(), mMoveCount.end(), 0);
-	std::fill(mSeekCount.begin(), mSeekCount.end(), 0);
+	std::ranges::fill(mMoveCount, 0);
+	std::ranges::fill(mSeekCount, 0);
 	// some hosts may call reset when restarting playback
+	// TODO: std::ranges::fill once bug with std::vector<bool> is resolved
 	std::fill(mNeedResync.begin(), mNeedResync.end(), true);
 
-	std::for_each(mHighpassFilters.begin(), mHighpassFilters.end(), [](auto& filter){ filter.reset(); });
+	std::ranges::for_each(mHighpassFilters, [](auto& filter){ filter.reset(); });
 
 	// reset the position tracker
 	mWritePos = 0;
@@ -444,6 +445,7 @@ void Scrubby::processparameters()
 	// or if tempo sync mode has just been switched on
 	if (getparameterchanged(kSeekRate_Sync) || (getparameterchanged(kTempoSync) && mTempoSync))
 	{
+		// TODO: std::ranges::fill once bug with std::vector<bool> is resolved
 		std::fill(mNeedResync.begin(), mNeedResync.end(), true);
 	}
 
@@ -456,6 +458,7 @@ void Scrubby::processparameters()
 	auto const entryUseSeekRateRandMin = std::exchange(mUseSeekRateRandMin, mTempoSync ? (seekRateRandMinSync < mSeekRateSync) : (seekRateRandMinHz < mSeekRateHz));
 	if (entryUseSeekRateRandMin && !mUseSeekRateRandMin && mTempoSync)
 	{
+		// TODO: std::ranges::fill once bug with std::vector<bool> is resolved
 		std::fill(mNeedResync.begin(), mNeedResync.end(), true);
 	}
 	mUseSeekDurRandMin = (mSeekDurRandMin < mSeekDur);

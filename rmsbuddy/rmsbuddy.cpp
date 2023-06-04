@@ -544,8 +544,8 @@ void RMSBuddy::SetMeter(UInt32 inChannelIndex, AudioUnitParameterID inID, AudioU
 void RMSBuddy::ResetRMS()
 {
 	mTotalSamples = 0;
-	std::fill(mAverageRMS.begin(), mAverageRMS.end(), 0.0);
-	std::fill(mTotalSquaredCollection.begin(), mTotalSquaredCollection.end(), 0.0);
+	std::ranges::fill(mAverageRMS, 0.);
+	std::ranges::fill(mTotalSquaredCollection, 0.);
 	for (UInt32 ch = 0; ch < mChannelCount; ch++)
 	{
 		SetMeter(ch, kChannelParameter_AverageRMS, mAverageRMS[0]);
@@ -556,7 +556,7 @@ void RMSBuddy::ResetRMS()
 // reset the absolute peak-related values and restart calculation of absolute peak
 void RMSBuddy::ResetPeak()
 {
-	std::fill(mAbsolutePeak.begin(), mAbsolutePeak.end(), 0.0f);
+	std::ranges::fill(mAbsolutePeak, 0.f);
 	for (UInt32 ch = 0; ch < mChannelCount; ch++)
 	{
 		SetMeter(ch, kChannelParameter_AbsolutePeak, mAbsolutePeak[ch]);
@@ -568,6 +568,6 @@ void RMSBuddy::ResetPeak()
 void RMSBuddy::RestartAnalysisWindow()
 {
 	mAnalysisWindowSampleCounter = 0;
-	std::fill(mContinualRMS.begin(), mContinualRMS.end(), 0.0);
-	std::fill(mContinualPeak.begin(), mContinualPeak.end(), 0.0f);
+	std::ranges::fill(mContinualRMS, 0.);
+	std::ranges::fill(mContinualPeak, 0.f);
 }

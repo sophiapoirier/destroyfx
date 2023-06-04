@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -91,10 +91,10 @@ void EQSync::reset()
 	mSmoothSamples = 1;
 	mSmoothDur = 1;
 
-	std::fill(mPrevIn.begin(), mPrevIn.end(), 0.0f);
-	std::fill(mPrevPrevIn.begin(), mPrevPrevIn.end(), 0.0f);
-	std::fill(mPrevOut.begin(), mPrevOut.end(), 0.0f);
-	std::fill(mPrevPrevOut.begin(), mPrevPrevOut.end(), 0.0f);
+	std::ranges::fill(mPrevIn, 0.f);
+	std::ranges::fill(mPrevPrevIn, 0.f);
+	std::ranges::fill(mPrevOut, 0.f);
+	std::ranges::fill(mPrevPrevOut, 0.f);
 
 	mPrevA0 = mPrevA1 = mPrevA2 = mPrevB1 = mPrevB2 = 0.0f;
 	mCurA0 = mCurA1 = mCurA2 = mCurB1 = mCurB2 = 0.0f;

@@ -164,6 +164,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   auto const addparameterrangegroup = [this](auto name, dfx::ParameterID parameterIndexBegin, dfx::ParameterID parameterIndexEnd) {
     assert(parameterIndexBegin < parameterIndexEnd);
     std::vector<dfx::ParameterID> parameters(parameterIndexEnd - parameterIndexBegin, dfx::kParameterID_Invalid);
+    // TODO C++23: std::ranges::iota
     std::iota(parameters.begin(), parameters.end(), parameterIndexBegin);
     addparametergroup(name, parameters);
   };
@@ -350,7 +351,7 @@ PLUGINCORE::PLUGINCORE(DfxPlugin& inDfxPlugin)
     geometer(dynamic_cast<PLUGIN&>(inDfxPlugin))
 {
   /* determine the size of the largest window size */
-  constexpr auto maxframe = *std::max_element(PLUGIN::buffersizes.cbegin(), PLUGIN::buffersizes.cend());
+  constexpr auto maxframe = *std::ranges::max_element(PLUGIN::buffersizes);
   static_assert(maxframe >= GeometerViewData::samples);
 
   /* add some leeway? */
@@ -1252,9 +1253,9 @@ void PLUGINCORE::updatewindowsize()
   /* set up buffers. prevmix and first frame of output are always
      filled with zeros. */
 
-  std::fill(prevmix.begin(), prevmix.end(), 0.0f);
+  std::ranges::fill(prevmix, 0.f);
 
-  std::fill(out0.begin(), out0.end(), 0.0f);
+  std::ranges::fill(out0, 0.f);
 
   /* start input at beginning. Output has a frame of silence. */
   insize = 0;

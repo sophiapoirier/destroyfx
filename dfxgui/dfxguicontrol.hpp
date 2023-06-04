@@ -320,7 +320,7 @@ void DGMultiControl<T>::setDirty_all(bool inValue)
 template <std::derived_from<VSTGUI::CControl> T>
 bool DGMultiControl<T>::isDirty() const
 {
-	return DGControl<T>::isDirty() || std::any_of(mChildren.cbegin(), mChildren.cend(), [](auto const& child){ return child->asCControl()->isDirty(); });
+	return DGControl<T>::isDirty() || std::ranges::any_of(mChildren, [](auto const& child){ return child->asCControl()->isDirty(); });
 }
 
 //-----------------------------------------------------------------------------
@@ -343,7 +343,7 @@ void DGMultiControl<T>::endEdit_all()
 template <std::derived_from<VSTGUI::CControl> T>
 bool DGMultiControl<T>::isEditing_any() const
 {
-	return DGControl<T>::isEditing() || std::any_of(mChildren.cbegin(), mChildren.cend(), [](auto const& child){ return child->asCControl()->isEditing(); });
+	return DGControl<T>::isEditing() || std::ranges::any_of(mChildren, [](auto const& child){ return child->asCControl()->isEditing(); });
 }
 
 //-----------------------------------------------------------------------------
@@ -354,8 +354,7 @@ IDGControl* DGMultiControl<T>::getControlByParameterID(dfx::ParameterID inParame
 	{
 		return this;
 	}
-	auto const foundChild = std::find_if(mChildren.cbegin(), mChildren.cend(), 
-										 [inParameterID](auto&& child){ return child->getParameterID() == inParameterID; });
+	auto const foundChild = std::ranges::find_if(mChildren, [inParameterID](auto&& child){ return child->getParameterID() == inParameterID; });
 	return (foundChild != mChildren.cend()) ? *foundChild : nullptr;
 }
 
@@ -381,7 +380,7 @@ template <std::derived_from<VSTGUI::CControl> T>
 void DGMultiControl<T>::addChildren(std::vector<dfx::ParameterID> const& inParameterIDs)
 {
 	assert(std::unordered_set(inParameterIDs.cbegin(), inParameterIDs.cend()).size() == inParameterIDs.size());
-	std::for_each(inParameterIDs.cbegin(), inParameterIDs.cend(), [this](auto parameterID){ addChild(parameterID); });
+	std::ranges::for_each(inParameterIDs, [this](auto parameterID){ addChild(parameterID); });
 }
 
 //-----------------------------------------------------------------------------

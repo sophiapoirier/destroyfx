@@ -62,14 +62,14 @@ MIDIGater::MIDIGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //-----------------------------------------------------------------------------------------
 void MIDIGater::initialize()
 {
-	std::fill(mLowpassGateFilters.begin(), mLowpassGateFilters.end(),
-			  decltype(mLowpassGateFilters)::value_type(getnumoutputs(), dfx::IIRFilter(getsamplerate())));
+	std::ranges::fill(mLowpassGateFilters,
+					  decltype(mLowpassGateFilters)::value_type(getnumoutputs(), dfx::IIRFilter(getsamplerate())));
 }
 
 //-----------------------------------------------------------------------------------------
 void MIDIGater::cleanup()
 {
-	std::fill(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), decltype(mLowpassGateFilters)::value_type{});
+	std::ranges::fill(mLowpassGateFilters, decltype(mLowpassGateFilters)::value_type{});
 }
 
 //-----------------------------------------------------------------------------------------
@@ -81,9 +81,9 @@ void MIDIGater::reset()
 //-----------------------------------------------------------------------------------------
 void MIDIGater::resetFilters()
 {
-	std::for_each(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), [](auto& channelFilters)
+	std::ranges::for_each(mLowpassGateFilters, [](auto& channelFilters)
 	{
-		std::for_each(channelFilters.begin(), channelFilters.end(), [](auto& filter){ filter.reset(); });
+		std::ranges::for_each(channelFilters, [](auto& filter){ filter.reset(); });
 	});
 }
 
@@ -192,7 +192,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 						{
 							dfx::IIRFilter::Coefficients filterCoef;
 							std::tie(filterCoef, postFilterAmp) = getmidistate().processEnvelopeLowpassGate(noteCount);
-							std::for_each(channelFilters.begin(), channelFilters.end(), [&filterCoef](auto& filter)
+							std::ranges::for_each(channelFilters, [&filterCoef](auto& filter)
 							{
 								filter.setCoefficients(filterCoef);
 							});
@@ -223,7 +223,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 			// could be because it already was inactive, or because we just completed articulation of the note
 			if (!getmidistate().isNoteActive(noteCount))
 			{
-				std::for_each(channelFilters.begin(), channelFilters.end(), [](auto& filter){ filter.reset(); });
+				std::ranges::for_each(channelFilters, [](auto& filter){ filter.reset(); });
 			}
 		}  // end of notes loop
 

@@ -42,10 +42,10 @@ void ReverbModel::clear()
     {
         item.clear();
     };
-    std::for_each(mCombFiltersL.begin(), mCombFiltersL.end(), clearItem);
-    std::for_each(mCombFiltersR.begin(), mCombFiltersR.end(), clearItem);
-    std::for_each(mAllPassFiltersL.begin(), mAllPassFiltersL.end(), clearItem);
-    std::for_each(mAllPassFiltersR.begin(), mAllPassFiltersR.end(), clearItem);
+    std::ranges::for_each(mCombFiltersL, clearItem);
+    std::ranges::for_each(mCombFiltersR, clearItem);
+    std::ranges::for_each(mAllPassFiltersL, clearItem);
+    std::ranges::for_each(mAllPassFiltersR, clearItem);
 }
 
 

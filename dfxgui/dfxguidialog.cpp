@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include "dfxguidialog.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstring>
@@ -444,7 +445,7 @@ bool DGDialog::attached(VSTGUI::CView* inParent)
 		// enabling auto-height annoyingly only works after the view is attached
 		std::vector<VSTGUI::CMultiLineTextLabel*> multiLineLabels;
 		getChildViewsOfType<VSTGUI::CMultiLineTextLabel>(multiLineLabels);
-		std::for_each(multiLineLabels.begin(), multiLineLabels.end(), [](auto label){ label->setAutoHeight(true); });
+		std::ranges::for_each(multiLineLabels, [](auto label){ label->setAutoHeight(true); });
 	}
 
 	return result;
@@ -699,7 +700,7 @@ bool DGTextScrollDialog::attached(VSTGUI::CView* inParent)
 		// enabling auto-height annoyingly only works after the view is attached
 		std::vector<VSTGUI::CMultiLineTextLabel*> multiLineLabels;
 		getChildViewsOfType<VSTGUI::CMultiLineTextLabel>(multiLineLabels, true);
-		std::for_each(multiLineLabels.begin(), multiLineLabels.end(), [](auto label){ label->setAutoHeight(true); });
+		std::ranges::for_each(multiLineLabels, [](auto label){ label->setAutoHeight(true); });
 	}
 
 	return result;

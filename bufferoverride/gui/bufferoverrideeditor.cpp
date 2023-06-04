@@ -581,7 +581,7 @@ void BufferOverrideEditor::parameterChanged(dfx::ParameterID inParameterID)
 //-----------------------------------------------------------------------------
 void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnderMouse)
 {
-	if (std::any_of(mHelpDisplays.cbegin(), mHelpDisplays.cend(), std::bind_front(std::equal_to<>{}, nullptr)))
+	if (std::ranges::any_of(mHelpDisplays, std::bind_front(std::equal_to<>{}, nullptr)))
 	{
 		return;
 	}

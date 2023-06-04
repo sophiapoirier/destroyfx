@@ -25,6 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
+#include <functional>
 #include <numbers>
 
 #include "dfxmath.h"
@@ -119,17 +120,20 @@ void Scrubby::checkTempoSyncStuff()
 			// check if audio playback has just restarted and reset buffer stuff if it has (for measure sync)
 			if (gettimeinfo().mPlaybackChanged)
 			{
+				// TODO: std::ranges::fill once bug with std::vector<bool> is resolved
 				std::fill(mNeedResync.begin(), mNeedResync.end(), true);
 			}
 		}
 		else  // get the tempo from the user parameter
 		{
 			mCurrentTempoBPS = mUserTempo / 60.0;
+			// TODO: std::ranges::fill once bug with std::vector<bool> is resolved
 			std::fill(mNeedResync.begin(), mNeedResync.end(), false);  // we don't want it true if we're not syncing to host tempo
 		}
 	}
 	else
 	{
+		// TODO: std::ranges::fill once bug with std::vector<bool> is resolved
 		std::fill(mNeedResync.begin(), mNeedResync.end(), false);  // we don't want it true if we're not syncing to host tempo
 	}
 
@@ -344,7 +348,7 @@ double Scrubby::processPitchConstraint(double readStep) const
 	// check to see if none of the semitones are enabled,
 	// in which case we act like they are all enabled.
 	// no we don't, we become silent, I changed my mind
-	auto const notesActive = std::any_of(mPitchSteps.begin(), mPitchSteps.end(), [](auto const& item){ return item; });
+	auto const notesActive = std::ranges::any_of(mPitchSteps, std::identity{});
 
 	// determine the lower bound of the number of semitone shifts that this playback speed results in
 	// the equation below comes from 2^(semitone/12) = readStep, solving for semitone
@@ -418,13 +422,13 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 	processMidiNotes();
 	checkTempoSyncStuff();
 
-	auto const notesActive = std::any_of(mPitchSteps.begin(), mPitchSteps.end(), [](auto const& item){ return item; });
+	auto const notesActive = std::ranges::any_of(mPitchSteps, std::identity{});
 	// if we're using pitch constraint and the previous block had no notes active,
 	// then check to see if new notes have begun and, if so, begin new seeks
 	// so that we start producing sound again immediately
 	if ((mPitchConstraint && (mSpeedMode == kSpeedMode_Robot)) && !mNotesWereAlreadyActive && notesActive)
 	{
-		std::fill(mSeekCount.begin(), mSeekCount.end(), 0);
+		std::ranges::fill(mSeekCount, 0);
 	}
 	// now remember the current situation for informing the next processing block
 	mNotesWereAlreadyActive = notesActive;

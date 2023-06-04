@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of Polarizer.
 
@@ -73,7 +73,7 @@ void PolarizerDSP::process(std::span<float const> inAudio, std::span<float> outA
 	// catch up if leap size decreased
 	mUnaffectedSamples = std::min(mUnaffectedSamples, leapSize);
 
-	std::transform(inAudio.begin(), inAudio.end(), outAudio.begin(), [this, leapSize, implode](auto const inputValue)
+	std::ranges::transform(inAudio, outAudio.begin(), [this, leapSize, implode](auto const inputValue)
 	{
 		auto outputValue = inputValue;
 		mUnaffectedSamples--;

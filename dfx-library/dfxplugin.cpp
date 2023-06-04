@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -69,7 +69,8 @@ namespace
 {
 
 static std::atomic<bool> sIdleThreadShouldRun {false};
-__attribute__((no_destroy)) static std::unique_ptr<std::thread> sIdleThread;  // TODO: C++20 use std::jthread, C++23 [[no_destroy]]
+// TODO C++23: [[no_destroy]]
+__attribute__((no_destroy)) static std::unique_ptr<std::thread> sIdleThread;  // TODO C++20: use std::jthread
 __attribute__((no_destroy)) static std::mutex sIdleThreadLock;
 __attribute__((no_destroy)) static std::unordered_set<DfxPlugin*> sIdleClients;
 __attribute__((no_destroy)) static std::mutex sIdleClientsLock;
@@ -97,8 +98,7 @@ static void DFX_RegisterIdleClient(DfxPlugin* const inIdleClient)
 				{
 					{
 						std::lock_guard const guard(sIdleClientsLock);
-						std::for_each(sIdleClients.cbegin(), sIdleClients.cend(), 
-									  [](auto&& idleClient){ idleClient->do_idle(); });
+						std::ranges::for_each(sIdleClients, [](auto&& idleClient){ idleClient->do_idle(); });
 					}
 					std::this_thread::sleep_for(kIdleTimerInterval);
 				}
@@ -177,8 +177,7 @@ DfxPlugin::DfxPlugin(
 	}
 
 	// reset pending notifications
-	std::for_each(mParametersChangedInProcessHavePosted.begin(), mParametersChangedInProcessHavePosted.end(), 
-				  [](auto& flag){ flag.test_and_set(); });
+	std::ranges::for_each(mParametersChangedInProcessHavePosted, [](auto& flag){ flag.test_and_set(); });
 	mPresetChangedInProcessHasPosted.test_and_set();
 	mLatencyChangeHasPosted.test_and_set();
 	mTailSizeChangeHasPosted.test_and_set();
@@ -297,8 +296,8 @@ void DfxPlugin::do_initialize()
 	if (!mInPlaceAudioProcessingAllowed)
 	{
 		mInputOutOfPlaceAudioBuffers.assign(getnuminputs(), std::vector<float>(getmaxframes(), 0.0f));
-		std::transform(mInputOutOfPlaceAudioBuffers.cbegin(), mInputOutOfPlaceAudioBuffers.cend(), 
-					   mInputAudioStreams.begin(), [](auto const& buffer){ return buffer.data(); });
+		std::ranges::transform(mInputOutOfPlaceAudioBuffers, mInputAudioStreams.begin(),
+							   [](auto const& buffer){ return buffer.data(); });
 	}
 #endif  // !TARGET_API_AUDIOUNIT
 
@@ -308,7 +307,7 @@ void DfxPlugin::do_initialize()
 
 #if TARGET_PLUGIN_USES_DSPCORE
 	// flag parameter changes to be picked up for DSP cores, which are all instantiated anew during plugin initialize
-	std::for_each(mParameters.begin(), mParameters.end(), [](auto& parameter){ parameter.setchanged(true); });
+	std::ranges::for_each(mParameters, [](auto& parameter){ parameter.setchanged(true); });
 
 	if (asymmetricalchannels())
 	{
@@ -339,8 +338,7 @@ void DfxPlugin::do_initialize()
 	}
 #endif  // TARGET_PLUGIN_USES_DSPCORE
 
-	std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), 
-				  [sr = getsamplerate()](auto& value){ value.first.setSampleRate(sr); });
+	std::ranges::for_each(mSmoothedAudioValues, [sr = getsamplerate()](auto& value){ value.first.setSampleRate(sr); });
 
 	do_reset();
 }
@@ -402,7 +400,7 @@ void DfxPlugin::do_reset()
 #endif
 
 	mIsFirstRenderSinceReset = true;
-	std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), [](auto& value){ value.first.snap(); });
+	std::ranges::for_each(mSmoothedAudioValues, [](auto& value){ value.first.snap(); });
 
 #if TARGET_PLUGIN_USES_MIDI
 	mMidiState.reset();
@@ -840,9 +838,9 @@ void DfxPlugin::addparametergroup(std::string const& inName, std::vector<dfx::Pa
 {
 	assert(!inName.empty());
 	assert(!inParameterIndices.empty());
-	assert(std::none_of(mParameterGroups.cbegin(), mParameterGroups.cend(), [&inName](auto const& item){ return (item.first == inName); }));
-	assert(std::none_of(inParameterIndices.cbegin(), inParameterIndices.cend(), [this](auto index){ return getparametergroup(index).has_value(); }));
-	assert(std::all_of(inParameterIndices.cbegin(), inParameterIndices.cend(), std::bind_front(&DfxPlugin::parameterisvalid, this)));
+	assert(std::ranges::none_of(mParameterGroups, [&inName](auto const& item){ return (item.first == inName); }));
+	assert(std::ranges::none_of(inParameterIndices, [this](auto index){ return getparametergroup(index).has_value(); }));
+	assert(std::ranges::all_of(inParameterIndices, std::bind_front(&DfxPlugin::parameterisvalid, this)));
 	assert(std::unordered_set(inParameterIndices.cbegin(), inParameterIndices.cend()).size() == inParameterIndices.size());
 
 	mParameterGroups.emplace_back(inName, std::set(inParameterIndices.cbegin(), inParameterIndices.cend()));
@@ -851,14 +849,14 @@ void DfxPlugin::addparametergroup(std::string const& inName, std::vector<dfx::Pa
 //-----------------------------------------------------------------------------
 std::optional<size_t> DfxPlugin::getparametergroup(dfx::ParameterID inParameterID) const
 {
-	auto const foundGroup = std::find_if(mParameterGroups.cbegin(), mParameterGroups.cend(), [inParameterID](auto const& group)
+	auto const foundGroup = std::ranges::find_if(mParameterGroups, [inParameterID](auto const& group)
 	{
 		auto const& indices = group.second;
-		return (indices.find(inParameterID) != indices.cend());
+		return indices.contains(inParameterID);
 	});
 	if (foundGroup != mParameterGroups.cend())
 	{
-		return static_cast<size_t>(std::distance(mParameterGroups.cbegin(), foundGroup));
+		return static_cast<size_t>(std::ranges::distance(mParameterGroups.cbegin(), foundGroup));
 	}
 	return {};
 }
@@ -1303,7 +1301,7 @@ void DfxPlugin::unregisterAllSmoothedAudioValues(DfxPluginCore& owner)
 //-----------------------------------------------------------------------------
 void DfxPlugin::incrementSmoothedAudioValues(DfxPluginCore* owner)
 {
-	std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), [owner](auto& value)
+	std::ranges::for_each(mSmoothedAudioValues, [owner](auto& value)
 	{
 		// TODO: is the !owner test vestigial? and now confusing, per the comment in the header declaration?
 		// (very careful testing required if changed because incorrect managed smoothing stuff has insidious consequences)
@@ -1326,7 +1324,7 @@ std::optional<double> DfxPlugin::getSmoothedAudioValueTime() const
 void DfxPlugin::setSmoothedAudioValueTime(double inSmoothingTimeInSeconds)
 {
 	// TODO: thread safety
-	std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), [inSmoothingTimeInSeconds](auto& value)
+	std::ranges::for_each(mSmoothedAudioValues, [inSmoothingTimeInSeconds](auto& value)
 	{
 		value.first.setSmoothingTime(inSmoothingTimeInSeconds);
 	});
@@ -1475,7 +1473,8 @@ void DfxPlugin::addchannelconfig(short inNumInputs, short inNumOutputs)
 //-----------------------------------------------------------------------------
 void DfxPlugin::addchannelconfig(ChannelConfig inChannelConfig)
 {
-	assert(std::find(mChannelConfigs.cbegin(), mChannelConfigs.cend(), inChannelConfig) == mChannelConfigs.cend());
+	// TODO C++23: std::ranges::contains
+	assert(std::ranges::find(mChannelConfigs, inChannelConfig) == mChannelConfigs.cend());
 	assert((inChannelConfig == kChannelConfig_AnyInAnyOut) || ((inChannelConfig.inChannels >= kChannelConfigCount_Any) && (inChannelConfig.outChannels >= kChannelConfigCount_Any)));
 #if TARGET_PLUGIN_USES_DSPCORE
 	assert((inChannelConfig.inChannels == inChannelConfig.outChannels) || (inChannelConfig.inChannels == 1));
@@ -1994,7 +1993,7 @@ void DfxPlugin::do_processparameters()
 
 	if (std::exchange(mIsFirstRenderSinceReset, false))
 	{
-		std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), [](auto& value){ value.first.snap(); });
+		std::ranges::for_each(mSmoothedAudioValues, [](auto& value){ value.first.snap(); });
 	}
 }
 

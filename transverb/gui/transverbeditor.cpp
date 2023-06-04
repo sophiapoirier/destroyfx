@@ -29,6 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <concepts>
 #include <cstdint>
 #include <cstdio>
+#include <functional>
 
 #include "dfxmath.h"
 #include "dfxmisc.h"
@@ -367,11 +368,13 @@ void TransverbEditor::OpenEditor()
 	{
 		VSTGUI::CParamDisplayValueToStringProc displayProc = nullptr;
 		void* userData = nullptr;
-		if (std::find(kSpeedParameters.cbegin(), kSpeedParameters.cend(), parameterID) != kSpeedParameters.cend())
+		// TODO C++23: std::ranges::contains
+		if (std::ranges::find(kSpeedParameters, parameterID) != kSpeedParameters.cend())
 		{
 			displayProc = speedDisplayProcedure;
 		}
-		else if (std::find(kFeedParameters.cbegin(), kFeedParameters.cend(), parameterID) != kFeedParameters.cend())
+		// TODO C++23: std::ranges::contains
+		else if (std::ranges::find(kFeedParameters, parameterID) != kFeedParameters.cend())
 		{
 			displayProc = feedbackDisplayProcedure;
 		}
@@ -386,9 +389,9 @@ void TransverbEditor::OpenEditor()
 		auto const textDisplay = emplaceControl<DGTextDisplay>(this, parameterID, textDisplayPos, displayProc, userData, nullptr,
 															   dfx::TextAlignment::Right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
 
-		if (auto const speedParameterID = std::find(kSpeedParameters.cbegin(), kSpeedParameters.cend(), parameterID); speedParameterID != kSpeedParameters.cend())
+		if (auto const speedParameterID = std::ranges::find(kSpeedParameters, parameterID); speedParameterID != kSpeedParameters.cend())
 		{
-			auto const head = static_cast<size_t>(std::distance(kSpeedParameters.cbegin(), speedParameterID));
+			auto const head = static_cast<size_t>(std::ranges::distance(kSpeedParameters.cbegin(), speedParameterID));
 			mSpeedDownButtons[head] = emplaceControl<TransverbSpeedTuneButton>(this, parameterID, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
 			mSpeedUpButtons[head] = emplaceControl<TransverbSpeedTuneButton>(this, parameterID, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
 			textDisplay->setTextToValueProc(speedTextConvertProcedure);
@@ -479,7 +482,7 @@ void TransverbEditor::OpenEditor()
 	{
 		SetParameterHelpText(parameterID, speedHelpText);
 	}
-	std::for_each(mSpeedModeButtons.begin(), mSpeedModeButtons.end(), [](auto* control){ control->setHelpText(speedHelpText); });
+	std::ranges::for_each(mSpeedModeButtons, [](auto* control){ control->setHelpText(speedHelpText); });
 	for (auto const parameterID : kFeedParameters)
 	{
 		SetParameterHelpText(parameterID, "how much of the delay sound gets mixed back into the delay buffer");
@@ -524,8 +527,7 @@ void TransverbEditor::parameterChanged(dfx::ParameterID inParameterID)
 	{
 		case kBsize:
 			// trigger re-conversion of numerical value to text
-			std::for_each(mDistanceTextDisplays.begin(), mDistanceTextDisplays.end(),
-						  [](auto& display){ display->refreshText(); });
+			std::ranges::for_each(mDistanceTextDisplays, std::bind_front(&DGTextDisplay::refreshText));
 			break;
 		case kFreeze:
 			HandleFreezeChange();
@@ -574,6 +576,5 @@ void TransverbEditor::HandleSpeedModeChange(size_t inIndex)
 void TransverbEditor::HandleFreezeChange()
 {
 	float const alpha = getparameter_b(kFreeze) ? kUnusedControlAlpha : 1.f;
-	std::for_each(kFeedParameters.cbegin(), kFeedParameters.cend(),
-				  [this, alpha](auto parameterID){ SetParameterAlpha(parameterID, alpha); });
+	std::ranges::for_each(kFeedParameters, [this, alpha](auto parameterID){ SetParameterAlpha(parameterID, alpha); });
 }

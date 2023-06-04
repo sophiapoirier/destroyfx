@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Rez Synth.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "rezsynth.h"
@@ -105,10 +105,8 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 					{
 						mAmpEvener[noteIndex].snap();
 						mBaseFreq[noteIndex].snap();
-						std::for_each(mBandCenterFreq[noteIndex].begin(), mBandCenterFreq[noteIndex].end(),
-									  [](auto& value){ value.snap(); });
-						std::for_each(mBandBandwidth[noteIndex].begin(), mBandBandwidth[noteIndex].end(),
-									  [](auto& value){ value.snap(); });
+						std::ranges::for_each(mBandCenterFreq[noteIndex], [](auto& value){ value.snap(); });
+						std::ranges::for_each(mBandBandwidth[noteIndex], [](auto& value){ value.snap(); });
 					}
 
 					auto const subSliceFrameCount = [this, numFramesToProcess, subSlicePosition, noteIndex, activeNumBands]
@@ -135,10 +133,8 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 									  noteIndex, activeNumBands);
 
 					mBaseFreq[noteIndex].inc(subSliceFrameCount);
-					std::for_each(mBandCenterFreq[noteIndex].begin(), mBandCenterFreq[noteIndex].end(),
-								  [subSliceFrameCount](auto& value){ value.inc(subSliceFrameCount); });
-					std::for_each(mBandBandwidth[noteIndex].begin(), mBandBandwidth[noteIndex].end(),
-								  [subSliceFrameCount](auto& value){ value.inc(subSliceFrameCount); });
+					std::ranges::for_each(mBandCenterFreq[noteIndex], [subSliceFrameCount](auto& value){ value.inc(subSliceFrameCount); });
+					std::ranges::for_each(mBandBandwidth[noteIndex], [subSliceFrameCount](auto& value){ value.inc(subSliceFrameCount); });
 
 					subSlicePosition += subSliceFrameCount;
 				}
@@ -147,7 +143,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 			// could be because it already was inactive, or because we just completed articulation of the note
 			if (!getmidistate().isNoteActive(noteIndex))
 			{
-				std::for_each(mLowpassGateFilters[noteIndex].begin(), mLowpassGateFilters[noteIndex].end(), [](auto& filter){ filter.reset(); });
+				std::ranges::for_each(mLowpassGateFilters[noteIndex], [](auto& filter){ filter.reset(); });
 			}
 
 			mNoteActiveLastRender[noteIndex] = getmidistate().isNoteActive(noteIndex);

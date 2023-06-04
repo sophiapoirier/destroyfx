@@ -228,7 +228,7 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 	//-----------------------CALCULATE BUFFER DECAY-------------------------
 	mPrevMinibufferDecayGain = mMinibufferDecayGain;
 	std::swap(mCurrentDecayFilters, mPrevDecayFilters);
-	std::for_each(mCurrentDecayFilters.begin(), mCurrentDecayFilters.end(), [](auto& filter){ filter.reset(); });
+	std::ranges::for_each(mCurrentDecayFilters, [](auto& filter){ filter.reset(); });
 	auto& firstFilter = mCurrentDecayFilters.front();
 
 	auto const positionNormalized = static_cast<float>(mWritePos) / static_cast<float>(mCurrentForcedBufferSize);
@@ -435,7 +435,7 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 		}
 		else
 		{
-			std::fill(mAudioOutputValues.begin(), mAudioOutputValues.end(), 0.f);
+			std::ranges::fill(mAudioOutputValues, 0.f);
 		}
 
 		constexpr auto normalizePosition = [](long length, long countDown, float stepAmount)
@@ -452,8 +452,8 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 			auto const fadeInGain = std::sqrt(normalizedPosition);
 #endif
 			// crossfade in the current input
-			std::transform(mAudioOutputValues.cbegin(), mAudioOutputValues.cend(), mAudioOutputValues.begin(),
-						   [fadeInGain](auto value){ return value * fadeInGain; });
+			std::ranges::transform(mAudioOutputValues, mAudioOutputValues.begin(),
+								   [fadeInGain](auto value){ return value * fadeInGain; });
 			mFadeInSmoothCountDown--;
 		}
 		if (mFadeOutSmoothCountDown > 0)
@@ -476,8 +476,8 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 			else
 			{
 				// fade-out the of end of the shortened minibuffer
-				std::transform(mAudioOutputValues.cbegin(), mAudioOutputValues.cend(), mAudioOutputValues.begin(),
-							   [fadeOutGain](auto value){ return value * fadeOutGain; });
+				std::ranges::transform(mAudioOutputValues, mAudioOutputValues.begin(),
+									   [fadeOutGain](auto value){ return value * fadeOutGain; });
 			}
 			mFadeOutSmoothCountDown--;
 		}

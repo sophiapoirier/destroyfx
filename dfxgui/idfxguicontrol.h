@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2018-2022  Sophia Poirier
+Copyright (C) 2018-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -68,7 +68,7 @@ public:
 
 	virtual void setHelpText(char const* inText) = 0;
 
-	// TODO: C++20 use std::ranges::view?
+	// TODO: use std::span? (requires changing the implementation to use a contiguous container)
 	virtual std::vector<IDGControl*> getChildren() = 0;
 	virtual std::vector<IDGControl const*> getChildren() const = 0;
 

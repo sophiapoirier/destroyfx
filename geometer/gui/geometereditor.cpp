@@ -331,13 +331,13 @@ void GeometerEditor::OpenEditor() {
 //-----------------------------------------------------------------------------
 void GeometerEditor::CloseEditor() {
 
-  std::fill(sliders.begin(), sliders.end(), nullptr);
-  std::fill(displays.begin(), displays.end(), nullptr);
-  std::fill(finedownbuttons.begin(), finedownbuttons.end(), nullptr);
-  std::fill(fineupbuttons.begin(), fineupbuttons.end(), nullptr);
+  std::ranges::fill(sliders, nullptr);
+  std::ranges::fill(displays, nullptr);
+  std::ranges::fill(finedownbuttons, nullptr);
+  std::ranges::fill(fineupbuttons, nullptr);
 
-  std::fill(genhelpitemcontrols.begin(), genhelpitemcontrols.end(), nullptr);
-  std::fill(g_helpicons.begin(), g_helpicons.end(), nullptr);
+  std::ranges::fill(genhelpitemcontrols, nullptr);
+  std::ranges::fill(g_helpicons, nullptr);
   helpicon = nullptr;
   helpbox = nullptr;
 }
@@ -408,9 +408,9 @@ std::string GeometerEditor::changehelp(IDGControl * currentControlUnderMouse) {
   if (currentControlUnderMouse && currentControlUnderMouse->isParameterAttached())
     paramID = currentControlUnderMouse->getParameterID();
 
-  if (auto const matchedGenHelp = std::find(genhelpitemcontrols.cbegin(), genhelpitemcontrols.cend(), currentControlUnderMouse);
+  if (auto const matchedGenHelp = std::ranges::find(genhelpitemcontrols, currentControlUnderMouse);
       matchedGenHelp != genhelpitemcontrols.cend()) {
-    auto const index = std::distance(genhelpitemcontrols.cbegin(), matchedGenHelp);
+    auto const index = std::ranges::distance(genhelpitemcontrols.cbegin(), matchedGenHelp);
     return updatehelp(HELP_CATEGORY_GENERAL, index, NUM_GEN_HELP_ITEMS);
   }
   if (paramID == P_BUFSIZE) {

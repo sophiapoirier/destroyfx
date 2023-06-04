@@ -65,6 +65,7 @@ DfxSettings::DfxSettings(uint32_t inMagic, DfxPlugin& inPlugin, size_t inSizeofE
 	mParameterAssignments(mNumParameters)
 {
 	// default to each parameter having its ID equal its index
+	// TODO C++23: std::ranges::iota
 	std::iota(mParameterIDMap.begin(), mParameterIDMap.end(), 0);
 
 	// calculate some data sizes that are useful to know
@@ -1525,7 +1526,7 @@ dfx::MidiEventType DfxSettings::getParameterAssignmentType(dfx::ParameterID inPa
 // given a parameter ID, find the tag (index) for that parameter in a table of parameter IDs
 dfx::ParameterID DfxSettings::getParameterIndexFromMap(dfx::ParameterID inParameterID, std::span<uint32_t const> inSearchIDs)
 {
-	auto const foundID = std::find(inSearchIDs.begin(), inSearchIDs.end(), inParameterID);
+	auto const foundID = std::ranges::find(inSearchIDs, inParameterID);
 	if (foundID != inSearchIDs.end())
 	{
 		return static_cast<dfx::ParameterID>(std::distance(inSearchIDs.begin(), foundID));

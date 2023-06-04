@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier and Keith Fullerton Whitman
+Copyright (C) 2001-2023  Sophia Poirier and Keith Fullerton Whitman
 
 This file is part of Thrush.
 
@@ -148,8 +148,8 @@ void Thrush::reset()
 	mOldDelayPosition = mOldDelayPosition2 = 0;
 #endif
 
-	std::fill(mDelayBuffer.begin(), mDelayBuffer.end(), 0.f);
-	std::fill(mDelayBuffer2.begin(), mDelayBuffer2.end(), 0.f);
+	std::ranges::fill(mDelayBuffer, 0.f);
+	std::ranges::fill(mDelayBuffer2, 0.f);
 
 	mNeedResync = true;
 }

@@ -83,7 +83,7 @@ std::string ToLower(std::string_view inText)
 {
 	auto const toLower = std::bind(std::tolower<std::string::value_type>, std::placeholders::_1, std::locale::classic());
 	std::string result;
-	std::transform(inText.cbegin(), inText.cend(), std::back_inserter(result), toLower);
+	std::ranges::transform(inText, std::back_inserter(result), toLower);
 	return result;
 }
 
@@ -153,9 +153,9 @@ bool LaunchURL(std::string const& inURL)
 #if _WIN32
 	// Return value is a fake HINSTANCE that will be >32 (if successful) or some error code
 	// otherwise. If we care about error handling, should update to ShellExecuteEx.
-	auto const ret = reinterpret_cast<intptr_t>(ShellExecute(nullptr, "open", inURL.c_str(), 
-															 nullptr, nullptr, SW_SHOWNORMAL));
-	return ret > 32;
+	auto const status = reinterpret_cast<intptr_t>(ShellExecute(nullptr, "open", inURL.c_str(),
+																nullptr, nullptr, SW_SHOWNORMAL));
+	return status > 32;
 #endif
 
 	return false;

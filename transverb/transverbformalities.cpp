@@ -125,7 +125,7 @@ TransverbDSP::TransverbDSP(DfxPlugin& inDfxPlugin)
 
 void TransverbDSP::reset() {
 
-  std::for_each(heads.begin(), heads.end(), [](Head& head){ head.reset(); });
+  std::ranges::for_each(heads, [](Head& head){ head.reset(); });
 }
 
 void TransverbDSP::Head::reset() {
@@ -135,7 +135,7 @@ void TransverbDSP::Head::reset() {
   filter.reset();
   speedHasChanged = true;
 
-  std::fill(buf.begin(), buf.end(), 0.f);
+  std::ranges::fill(buf, 0.f);
 }
 
 
@@ -190,7 +190,7 @@ void TransverbDSP::processparameters() {
       }
     }
     auto const bsize_f = static_cast<double>(bsize);
-    std::for_each(heads.begin(), heads.end(), [bsize_f](Head& head){ head.read = fmod_bipolar(head.read, bsize_f); });
+    std::ranges::for_each(heads, [bsize_f](Head& head){ head.read = fmod_bipolar(head.read, bsize_f); });
   }
 
   for (size_t head = 0; head < kNumDelays; head++)
@@ -204,7 +204,7 @@ void TransverbDSP::processparameters() {
 
   if (getparameterchanged(kQuality) || getparameterchanged(kTomsound))
   {
-    std::for_each(heads.begin(), heads.end(), [](Head& head){ head.speedHasChanged = true; });
+    std::ranges::for_each(heads, [](Head& head){ head.speedHasChanged = true; });
   }
 
   // stereo-split-heads mode (head 1 goes to left output and 2 to right)
@@ -430,7 +430,8 @@ void Transverb::randomizeparameters()
 			continue;
 		}
 		// make slow speeds more probable (for fairer distribution)
-		if (std::find(kSpeedParameters.cbegin(), kSpeedParameters.cend(), i) != kSpeedParameters.cend())
+		// TODO C++23: std::ranges::contains
+		if (std::ranges::find(kSpeedParameters, i) != kSpeedParameters.cend())
 		{
 			auto const rand = generateParameterRandomValue<double>(-1., 1.);
 			auto const range = (rand < 0.) ? getparametermin_f(i) : getparametermax_f(i); 
@@ -467,13 +468,11 @@ void Transverb::randomizeparameters()
 
 	// apply the scalar to the new mix parameter values
 	newDrymix *= mixDiffScalar;
-	std::transform(newMix.cbegin(), newMix.cend(), newMix.begin(),
-				   [mixDiffScalar](double value){ return value * mixDiffScalar; });
+	std::ranges::transform(newMix, newMix.begin(), [mixDiffScalar](double value){ return value * mixDiffScalar; });
 
 	// clip the the delay head mix values at unity gain so that we don't get mega-feedback blasts
 	newDrymix = std::clamp(newDrymix, 0., getparametermax_f(kDrymix));
-	std::transform(newMix.cbegin(), newMix.cend(), newMix.begin(),
-				   [](double value){ return std::clamp(value, 0., 1.); });
+	std::ranges::transform(newMix, newMix.begin(), [](double value){ return std::clamp(value, 0., 1.); });
 
 	// set the new randomized mix parameter values as the new values
 	setparameter_f(kDrymix, newDrymix);
@@ -594,7 +593,8 @@ void Transverb::settings_doChunkRestoreSetParameterStuff(dfx::ParameterID parame
 	if (dataVersion <= 0x00010502)
 	{
 		// invert old erroneously reversed dist parameter values
-		if (std::find(kDistParameters.cbegin(), kDistParameters.cend(), parameterID) != kDistParameters.cend())
+		// TODO C++23: std::ranges::contains
+		if (std::ranges::find(kDistParameters, parameterID) != kDistParameters.cend())
 		{
 			auto const valueNormalized = 1. - contractparametervalue(parameterID, value);
 			if (presetIndex)

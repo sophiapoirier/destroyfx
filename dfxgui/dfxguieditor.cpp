@@ -35,6 +35,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <map>
 #include <mutex>
 #include <numeric>
+#include <ranges>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -78,7 +79,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
-	__attribute__((no_destroy)) static VSTGUI::CFileExtension const kDfxGui_AUPresetFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI);  // TODO: C++23 [[no_destroy]]
+	__attribute__((no_destroy)) static VSTGUI::CFileExtension const kDfxGui_AUPresetFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI);  // TODO C++23: [[no_destroy]]
 	static auto const kDfxGui_SettingsPasteboardFlavorType = kDfxGui_SettingsPasteboardFlavorType_AU;
 #endif
 
@@ -224,6 +225,7 @@ try
 	}
 #else
 	mParameterList.assign(GetNumParameters(), dfx::kParameterID_Invalid);
+	// TODO C++23: std::ranges::iota
 	std::iota(mParameterList.begin(), mParameterList.end(), 0);
 	std::erase_if(mParameterList, [this](auto parameterID)
 	{
@@ -416,7 +418,8 @@ void DfxGuiEditor::RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Sco
 bool DfxGuiEditor::IsPropertyRegistered(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex) const
 {
 	auto const property = std::make_tuple(inPropertyID, inScope, inItemIndex);
-	return std::find(mRegisteredProperties.cbegin(), mRegisteredProperties.cend(), property) != mRegisteredProperties.cend();
+	// TODO C++23: std::ranges::contains
+	return std::ranges::find(mRegisteredProperties, property) != mRegisteredProperties.cend();
 }
 
 //-----------------------------------------------------------------------------
@@ -427,7 +430,8 @@ IDGControl* DfxGuiEditor::addControl(IDGControl* inControl)
 	// XXX only add it to our controls list if it is attached to a parameter (?)
 	if (dfxgui_IsValidParameterID(inControl->getParameterID()))
 	{
-		assert(std::find(mControlsList.cbegin(), mControlsList.cend(), inControl) == mControlsList.cend());
+		// TODO C++23: std::ranges::contains
+		assert(std::ranges::find(mControlsList, inControl) == mControlsList.cend());
 		mControlsList.push_back(inControl);
 		inControl->asCControl()->registerViewEventListener(this);
 	}
@@ -443,12 +447,9 @@ void DfxGuiEditor::removeControl(IDGControl* inControl)
 {
 	assert(false);  // TODO: test or remove this method? (it currently is not used anywhere)
 
-	auto const foundControl = std::find(mControlsList.cbegin(), mControlsList.cend(), inControl);
-	assert(foundControl != mControlsList.cend());
-	if (foundControl != mControlsList.cend())
-	{
-		mControlsList.erase(foundControl);
-	}
+	// TODO C++23: std::ranges::contains
+	assert(std::ranges::find(mControlsList, inControl) != mControlsList.cend());
+	std::erase(mControlsList, inControl);
 
 	inControl->asCControl()->unregisterViewEventListener(this);
 	[[maybe_unused]] auto const success = getFrame()->removeView(inControl->asCControl());
@@ -608,16 +609,16 @@ void DfxGuiEditor::randomizeparameter(dfx::ParameterID inParameterID, bool inWri
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 {
-	auto parameterList = GetParameterList();
-	// TODO: C++20 use ranges view filter
-	std::erase_if(parameterList, [this](auto parameterID)
+	// TODO C++23: std::ranges::to<std::vector>
+	auto const parameterList = GetParameterList();
+	auto randomizableParameterList = std::views::filter(parameterList, [this](auto parameterID)
 	{
-		return HasParameterAttribute(parameterID, DfxParam::kAttribute_OmitFromRandomizeAll);
+		return !HasParameterAttribute(parameterID, DfxParam::kAttribute_OmitFromRandomizeAll);
 	});
 
 	if (inWriteAutomation)
 	{
-		for (auto const parameterID : parameterList)
+		for (auto const parameterID : randomizableParameterList)
 		{
 			automationgesture_begin(parameterID);
 		}
@@ -640,7 +641,7 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 
 	if (inWriteAutomation)
 	{
-		for (auto const parameterID : parameterList)
+		for (auto const parameterID : randomizableParameterList)
 		{
 #ifdef TARGET_API_VST
 			getEffect()->setParameterAutomated(dfx::ParameterID_ToVST(parameterID), getparameter_gen(parameterID));
@@ -1460,7 +1461,7 @@ std::vector<dfx::ParameterID> DfxGuiEditor::CreateParameterList(AudioUnitScope i
 	}
 	assert(getParameterCount(dataSize) == parameterList.size());
 
-	mAUMaxParameterID = *std::max_element(parameterList.cbegin(), parameterList.cend());
+	mAUMaxParameterID = *std::ranges::max_element(parameterList);
 
 	return std::vector<dfx::ParameterID>(parameterList.cbegin(), parameterList.cend());
 }
@@ -2275,24 +2276,19 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 //-----------------------------------------------------------------------------
 VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParametersContextualMenu()
 {
+	// TODO C++23: std::ranges::to<std::vector>
 	auto const parameterList = GetParameterList();
-	if (parameterList.empty())
-	{
-		return {};
-	}
-
 	auto const resultMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
 	resultMenu->setStyle(kDfxGui_ContextualMenuStyle);
 	std::map<size_t, VSTGUI::COptionMenu&> groupSubMenus;
 
-	for (auto const parameterID : parameterList)
+	auto const isParameterVisible = [this](auto parameterID)
 	{
-		// TODO: C++20 use ranges view filter
-		if (HasParameterAttribute(parameterID, DfxParam::kAttribute_Hidden))
-		{
-			continue;
-		}
+		return !HasParameterAttribute(parameterID, DfxParam::kAttribute_Hidden);
+	};
 
+	for (auto const parameterID : std::views::filter(parameterList, isParameterVisible))
+	{
 		if (auto const parameterSubMenu = createParameterContextualMenu(parameterID))
 		{
 			if (auto const groupIndex = GetParameterGroup(parameterID))
@@ -2315,8 +2311,11 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParametersContext
 			}
 		}
 	}
-	assert(resultMenu->getNbEntries() > 0);
 
+	if (resultMenu->getNbEntries() <= 0)
+	{
+		return {};
+	}
 	return resultMenu;
 }
 
@@ -2435,7 +2434,7 @@ public:
 			return std::isalnum(character, std::locale::classic()) || (character == '+') || (character == '/') || (character == '=');
 		};
 
-		if (!std::all_of(inString.begin(), inString.end(), matchBase64))
+		if (!std::ranges::all_of(inString, matchBase64))
 		{
 			return {};
 		}
@@ -2462,15 +2461,15 @@ private:
 	{
 #if TARGET_OS_WIN32
 		auto const base64 = VSTGUI::Base64Codec::encode(inSettingsData, inSettingsDataSize);
-		std::vector<std::byte> ret;
-		ret.reserve(kPasteTextPrefix.size() +
-					base64.dataSize +
-					kPasteTextSuffix.size());
-		for (char const c : kPasteTextPrefix) ret.push_back(static_cast<std::byte>(c));
-		for (size_t i = 0; i < base64.dataSize; i++) ret.push_back(static_cast<std::byte>(base64.data[i]));
-		for (char const c : kPasteTextSuffix) ret.push_back(static_cast<std::byte>(c));
-		for (char const c : kPasteTextPadding) ret.push_back(static_cast<std::byte>(c));
-		return ret;
+		std::vector<std::byte> result;
+		result.reserve(kPasteTextPrefix.size() +
+					   base64.dataSize +
+					   kPasteTextSuffix.size());
+		for (char const c : kPasteTextPrefix) result.push_back(static_cast<std::byte>(c));
+		for (uint32_t i = 0; i < base64.dataSize; i++) result.push_back(static_cast<std::byte>(base64.data[i]));
+		for (char const c : kPasteTextSuffix) result.push_back(static_cast<std::byte>(c));
+		for (char const c : kPasteTextPadding) result.push_back(static_cast<std::byte>(c));
+		return result;
 #else
 		return {inSettingsData, std::next(inSettingsData, inSettingsDataSize)};
 #endif
@@ -2708,7 +2707,7 @@ dfx::StatusCode DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 			assert(ignoredType == SettingsDataPackage::kDataType);
 			decodedDataStorage = SettingsDataPackage::decode(vstSettingsData, vstSettingsDataSize);
 			vstSettingsData = decodedDataStorage.data();
-			vstSettingsDataSize = decodedDataStorage.size();
+			vstSettingsDataSize = static_cast<VstInt32>(decodedDataStorage.size());
 		}
 	}
 #endif  // TARGET_OS_MAC

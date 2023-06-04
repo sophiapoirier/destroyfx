@@ -189,7 +189,7 @@ void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outA
 			{
 				dfx::IIRFilter::Coefficients lpCoeff;
 				std::tie(lpCoeff, envAmp) = getmidistate().processEnvelopeLowpassGate(currentNote);
-				std::for_each(channelFilters.begin(), channelFilters.end(), [&lpCoeff](auto& filter)
+				std::ranges::for_each(channelFilters, [&lpCoeff](auto& filter)
 				{
 					filter.setCoefficients(lpCoeff);
 				});

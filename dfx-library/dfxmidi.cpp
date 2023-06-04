@@ -28,6 +28,7 @@ This is our MIDI stuff.
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <span>
 
 #include "dfxmath.h"
 
@@ -54,9 +55,9 @@ void DfxMidi::reset()
 	}
 	for (auto& noteAudio : mNoteAudioTable)
 	{
-		std::fill(noteAudio.mLastOutValue.begin(), noteAudio.mLastOutValue.end(), 0.0f);
+		std::ranges::fill(noteAudio.mLastOutValue, 0.f);
 		noteAudio.mSmoothSamples = 0;
-		std::for_each(noteAudio.mTails.begin(), noteAudio.mTails.end(), [](auto& tail){ std::fill(tail.begin(), tail.end(), 0.0f); });
+		std::ranges::for_each(noteAudio.mTails, [](auto& tail){ std::ranges::fill(tail, 0.f); });
 	}
 	mSustainQueue.fill(false);
 
@@ -86,7 +87,7 @@ void DfxMidi::setSampleRate(double inSampleRate)
 	mStolenNoteFadeStep = 1.0f / static_cast<float>(mStolenNoteFadeDur);
 	for (auto& noteAudio : mNoteAudioTable)
 	{
-		std::fill(noteAudio.mTails.begin(), noteAudio.mTails.end(), decltype(noteAudio.mTails)::value_type(mStolenNoteFadeDur, 0.f));
+		std::ranges::fill(noteAudio.mTails, decltype(noteAudio.mTails)::value_type(mStolenNoteFadeDur, 0.f));
 	}
 }
 
@@ -143,11 +144,12 @@ void DfxMidi::preprocessEvents(size_t inNumFrames)
 
 	// Sort the events in our queue so that they are in chronological order.
 	// The host is supposed to send them in order, but just in case...
-	std::stable_sort(mBlockEvents.begin(), std::next(mBlockEvents.begin(), mNumBlockEvents), [](auto const& a, auto const& b)
+	std::span const activeBlockEvents(mBlockEvents.begin(), mNumBlockEvents);
+	std::ranges::stable_sort(activeBlockEvents, [](auto const& a, auto const& b)
 	{
 		return a.mOffsetFrames < b.mOffsetFrames;
 	});
-	std::for_each(mBlockEvents.begin(), mBlockEvents.end(), [inNumFrames](auto& event)
+	std::ranges::for_each(activeBlockEvents, [inNumFrames](auto& event)
 	{
 		assert(event.mOffsetFrames < inNumFrames);
 		event.mOffsetFrames = std::min(event.mOffsetFrames, inNumFrames - 1);
@@ -193,12 +195,12 @@ DfxMidi::MusicNote& DfxMidi::getNoteStateMutable(int inMidiNote)
 void DfxMidi::insertNote(int inMidiNote)
 {
 	// first check whether this note is already active (could happen in weird sequencers, like Max for example)
-	auto const nonMatchPortion = std::stable_partition(mNoteQueue.begin(), mNoteQueue.end(), [inMidiNote](auto const& note)
-													   {
-														   return note == inMidiNote;
-													   });
+	auto const nonMatchPortion = std::ranges::stable_partition(mNoteQueue, [inMidiNote](auto const& note)
+	{
+		return note == inMidiNote;
+	});
 	// if the note is not already active, shift every note up a position (normal scenario)
-	if (nonMatchPortion == mNoteQueue.cbegin())
+	if (nonMatchPortion.begin() == mNoteQueue.cbegin())
 	{
 		std::rotate(mNoteQueue.begin(), std::prev(mNoteQueue.end()), mNoteQueue.end());
 		// then place the new note into the first position
@@ -211,11 +213,11 @@ void DfxMidi::insertNote(int inMidiNote)
 // this function removes a note from the active notes queue
 void DfxMidi::removeNote(int inMidiNote)
 {
-	auto const nonMatchPortion = std::stable_partition(mNoteQueue.begin(), mNoteQueue.end(), [inMidiNote](auto const& note)
-													   {
-														   return note != inMidiNote;
-													   });
-	std::fill(nonMatchPortion, mNoteQueue.end(), kInvalidValue);
+	auto const nonMatchPortion = std::ranges::stable_partition(mNoteQueue, [inMidiNote](auto const& note)
+	{
+		return note != inMidiNote;
+	});
+	std::fill(nonMatchPortion.begin(), mNoteQueue.end(), kInvalidValue);
 
 	if (auto const latestNote = getLatestNote())
 	{

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -214,16 +214,16 @@ void DfxParam::initNames(std::vector<std::string_view> const& inNames)
 	};
 
 	assert(!inNames.empty());
-	assert(std::all_of(inNames.cbegin(), inNames.cend(), [](auto const& name){ return !name.empty(); }));
+	assert(std::ranges::all_of(inNames, [](auto const& name){ return !name.empty(); }));
 	{
 		std::vector<size_t> lengths;
-		std::transform(inNames.cbegin(), inNames.cend(), std::back_inserter(lengths), stringLength);
+		std::ranges::transform(inNames, std::back_inserter(lengths), stringLength);
 		assert(std::unordered_set<size_t>(lengths.cbegin(), lengths.cend()).size() == lengths.size());
 	}
 
 	// sort the names by length (ascending)
 	mShortNames.assign(inNames.cbegin(), inNames.cend());
-	std::sort(mShortNames.begin(), mShortNames.end(), [stringLength](auto const& a, auto const& b)
+	std::ranges::sort(mShortNames, [stringLength](auto const& a, auto const& b)
 	{
 		return stringLength(a) < stringLength(b);
 	});
@@ -707,7 +707,7 @@ std::string DfxParam::getname(size_t inMaxLength) const
 	}
 
 	// we want the nearest length match that is equal to or less than the requested maximum
-	auto const bestMatch = std::min_element(mShortNames.cbegin(), mShortNames.cend(), [inMaxLength](auto const& a, auto const& b)
+	auto const bestMatch = std::ranges::min_element(mShortNames, [inMaxLength](auto const& a, auto const& b)
 	{
 		auto const reduce = [inMaxLength](auto const& string)
 		{
@@ -719,7 +719,7 @@ std::string DfxParam::getname(size_t inMaxLength) const
 	// but if nothing was short enough to fully qualify, truncate the shortest of what we have
 	if (bestMatch->length() > inMaxLength)
 	{
-		auto const shortest = std::min_element(mShortNames.cbegin(), mShortNames.cend(), [](auto const& a, auto const& b)
+		auto const shortest = std::ranges::min_element(mShortNames, [](auto const& a, auto const& b)
 		{
 			return a.length() < b.length();
 		});

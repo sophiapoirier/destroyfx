@@ -343,9 +343,9 @@ dfx::Crossover::Crossover(size_t inChannelCount, double inSampleRate, double inF
 #if !DFX_CROSSOVER_LINKWITZ_RILEY_MUSICDSP
 	auto const initFilters = [inSampleRate](auto& channelFilters)
 	{
-		std::for_each(channelFilters.begin(), channelFilters.end(), [inSampleRate](auto& chainedFilters)
+		std::ranges::for_each(channelFilters, [inSampleRate](auto& chainedFilters)
 		{
-			std::for_each(chainedFilters.begin(), chainedFilters.end(), [inSampleRate](auto& filter)
+			std::ranges::for_each(chainedFilters, [inSampleRate](auto& filter)
 			{
 				filter = dfx::IIRFilter(inSampleRate);
 			});
@@ -392,9 +392,9 @@ void dfx::Crossover::setFrequency(double inFrequency)
 #else
 	auto const setCoefficients = [](auto& channelFilters, auto const& coeff)
 	{
-		std::for_each(channelFilters.begin(), channelFilters.end(), [&coeff](auto& chainedFilters)
+		std::ranges::for_each(channelFilters, [&coeff](auto& chainedFilters)
 		{
-			std::for_each(chainedFilters.begin(), chainedFilters.end(), [&coeff](auto& filter)
+			std::ranges::for_each(chainedFilters, [&coeff](auto& filter)
 			{
 				filter.setCoefficients(coeff);
 			});
@@ -414,14 +414,14 @@ void dfx::Crossover::reset()
 	{
 		history.reset();
 	};
-	std::for_each(mLowpassHistories.begin(), mLowpassHistories.end(), clearHistory);
-	std::for_each(mHighpassHistories.begin(), mHighpassHistories.end(), clearHistory);
+	std::ranges::for_each(mLowpassHistories, clearHistory);
+	std::ranges::for_each(mHighpassHistories, clearHistory);
 #else
 	auto const resetFilters = [](auto& channelFilters)
 	{
-		std::for_each(channelFilters.begin(), channelFilters.end(), [](auto& chainedFilters)
+		std::ranges::for_each(channelFilters, [](auto& chainedFilters)
 		{
-			std::for_each(chainedFilters.begin(), chainedFilters.end(), [](auto& filter)
+			std::ranges::for_each(chainedFilters, [](auto& filter)
 			{
 				filter.reset();
 			});

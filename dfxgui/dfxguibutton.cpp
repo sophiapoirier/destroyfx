@@ -347,8 +347,8 @@ void DGButton::setRadioThresholds(std::vector<VSTGUI::CCoord> const& inThreshold
 {
 	assert(mMode == Mode::Radio);
 	assert((inThresholds.size() + 1) == getNumStates());
-	assert(std::all_of(inThresholds.cbegin(), inThresholds.cend(), std::bind(std::less<>{}, _1, getRange())));
-	assert(std::all_of(inThresholds.cbegin(), inThresholds.cend(), std::bind(std::greater<>{}, _1, 0)));
+	assert(std::ranges::all_of(inThresholds, std::bind(std::less<>{}, _1, getRange())));
+	assert(std::ranges::all_of(inThresholds, std::bind(std::greater<>{}, _1, 0)));
 
 	mRadioThresholds = inThresholds;
 }
@@ -369,7 +369,7 @@ long DGButton::getRadioValue(VSTGUI::CPoint const& inPos) const
 		auto const pos = (mOrientation & dfx::kAxis_Horizontal) ? (inPos.x - getViewSize().left) : (inPos.y - getViewSize().top);
 		if (!mRadioThresholds.empty())
 		{
-			return std::count_if(mRadioThresholds.cbegin(), mRadioThresholds.cend(), std::bind(std::less_equal<>{}, _1, pos));
+			return std::ranges::count_if(mRadioThresholds, std::bind(std::less_equal<>{}, _1, pos));
 		}
 		return std::lround(pos) / (getRange() / dfx::math::ToSigned(getNumStates()));
 	}();

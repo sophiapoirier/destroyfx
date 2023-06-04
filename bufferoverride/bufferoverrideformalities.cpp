@@ -136,7 +136,7 @@ void BufferOverride::initialize()
 	}
 	mAudioOutputValues.assign(numChannels, 0.0f);
 
-	std::for_each(mDecayFilters.begin(), mDecayFilters.end(), [this, numChannels](auto& filters)
+	std::ranges::for_each(mDecayFilters, [this, numChannels](auto& filters)
 	{
 		filters.assign(numChannels, dfx::IIRFilter(getsamplerate()));
 	});
@@ -172,9 +172,9 @@ void BufferOverride::reset()
 	mDivisorLFO.reset();
 	mBufferLFO.reset();
 
-	std::for_each(mDecayFilters.begin(), mDecayFilters.end(), [](auto& filters)
+	std::ranges::for_each(mDecayFilters, [](auto& filters)
 	{
-		std::for_each(filters.begin(), filters.end(), [](auto& filter)
+		std::ranges::for_each(filters, [](auto& filter)
 		{
 			filter.reset();
 			filter.setCoefficients(dfx::IIRFilter::kUnityCoeff);

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -168,7 +168,7 @@ void DfxStubDSP::reset()
 	// reset this buffer position tracker to zero
 	bufferpos = 0;
 
-	std::fill(buffer.begin(), buffer.end(), 0.0f);
+	std::ranges::fill(buffer, 0.f);
 }
 
 #else
@@ -179,7 +179,7 @@ void DfxStub::reset()
 
 	for (auto& buffer : buffers)
 	{
-		std::fill(buffer.begin(), buffer.end(), 0.0f);
+		std::ranges::fill(buffer, 0.f);
 	}
 }
 #endif // if/else TARGET_PLUGIN_USES_DSPCORE
