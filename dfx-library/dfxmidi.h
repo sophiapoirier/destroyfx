@@ -243,7 +243,6 @@ private:
 		int mByte2 = 0;  // the second MIDI data byte
 		int mChannel = 0;  // the MIDI channel
 		size_t mOffsetFrames = 0;  // the delta offset (the sample position in the current block where the event occurs)
-		size_t mOrderOfArrival = 0;  // the sequence within the current block in which the event arrived (hack to achieve stable sort)
 	};
 
 	//-----------------------------------------------------------------------------
