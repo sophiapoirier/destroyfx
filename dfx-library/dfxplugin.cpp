@@ -1268,6 +1268,21 @@ void DfxPlugin::updatenumchannels()
 #pragma mark properties
 
 //-----------------------------------------------------------------------------
+void DfxPlugin::dfx_PropertyChanged(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	PropertyChanged(inPropertyID, inScope, inItemIndex);
+#endif
+
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
+	if (auto const guiEditor = dynamic_cast<DfxGuiEditor*>(getEditor()))
+	{
+		guiEditor->PropertyChanged(inPropertyID, inScope, inItemIndex);
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
 std::string DfxPlugin::getpluginname() const
 {
 	return PLUGIN_NAME_STRING;
@@ -2218,31 +2233,13 @@ bool DfxPlugin::getMidiAssignmentsSteal() const
 //-----------------------------------------------------------------------------
 void DfxPlugin::postupdate_midilearn()
 {
-#ifdef TARGET_API_AUDIOUNIT
-	PropertyChanged(dfx::kPluginProperty_MidiLearn, kAudioUnitScope_Global, AudioUnitElement(0));
-#endif
-
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	if (auto const guiEditor = dynamic_cast<DfxGuiEditor*>(getEditor()))
-	{
-		guiEditor->HandleMidiLearnChange();
-	}
-#endif
+	dfx_PropertyChanged(dfx::kPluginProperty_MidiLearn);
 }
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::postupdate_midilearner()
 {
-#ifdef TARGET_API_AUDIOUNIT
-	PropertyChanged(dfx::kPluginProperty_MidiLearner, kAudioUnitScope_Global, AudioUnitElement(0));
-#endif
-
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	if (auto const guiEditor = dynamic_cast<DfxGuiEditor*>(getEditor()))
-	{
-		guiEditor->HandleMidiLearnerChange();
-	}
-#endif
+	dfx_PropertyChanged(dfx::kPluginProperty_MidiLearner);
 }
 
 #endif

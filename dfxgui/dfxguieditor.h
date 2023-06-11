@@ -24,8 +24,10 @@ To contact the author, use the contact form at http://destroyfx.org
 #pragma once
 
 
+#include <atomic>
 #include <functional>
 #include <list>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -172,6 +174,9 @@ public:
 	// inItemIndex is optionally used for some properties and its meaning is contextual to that property.
 	void RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned int inItemIndex = 0);
 	virtual void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex) {}
+#ifndef TARGET_API_AUDIOUNIT
+	void PropertyChanged(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex);
+#endif
 
 	// Adds the control to mControlsList, only if attached to a parameter, 
 	// since those are the only controls for which we manage extra functionality.
@@ -371,6 +376,14 @@ protected:
 	std::vector<IDGControl*> mControlsList;
 
 private:
+	struct PropertyDescriptor
+	{
+		dfx::PropertyID mID {};
+		dfx::Scope mScope {};
+		unsigned int mItemIndex {};
+		auto operator<=>(PropertyDescriptor const&) const noexcept = default;
+	};
+
 	// update affected controls of a parameter value change
 	// optional: inSendingControl can specify the originating control to omit it from circular notification
 	void updateParameterControls(dfx::ParameterID inParameterID, float inValue, VSTGUI::CControl* inSendingControl = nullptr);
@@ -379,6 +392,7 @@ private:
 	VSTGUI::COptionMenu createContextualMenu(IDGControl* inControl);
 	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParameterContextualMenu(dfx::ParameterID inParameterID);
 	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParametersContextualMenu();
+
 	dfx::StatusCode initClipboard();
 	dfx::StatusCode copySettings();
 	dfx::StatusCode pasteSettings(bool* inQueryPastabilityOnly);
@@ -427,7 +441,7 @@ private:
 	size_t mNumOutputChannels = 0;
 
 	// Custom properties that have been registered for HandlePropertyChange calls.
-	std::vector<std::tuple<dfx::PropertyID, dfx::Scope, unsigned int>> mRegisteredProperties;
+	std::vector<PropertyDescriptor> mRegisteredProperties;
 
 	VSTGUI::SharedPointer<DGTextEntryDialog> mTextEntryDialog;
 	VSTGUI::SharedPointer<DGDialog> mErrorDialog;
@@ -455,6 +469,8 @@ private:
 	AudioUnitEvent mParameterListPropertyAUEvent {};
 	AudioUnitEvent mMidiLearnPropertyAUEvent {};
 	AudioUnitEvent mMidiLearnerPropertyAUEvent {};
+#else
+	std::map<PropertyDescriptor, std::atomic_flag> mPropertyChangesHavePosted;
 #endif
 
 #ifdef TARGET_API_RTAS

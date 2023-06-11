@@ -164,6 +164,11 @@ DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 
 	setKnobMode(VSTGUI::kLinearMode);
 
+#if !defined(TARGET_API_AUDIOUNIT) && TARGET_PLUGIN_USES_MIDI
+	RegisterPropertyChange(dfx::kPluginProperty_MidiLearn);
+	RegisterPropertyChange(dfx::kPluginProperty_MidiLearner);
+#endif
+
 #ifdef TARGET_API_RTAS
 	mParameterHighlightColors.assign(GetNumParameters(), eHighlight_None);
 
@@ -231,6 +236,8 @@ try
 	{
 		return HasParameterAttribute(parameterID, DfxParam::kAttribute_Unused);
 	});
+
+	mPropertyChangesHavePosted.clear();
 #endif
 
 	OpenEditor();
@@ -394,6 +401,29 @@ void DfxGuiEditor::idle()
 		ShowMessage(std::exchange(mPendingErrorMessage, {}));
 	}
 
+#ifndef TARGET_API_AUDIOUNIT
+	for (auto& [propertyDescriptor, propertyChangeHasPosted] : mPropertyChangesHavePosted)
+	{
+		if (!propertyChangeHasPosted.test_and_set())
+		{
+			switch (propertyDescriptor.mID)
+			{
+			#if TARGET_PLUGIN_USES_MIDI
+				case dfx::kPluginProperty_MidiLearn:
+					HandleMidiLearnChange();
+					break;
+				case dfx::kPluginProperty_MidiLearner:
+					HandleMidiLearnerChange();
+					break;
+			#endif
+				default:
+					HandlePropertyChange(propertyDescriptor.mID, propertyDescriptor.mScope, propertyDescriptor.mItemIndex);
+					break;
+			}
+		}
+	}
+#endif
+
 #ifdef TARGET_API_RTAS
 	// Called by GUI when idle time available; NO_UI: Call process' DoIdle() method.  
 	// Keeps other processes from starving during certain events (like mouse down).
@@ -411,13 +441,25 @@ void DfxGuiEditor::RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Sco
 	assert(!IsOpen());  // you need to register these all before opening a view
 	assert(!IsPropertyRegistered(inPropertyID, inScope, inItemIndex));
 
-	mRegisteredProperties.emplace_back(inPropertyID, inScope, inItemIndex);
+	mRegisteredProperties.push_back({inPropertyID, inScope, inItemIndex});
 }
+
+#ifndef TARGET_API_AUDIOUNIT
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::PropertyChanged(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex)
+{
+	if (IsPropertyRegistered(inPropertyID, inScope, inItemIndex))
+	{
+		// defer handling to the main thread
+		mPropertyChangesHavePosted[{inPropertyID, inScope, inItemIndex}].clear();
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::IsPropertyRegistered(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex) const
 {
-	auto const property = std::make_tuple(inPropertyID, inScope, inItemIndex);
+	PropertyDescriptor const property{inPropertyID, inScope, inItemIndex};
 	// TODO C++23: std::ranges::contains
 	return std::ranges::find(mRegisteredProperties, property) != mRegisteredProperties.cend();
 }
@@ -2980,14 +3022,14 @@ void DfxGuiEditor::AudioUnitEventListenerProc(void* inCallbackRefCon, void* inOb
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::ForEachRegisteredAudioUnitEvent(std::function<void(AudioUnitEvent const&)>&& f)
 {
-	for (auto const& [propertyID, scope, itemIndex] : mRegisteredProperties)
+	for (auto const property : mRegisteredProperties)
 	{
 		AudioUnitEvent auEvent {};
 		auEvent.mEventType = kAudioUnitEvent_PropertyChange;
 		auEvent.mArgument.mProperty.mAudioUnit = dfxgui_GetEffectInstance();
-		auEvent.mArgument.mProperty.mPropertyID = propertyID;
-		auEvent.mArgument.mProperty.mScope = scope;
-		auEvent.mArgument.mProperty.mElement = itemIndex;
+		auEvent.mArgument.mProperty.mPropertyID = property.mID;
+		auEvent.mArgument.mProperty.mScope = property.mScope;
+		auEvent.mArgument.mProperty.mElement = property.mItemIndex;
 
 		f(auEvent);
 	}

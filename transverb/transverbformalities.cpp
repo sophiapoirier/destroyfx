@@ -537,9 +537,7 @@ dfx::StatusCode Transverb::dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Sc
   if (isSpeedModePropertyID(inPropertyID))
   {
     speedModeStateFromPropertyID(inPropertyID) = dfx::Enliven<uint8_t>(inData);
-#ifdef TARGET_API_AUDIOUNIT
-    PropertyChanged(inPropertyID, inScope, inItemIndex);
-#endif
+    dfx_PropertyChanged(inPropertyID, inScope, inItemIndex);
     return dfx::kStatus_NoError;
   }
   return DfxPlugin::dfx_SetProperty(inPropertyID, inScope, inItemIndex, inData, inDataSize);
@@ -570,6 +568,10 @@ void Transverb::settings_restoreExtendedData(void const* inData, size_t storedEx
     if constexpr (!DfxSettings::serializationIsNativeEndian())
     {
       dfx::ReverseBytes(speedModeStates.data(), speedModeStates.size());
+    }
+    for (size_t i = 0; i < kNumDelays; i++)
+    {
+      dfx_PropertyChanged(speedModeIndexToPropertyID(i));
     }
   }
 }

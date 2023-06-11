@@ -25,6 +25,7 @@ To contact the developer, use the contact form at http://destroyfx.org
 #include "turntablist.h"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -166,7 +167,7 @@ void Turntablist::idle()
 {
 	if (!mPlayChangedInProcessHasPosted.test_and_set(std::memory_order_relaxed))
 	{
-		PropertyChanged(kTurntablistProperty_Play, kAudioUnitScope_Global, 0);
+		dfx_PropertyChanged(kTurntablistProperty_Play);
 	}
 }
 
@@ -382,7 +383,7 @@ OSStatus Turntablist::RestoreState(CFPropertyListRef inData)
 							// if we haven't gotten it already...
 							if (!audioFileNameString)
 							{
-								HFSUniStr255 fileNameUniString;
+								HFSUniStr255 fileNameUniString {};
 								auto const aliasStatus = FSCopyAliasInfo(aliasHandle, &fileNameUniString, nullptr, nullptr, nullptr, nullptr);
 								if (aliasStatus == noErr)
 								{
@@ -629,7 +630,7 @@ void Turntablist::setPlay(bool inPlayState, bool inShouldSendNotification)
 		}
 		else
 		{
-			PropertyChanged(kTurntablistProperty_Play, kAudioUnitScope_Global, 0);
+			dfx_PropertyChanged(kTurntablistProperty_Play);
 		}
 	}
 }
@@ -730,24 +731,24 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 
 // libsndfile
 #else
-	UInt8 file[2048] {};
-	AUSDK_Require_noerr(FSRefMakePath(&inFileRef, file, std::size(file)));
-//std::fprintf(stderr, PLUGIN_NAME_STRING " audio file:  %s\n", file);
+	std::array<UInt8, 2048> file {};
+	AUSDK_Require_noerr(FSRefMakePath(&inFileRef, file.data(), file.size()));
+//std::fprintf(stderr, PLUGIN_NAME_STRING " audio file:  %s\n", file.data());
 
 	SF_INFO sfInfo {};
-	SNDFILE* const sndFile = sf_open(reinterpret_cast<char const*>(file), SFM_READ, &sfInfo);
+	SNDFILE* const sndFile = sf_open(reinterpret_cast<char const*>(file.data()), SFM_READ, &sfInfo);
 
 	if (!sndFile)
 	{
 		// print error
-		char buffer[256] {};
-		sf_error_str(sndFile, buffer, std::size(buffer) - 1);
-		std::fprintf(stderr, "\n" PLUGIN_NAME_STRING " could not open the audio file:  %s\nlibsndfile error message:  %s\n", file, buffer);
+		std::array<char, 256> buffer {};
+		sf_error_str(sndFile, buffer.data(), buffer.size() - 1);
+		std::fprintf(stderr, "\n" PLUGIN_NAME_STRING " could not open the audio file:  %s\nlibsndfile error message:  %s\n", file.data(), buffer.data());
 		return sf_error(sndFile);
 	}
 
 #if 0
-	std::fprintf(stderr, "**** SF_INFO dump for:  %s\n", file);
+	std::fprintf(stderr, "**** SF_INFO dump for:  %s\n", file.data());
 	std::fprintf(stderr, "     samplerate:  %d\n", sfInfo.samplerate);
 	std::fprintf(stderr, "     frames:  %d (0x%08x)\n", sfInfo.frames, sfInfo.frames);
 	std::fprintf(stderr, "     channels:  %d\n", sfInfo.channels);
@@ -821,7 +822,7 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 	guard.unlock();
 
 	m_fsAudioFile = inFileRef;  // XXX TODO: this object needs its own serialized lock access as well
-	PropertyChanged(kTurntablistProperty_AudioFile, kAudioUnitScope_Global, 0);
+	dfx_PropertyChanged(kTurntablistProperty_AudioFile);
 
 	return noErr;
 }

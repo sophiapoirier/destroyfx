@@ -318,7 +318,7 @@ public:
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].getvaluecfstring(inStringIndex) : nullptr;
 	}
 #endif
-	void addparametergroup(std::string const& inName, std::vector<dfx::ParameterID> const& inParameterIndices);  // TODO: C++23 use std::span?
+	void addparametergroup(std::string const& inName, std::vector<dfx::ParameterID> const& inParameterIndices);  // TODO C++23: use std::span?
 	std::optional<size_t> getparametergroup(dfx::ParameterID inParameterID) const;
 	std::string getparametergroupname(size_t inGroupIndex) const;
 
@@ -493,6 +493,7 @@ public:
 	{
 		return dfx::kStatus_InvalidProperty;
 	}
+	void dfx_PropertyChanged(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned int inItemIndex = 0);
 	size_t dfx_GetNumPluginProperties() const
 	{
 		return dfx::kPluginProperty_NumProperties + dfx_GetNumAdditionalPluginProperties();
