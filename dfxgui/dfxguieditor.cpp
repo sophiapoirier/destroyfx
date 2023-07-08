@@ -236,8 +236,6 @@ try
 	{
 		return HasParameterAttribute(parameterID, DfxParam::kAttribute_Unused);
 	});
-
-	mPropertyChangesHavePosted.clear();
 #endif
 
 	OpenEditor();
@@ -441,7 +439,12 @@ void DfxGuiEditor::RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Sco
 	assert(!IsOpen());  // you need to register these all before opening a view
 	assert(!IsPropertyRegistered(inPropertyID, inScope, inItemIndex));
 
-	mRegisteredProperties.push_back({inPropertyID, inScope, inItemIndex});
+	PropertyDescriptor const property{inPropertyID, inScope, inItemIndex};
+	mRegisteredProperties.push_back(property);
+
+#ifndef TARGET_API_AUDIOUNIT
+	mPropertyChangesHavePosted[property].test_and_set();
+#endif
 }
 
 #ifndef TARGET_API_AUDIOUNIT
@@ -451,7 +454,9 @@ void DfxGuiEditor::PropertyChanged(dfx::PropertyID inPropertyID, dfx::Scope inSc
 	if (IsPropertyRegistered(inPropertyID, inScope, inItemIndex))
 	{
 		// defer handling to the main thread
-		mPropertyChangesHavePosted[{inPropertyID, inScope, inItemIndex}].clear();
+		PropertyDescriptor const property{inPropertyID, inScope, inItemIndex};
+		assert(mPropertyChangesHavePosted.contains(property));
+		mPropertyChangesHavePosted[property].clear();
 	}
 }
 #endif
