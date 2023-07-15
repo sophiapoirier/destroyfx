@@ -184,12 +184,12 @@ public:
 	// query the ordered queue of active MIDI notes
 	bool isAnyNoteActive() const noexcept
 	{
-		return mNoteQueue.front() >= 0;
+		return noteIsValid(mNoteQueue.front());
 	}
 	auto getLatestNote() const noexcept
 	{
 		auto const note = mNoteQueue.front();
-		return (note >= 0) ? std::make_optional(note) : std::nullopt;
+		return noteIsValid(note) ? std::make_optional(note) : std::nullopt;
 	}
 
 	static constexpr bool isNote(int inMidiStatus) noexcept
@@ -197,9 +197,9 @@ public:
 		return (inMidiStatus == kStatus_NoteOn) || (inMidiStatus == kStatus_NoteOff);
 	}
 
-	double getNoteFrequency(int inNote) const;
+	double getNoteFrequency(int inMidiNote) const;
 	// the gain for the note, scaled with velocity, curve, and influence
-	float getNoteAmplitude(int inNote) const;
+	float getNoteAmplitude(int inMidiNote) const;
 
 	auto getPitchBend() const noexcept
 	{
@@ -231,7 +231,7 @@ public:
 
 
 private:
-	static constexpr size_t kEventQueueSize = 12000;
+	static constexpr size_t kEventQueueSize = 12'000;
 	static constexpr int kInvalidValue = -1;  // sentinel for any MIDI value type
 
 	//-----------------------------------------------------------------------------
@@ -243,6 +243,7 @@ private:
 		int mByte2 = 0;  // the second MIDI data byte
 		int mChannel = 0;  // the MIDI channel
 		size_t mOffsetFrames = 0;  // the delta offset (the sample position in the current block where the event occurs)
+		size_t mOrderOfArrival = 0;  // the sequence within the current block in which the event arrived (hack to achieve stable sort)
 	};
 
 	//-----------------------------------------------------------------------------
@@ -279,6 +280,11 @@ private:
 	void turnOffNote(int inMidiNote);
 
 	void postprocessEnvelope(MusicNote& inNote);
+
+	static constexpr bool noteIsValid(int inMidiNote) noexcept
+	{
+		return (inMidiNote >= 0);
+	}
 
 	std::array<MusicNote, kNumNotes> mNoteTable {};  // a table with important data about each note
 	std::array<MusicNoteAudio, kNumNotes> mNoteAudioTable {};

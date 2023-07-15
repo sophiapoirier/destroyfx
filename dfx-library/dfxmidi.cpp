@@ -29,6 +29,7 @@ This is our MIDI stuff.
 #include <cassert>
 #include <cmath>
 #include <span>
+#include <tuple>
 
 #include "dfxmath.h"
 
@@ -145,9 +146,16 @@ void DfxMidi::preprocessEvents(size_t inNumFrames)
 	// Sort the events in our queue so that they are in chronological order.
 	// The host is supposed to send them in order, but just in case...
 	std::span const activeBlockEvents(mBlockEvents.begin(), mNumBlockEvents);
-	std::ranges::stable_sort(activeBlockEvents, [](auto const& a, auto const& b)
+	// we can postpone filling the arrival indices until now since this is the only place they are used
+	for (size_t i = 0; i < activeBlockEvents.size(); i++)
 	{
-		return a.mOffsetFrames < b.mOffsetFrames;
+		activeBlockEvents[i].mOrderOfArrival = i;
+	}
+	std::ranges::sort(activeBlockEvents, [](auto const& a, auto const& b)
+	{
+		// std::stable_sort can allocate memory and therefore is not realtime-safe,
+		// but we achieve the same result by comparing this monotonic arrival index at matching frame offsets
+		return std::tie(a.mOffsetFrames, a.mOrderOfArrival) < std::tie(b.mOffsetFrames, b.mOrderOfArrival);
 	});
 	std::ranges::for_each(activeBlockEvents, [inNumFrames](auto& event)
 	{
@@ -194,35 +202,38 @@ DfxMidi::MusicNote& DfxMidi::getNoteStateMutable(int inMidiNote)
 // this function inserts a new note into the beginning of the active notes queue
 void DfxMidi::insertNote(int inMidiNote)
 {
-	// first check whether this note is already active (could happen in weird sequencers, like Max for example)
-	auto const nonMatchPortion = std::ranges::stable_partition(mNoteQueue, [inMidiNote](auto const& note)
+	assert(noteIsValid(inMidiNote));
+
+	// there is only something to do if the current note is already the first active note
+	if (auto const existingNote = std::ranges::find(mNoteQueue, inMidiNote); existingNote != mNoteQueue.begin())
 	{
-		return note == inMidiNote;
-	});
-	// if the note is not already active, shift every note up a position (normal scenario)
-	if (nonMatchPortion.begin() == mNoteQueue.cbegin())
-	{
-		std::rotate(mNoteQueue.begin(), std::prev(mNoteQueue.end()), mNoteQueue.end());
+		// shift all of the notes, or all before the current note if it is already active, up one position
+		std::rotate(mNoteQueue.begin(), std::prev(existingNote), existingNote);
 		// then place the new note into the first position
 		mNoteQueue.front() = inMidiNote;
 		mActiveLegatoMidiNote = inMidiNote;
 	}
+
+	assert(std::ranges::count(mNoteQueue, inMidiNote) == 1);
 }
 
 //-----------------------------------------------------------------------------
 // this function removes a note from the active notes queue
 void DfxMidi::removeNote(int inMidiNote)
 {
-	auto const nonMatchPortion = std::ranges::stable_partition(mNoteQueue, [inMidiNote](auto const& note)
-	{
-		return note != inMidiNote;
-	});
-	std::fill(nonMatchPortion.begin(), mNoteQueue.end(), kInvalidValue);
+	assert(noteIsValid(inMidiNote));
 
-	if (auto const latestNote = getLatestNote())
+	// std::stable_partition is simpler but can allocate memory and therefore is not realtime-safe
+	if (auto const existingNote = std::ranges::find(mNoteQueue, inMidiNote); existingNote != mNoteQueue.end())
 	{
-		mActiveLegatoMidiNote = *latestNote;
+		std::rotate(existingNote, std::next(existingNote), mNoteQueue.end());
+		mNoteQueue.back() = kInvalidValue;
 	}
+
+	mActiveLegatoMidiNote = getLatestNote().value_or(mActiveLegatoMidiNote);
+
+	// TODO C++23: !std::ranges::contains
+	assert(std::ranges::find(mNoteQueue, inMidiNote) == mNoteQueue.end());
 }
 
 //-----------------------------------------------------------------------------
@@ -442,23 +453,23 @@ void DfxMidi::heedEvents(size_t inEventIndex, float inVelocityCurve, float inVel
 }
 
 //-----------------------------------------------------------------------------
-double DfxMidi::getNoteFrequency(int inNote) const
+double DfxMidi::getNoteFrequency(int inMidiNote) const
 {
-	if (inNote == kLegatoVoiceNoteIndex)
+	if (inMidiNote == kLegatoVoiceNoteIndex)
 	{
-		inNote = mActiveLegatoMidiNote;
+		inMidiNote = mActiveLegatoMidiNote;
 	}
-	if (inNote >= 0)
+	if (noteIsValid(inMidiNote))
 	{
-		return mNoteFrequencyTable.at(dfx::math::ToIndex(inNote));
+		return mNoteFrequencyTable.at(dfx::math::ToIndex(inMidiNote));
 	}
 	return 0.0;
 }
 
 //-----------------------------------------------------------------------------
-float DfxMidi::getNoteAmplitude(int inNote) const
+float DfxMidi::getNoteAmplitude(int inMidiNote) const
 {
-	return getNoteState(inNote).mNoteAmp.getValue();
+	return getNoteState(inMidiNote).mNoteAmp.getValue();
 }
 
 //-------------------------------------------------------------------------
