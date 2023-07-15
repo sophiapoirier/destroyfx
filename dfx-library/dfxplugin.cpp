@@ -291,7 +291,13 @@ void DfxPlugin::do_initialize()
 
 	initialize();
 
-#ifndef TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
+	if (CanScheduleParameters())
+	{
+		// potentially increase fixed pre-allocation done in AUBase to avoid future re-allocations during audio I/O
+		GetParamEventList().reserve(GetMaxFramesPerSlice() % dfx::math::GetFrequencyBasedSmoothingStride(getsamplerate()));
+	}
+#else
 	mInputAudioStreams.assign(getnuminputs(), nullptr);
 	if (!mInPlaceAudioProcessingAllowed)
 	{
