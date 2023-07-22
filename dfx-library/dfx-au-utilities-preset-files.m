@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2022  Sophia Poirier
+	Copyright (C) 2003-2023  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -58,8 +58,6 @@
 //--------------------------------------------------------------------------
 // the file name extension that identifies a file as being an AU preset file
 #define kAUPresetFileNameExtension	CFSTR("aupreset")
-// the name of the directory in Library/Audio for AU preset files
-static NSString* const kAUPresetsDirName = @"Presets";
 // this is defined in the Carbon header MacErrors.h
 static OSStatus const kDFX_coreFoundationUnknownErr = -4960;
 
@@ -103,7 +101,7 @@ CFURLRef FindPresetsDirForAU(AudioComponent inAUComponent, DFXFileSystemDomain i
 	}
 
 	// Presets directory in the Audio directory
-	url = [url URLByAppendingPathComponent:kAUPresetsDirName isDirectory:YES];
+	url = [url URLByAppendingPathComponent:@"Presets" isDirectory:YES];
 	if (url == nil)
 	{
 		return NULL;

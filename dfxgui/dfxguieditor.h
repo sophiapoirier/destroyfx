@@ -462,6 +462,7 @@ private:
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
+	VSTGUI::CFileExtension const kAUPresetFileExtension;
 	std::mutex mutable mParameterListLock;
 	AudioUnitParameterID mAUMaxParameterID = 0;
 	dfx::UniqueOpaqueType<AUEventListenerRef, AUListenerDispose> mAUEventListener;
@@ -471,6 +472,11 @@ private:
 	AudioUnitEvent mMidiLearnerPropertyAUEvent {};
 #else
 	std::map<PropertyDescriptor, std::atomic_flag> mPropertyChangesHavePosted;
+#endif
+
+#ifdef TARGET_API_VST
+	VSTGUI::CFileExtension const kVSTProgramFileExtension {"VST program", "fxp"};
+	//VSTGUI::CFileExtension const kVSTBankFileExtension {"VST bank", "fxb"};
 #endif
 
 #ifdef TARGET_API_RTAS

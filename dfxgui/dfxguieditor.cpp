@@ -79,14 +79,11 @@ To contact the author, use the contact form at http://destroyfx.org
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
-	__attribute__((no_destroy)) static VSTGUI::CFileExtension const kDfxGui_AUPresetFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI);  // TODO C++23: [[no_destroy]]
 	static auto const kDfxGui_SettingsPasteboardFlavorType = kDfxGui_SettingsPasteboardFlavorType_AU;
 #endif
 
 #ifdef TARGET_API_VST
 	constexpr bool kDfxGui_CopySettingsIsPreset = true;
-	__attribute__((no_destroy)) static VSTGUI::CFileExtension const kDfxGui_VSTProgramFileExtension("VST program", "fxp");
-	__attribute__((no_destroy)) static VSTGUI::CFileExtension const kDfxGui_VSTBankFileExtension("VST bank", "fxb");
 	constexpr VstInt32 kDfxGui_VSTSettingsChunkMagic = FOURCC('C', 'c', 'n', 'K');
 	constexpr VstInt32 kDfxGui_VSTSettingsRegularMagic = FOURCC('F', 'x', 'C', 'k');
 	constexpr VstInt32 kDfxGui_VSTSettingsOpaqueChunkMagic = FOURCC('F', 'P', 'C', 'h');
@@ -106,6 +103,9 @@ To contact the author, use the contact form at http://destroyfx.org
 //-----------------------------------------------------------------------------
 DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 :	TARGET_API_EDITOR_BASE_CLASS(inInstance)
+#ifdef TARGET_API_AUDIOUNIT
+	, kAUPresetFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI)
+#endif
 {
 	// ugly wart added in VSTGUI 4.10: the library must be statically "initialized" before use
 	static std::once_flag once;
@@ -1599,7 +1599,7 @@ void DfxGuiEditor::LoadPresetFile()
 		Require(fileSelector, "could not create load file dialog");
 		fileSelector->setTitle("Open");
 #ifdef TARGET_API_AUDIOUNIT
-		fileSelector->addFileExtension(kDfxGui_AUPresetFileExtension);
+		fileSelector->addFileExtension(kAUPresetFileExtension);
 		auto const presetsDirURL = dfx::MakeUniqueCFType(FindPresetsDirForAU(AudioComponentInstanceGetComponent(dfxgui_GetEffectInstance()), kDFXFileSystemDomain_User, false));
 		if (presetsDirURL)
 		{
@@ -1613,8 +1613,8 @@ void DfxGuiEditor::LoadPresetFile()
 		}
 #endif
 #ifdef TARGET_API_VST
-		fileSelector->addFileExtension(kDfxGui_VSTProgramFileExtension);
-//		fileSelector->addFileExtension(kDfxGui_VSTBankFileExtension);  // TODO: could also support banks of programs
+		fileSelector->addFileExtension(kVSTProgramFileExtension);
+//		fileSelector->addFileExtension(kVSTBankFileExtension);  // TODO: could also support banks of programs
 #endif
 		fileSelector->run([this](VSTGUI::CNewFileSelector* inFileSelector)
 		{
@@ -1691,7 +1691,7 @@ void DfxGuiEditor::SavePresetFile()
 						VSTGUI::SharedPointer<VSTGUI::CNewFileSelector> fileSelector(VSTGUI::CNewFileSelector::create(getFrame(), VSTGUI::CNewFileSelector::kSelectSaveFile), false);
 						Require(fileSelector, "could not create save file dialog");
 						fileSelector->setTitle("Save");
-						fileSelector->setDefaultExtension(kDfxGui_AUPresetFileExtension);
+						fileSelector->setDefaultExtension(kAUPresetFileExtension);
 						if (!inText.empty())
 						{
 							fileSelector->setDefaultSaveName(inText.c_str());
@@ -1736,7 +1736,7 @@ void DfxGuiEditor::SavePresetFile()
 		VSTGUI::SharedPointer<VSTGUI::CNewFileSelector> fileSelector(VSTGUI::CNewFileSelector::create(getFrame(), VSTGUI::CNewFileSelector::kSelectSaveFile), false);
 		Require(fileSelector, "could not create save file dialog");
 		fileSelector->setTitle("Save");
-		fileSelector->setDefaultExtension(kDfxGui_VSTProgramFileExtension);
+		fileSelector->setDefaultExtension(kVSTProgramFileExtension);
 		fileSelector->run([this](VSTGUI::CNewFileSelector* inFileSelector)
 		{
 			if (auto const filePath = inFileSelector->getSelectedFile(0))

@@ -32,6 +32,7 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 #include <cmath>
 #include <functional>
 #include <mutex>
+#include <optional>
 #include <thread>
 #include <unordered_set>
 
@@ -68,37 +69,55 @@ constexpr std::chrono::milliseconds kIdleTimerInterval(30);
 namespace
 {
 
-static std::atomic<bool> sIdleThreadShouldRun {false};
-// TODO C++23: [[no_destroy]]
-__attribute__((no_destroy)) static std::unique_ptr<std::thread> sIdleThread;  // TODO C++20: use std::jthread
-__attribute__((no_destroy)) static std::mutex sIdleThreadLock;
-__attribute__((no_destroy)) static std::unordered_set<DfxPlugin*> sIdleClients;
-__attribute__((no_destroy)) static std::mutex sIdleClientsLock;
+//-----------------------------------------------------------------------------
+class DfxIdleRegistrar
+{
+public:
+	static DfxIdleRegistrar& instance();
+	void add(DfxPlugin* inIdleClient);
+	void remove(DfxPlugin* inIdleClient);
+
+private:
+	DfxIdleRegistrar() = default;
+
+	std::atomic<bool> mThreadShouldRun {false};
+	std::optional<std::thread> mThread;  // TODO C++20: use std::jthread
+	std::mutex mThreadLock;
+	std::unordered_set<DfxPlugin*> mClients;
+	std::mutex mClientsLock;
+};
 
 //-----------------------------------------------------------------------------
-static void DFX_RegisterIdleClient(DfxPlugin* const inIdleClient)
+DfxIdleRegistrar& DfxIdleRegistrar::instance()
+{
+	__attribute__((no_destroy)) static DfxIdleRegistrar registrar;  // TODO C++23: [[no_destroy]]
+	return registrar;
+}
+
+//-----------------------------------------------------------------------------
+void DfxIdleRegistrar::add(DfxPlugin* const inIdleClient)
 {
 	{
-		std::lock_guard const guard(sIdleClientsLock);
-		[[maybe_unused]] auto const [element, inserted] = sIdleClients.insert(inIdleClient);
+		std::lock_guard const guard(mClientsLock);
+		[[maybe_unused]] auto const [element, inserted] = mClients.insert(inIdleClient);
 		assert(inserted);
 	}
 
 	{
-		std::lock_guard const guard(sIdleThreadLock);
-		if (!sIdleThread)
+		std::lock_guard const guard(mThreadLock);
+		if (!mThread)
 		{
-			sIdleThreadShouldRun = true;
-			sIdleThread = std::make_unique<std::thread>([]
+			mThreadShouldRun = true;
+			mThread.emplace([this]
 			{
 #if TARGET_OS_MAC
 				pthread_setname_np(PLUGIN_NAME_STRING " idle timer");
 #endif
-				while (sIdleThreadShouldRun)
+				while (mThreadShouldRun)
 				{
 					{
-						std::lock_guard const guard(sIdleClientsLock);
-						std::ranges::for_each(sIdleClients, [](auto&& idleClient){ idleClient->do_idle(); });
+						std::lock_guard const guard(mClientsLock);
+						std::ranges::for_each(mClients, std::bind_front(&DfxPlugin::do_idle));
 					}
 					std::this_thread::sleep_for(kIdleTimerInterval);
 				}
@@ -108,24 +127,24 @@ static void DFX_RegisterIdleClient(DfxPlugin* const inIdleClient)
 }
 
 //-----------------------------------------------------------------------------
-static void DFX_UnregisterIdleClient(DfxPlugin* const inIdleClient)
+void DfxIdleRegistrar::remove(DfxPlugin* const inIdleClient)
 {
-	auto const allClientsCompleted = [&inIdleClient]
+	auto const allClientsCompleted = [this, inIdleClient]
 	{
-		std::lock_guard const guard(sIdleClientsLock);
-		[[maybe_unused]] auto const eraseCount = sIdleClients.erase(inIdleClient);
+		std::lock_guard const guard(mClientsLock);
+		[[maybe_unused]] auto const eraseCount = mClients.erase(inIdleClient);
 		assert(eraseCount == 1);
-		return sIdleClients.empty();
+		return mClients.empty();
 	}();
 
 	if (allClientsCompleted)
 	{
-		sIdleThreadShouldRun = false;
-		std::lock_guard const guard(sIdleThreadLock);
-		if (sIdleThread)
+		mThreadShouldRun = false;
+		std::lock_guard const guard(mThreadLock);
+		if (mThread)
 		{
-			sIdleThread->join();
-			sIdleThread.reset();
+			mThread->join();
+			mThread.reset();
 		}
 	}
 }
@@ -257,7 +276,7 @@ void DfxPlugin::do_PostConstructor()
 
 	dfx_PostConstructor();
 
-	DFX_RegisterIdleClient(this);
+	DfxIdleRegistrar::instance().add(this);
 
 #ifdef TARGET_API_VST
 	// all supported channel configurations should have been added by now
@@ -270,7 +289,7 @@ void DfxPlugin::do_PostConstructor()
 // this is called immediately before all destructors (DfxPlugin and any derived classes) occur
 void DfxPlugin::do_PreDestructor()
 {
-	DFX_UnregisterIdleClient(this);
+	DfxIdleRegistrar::instance().remove(this);
 
 	dfx_PreDestructor();
 

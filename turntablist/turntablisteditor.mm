@@ -26,7 +26,6 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <cmath>
 #include <cstdio>
 #include <mutex>
-#include <type_traits>
 #include <vector>
 
 #include "dfx-au-utilities.h"
@@ -153,6 +152,10 @@ public:
 	OSStatus LoadAudioFile(FSRef const& inAudioFileRef);
 
 private:
+	void InitializeSupportedAudioFileTypes();
+#if DRAG_N_DROP
+	bool IsSupportedAudioFileType(FSRef const& inFileRef) const;
+#endif
 	void HandleLoadButton();
 	void HandleAudioFileChange();
 	void HandlePlayButton(bool inPlay);
@@ -168,6 +171,9 @@ private:
 	DGStaticTextDisplay* mAllParametersTextDisplay = nullptr;
 	DGButton* mPlayButton = nullptr;
 	DGAnimation* mScratchSpeedKnob = nullptr;
+
+	std::vector<CFStringRef> mSupportedAudioFileExtensions;
+	std::vector<OSType> mSupportedAudioFileTypeCodes;
 
 #if DRAG_N_DROP
 	OSStatus mDragAudioFileError = noErr;
@@ -261,11 +267,13 @@ TurntablistEditor::TurntablistEditor(DGEditorListenerInstance inInstance)
 {
 	RegisterPropertyChange(kTurntablistProperty_AudioFile);
 	RegisterPropertyChange(kTurntablistProperty_Play);
+
+	InitializeSupportedAudioFileTypes();
 }
 
 //-----------------------------------------------------------------------------
 /*
-CFStringRef gSupportedAudioFileExtensions[] = 
+static CFStringRef const kSupportedAudioFileExtensions[] =
 {
 	CFSTR("aif"),
 	CFSTR("aiff"),
@@ -281,7 +289,7 @@ CFStringRef gSupportedAudioFileExtensions[] =
 	CFSTR("adts"),
 	CFSTR("m4a")
 };
-OSType gSupportedAudioFileTypeCodes[] = 
+constexpr OSType kSupportedAudioFileTypeCodes[] =
 {
 	kAudioFileAIFFType,
 	kAudioFileAIFCType,
@@ -293,56 +301,50 @@ OSType gSupportedAudioFileTypeCodes[] =
 	kAudioFileAAC_ADTSType
 };
 */
-/*__attribute__((no_destroy))*/ static auto const gSupportedAudioFileTypeCodes = new std::vector<OSType>();
-/*__attribute__((no_destroy))*/ static auto const gSupportedAudioFileExtensions = new std::vector<CFStringRef>();
 
 //-----------------------------------------------------------------------------
-static void DFX_InitializeSupportedAudioFileTypesArrays()
+void TurntablistEditor::InitializeSupportedAudioFileTypes()
 {
-	static std::once_flag onceFlag;
-	std::call_once(onceFlag, []
+	UInt32 propertySize = 0;
+	auto status = AudioFileGetGlobalInfoSize(kAudioFileGlobalInfo_ReadableTypes, 0, nullptr, &propertySize);
+	assert(status == noErr);
+	assert(propertySize > 0);
+	if ((status == noErr) && (propertySize > 0))
 	{
-		UInt32 propertySize = 0;
-		auto status = AudioFileGetGlobalInfoSize(kAudioFileGlobalInfo_ReadableTypes, 0, nullptr, &propertySize);
+		auto const numAudioFileTypeCodes = propertySize / sizeof(decltype(mSupportedAudioFileTypeCodes)::value_type);
+		mSupportedAudioFileTypeCodes.assign(numAudioFileTypeCodes, 0);
+		status = AudioFileGetGlobalInfo(kAudioFileGlobalInfo_ReadableTypes, 0, nullptr, &propertySize, mSupportedAudioFileTypeCodes.data());
 		assert(status == noErr);
-		assert(propertySize > 0);
-		if ((status == noErr) && (propertySize > 0))
-		{
-			auto const numAudioFileTypeCodes = propertySize / sizeof(std::remove_pointer_t<decltype(gSupportedAudioFileTypeCodes)>::value_type);
-			gSupportedAudioFileTypeCodes->assign(numAudioFileTypeCodes, 0);
-			status = AudioFileGetGlobalInfo(kAudioFileGlobalInfo_ReadableTypes, 0, nullptr, &propertySize, gSupportedAudioFileTypeCodes->data());
-			assert(status == noErr);
-		}
+	}
 
-		for (auto audioFileTypeCode : *gSupportedAudioFileTypeCodes)
+	for (auto audioFileTypeCode : mSupportedAudioFileTypeCodes)
+	{
+		CFArrayRef extensionsArray = nullptr;
+		propertySize = sizeof(extensionsArray);
+		status = AudioFileGetGlobalInfo(kAudioFileGlobalInfo_ExtensionsForType, sizeof(audioFileTypeCode), &audioFileTypeCode, &propertySize, &extensionsArray);
+		assert(status == noErr);
+		assert(extensionsArray);
+		if ((status == noErr) && extensionsArray)
 		{
-			CFArrayRef extensionsArray = nullptr;
-			propertySize = sizeof(extensionsArray);
-			status = AudioFileGetGlobalInfo(kAudioFileGlobalInfo_ExtensionsForType, sizeof(audioFileTypeCode), &audioFileTypeCode, &propertySize, &extensionsArray);
-			assert(status == noErr);
-			assert(extensionsArray);
-			if ((status == noErr) && extensionsArray)
-			{
-				auto const cfReleaser = dfx::MakeUniqueCFType(extensionsArray);
+			auto const cfReleaser = dfx::MakeUniqueCFType(extensionsArray);
 //auto const audioFileType_bigEndian = CFSwapInt32HostToBig(audioFileTypeCode);
 //std::fprintf(stderr, "\n\t%.*s\n", static_cast<int>(sizeof(audioFileType_bigEndian)), reinterpret_cast<char const*>(&audioFileType_bigEndian));
-				auto const numExtensions = CFArrayGetCount(extensionsArray);
-				for (CFIndex i = 0; i < numExtensions; i++)
-				{
-					auto const extension = static_cast<CFStringRef>(CFArrayGetValueAtIndex(extensionsArray, i));
-					assert(extension);
-					gSupportedAudioFileExtensions->push_back(extension);
-					CFRetain(extension);
+			auto const numExtensions = CFArrayGetCount(extensionsArray);
+			for (CFIndex i = 0; i < numExtensions; i++)
+			{
+				auto const extension = static_cast<CFStringRef>(CFArrayGetValueAtIndex(extensionsArray, i));
+				assert(extension);
+				mSupportedAudioFileExtensions.push_back(extension);
+				CFRetain(extension);
 //CFShow(extension);
-				}
 			}
 		}
-	});
+	}
 }
 
 #if DRAG_N_DROP
 //-----------------------------------------------------------------------------
-static bool DFX_IsSupportedAudioFileType(FSRef const& inFileRef)
+bool TurntablistEditor::IsSupportedAudioFileType(FSRef const& inFileRef) const
 {
 	bool result = false;
 
@@ -361,7 +363,7 @@ static bool DFX_IsSupportedAudioFileType(FSRef const& inFileRef)
 			result = false;
 			if (lsItemInfo.extension)
 			{
-				for (auto const& supportedAudioFileExtension : *gSupportedAudioFileExtensions)
+				for (auto const& supportedAudioFileExtension : mSupportedAudioFileExtensions)
 				{
 					if (CFStringCompare(lsItemInfo.extension, supportedAudioFileExtension, kCFCompareCaseInsensitive) == kCFCompareEqualTo)
 					{
@@ -372,7 +374,7 @@ static bool DFX_IsSupportedAudioFileType(FSRef const& inFileRef)
 			}
 			if (!result)
 			{
-				for (auto const audioFileTypeCode : *gSupportedAudioFileTypeCodes)
+				for (auto const audioFileTypeCode : mSupportedAudioFileTypeCodes)
 				{
 					if (lsItemInfo.filetype == audioFileTypeCode)
 					{
@@ -611,8 +613,6 @@ buttonStat = CreateRoundButtonControl(GetCarbonWindow(), &buttonRect, kControlSi
 	SetControlDragTrackingEnabled(GetCarbonPane(), true);
 	SetAutomaticControlDragTrackingEnabledForWindow(GetCarbonWindow(), true);
 #endif
-
-	DFX_InitializeSupportedAudioFileTypesArrays();
 }
 
 //-----------------------------------------------------------------------------
@@ -812,7 +812,7 @@ void TurntablistEditor::HandleLoadButton()
 	VSTGUI::SharedPointer<VSTGUI::CNewFileSelector> fileSelector(VSTGUI::CNewFileSelector::create(getFrame(), VSTGUI::CNewFileSelector::kSelectFile), false);
 	if (fileSelector)
 	{
-		for (auto const& supportedAudioFileExtension : *gSupportedAudioFileExtensions)
+		for (auto const& supportedAudioFileExtension : mSupportedAudioFileExtensions)
 		{
 			auto const supportedAudioFileExtensionC = dfx::CreateCStringFromCFString(supportedAudioFileExtension);
 			if (supportedAudioFileExtensionC)
@@ -1210,7 +1210,7 @@ std::fprintf(stderr, "flavor = '%.4s', size = %ld\n", (char*)(&dragFlavorType_bi
 									bool result = false;
 									if (foundFile)
 									{
-										if (DFX_IsSupportedAudioFileType(mDragAudioFileRef))
+										if (IsSupportedAudioFileType(mDragAudioFileRef))
 										{
 											status = LoadAudioFile(mDragAudioFileRef);
 											if (status == noErr)
