@@ -99,7 +99,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 PLUGINCORE::PLUGINCORE(DfxPlugin& inInstance)
   : DfxPluginCore(inInstance) {
   /* determine the size of the largest window size */
-  constexpr auto maxframe = *std::max_element(buffersizes.cbegin(), buffersizes.cend());
+  constexpr auto maxframe = *std::ranges::max_element(buffersizes);
 
   /* add some leeway? */
   in0.assign(maxframe, 0.f);

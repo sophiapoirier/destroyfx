@@ -159,6 +159,6 @@ private:
   dfx::UniqueOpaqueType<rfftw_plan, rfftw_destroy_plan> plan, rplan;
 
   /* result of ffts ( */
-  float fftr[*std::max_element(buffersizes.cbegin(), buffersizes.cend())] {};
+  float fftr[*std::ranges::max_element(buffersizes)] {};
 
 };
