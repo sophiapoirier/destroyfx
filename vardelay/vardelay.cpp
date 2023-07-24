@@ -1,19 +1,38 @@
-/* Super Destroy FX : Vardelay! */
+/*---------------------------------------------------------------
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2002-2023  Sophia Poirier
+
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 2 of the License, or 
+(at your option) any later version.
+
+Destroy FX Library is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org
+
+Super Destroy FX : Vardelay!
+---------------------------------------------------------------*/
 
 #include "vardelay.hpp"
 
+#include <algorithm>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <math.h>
 
-#define MKBUFSIZE(c) (buffersizes[(int)((c)*(BUFFERSIZESSIZE-1))])
-
-const int PLUGIN::buffersizes[BUFFERSIZESSIZE] = { 
-  2, 4, 8, 16, 32, 64, 128, 256, 512, 
-  1024, 2048, 4096, 8192, 16384, 32768, 
-};
+#define MKBUFSIZE(c) (buffersizes[(int)((c)*(buffersizes.size()-1))])
 
 
 PLUGIN::PLUGIN(audioMasterCallback audioMaster)
@@ -29,9 +48,7 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
     FPARAM(band[zz], P_DELAYS + zz, "band", 0.0f, "dist");
   }
 
-  long maxframe = 0;
-  for (long i=0; i<BUFFERSIZESSIZE; i++)
-    maxframe = ( buffersizes[i] > maxframe ? buffersizes[i] : maxframe );
+  constexpr auto maxframe = *std::ranges::max_element(buffersizes);
 
   setup();
 
@@ -188,10 +205,6 @@ void PLUGIN::getParameterLabel(long index, char *label) {
    operate entirely within one buffer.
 */
 void PLUGIN::processw(float * in, float * out, long samples) {
-
-  static int ss;
-  static int t;
-  ss = !ss;
 
   /* XXX memset */
   for(int u=0; u < samples; u ++) out[u] = 0.0f;

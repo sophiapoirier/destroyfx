@@ -32,6 +32,7 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 #include <cmath>
 #include <concepts>
 #include <limits>
+#include <numbers>
 #include <unordered_set>
 
 #include "dfxmath.h"
@@ -40,7 +41,7 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 
 //-----------------------------------------------------------------------------
 // interpret fractional numbers as integral
-static int64_t Float2Int(double const& inValue)
+constexpr int64_t Float2Int(double const& inValue)
 {
 	constexpr auto padding = DfxParam::kIntegerPadding;
 	return static_cast<int64_t>(inValue + ((inValue < 0.) ? -padding : padding));
@@ -48,19 +49,20 @@ static int64_t Float2Int(double const& inValue)
 
 //-----------------------------------------------------------------------------
 // interpret fractional numbers as booleans
-static bool Float2Boolean(double const& inValue)
+constexpr bool Float2Boolean(double const& inValue)
 {
 	return !dfx::math::IsZero(inValue);
 }
 
 //-----------------------------------------------------------------------------
 // interpret integral numbers as booleans
-static bool Int2Boolean(int64_t const& inValue)
+constexpr bool Int2Boolean(int64_t const& inValue)
 {
 	return (inValue != 0);
 }
 
 //-----------------------------------------------------------------------------
+// TODO C++26: constexpr
 template <std::floating_point T>
 auto sqrt_safe(T inValue)
 {
@@ -68,6 +70,7 @@ auto sqrt_safe(T inValue)
 }
 
 //-----------------------------------------------------------------------------
+// TODO C++26: constexpr
 template <std::floating_point T>
 auto pow_safe(T inBase, T inExponent)
 {
@@ -75,6 +78,7 @@ auto pow_safe(T inBase, T inExponent)
 }
 
 //-----------------------------------------------------------------------------
+// TODO C++26: constexpr
 template <std::floating_point T>
 auto log_safe(T inValue)
 {
@@ -392,8 +396,8 @@ double DfxParam::contract(double inLiteralValue) const
 double DfxParam::contract(double inLiteralValue, double inMinValue, double inMaxValue, Curve inCurveType, double inCurveSpec)
 {
 	auto const valueRange = inMaxValue - inMinValue;
-	static constexpr double oneDivThree = 1.0 / 3.0;
-	static double const logTwo = std::log(2.0);
+	constexpr double oneDivThree = 1. / 3.;
+	constexpr auto logTwo = std::numbers::ln2_v<double>;
 
 	switch (inCurveType)
 	{
@@ -521,7 +525,7 @@ double DfxParam::expand(double inGenValue) const
 double DfxParam::expand(double inGenValue, double inMinValue, double inMaxValue, Curve inCurveType, double inCurveSpec)
 {
 	auto const valueRange = inMaxValue - inMinValue;
-	static double const logTwoInv = 1.0 / std::log(2.0);
+	constexpr auto logTwoInv = 1. / std::numbers::ln2_v<double>;
 
 	switch (inCurveType)
 	{

@@ -1,22 +1,40 @@
+/*---------------------------------------------------------------
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2009-2023  Sophia Poirier
 
-/* DFX Firefly : Universal FIR filter; EXTREME style. */
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 2 of the License, or 
+(at your option) any later version.
+
+Destroy FX Library is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org
+
+DFX Firefly : Universal FIR filter; EXTREME style.
+---------------------------------------------------------------*/
 
 #include "firefly.hpp"
 
 #include "fireflyeditor.hpp"
 
+#include <algorithm>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <math.h>
 
-#define MKBUFSIZE(c) (buffersizes[(int)((c)*(BUFFERSIZESSIZE-1))])
-
-const int PLUGIN::buffersizes[BUFFERSIZESSIZE] = { 
-  2, 4, 8, 16, 32, 64, 128, 256, 512, 
-  1024, 2048, 4096, 8192, 16384, 32768, 
-};
+#define MKBUFSIZE(c) (buffersizes[(int)((c)*(buffersizes.size()-1))])
 
 
 PLUGIN::PLUGIN(audioMasterCallback audioMaster)
@@ -25,9 +43,7 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   FPARAM(bufsizep, P_BUFSIZE, "wsize", 0.5, "samples");
   FPARAM(shape, P_SHAPE, "shape", 0.0, "");
 
-  long maxframe = 0;
-  for (long i=0; i<BUFFERSIZESSIZE; i++)
-    maxframe = ( buffersizes[i] > maxframe ? buffersizes[i] : maxframe );
+  constexpr auto maxframe = *std::ranges::max_element(buffersizes);
 
   setup();
 
@@ -84,6 +100,9 @@ void PLUGIN::resume() {
   if (changed) setInitialDelay(framesize);
 
   changed = 0;
+
+  ss = false;
+  t = 0;
 
 }
 
@@ -187,8 +206,6 @@ void PLUGIN::getParameterLabel(long index, char *label) {
 */
 void PLUGIN::processw(float * in, float * out, long samples) {
 
-  static int ss;
-  static int t;
   ss = !ss;
 
 #if 1

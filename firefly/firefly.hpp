@@ -1,9 +1,32 @@
+/*---------------------------------------------------------------
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2009-2023  Sophia Poirier
 
-/* DFX Firefly : Universal FIR filter; EXTREME style. */
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 2 of the License, or 
+(at your option) any later version.
+
+Destroy FX Library is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org
+
+DFX Firefly : Universal FIR filter; EXTREME style.
+---------------------------------------------------------------*/
 
 #ifndef _DFX_FIREFLY_H
 #define _DFX_FIREFLY_H
 
+#include <array>
 #include <audioeffectx.h>
 
 #ifdef WIN32
@@ -156,8 +179,10 @@ protected:
   int outsize;
   int outstart;
 
-  #define BUFFERSIZESSIZE 15
-  static const int buffersizes[BUFFERSIZESSIZE];
+  static constexpr std::array buffersizes {
+    2, 4, 8, 16, 32, 64, 128, 256, 512,
+    1024, 2048, 4096, 8192, 16384, 32768
+  };
 
   /* buffersize is 3 * third, framesize is 2 * third 
      buffersize is used for outbuf.
@@ -166,6 +191,9 @@ protected:
 
   /* 1 if need to do ioChanged since buffer settings are different now */
   int changed;
+
+  bool ss = false;
+  unsigned int t = 0;
 
 };
 

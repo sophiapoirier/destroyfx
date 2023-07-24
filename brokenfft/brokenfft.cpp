@@ -1,20 +1,39 @@
-/* Broken FFT 2.0: Featuring the Super Destroy FX Windowing System! */
+/*---------------------------------------------------------------
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2001-2023  Sophia Poirier
+
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 2 of the License, or 
+(at your option) any later version.
+
+Destroy FX Library is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org
+
+Broken FFT 2.0: Featuring the Super Destroy FX Windowing System!
+---------------------------------------------------------------*/
 
 #include "brokenfft.hpp"
 #include "fourier.h"
 
+#include <algorithm>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <math.h>
 
-#define MKBUFSIZE(c) (buffersizes[(int)((c)*(BUFFERSIZESSIZE-1))])
-
-const int PLUGIN::buffersizes[BUFFERSIZESSIZE] = { 
-  2, 4, 8, 16, 32, 64, 128, 256, 512, 
-  1024, 2048, 4096, 8192, 16384, 32768, 
-};
+#define MKBUFSIZE(c) (buffersizes[(int)((c)*(buffersizes.size()-1))])
 
 PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMS) {
@@ -50,9 +69,7 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   FPARAM(norm, P_NORM, "anorm", 0.0f, "?");
   
 
-  long maxframe = 0;
-  for (long i=0; i<BUFFERSIZESSIZE; i++)
-    maxframe = ( buffersizes[i] > maxframe ? buffersizes[i] : maxframe );
+  constexpr auto maxframe = *std::ranges::max_element(buffersizes);
 
   setup();
 
@@ -550,9 +567,6 @@ void PLUGIN::fftops(long samples) {
 void PLUGIN::processw(float * in, float * out) {
 
   int samples = framesize;
-
-  static int ss;
-  ss = !ss;
 
   int i = 0;
 
