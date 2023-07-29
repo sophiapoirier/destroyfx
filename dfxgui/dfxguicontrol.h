@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2003-2022  Sophia Poirier
+Copyright (C) 2003-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -150,6 +150,10 @@ protected:
 				mControl->asCControl()->endEdit();
 			}
 		}
+		DiscreteValueConstrainer(DiscreteValueConstrainer const&) = delete;
+		DiscreteValueConstrainer(DiscreteValueConstrainer&&) = delete;
+		DiscreteValueConstrainer& operator=(DiscreteValueConstrainer const&) = delete;
+		DiscreteValueConstrainer& operator=(DiscreteValueConstrainer&&) = delete;
 	private:
 		IDGControl* const mControl;
 		float const mEntryValue;
@@ -233,7 +237,7 @@ public:
 
 protected:
 	IDGControl* addChild(dfx::ParameterID inParameterID);
-	// TODO: C++23 use std::span?
+	// TODO C++23: use std::span?
 	void addChildren(std::vector<dfx::ParameterID> const& inParameterID);
 
 	template <std::invocable<IDGControl*> Proc>

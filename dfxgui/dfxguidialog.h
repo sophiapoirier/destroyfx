@@ -40,6 +40,11 @@ public:
 	DGModalSession(VSTGUI::CFrame* inFrame, VSTGUI::CView* inView);
 	~DGModalSession();
 
+	DGModalSession(DGModalSession const&) = delete;
+	DGModalSession(DGModalSession&&) = delete;
+	DGModalSession& operator=(DGModalSession const&) = delete;
+	DGModalSession& operator=(DGModalSession&&) = delete;
+
 	bool isSessionActive() const noexcept;
 
 private:
@@ -85,7 +90,7 @@ public:
 
 	VSTGUI::CTextButton* getButton(Selection inSelection) const;
 
-	CLASS_METHODS(DGDialog, VSTGUI::CViewContainer)
+	CLASS_METHODS_NOCOPY(DGDialog, VSTGUI::CViewContainer)
 
 private:
 	enum : Buttons
@@ -125,7 +130,7 @@ public:
 	// callback only invoked when text entry submitted with OK button
 	bool runModal(VSTGUI::CFrame* inFrame, std::function<bool(std::string const&, dfx::ParameterID)>&& inCallback);
 
-	CLASS_METHODS(DGTextEntryDialog, DGDialog)
+	CLASS_METHODS_NOCOPY(DGTextEntryDialog, DGDialog)
 
 private:
 	dfx::ParameterID const mParameterID;
@@ -148,7 +153,7 @@ public:
 
 	bool runModal(VSTGUI::CFrame* inFrame);
 
-	CLASS_METHODS(DGTextScrollDialog, VSTGUI::CScrollView)
+	CLASS_METHODS_NOCOPY(DGTextScrollDialog, VSTGUI::CScrollView)
 
 protected:
 	// CScrollView override

@@ -181,6 +181,11 @@ public:
     }
   }
 
+  InstalledFontResource(InstalledFontResource const&) = delete;
+  InstalledFontResource(InstalledFontResource&&) = delete;
+  InstalledFontResource& operator=(InstalledFontResource const&) = delete;
+  InstalledFontResource& operator=(InstalledFontResource&&) = delete;
+
 private:
   const std::string tempfile;
 };
@@ -295,7 +300,7 @@ public:
     if (inFontName) {
       return VSTGUI::makeOwned<VSTGUI::CFontDesc>(inFontName, inFontSize);
     } else {
-      auto fontDesc = VSTGUI::makeOwned<VSTGUI::CFontDesc>(*VSTGUI::kSystemFont);
+      auto const fontDesc = VSTGUI::makeOwned<VSTGUI::CFontDesc>(*VSTGUI::kSystemFont);
       fontDesc->setSize(inFontSize);
 #if TARGET_OS_MAC
       if (auto const fontName = [NSFont systemFontOfSize:NSFont.systemFontSize].displayName) {
