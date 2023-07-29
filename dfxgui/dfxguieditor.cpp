@@ -53,6 +53,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
+	#include <AudioUnitSDK/AUUtility.h>
 	#include "dfx-au-utilities.h"
 #endif
 
@@ -810,27 +811,24 @@ void DfxGuiEditor::TextEntryForParameterValue(dfx::ParameterID inParameterID)
 	}
 
 	mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>(inParameterID, getparametername(inParameterID), "enter value:");
-	if (mTextEntryDialog)
+	std::array<char, dfx::kParameterValueStringMaxLength> textValue {};
+	if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
 	{
-		std::array<char, dfx::kParameterValueStringMaxLength> textValue {};
-		if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
-		{
-			std::snprintf(textValue.data(), textValue.size(), "%.6lf", getparameter_f(inParameterID));
-		}
-		else
-		{
-			std::snprintf(textValue.data(), textValue.size(), "%ld", getparameter_i(inParameterID));
-		}
-		mTextEntryDialog->setText(textValue.data());
+		std::snprintf(textValue.data(), textValue.size(), "%.6lf", getparameter_f(inParameterID));
+	}
+	else
+	{
+		std::snprintf(textValue.data(), textValue.size(), "%ld", getparameter_i(inParameterID));
+	}
+	mTextEntryDialog->setText(textValue.data());
 
-		auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID inParameterID)
-		{
-			return dfxgui_SetParameterValueWithString(inParameterID, inText);
-		};
-		if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
-		{
-			ShowMessage("could not display text entry dialog");
-		}
+	auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID inParameterID)
+	{
+		return dfxgui_SetParameterValueWithString(inParameterID, inText);
+	};
+	if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
+	{
+		ShowMessage("could not display text entry dialog");
 	}
 }
 
@@ -1621,7 +1619,8 @@ void DfxGuiEditor::LoadPresetFile()
 #ifdef TARGET_API_AUDIOUNIT
 					auto const fileURL = PathToCFURL(filePath);
 					Require(fileURL.get(), "failed to create file URL");
-					RestoreAUStateFromPresetFile(dfxgui_GetEffectInstance(), fileURL.get());
+					auto const status = RestoreAUStateFromPresetFile(dfxgui_GetEffectInstance(), fileURL.get());
+					ausdk::ThrowQuietIf(status != noErr, status);
 #elif defined(TARGET_API_VST)
 					RestoreVSTStateFromProgramFile(filePath);
 #elif
@@ -1920,34 +1919,31 @@ void DfxGuiEditor::TextEntryForParameterMidiCC(dfx::ParameterID inParameterID)
 	}
 
 	mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>(inParameterID, getparametername(inParameterID), "enter value:");
-	if (mTextEntryDialog)
+	// initialize the text with the current CC assignment, if there is one
+	auto const currentParameterAssignment = getparametermidiassignment(inParameterID);
+	if (currentParameterAssignment.mEventType == dfx::MidiEventType::CC)
 	{
-		// initialize the text with the current CC assignment, if there is one
-		auto const currentParameterAssignment = getparametermidiassignment(inParameterID);
-		if (currentParameterAssignment.mEventType == dfx::MidiEventType::CC)
-		{
-			mTextEntryDialog->setText(std::to_string(currentParameterAssignment.mEventNum));
-		}
+		mTextEntryDialog->setText(std::to_string(currentParameterAssignment.mEventNum));
+	}
 
-		auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID inParameterID)
+	auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID inParameterID)
+	{
+		int value {};
+		auto const readCount = std::sscanf(inText.c_str(), "%d", &value);
+		if ((readCount < 1) || (readCount == EOF) || (value < 0) || (value > DfxMidi::kMaxValue))
 		{
-			int value {};
-			auto const readCount = std::sscanf(inText.c_str(), "%d", &value);
-			if ((readCount < 1) || (readCount == EOF) || (value < 0) || (value > DfxMidi::kMaxValue))
-			{
-				return false;
-			}
-			dfx::ParameterAssignment parameterAssignment;
-			parameterAssignment.mEventType = dfx::MidiEventType::CC;
-			parameterAssignment.mEventChannel = getparametermidiassignment(inParameterID).mEventChannel;  // persist any existing choice
-			parameterAssignment.mEventNum = value;
-			setparametermidiassignment(inParameterID, parameterAssignment);
-			return true;
-		};
-		if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
-		{
-			ShowMessage("could not display text entry dialog");
+			return false;
 		}
+		dfx::ParameterAssignment parameterAssignment;
+		parameterAssignment.mEventType = dfx::MidiEventType::CC;
+		parameterAssignment.mEventChannel = getparametermidiassignment(inParameterID).mEventChannel;  // persist any existing choice
+		parameterAssignment.mEventNum = value;
+		setparametermidiassignment(inParameterID, parameterAssignment);
+		return true;
+	};
+	if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
+	{
+		ShowMessage("could not display text entry dialog");
 	}
 }
 
@@ -1960,28 +1956,25 @@ void DfxGuiEditor::TextEntryForParameterMidiChannel(dfx::ParameterID inParameter
 	}
 
 	mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>(inParameterID, getparametername(inParameterID), "enter value:");
-	if (mTextEntryDialog)
-	{
-		mTextEntryDialog->setText(std::to_string(getparametermidiassignment(inParameterID).mEventChannel + 1));
+	mTextEntryDialog->setText(std::to_string(getparametermidiassignment(inParameterID).mEventChannel + 1));
 
-		auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID inParameterID)
+	auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID inParameterID)
+	{
+		int value {};
+		auto const readCount = std::sscanf(inText.c_str(), "%d", &value);
+		value -= 1;  // transform from display value to zero-based index as used by MIDI
+		if ((readCount < 1) || (readCount == EOF) || (value < 0) || (value > DfxMidi::kMaxChannelValue))
 		{
-			int value {};
-			auto const readCount = std::sscanf(inText.c_str(), "%d", &value);
-			value -= 1;  // transform from display value to zero-based index as used by MIDI
-			if ((readCount < 1) || (readCount == EOF) || (value < 0) || (value > DfxMidi::kMaxChannelValue))
-			{
-				return false;
-			}
-			auto parameterAssignment = getparametermidiassignment(inParameterID);
-			parameterAssignment.mEventChannel = value;
-			setparametermidiassignment(inParameterID, parameterAssignment);
-			return true;
-		};
-		if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
-		{
-			ShowMessage("could not display text entry dialog");
+			return false;
 		}
+		auto parameterAssignment = getparametermidiassignment(inParameterID);
+		parameterAssignment.mEventChannel = value;
+		setparametermidiassignment(inParameterID, parameterAssignment);
+		return true;
+	};
+	if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
+	{
+		ShowMessage("could not display text entry dialog");
 	}
 }
 
@@ -2048,25 +2041,22 @@ void DfxGuiEditor::TextEntryForSmoothedAudioValueTime()
 	}
 
 	mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>("parameter value smoothing time", "enter seconds:");
-	if (mTextEntryDialog)
-	{
-		mTextEntryDialog->setText(std::to_string(*currentValue));
+	mTextEntryDialog->setText(std::to_string(*currentValue));
 
-		auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID)
+	auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID)
+	{
+		double value {};
+		auto const readCount = std::sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%lf", &value);
+		if ((readCount < 1) || (readCount == EOF) || (value < 0.))
 		{
-			double value {};
-			auto const readCount = std::sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%lf", &value);
-			if ((readCount < 1) || (readCount == EOF) || (value < 0.))
-			{
-				return false;
-			}
-			setSmoothedAudioValueTime(value);
-			return true;
-		};
-		if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
-		{
-			ShowMessage("could not display text entry dialog");
+			return false;
 		}
+		setSmoothedAudioValueTime(value);
+		return true;
+	};
+	if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
+	{
+		ShowMessage("could not display text entry dialog");
 	}
 }
 
@@ -2819,9 +2809,9 @@ dfx::StatusCode DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 void DfxGuiEditor::ShowMessage(std::string const& inMessage)
 {
 	bool shown = false;
-	mErrorDialog = VSTGUI::makeOwned<DGDialog>(DGRect(0, 0, 300, 120), inMessage);
-	if (mErrorDialog)
+	if (getFrame())
 	{
+		mErrorDialog = VSTGUI::makeOwned<DGDialog>(DGRect(0, 0, 300, 120), inMessage);
 		shown = mErrorDialog->runModal(getFrame());
 		assert(shown);
 	}
