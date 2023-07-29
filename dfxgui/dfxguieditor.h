@@ -389,7 +389,7 @@ private:
 	void updateParameterControls(dfx::ParameterID inParameterID, float inValue, VSTGUI::CControl* inSendingControl = nullptr);
 
 	[[nodiscard]] bool handleContextualMenuClick(VSTGUI::CControl* inControl, VSTGUI::MouseEventButtonState inButtonState);
-	VSTGUI::COptionMenu createContextualMenu(IDGControl* inControl);
+	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createContextualMenu(IDGControl* inControl);
 	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParameterContextualMenu(dfx::ParameterID inParameterID);
 	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParametersContextualMenu();
 

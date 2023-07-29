@@ -206,10 +206,6 @@ try
 	mControlsList.clear();
 
 	frame = new VSTGUI::CFrame(VSTGUI::CRect(rect.left, rect.top, rect.right, rect.bottom), this);
-	if (!frame)
-	{
-		return false;
-	}
 	frame->open(inWindow);
 	frame->setBackground(GetBackgroundImage());
 	frame->registerMouseObserver(this);
@@ -2111,20 +2107,20 @@ bool DfxGuiEditor::handleContextualMenuClick(VSTGUI::CControl* inControl, VSTGUI
 	}
 
 	auto const dgControl = dynamic_cast<IDGControl*>(inControl);
-	auto popupMenu = createContextualMenu(dgControl);
+	auto const popupMenu = createContextualMenu(dgControl);
 
 	// --------- show the contextual menu ---------
 	VSTGUI::CPoint mousePos;
 	[[maybe_unused]] auto const mousePosSuccess = getFrame()->getCurrentMouseLocation(mousePos);
 	assert(mousePosSuccess);
-	return popupMenu.popup(getFrame(), mousePos);
+	return popupMenu->popup(getFrame(), mousePos);
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
+VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 {
-	VSTGUI::COptionMenu resultMenu;
-	resultMenu.setStyle(kDfxGui_ContextualMenuStyle);
+	auto const resultMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
+	resultMenu->setStyle(kDfxGui_ContextualMenuStyle);
 
 	// populate the parameter-specific section of the menu
 	bool const parameterAttached = inControl && inControl->isParameterAttached();
@@ -2135,7 +2131,7 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 			auto const parameterID = control->getParameterID();
 			if (auto const parameterSubMenu = createParameterContextualMenu(parameterID))
 			{
-				resultMenu.addEntry(parameterSubMenu, getparametername(parameterID));
+				resultMenu->addEntry(parameterSubMenu, getparametername(parameterID));
 			}
 		};
 		addParameterSubMenu(inControl);
@@ -2143,40 +2139,40 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 		{
 			addParameterSubMenu(child);
 		}
-		if (resultMenu.getNbEntries())
+		if (resultMenu->getNbEntries())
 		{
-			resultMenu.addSeparator();  // preface the global commands section with a divider
+			resultMenu->addSeparator();  // preface the global commands section with a divider
 		}
 	}
 
 	// populate the global section of the menu
-	resultMenu.addSeparator();
+	resultMenu->addSeparator();
 	constexpr bool automationGesture = true;
-	DFX_AppendCommandItemToMenu(resultMenu, "Reset all parameter values to default", 
+	DFX_AppendCommandItemToMenu(*resultMenu, "Reset all parameter values to default",
 								std::bind(&DfxGuiEditor::setparameters_default, this, automationGesture));
-	DFX_AppendCommandItemToMenu(resultMenu, "Randomize all parameter values", 
+	DFX_AppendCommandItemToMenu(*resultMenu, "Randomize all parameter values",
 								std::bind(&DfxGuiEditor::randomizeparameters, this, automationGesture));  // XXX yes to writing automation data?
-	DFX_AppendCommandItemToMenu(resultMenu, "Generate parameter automation snapshot", 
+	DFX_AppendCommandItemToMenu(*resultMenu, "Generate parameter automation snapshot",
 								std::bind(&DfxGuiEditor::GenerateParametersAutomationSnapshot, this));
 	if (getSmoothedAudioValueTime().has_value())
 	{
-		DFX_AppendCommandItemToMenu(resultMenu, "Set parameter value smoothing time...", 
+		DFX_AppendCommandItemToMenu(*resultMenu, "Set parameter value smoothing time...",
 									std::bind(&DfxGuiEditor::TextEntryForSmoothedAudioValueTime, this));
 	}
 	if (!parameterAttached)
 	{
 		if (auto const parametersSubMenu = createParametersContextualMenu())
 		{
-			resultMenu.addEntry(parametersSubMenu, "Parameters");
+			resultMenu->addEntry(parametersSubMenu, "Parameters");
 		}
 	}
 
-	resultMenu.addSeparator();
-	DFX_AppendCommandItemToMenu(resultMenu, "Copy settings", std::bind(&DfxGuiEditor::copySettings, this));
+	resultMenu->addSeparator();
+	DFX_AppendCommandItemToMenu(*resultMenu, "Copy settings", std::bind(&DfxGuiEditor::copySettings, this));
 	{
 		bool currentClipboardIsPastable {};
 		pasteSettings(&currentClipboardIsPastable);
-		DFX_AppendCommandItemToMenu(resultMenu, "Paste settings", std::bind(&DfxGuiEditor::pasteSettings, this, nullptr), currentClipboardIsPastable);
+		DFX_AppendCommandItemToMenu(*resultMenu, "Paste settings", std::bind(&DfxGuiEditor::pasteSettings, this, nullptr), currentClipboardIsPastable);
 	}
 #ifndef TARGET_API_RTAS  // RTAS has no API for preset files, Pro Tools handles them
 	#ifdef TARGET_API_VST
@@ -2184,39 +2180,39 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 	#else
 	std::string const presetFileLabel("preset");
 	#endif
-	DFX_AppendCommandItemToMenu(resultMenu, "Save " + presetFileLabel + " file...", std::bind(&DfxGuiEditor::SavePresetFile, this));
-	DFX_AppendCommandItemToMenu(resultMenu, "Load " + presetFileLabel + " file...", std::bind(&DfxGuiEditor::LoadPresetFile, this));
+	DFX_AppendCommandItemToMenu(*resultMenu, "Save " + presetFileLabel + " file...", std::bind(&DfxGuiEditor::SavePresetFile, this));
+	DFX_AppendCommandItemToMenu(*resultMenu, "Load " + presetFileLabel + " file...", std::bind(&DfxGuiEditor::LoadPresetFile, this));
 #endif
 
 #if TARGET_PLUGIN_USES_MIDI
-	resultMenu.addSeparator();
-	DFX_AppendCommandItemToMenu(resultMenu, "MIDI learn", 
+	resultMenu->addSeparator();
+	DFX_AppendCommandItemToMenu(*resultMenu, "MIDI learn",
 								std::bind(&DfxGuiEditor::setmidilearning, this, !getmidilearning()), 
 								true, getmidilearning());
-	DFX_AppendCommandItemToMenu(resultMenu, "MIDI assignments reset", std::bind(&DfxGuiEditor::resetmidilearn, this));
-	DFX_AppendCommandItemToMenu(resultMenu, "MIDI assignments use channel", 
+	DFX_AppendCommandItemToMenu(*resultMenu, "MIDI assignments reset", std::bind(&DfxGuiEditor::resetmidilearn, this));
+	DFX_AppendCommandItemToMenu(*resultMenu, "MIDI assignments use channel",
 								std::bind(&DfxGuiEditor::setMidiAssignmentsUseChannel, this, !getMidiAssignmentsUseChannel()), 
 								true, getMidiAssignmentsUseChannel());
-	DFX_AppendCommandItemToMenu(resultMenu, "Steal MIDI assignments", 
+	DFX_AppendCommandItemToMenu(*resultMenu, "Steal MIDI assignments",
 								std::bind(&DfxGuiEditor::setMidiAssignmentsSteal, this, !getMidiAssignmentsSteal()), 
 								true, getMidiAssignmentsSteal());
 #endif
 
-	resultMenu.addSeparator();
-	DFX_AppendCommandItemToMenu(resultMenu, PLUGIN_NAME_STRING " manual", std::bind(&dfx::LaunchDocumentation));
+	resultMenu->addSeparator();
+	DFX_AppendCommandItemToMenu(*resultMenu, PLUGIN_NAME_STRING " manual", std::bind(&dfx::LaunchDocumentation));
 #if TARGET_PLUGIN_USES_MIDI
-	DFX_AppendCommandItemToMenu(resultMenu, PLUGIN_CREATOR_NAME_STRING " MIDI features manual", std::bind(&dfx::LaunchURL, DESTROYFX_URL "/docs/destroy-fx-midi.html"));
+	DFX_AppendCommandItemToMenu(*resultMenu, PLUGIN_CREATOR_NAME_STRING " MIDI features manual", std::bind(&dfx::LaunchURL, DESTROYFX_URL "/docs/destroy-fx-midi.html"));
 #endif
-	DFX_AppendCommandItemToMenu(resultMenu, "Open " PLUGIN_CREATOR_NAME_STRING " web site", 
+	DFX_AppendCommandItemToMenu(*resultMenu, "Open " PLUGIN_CREATOR_NAME_STRING " web site",
 								std::bind(&dfx::LaunchURL, PLUGIN_HOMEPAGE_URL));
-	DFX_AppendCommandItemToMenu(resultMenu, "Acknowledgements", std::bind(&DfxGuiEditor::ShowAcknowledgements, this));
+	DFX_AppendCommandItemToMenu(*resultMenu, "Acknowledgements", std::bind(&DfxGuiEditor::ShowAcknowledgements, this));
 
-	resultMenu.addSeparator();
+	resultMenu->addSeparator();
 	auto const [versionMajor, versionMinor, versionBugfix] = getPluginVersion();
 	auto const versionText = std::to_string(versionMajor) + "." + std::to_string(versionMinor) + "." + std::to_string(versionBugfix);
-	DFX_AppendCommandItemToMenu(resultMenu, "Version " + versionText, {}, false);
+	DFX_AppendCommandItemToMenu(*resultMenu, "Version " + versionText, {}, false);
 
-	resultMenu.cleanupSeparators(true);
+	resultMenu->cleanupSeparators(true);
 	return resultMenu;
 }
 
@@ -2225,7 +2221,7 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 {
 	assert(dfxgui_IsValidParameterID(inParameterID));
 
-	auto resultMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
+	auto const resultMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
 	resultMenu->setStyle(kDfxGui_ContextualMenuStyle);
 
 	resultMenu->addSeparator();
