@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <utility>
 
 #include "dfxmath.h"
 

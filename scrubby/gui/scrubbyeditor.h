@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #pragma once
 
 
+#include <utility>
 #include <vector>
 
 #include "dfxgui.h"

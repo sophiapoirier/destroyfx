@@ -27,6 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 #include <cstdio>
 #include <cstring>
 #include <exception>

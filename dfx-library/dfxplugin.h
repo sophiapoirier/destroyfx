@@ -129,6 +129,7 @@ VST_NUM_CHANNELS
 #include <atomic>
 #include <cassert>
 #include <concepts>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -138,6 +139,7 @@ VST_NUM_CHANNELS
 #include <string>
 #include <string_view>
 #include <thread>
+#include <utility>
 #include <variant>
 #include <vector>
 

@@ -29,6 +29,7 @@ These are some generally useful functions.
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+#include <cstddef>
 #include <cstring>
 #include <functional>
 #include <locale>
