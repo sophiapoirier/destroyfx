@@ -370,6 +370,10 @@ consteval auto DFX_EndianModeForScalarType()
 	{
 		return kLogicAUNodePropertyEndianMode_All64Bits;
 	}
+	else
+	{
+		static_assert(dfx::AlwaysFalse<T>, "unhandled condition");
+	}
 }
 #endif
 

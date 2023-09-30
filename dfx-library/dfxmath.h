@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -39,6 +39,8 @@ This is our math and numerics shit.
 #include <type_traits>
 #include <utility>
 
+#include "dfxmisc.h"
+
 
 namespace dfx::math
 {
@@ -48,8 +50,8 @@ namespace dfx::math
 // constants
 //-----------------------------------------------------------------------------
 
-// the AU SDK handles denormals for us, and ARM processors don't have denormal performance issues
-constexpr bool kDenormalProblem = 
+// the AU SDK handles denormals for us, and ARM processors don't have denormal performance degradation
+inline constexpr bool kDenormalProblem = 
 #if defined(TARGET_API_AUDIOUNIT) || defined(__arm__) || defined(__arm64__)
 false;
 #else
@@ -295,6 +297,7 @@ constexpr T getRandomDefaultMaximum()
 	}
 }
 
+//-----------------------------------------------------------------------------
 // allows to select between types at compile-time
 template <Randomizable T>
 constexpr auto getRandomDistribution(T inRangeMinimum = T(0), T inRangeMaximum = getRandomDefaultMaximum<T>())
@@ -308,12 +311,17 @@ constexpr auto getRandomDistribution(T inRangeMinimum = T(0), T inRangeMaximum =
 	{
 		return std::uniform_int_distribution<uint8_t>(inRangeMinimum ? 1 : 0, inRangeMaximum ? 1 : 0);
 	}
-	else
+	else if constexpr (std::is_integral_v<T>)
 	{
 		return std::uniform_int_distribution<T>(inRangeMinimum, inRangeMaximum);
 	}
+	else
+	{
+		static_assert(dfx::AlwaysFalse<T>, "unhandled condition");
+	}
 }
 
+//-----------------------------------------------------------------------------
 // This is PCG-XSH-RR as a C++11 random number engine with 32 bit output
 // and 64-bit state.
 // https://en.wikipedia.org/wiki/Permuted_congruential_generator

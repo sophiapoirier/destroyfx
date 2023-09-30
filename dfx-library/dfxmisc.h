@@ -47,6 +47,13 @@ namespace dfx
 
 
 //-----------------------------------------------------------------------------
+// used in compile-time branches to enforce unreachable case
+template <typename>
+inline constexpr bool AlwaysFalse = false;
+
+
+
+//-----------------------------------------------------------------------------
 namespace detail
 {
 	template <typename T, auto D>
