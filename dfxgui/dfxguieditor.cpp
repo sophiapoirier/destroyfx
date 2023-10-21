@@ -40,6 +40,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <string_view>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "dfxguibutton.h"
 #include "dfxguidialog.h"
@@ -1219,15 +1220,7 @@ std::optional<std::string> DfxGuiEditor::getparametervaluestring(dfx::ParameterI
 std::string DfxGuiEditor::getparameterunitstring(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	std::array<char, dfx::kParameterUnitStringMaxLength> unitLabel {};
-	size_t dataSize = unitLabel.size() * sizeof(unitLabel.front());
-	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterUnitLabel, dfx::kScope_Global, 
-										   inParameterID, unitLabel.data(), dataSize);
-	if (status == dfx::kStatus_NoError)
-	{
-		return unitLabel.data();
-	}
-	return {};
+	return dfxgui_GetPropertyAsString(dfx::kPluginProperty_ParameterUnitLabel, dfx::kScope_Global, inParameterID);
 #else
 	return dfxgui_GetEffectInstance()->getparameterunitstring(inParameterID);
 #endif
@@ -1268,15 +1261,8 @@ std::optional<size_t> DfxGuiEditor::GetParameterGroup(dfx::ParameterID inParamet
 std::string DfxGuiEditor::GetParameterGroupName(size_t inGroupIndex)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	std::array<char, dfx::kParameterGroupStringMaxLength> groupName {};
-	size_t dataSize = groupName.size() * sizeof(groupName.front());
-	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterGroupName, dfx::kScope_Global, 
-										   static_cast<unsigned int>(inGroupIndex), groupName.data(), dataSize);
-	if (status == dfx::kStatus_NoError)
-	{
-		return groupName.data();
-	}
-	return {};
+	return dfxgui_GetPropertyAsString(dfx::kPluginProperty_ParameterGroupName, dfx::kScope_Global,
+									  static_cast<unsigned int>(inGroupIndex));
 #else
 	return dfxgui_GetEffectInstance()->getparametergroupname(inGroupIndex);
 #endif
@@ -1554,6 +1540,22 @@ dfx::StatusCode DfxGuiEditor::dfxgui_GetProperty(dfx::PropertyID inPropertyID, d
 }
 
 //-----------------------------------------------------------------------------
+std::string DfxGuiEditor::dfxgui_GetPropertyAsString(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex)
+{
+	size_t dataSize {};
+	dfx::PropertyFlags flags {};
+	if (dfxgui_GetPropertyInfo(inPropertyID, inScope, inItemIndex, dataSize, flags) == dfx::kStatus_NoError)
+	{
+		std::vector<char> text(dataSize);
+		if (dfxgui_GetProperty(inPropertyID, inScope, inItemIndex, text.data(), dataSize) == dfx::kStatus_NoError)
+		{
+			return text.data();
+		}
+	}
+	return {};
+}
+
+//-----------------------------------------------------------------------------
 dfx::StatusCode DfxGuiEditor::dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, 
 												 void const* inData, size_t inDataSize)
 {
@@ -1679,7 +1681,7 @@ void DfxGuiEditor::SavePresetFile()
 						{
 							return false;
 						}
-						Require(status == noErr, ("error code " + std::to_string(status)).c_str());
+						Require(status == noErr, "error code " + std::to_string(status));
 						return true;
 					}
 					case DGDialog::kSelection_Other:
@@ -1704,7 +1706,7 @@ void DfxGuiEditor::SavePresetFile()
 									assert(pluginBundle);
 									auto const status = CustomSaveAUPresetFile_Bundle(dfxgui_GetEffectInstance(), fileURL.get(), false, pluginBundle);
 									Require((status == noErr) || (status == userCanceledErr), 
-											("error code " + std::to_string(status)).c_str());
+											"error code " + std::to_string(status));
 								}
 								catch (std::exception const& e)
 								{
@@ -2499,10 +2501,10 @@ private:
 		result.reserve(kPasteTextPrefix.size() +
 					   base64.dataSize +
 					   kPasteTextSuffix.size());
-		for (char const c : kPasteTextPrefix) result.push_back(static_cast<std::byte>(c));
+		for (auto const c : kPasteTextPrefix) result.push_back(static_cast<std::byte>(c));
 		for (uint32_t i = 0; i < base64.dataSize; i++) result.push_back(static_cast<std::byte>(base64.data[i]));
-		for (char const c : kPasteTextSuffix) result.push_back(static_cast<std::byte>(c));
-		for (char const c : kPasteTextPadding) result.push_back(static_cast<std::byte>(c));
+		for (auto const c : kPasteTextSuffix) result.push_back(static_cast<std::byte>(c));
+		for (auto const c : kPasteTextPadding) result.push_back(static_cast<std::byte>(c));
 		return result;
 #else
 		return {inSettingsData, std::next(inSettingsData, inSettingsDataSize)};
@@ -2870,7 +2872,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::Require(bool inCondition, char const* inFailureMessage)
+void DfxGuiEditor::Require(bool inCondition, std::string const& inFailureMessage)
 {
 	if (!inCondition)
 	{

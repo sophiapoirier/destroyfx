@@ -310,6 +310,7 @@ public:
 		auto const status = dfxgui_GetProperty(inPropertyID, inScope, inItemIndex, &value, dataSize);
 		return ((status == dfx::kStatus_NoError) && (dataSize == sizeof(value))) ? std::make_optional(value) : std::nullopt;
 	}
+	std::string dfxgui_GetPropertyAsString(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned int inItemIndex = 0);
 	dfx::StatusCode dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
 									   void const* inData, size_t inDataSize);
 	// Assumes the data's size is sizeof(T). Returns true if successful.
@@ -405,7 +406,7 @@ private:
 	void ShowMessage(std::string const& inMessage);
 	void ShowAcknowledgements();
 	void HandleLoadImageError(DGImage& inImage, std::string const& inFileName);
-	static void Require(bool inCondition, char const* inFailureMessage = "");
+	static void Require(bool inCondition, std::string const& inFailureMessage);
 	static std::tuple<uint8_t, uint8_t, uint8_t> getPluginVersion() noexcept;
 
 #ifndef TARGET_API_VST
