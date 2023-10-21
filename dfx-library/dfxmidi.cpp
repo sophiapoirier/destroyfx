@@ -60,7 +60,7 @@ void DfxMidi::reset()
 		noteAudio.mSmoothSamples = 0;
 		std::ranges::for_each(noteAudio.mTails, [](auto& tail){ std::ranges::fill(tail, 0.f); });
 	}
-	mSustainQueue.fill(false);
+	mSustainedNotes.fill(false);
 
 	// clear the ordered note queue
 	removeAllNotes();
@@ -383,7 +383,7 @@ void DfxMidi::heedEvents(size_t inEventIndex, float inVelocityCurve, float inVel
 				// don't process this note off, but do remember it, if the sustain pedal is on
 				if (mSustain)
 				{
-					mSustainQueue[currentNote] = true;
+					mSustainedNotes[currentNote] = true;
 				}
 				else
 				{
@@ -415,12 +415,12 @@ void DfxMidi::heedEvents(size_t inEventIndex, float inVelocityCurve, float inVel
 				case kCC_SustainPedalOnOff:
 					if (mSustain && !isLegatoMode() && (event.mByte2 <= 63))
 					{
-						for (size_t i = 0; i < mSustainQueue.size(); i++)
+						for (size_t i = 0; i < mSustainedNotes.size(); i++)
 						{
-							if (mSustainQueue[i])
+							if (mSustainedNotes[i])
 							{
 								turnOffNote(static_cast<int>(i));
-								mSustainQueue[i] = false;
+								mSustainedNotes[i] = false;
 							}
 						}
 					}
@@ -518,7 +518,7 @@ void DfxMidi::setLegatoMode(bool inEnable)
 			turnOffNote(kLegatoVoiceNoteIndex);
 		}
 		removeAllNotes();
-		mSustainQueue.fill(false);
+		mSustainedNotes.fill(false);
 	}
 }
 

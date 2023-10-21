@@ -264,8 +264,8 @@ private:
 		// deleting copy operations to prevent accidental dynamic allocation in realtime context
 		MusicNoteAudio(MusicNoteAudio const&) = delete;
 		MusicNoteAudio& operator=(MusicNoteAudio const&) = delete;
-		MusicNoteAudio(MusicNoteAudio&&) = default;
-		MusicNoteAudio& operator=(MusicNoteAudio&&) = default;
+		MusicNoteAudio(MusicNoteAudio&&) noexcept = default;
+		MusicNoteAudio& operator=(MusicNoteAudio&&) noexcept = default;
 
 		std::vector<float> mLastOutValue;  // capture the most recent output value of each audio channel for smoothing, if necessary
 		size_t mSmoothSamples = 0;  // counter for quickly fading cut-off notes, for smoothity
@@ -284,7 +284,7 @@ private:
 
 	static constexpr bool noteIsValid(int inMidiNote) noexcept
 	{
-		return (inMidiNote >= 0);
+		return ((inMidiNote >= 0) && (inMidiNote <= kMaxValue));
 	}
 
 	std::array<MusicNote, kNumNotes> mNoteTable {};  // a table with important data about each note
@@ -305,7 +305,7 @@ private:
 	double mPitchBend = 1.0;  // a frequency scalar value for the current pitchbend setting
 	double mPitchBendRange = 0.0;  // plus/minus range of pitchbend's effect in semitones
 
-	std::array<bool, kNumNotes> mSustainQueue {};  // a queue of note-offs for when the sustain pedal is active
+	std::array<bool, kNumNotes> mSustainedNotes {};  // which notes have deferred note-offs for when the sustain pedal is active
 
 	bool mSustain = false;  // whether sustain pedal is active
 	bool mLegatoMode = false;
