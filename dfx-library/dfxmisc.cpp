@@ -32,6 +32,7 @@ These are some generally useful functions.
 #include <cstddef>
 #include <cstring>
 #include <functional>
+#include <iterator>
 #include <locale>
 #include <string_view>
 #include <string>

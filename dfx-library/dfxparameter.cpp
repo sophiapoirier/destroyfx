@@ -31,6 +31,7 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 #include <cassert>
 #include <cmath>
 #include <concepts>
+#include <iterator>
 #include <limits>
 #include <numbers>
 #include <unordered_set>
