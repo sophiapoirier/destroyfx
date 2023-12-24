@@ -549,6 +549,7 @@
 				"$(DFX_ROOT_SOURCE_PATH)/dfx-library/dfxplugin-metadata.cpp",
 			);
 			outputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/dfxplugin-metadata",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
