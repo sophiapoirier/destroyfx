@@ -853,9 +853,9 @@ private:
 	// try to get musical tempo/time/location information from the host
 	void processtimeinfo();
 
-	std::variant<size_t, double> mLatency {size_t(0)};  // TODO C++23: integer literal suffix UZ
+	std::variant<size_t, double> mLatency {0uz};
 	std::atomic_flag mLatencyChangeHasPosted;
-	std::variant<size_t, double> mTailSize {size_t(0)};  // TODO C++23: integer literal suffix UZ
+	std::variant<size_t, double> mTailSize {0uz};
 	std::atomic_flag mTailSizeChangeHasPosted;
 	bool mInPlaceAudioProcessingAllowed = true;
 	bool mAudioIsRendering = false;

@@ -262,8 +262,7 @@ constexpr double LambertW(double inValue)
 constexpr size_t GetFrequencyBasedSmoothingStride(double inSamplerate)
 {
 	assert(inSamplerate > 0.);
-	// TODO C++23: integer literal suffix UZ
-	return std::max(static_cast<size_t>(inSamplerate) / size_t(11025), size_t(1));
+	return std::max(static_cast<size_t>(inSamplerate) / 11025uz, 1uz);
 }
 
 

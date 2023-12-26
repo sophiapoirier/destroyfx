@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2010-2022  Sophia Poirier
+Copyright (C) 2010-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -60,7 +60,7 @@ void DfxEnvelope::setSampleRate(double inSampleRate)
 		auto const srScalar = inSampleRate / prevSampleRate;
 		mSectionPos = dfx::math::RoundToIndex(static_cast<double>(mSectionPos) * srScalar);
 		mSectionLength = dfx::math::RoundToIndex(static_cast<double>(mSectionLength) * srScalar);
-		mSectionLength_inv = 1.0 / static_cast<double>(std::max(mSectionLength, size_t(1)));
+		mSectionLength_inv = 1. / static_cast<double>(std::max(mSectionLength, 1uz));
 	}
 }
 

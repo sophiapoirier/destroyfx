@@ -494,8 +494,7 @@ DGTextArrayDisplay::DGTextArrayDisplay(DfxGuiEditor* inOwnerEditor, dfx::Paramet
 									   float inFontSize, DGColor inFontColor, char const* inFontName)
 :	DGTextDisplay(inOwnerEditor, inParameterID, inRegion, nullptr, nullptr, inBackground,
 				  inTextAlignment, inFontSize, inFontColor, inFontName),
-	// TODO C++23: integer literal suffix UZ
-	mDisplayStrings(std::max(inNumStrings, size_t(1)))
+	mDisplayStrings(std::max(inNumStrings, 1uz))
 {
 	setMouseEnabled(false);
 }

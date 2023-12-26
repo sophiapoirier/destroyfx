@@ -57,9 +57,8 @@ Welcome to our settings persistence mess.
 //-----------------------------------------------------------------------------
 DfxSettings::DfxSettings(uint32_t inMagic, DfxPlugin& inPlugin, size_t inSizeofExtendedData)
 :	mPlugin(inPlugin),
-	// TODO C++23: integer literal suffix UZ
-	mNumParameters(std::max(inPlugin.getnumparameters(), size_t(1))),	// we need at least one parameter
-	mNumPresets(std::max(inPlugin.getnumpresets(), size_t(1))),	// we need at least one set of parameters
+	mNumParameters(std::max(inPlugin.getnumparameters(), 1uz)),	// we need at least one parameter
+	mNumPresets(std::max(inPlugin.getnumpresets(), 1uz)),	// we need at least one set of parameters
 	mSizeOfExtendedData(inSizeofExtendedData),
 	mParameterIDMap(mNumParameters, dfx::kParameterID_Invalid),
 	mParameterAssignments(mNumParameters)
@@ -232,8 +231,7 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset) const
 	auto const firstSharedPresetByteAddress = sharedParameterIDs.getByteAddress() + mSizeOfParameterIDs;
 	auto sharedPresetName = reinterpret_cast<GenPresetNameElementT*>(firstSharedPresetByteAddress + offsetof(GenPreset, mName));
 	SerializedObject<GenPresetParameterValueT> sharedPresetParameterValues(firstSharedPresetByteAddress + offsetof(GenPreset, mParameterValues));
-	// TODO C++23: integer literal suffix UZ
-	auto const savePresetCount = inIsPreset ? size_t(1) : mNumPresets;
+	auto const savePresetCount = inIsPreset ? 1uz : mNumPresets;
 	SerializedObject<dfx::ParameterAssignment> const sharedParameterAssignments(firstSharedPresetByteAddress + (mSizeOfPreset * savePresetCount));
 
 	// first store the special chunk infos
@@ -373,8 +371,7 @@ try
 
 	// figure out how many presets we should try to load 
 	// if the incoming chunk doesn't match what we're expecting
-	// TODO C++23: integer literal suffix UZ
-	auto const copyPresets = std::min(static_cast<size_t>(numStoredPresets), inIsPreset ? size_t(1) : mNumPresets);
+	auto const copyPresets = std::min(static_cast<size_t>(numStoredPresets), inIsPreset ? 1uz : mNumPresets);
 	// figure out how much of the dfx::ParameterAssignment structure we can import
 	auto const copyParameterAssignmentSize = std::min(storedParameterAssignmentSize, mSettingsInfo.mStoredParameterAssignmentSize);
 
