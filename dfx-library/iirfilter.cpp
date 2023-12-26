@@ -31,6 +31,7 @@ Welcome to our Infinite Impulse Response filter.
 #include <cmath>
 #include <numbers>
 #include <numeric>
+#include <utility>
 
 #include "dfxmath.h"
 #include "dfxparameter.h"
@@ -144,8 +145,7 @@ static dfx::IIRFilter::Coefficients CalculateCoefficients(dfx::IIRFilter::Filter
 			break;
 
 		default:
-			assert(false);
-			return dfx::IIRFilter::kZeroCoeff;
+			std::unreachable();
 	}
 
 	if (!dfx::math::IsZero(b0))

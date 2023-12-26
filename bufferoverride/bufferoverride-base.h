@@ -27,6 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <cmath>
 #include <concepts>
 #include <type_traits>
+#include <utility>
 
 #include "dfx-base.h"
 #include "dfxmath.h"
@@ -168,8 +169,6 @@ T GetBufferDecay(T normalizedPosition, T depth, DecayShape shape, dfx::math::Ran
 				return maxValue;
 			}
 			return randomEngine.next(maxValue - std::fabs(depth), maxValue);
-		default:
-			assert(false);  // TODO C++23: std::unreachable
-			return maxValue;
 	}
+	std::unreachable();
 }

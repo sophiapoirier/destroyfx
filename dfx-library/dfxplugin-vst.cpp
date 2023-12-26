@@ -34,6 +34,7 @@ This is where we connect the VST API to our DfxPlugin system.
 #include <cstdio>
 #include <limits>
 #include <optional>
+#include <utility>
 
 #include "dfxmath.h"
 
@@ -414,8 +415,7 @@ void DfxPlugin::getParameterDisplay(VstInt32 index, char* text)
 			vst_strncpy(text, getparameter_b(parameterID) ? "on" : "off", kVstMaxParamStrLen);
 			break;
 		default:
-			assert(false);
-			break;
+			std::unreachable();
 	}
 }
 
@@ -596,7 +596,7 @@ VstInt32 DfxPlugin::processEvents(VstEvents* events)
 		int const status = midiData[0] & 0xF0;
 		int const byte1 = midiData[1] & 0x7F;
 		int const byte2 = midiData[2] & 0x7F;
-		auto const offsetFrames = dfx::math::ToIndex(midiEvent->deltaFrames);  // timing offset
+		auto const offsetFrames = dfx::math::ToUnsigned(midiEvent->deltaFrames);  // timing offset
 
 		// looking at notes   (0x9* is Note On status ~ 0x8* is Note Off status)
 		if ((status == DfxMidi::kStatus_NoteOn) || (status == DfxMidi::kStatus_NoteOff))

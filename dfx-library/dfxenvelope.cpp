@@ -25,9 +25,9 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "dfxenvelope.h"
 
 #include <algorithm>
-#include <cassert>
 #include <cmath>
 #include <tuple>
+#include <utility>
 
 #include "dfxmath.h"
 
@@ -179,8 +179,7 @@ void DfxEnvelope::beginRelease()
 			break;
 
 		default:
-			assert(false);
-			break;
+			std::unreachable();
 	}
 
 	mLastValue = outputValue;

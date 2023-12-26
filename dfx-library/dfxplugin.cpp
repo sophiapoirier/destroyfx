@@ -35,6 +35,7 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 #include <optional>
 #include <thread>
 #include <unordered_set>
+#include <utility>
 
 #include "dfxmath.h"
 #include "dfxmisc.h"
@@ -616,8 +617,7 @@ void DfxPlugin::randomizeparameter(dfx::ParameterID inParameterID)
 				parameter.set_b(generateParameterRandomValue<bool>());
 				break;
 			default:
-				assert(false);
-				break;
+				std::unreachable();
 		}
 
 		update_parameter(inParameterID);  // make the host aware of the parameter change

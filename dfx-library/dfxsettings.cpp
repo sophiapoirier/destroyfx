@@ -40,6 +40,7 @@ Welcome to our settings persistence mess.
 #include <stdexcept>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "dfxmath.h"
@@ -1603,8 +1604,7 @@ DfxSettings::CrisisError DfxSettings::handleCrisis(CrisisReasonFlags inFlags) co
 			// if the host is still alive, then we have failed...
 			return CrisisError::FailedCrashError;
 	}
-	assert(false);  // unhandled case
-	return CrisisError::NoError;
+	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------

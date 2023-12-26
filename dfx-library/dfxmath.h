@@ -422,10 +422,8 @@ private:
 				return static_cast<result_type>(std::chrono::steady_clock::now().time_since_epoch().count());
 			case RandomSeed::Entropic:
 				return std::random_device()();
-			default:
-				assert(false);
-				return 0;
 		}
+		std::unreachable();
 	}
 
 	EngineType mEngine;

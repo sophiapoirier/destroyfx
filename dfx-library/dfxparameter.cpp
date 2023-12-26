@@ -35,6 +35,7 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 #include <limits>
 #include <numbers>
 #include <unordered_set>
+#include <utility>
 
 #include "dfxmath.h"
 
@@ -166,8 +167,7 @@ void DfxParam::init(std::vector<std::string_view> const& inNames, ValueType inTy
 			mValue = Int2Boolean(inInitialValue.b);
 			break;
 		default:
-			assert(false);
-			break;
+			std::unreachable();
 	}
 }
 
@@ -339,8 +339,7 @@ double DfxParam::derive_f(Value inValue) const noexcept
 		case ValueType::Boolean:
 			return Int2Boolean(inValue.b) ? 1. : 0.;
 	}
-	assert(false);
-	return 0.0;
+	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------
@@ -359,8 +358,7 @@ int64_t DfxParam::derive_i(Value inValue) const
 		case ValueType::Boolean:
 			return Int2Boolean(inValue.b) ? 1 : 0;
 	}
-	assert(false);
-	return 0;
+	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------
@@ -379,8 +377,7 @@ bool DfxParam::derive_b(Value inValue) const noexcept
 		case ValueType::Boolean:
 			return Int2Boolean(inValue.b);
 	}
-	assert(false);
-	return false;
+	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------
@@ -420,8 +417,7 @@ double DfxParam::contract(double inLiteralValue, double inMinValue, double inMax
 		case Curve::Log:
 			return (log_safe(inLiteralValue / inMinValue) / logTwo) / (log_safe(inMaxValue / inMinValue) / logTwo);
 	}
-	assert(false);
-	return inLiteralValue;
+	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------
@@ -476,8 +472,7 @@ DfxParam::Value DfxParam::pack_f(double inValue) const
 		case ValueType::Boolean:
 			return Float2Boolean(inValue);
 	}
-	assert(false);
-	return {};
+	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------
@@ -492,8 +487,7 @@ DfxParam::Value DfxParam::pack_i(int64_t inValue) const noexcept
 		case ValueType::Boolean:
 			return Int2Boolean(inValue);
 	}
-	assert(false);
-	return {};
+	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------
@@ -508,8 +502,7 @@ DfxParam::Value DfxParam::pack_b(bool inValue) const noexcept
 		case ValueType::Boolean:
 			return inValue;
 	}
-	assert(false);
-	return {};
+	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------
@@ -548,8 +541,7 @@ double DfxParam::expand(double inGenValue, double inMinValue, double inMaxValue,
 		case Curve::Log:
 			return inMinValue * std::pow(2.0, inGenValue * log_safe(inMaxValue / inMinValue) * logTwoInv);
 	}
-	assert(false);
-	return inGenValue;
+	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------
@@ -570,8 +562,7 @@ void DfxParam::set(Value inValue)
 			inValue = Int2Boolean(inValue.b);
 			break;
 		default:
-			assert(false);
-			break;
+			std::unreachable();
 	}
 
 	if (mValue.exchange(inValue) != inValue)
@@ -783,8 +774,7 @@ std::string DfxParam::getunitstring() const
 		case Unit::Custom:
 			return mCustomUnitString;
 	}
-	assert(false);
-	return "";
+	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------

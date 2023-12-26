@@ -48,8 +48,7 @@ static constexpr VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAli
 		case dfx::TextAlignment::Right:
 			return VSTGUI::kRightText;
 	}
-	assert(false);
-	return {};
+	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------
@@ -252,8 +251,7 @@ dfx::TextAlignment DGTextDisplay::getTextAlignment() const noexcept
 		case VSTGUI::kLeftText:
 			return dfx::TextAlignment::Left;
 	}
-	assert(false);
-	return {};
+	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------

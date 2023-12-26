@@ -26,6 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <cassert>
 #include <cmath>
 #include <numbers>
+#include <utility>
 
 #include "dfxmath.h"
 
@@ -274,10 +275,8 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 					return decayReachedMidpoint;
 				case kDecayMode_LP_HP_Alternating:
 					return !mDecayFilterIsLowpass;
-				default:
-					assert(false);  // TODO C++23: std::unreachable
-					return false;
 			}
+			std::unreachable();
 		}();
 		if (decay >= decayMax)
 		{

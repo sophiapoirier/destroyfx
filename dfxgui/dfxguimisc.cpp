@@ -29,6 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <cstring>
 #include <functional>
 #include <optional>
+#include <utility>
 
 #include "dfxmisc.h"
 
@@ -183,8 +184,7 @@ DGColor DGColor::getSystem(System inSystemColorID)
 	}
 #undef DFX_SELECTOR
 
-	assert(false);
-	return kBlack;
+	std::unreachable();
 }
 
 

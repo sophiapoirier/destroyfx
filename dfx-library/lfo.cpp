@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2023  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -27,10 +27,10 @@ Welcome to our Low Frequency Oscillator.
 #include "lfo.h"
 
 #include <algorithm>
-#include <cassert>
 #include <cmath>
 #include <numbers>
 #include <numeric>
+#include <utility>
 
 #include "dfxmath.h"
 
@@ -65,10 +65,8 @@ std::string dfx::LFO::getShapeName(Shape inShape)
 		case kShape_Thorn               : return "thorn";
 		case kShape_Random              : return "random";
 		case kShape_RandomInterpolating : return "random interpolating";
-		default:
-			assert(false);
-			return {};
 	}
+	std::unreachable();
 }
 
 //--------------------------------------------------------------------------------------

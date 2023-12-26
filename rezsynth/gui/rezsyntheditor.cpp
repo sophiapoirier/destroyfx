@@ -21,10 +21,10 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include "rezsyntheditor.h"
 
-#include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <map>
+#include <utility>
 
 #include "dfxmath.h"
 #include "dfxmisc.h"
@@ -657,8 +657,6 @@ RezSynthEditor::Section RezSynthEditor::ParameterToSection(dfx::ParameterID inPa
 		case kDryWetMix:
 		case kDryWetMixMode:
 			return Section::Mix;
-		default:
-			assert(false);
-			return {};
 	}
+	std::unreachable();
 }

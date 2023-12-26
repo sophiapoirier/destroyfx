@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
+#include <utility>
 
 #include "dfxmisc.h"
 #include "scrubby.h"
@@ -629,10 +630,8 @@ void ScrubbyEditor::HandleNotesButton(size_t inNotesButtonType)
 				setparameter_b(i, false);
 			}
 			break;
-		default:
-			assert(false);
-			break;
 	}
+	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------
