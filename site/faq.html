@@ -64,10 +64,23 @@
     <ul>
       <li>Our plugins only run in 64-bit host software. Some old software is 32-bit.</li>
       <li>If you are using VST for Mac, we have discontinued development of those long ago and the
-      last versions only run on ancient PowerPC-based Macs.</li>
+      last versions only run on ancient PowerPC-based Macs. We have heard positive reports about
+      <a href="https://www.bluecataudio.com/Products/Product_PatchWork/">Blue Cat Audio's PatchWork</a>
+      as a wrapper to use AUs in VST-only hosts.</li>
       <li>Confirm that your computer and host software meet our
         <a href="sysreq.html">system requirements</a>.</li>
     </ul>
+
+    Transverb 1.5.2 for Mac also will likely produce the ominous message that it &quot;can't be
+    opened because Apple cannot check it for malicious software.&quot; This is because oops we
+    forgot to &quot;notarize&quot; the download package. The easiest solution is to convince macOS
+    that it was not downloaded from the wilds of the internet via the following command in Terminal:
+    <br />
+    <code>xattr -d com.apple.quarantine ~/Downloads/transverb-1.5.2-mac.dmg</code>
+    <br />
+    (which assumes the default downloaded path to the disk image file, though adjust the end of that
+    command accordingly if you relocated the file). You may need to unmount and remount the
+    Transverb disk image as well.
   </div>
 
 
