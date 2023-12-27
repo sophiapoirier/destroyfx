@@ -30,6 +30,7 @@ This is where we connect the RTAS/AudioSuite API to our DfxPlugin system.
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <utility>
 
 #include "CEffectTypeAS.h"
 #include "CEffectTypeRTAS.h"
@@ -914,14 +915,14 @@ DfxEffectGroup::DfxEffectGroup()
 void DfxEffectGroup::CreateEffectTypes()
 {
 	OSType effectTypeFourCharID = 0;
-//	for (UInt32 i=1; i <= EffectLayerDef::MAX_NUM_CONNECTIONS; i++)
-//	int maxNumChannels = SurroundFormatToNumChannels(ePlugIn_StemFormat_LastExplicitChoice);
-//	for (int i=1; i <= maxNumChannels; i++)
-	for (int i = static_cast<int>(ePlugIn_StemFormat_FirstExplicitChoice) - 1; i <= static_cast<int>(ePlugIn_StemFormat_LastExplicitChoice); i++)
+//	for (UInt32 i = 1; i <= EffectLayerDef::MAX_NUM_CONNECTIONS; i++)
+//	const int maxNumChannels = SurroundFormatToNumChannels(ePlugIn_StemFormat_LastExplicitChoice);
+//	for (int i = 1; i <= maxNumChannels; i++)
+	for (auto i = std::to_underlying(ePlugIn_StemFormat_FirstExplicitChoice) - 1; i <= std::to_underlying(ePlugIn_StemFormat_LastExplicitChoice); i++)
 	{
 		effectTypeFourCharID = DFX_IterateAlphaNumericFourCharCode(effectTypeFourCharID);
 		CEffectType* effectType {};
-		if (i < static_cast<int>(ePlugIn_StemFormat_FirstExplicitChoice))
+		if (i < std::to_underlying(ePlugIn_StemFormat_FirstExplicitChoice))
 		{
 			effectType = new CEffectTypeAS(effectTypeFourCharID, PLUGIN_ID, PLUGIN_CATEGORY_RTAS);
 //			effectType->AddGestalt(pluginGestalt_MultiInputModeOnly);	// XXX I see no reason to require this?
@@ -933,7 +934,7 @@ effectType->DefineGenericNumInputsAndOutputs(2, 2);	// XXX hack for Lowender
 		{
 if (i > ePlugIn_StemFormat_Stereo) break;	// XXX hack for Lowender, still need to implement real channel config handle
 			effectType = new CEffectTypeRTAS(effectTypeFourCharID, PLUGIN_ID, PLUGIN_CATEGORY_RTAS);
-			effectType->DefineStemFormats((EPlugIn_StemFormat)i, (EPlugIn_StemFormat)i);
+			effectType->DefineStemFormats(static_cast<EPlugIn_StemFormat>(i), static_cast<EPlugIn_StemFormat>(i));
 		}
 		dfx_AddEffectType(effectType);
 	}
