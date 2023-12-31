@@ -28,11 +28,11 @@ These are some generally useful functions.
 
 
 #include <algorithm>
-#include <array>
 #include <bit>
 #include <cassert>
 #include <concepts>
 #include <cstring>
+#include <initializer_list>
 #include <memory>
 #include <span>
 #include <string>
@@ -176,23 +176,21 @@ bool IsHostValidator();
 #endif
 
 // coming up with these sets of short parameter names can be annoying, so here are some sets we use repeatedly
-// TODO: C++20 just use std::vector (and eliminate MakeParameterNames) since it gains constexpr constructors
-static constexpr std::array<std::string_view, 2> kParameterNames_Tempo = {"tempo", "Tmpo"};
-static constexpr std::array<std::string_view, 4> kParameterNames_TempoSync = {"tempo sync", "TmpoSnc", "TpoSnc", "Sync"};
-static constexpr std::array<std::string_view, 4> kParameterNames_TempoAuto = {"sync to host tempo", "HstTmpo", "HstTmp", "HTmp"};
-static constexpr std::array<std::string_view, 3> kParameterNames_DryWetMix = {"dry/wet mix", "DryWet", "DrWt"};
-static constexpr std::array<std::string_view, 2> kParameterNames_Floor = {"floor", "Flor"};
-static constexpr std::array<std::string_view, 2> kParameterNames_Freeze = {"freeze", "Frez"};
-static constexpr std::array<std::string_view, 2> kParameterNames_Attack = {"attack", "Attk"};
-static constexpr std::array<std::string_view, 3> kParameterNames_Release = {"release", "Releas", "Rles"};
-static constexpr std::array<std::string_view, 4> kParameterNames_VelocityInfluence = {"velocity influence", "VelInfl", "VelInf", "Velo"};
-static constexpr std::array<std::string_view, 4> kParameterNames_PitchBendRange = {"pitch bend range", "PtchBnd", "PtchBd", "PB"};
-static constexpr std::array<std::string_view, 4> kParameterNames_MidiMode = {"MIDI mode", "MIDIMod", "MIDIMd", "MIDI"};
+inline constexpr std::initializer_list<std::string_view> kParameterNames_Tempo = {"tempo", "Tmpo"};
+inline constexpr std::initializer_list<std::string_view> kParameterNames_TempoSync = {"tempo sync", "TmpoSnc", "TpoSnc", "Sync"};
+inline constexpr std::initializer_list<std::string_view> kParameterNames_TempoAuto = {"sync to host tempo", "HstTmpo", "HstTmp", "HTmp"};
+inline constexpr std::initializer_list<std::string_view> kParameterNames_DryWetMix = {"dry/wet mix", "DryWet", "DrWt"};
+inline constexpr std::initializer_list<std::string_view> kParameterNames_Floor = {"floor", "Flor"};
+inline constexpr std::initializer_list<std::string_view> kParameterNames_Freeze = {"freeze", "Frez"};
+inline constexpr std::initializer_list<std::string_view> kParameterNames_Attack = {"attack", "Attk"};
+inline constexpr std::initializer_list<std::string_view> kParameterNames_Release = {"release", "Releas", "Rles"};
+inline constexpr std::initializer_list<std::string_view> kParameterNames_VelocityInfluence = {"velocity influence", "VelInfl", "VelInf", "Velo"};
+inline constexpr std::initializer_list<std::string_view> kParameterNames_PitchBendRange = {"pitch bend range", "PtchBnd", "PtchBd", "PB"};
+inline constexpr std::initializer_list<std::string_view> kParameterNames_MidiMode = {"MIDI mode", "MIDIMod", "MIDIMd", "MIDI"};
 // convenience function to produce the required initparameter_* argument from the above compile-time representation
-template <auto Size>
-auto MakeParameterNames(std::array<std::string_view, Size> const& inNamesArray)
+static inline auto MakeParameterNames(std::initializer_list<std::string_view> inNamesArray)
 {
-	return std::vector(inNamesArray.cbegin(), inNamesArray.cend());
+	return std::vector(inNamesArray.begin(), inNamesArray.end());
 }
 
 }  // namespace
