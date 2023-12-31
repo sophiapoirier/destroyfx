@@ -37,6 +37,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <mutex>
 #include <numeric>
 #include <ranges>
+#include <span>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -2501,10 +2502,11 @@ private:
 		result.reserve(kPasteTextPrefix.size() +
 					   base64.dataSize +
 					   kPasteTextSuffix.size());
-		for (auto const c : kPasteTextPrefix) result.push_back(static_cast<std::byte>(c));
-		for (uint32_t i = 0; i < base64.dataSize; i++) result.push_back(static_cast<std::byte>(base64.data[i]));
-		for (auto const c : kPasteTextSuffix) result.push_back(static_cast<std::byte>(c));
-		for (auto const c : kPasteTextPadding) result.push_back(static_cast<std::byte>(c));
+		constexpr auto toByte = []<typename T> requires(sizeof(T) == 1) (T value){ return static_cast<std::byte>(value); };
+		std::ranges::transform(kPasteTextPrefix, std::back_inserter(result), toByte);
+		std::ranges::transform(std::span(base64.data.begin(), base64.dataSize), std::back_inserter(result), toByte);
+		std::ranges::transform(kPasteTextSuffix, std::back_inserter(result), toByte);
+		std::ranges::transform(kPasteTextPadding, std::back_inserter(result), toByte);
 		return result;
 #else
 		return {inSettingsData, std::next(inSettingsData, inSettingsDataSize)};
@@ -3137,8 +3139,8 @@ DGButton* DfxGuiEditor::CreateMidiResetButton(VSTGUI::CCoord inXpos, VSTGUI::CCo
 #ifdef TARGET_API_VST
 
 //-----------------------------------------------------------------------------
-template <typename T>
-[[nodiscard]] static T DFXGUI_CorrectEndian(T inValue)
+template <dfx::TriviallySerializable T>
+[[nodiscard]] T DFXGUI_CorrectEndian(T inValue)
 {
 	if constexpr (!DfxSettings::serializationIsNativeEndian())  // VST program and bank files are also big-endian
 	{

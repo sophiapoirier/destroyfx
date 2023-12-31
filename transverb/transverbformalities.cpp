@@ -554,7 +554,7 @@ void Transverb::settings_saveExtendedData(void* outData, bool /*isPreset*/) cons
   auto speedModeStatesSerialization = speedModeStates;
   if constexpr (!DfxSettings::serializationIsNativeEndian())
   {
-    dfx::ReverseBytes(speedModeStatesSerialization.data(), speedModeStatesSerialization.size());
+    dfx::ReverseBytes(speedModeStatesSerialization);
   }
   std::memcpy(outData, speedModeStatesSerialization.data(), settings_sizeOfExtendedData());
 }
@@ -567,7 +567,7 @@ void Transverb::settings_restoreExtendedData(void const* inData, size_t storedEx
     std::memcpy(speedModeStates.data(), inData, settings_sizeOfExtendedData());
     if constexpr (!DfxSettings::serializationIsNativeEndian())
     {
-      dfx::ReverseBytes(speedModeStates.data(), speedModeStates.size());
+      dfx::ReverseBytes(speedModeStates);
     }
     for (size_t i = 0; i < kNumDelays; i++)
     {

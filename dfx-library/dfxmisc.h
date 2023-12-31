@@ -27,11 +27,14 @@ These are some generally useful functions.
 #pragma once
 
 
+#include <algorithm>
 #include <array>
+#include <bit>
 #include <cassert>
 #include <concepts>
 #include <cstring>
 #include <memory>
+#include <span>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -132,13 +135,25 @@ T Enliven(void const* inData) noexcept
 
 //-----------------------------------------------------------------------------
 void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount);
-void ReverseBytes(TriviallySerializable auto* ioData, size_t inItemCount)
+
+//-----------------------------------------------------------------------------
+template <TriviallySerializable T>
+void ReverseBytes(std::span<T> ioData)
 {
-	ReverseBytes(ioData, sizeof(*ioData), inItemCount);
+	if constexpr (std::is_integral_v<T>)
+	{
+		std::ranges::transform(ioData, ioData.begin(), [](T value){ return std::byteswap(value); });
+	}
+	else
+	{
+		ReverseBytes(ioData.data(), sizeof(T), ioData.size());
+	}
 }
+
+//-----------------------------------------------------------------------------
 void ReverseBytes(TriviallySerializable auto& ioData)
 {
-	ReverseBytes(&ioData, 1);
+	ReverseBytes(std::span(&ioData, 1));
 }
 
 std::string ToLower(std::string_view inText);

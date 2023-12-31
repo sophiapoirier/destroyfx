@@ -663,7 +663,7 @@ void blah(long long x)
 	// reverse the byte order for each of the parameter IDs
 	auto const dataParameterIDs = OffsetAddressToType<uint32_t>(dataHeaderAddress, storedHeaderSize);
 	validateRange(dataParameterIDs, sizeof(*dataParameterIDs) * numStoredParameters, "parameter IDs");
-	dfx::ReverseBytes(dataParameterIDs, numStoredParameters);
+	dfx::ReverseBytes(std::span(dataParameterIDs, numStoredParameters));
 
 	// reverse the order of bytes for each parameter value, 
 	// but no need to mess with the preset names since they are char arrays
@@ -687,7 +687,7 @@ void blah(long long x)
 	validateRange(dataPresets, sizeOfStoredPreset * numStoredPresets, "presets");
 	for (uint32_t i = 0; i < numStoredPresets; i++)
 	{
-		dfx::ReverseBytes(dataPresets->mParameterValues, numStoredParameters);
+		dfx::ReverseBytes(std::span(dataPresets->mParameterValues, numStoredParameters));
 		// point to the next preset in the data array
 		dataPresets = OffsetAddress(dataPresets, sizeOfStoredPreset);
 	}
