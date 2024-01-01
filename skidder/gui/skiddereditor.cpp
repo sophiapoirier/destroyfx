@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2023  Sophia Poirier
+Copyright (C) 2000-2024  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -155,7 +155,7 @@ static bool crossoverDisplayProc(float inValue, char* outText, void*)
 static std::optional<float> crossoverTextToValueProc(std::string const& inText, DGTextDisplay* inTextDisplay)
 {
 	auto const value = DGTextDisplay::textToValueProc_Generic(inText, inTextDisplay);
-	if (value && (dfx::ToLower(inText).find("khz") != std::string::npos))
+	if (value && dfx::ToLower(inText).contains("khz"))
 	{
 		return *value * 1'000.f;
 	}
