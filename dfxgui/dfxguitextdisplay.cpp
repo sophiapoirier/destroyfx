@@ -56,19 +56,9 @@ static bool DFXGUI_IsBitmapFont(char const* inFontName) noexcept
 {
 	return [](std::string_view fontName)
 	{
-		if (fontName.compare(dfx::kFontName_Snooty10px) == 0)
-		{
-			return true;
-		}
-		if (fontName.compare(dfx::kFontName_Pasement9px) == 0)
-		{
-			return true;
-		}
-		if (fontName.compare(dfx::kFontName_Wetar16px) == 0)
-		{
-			return true;
-		}
-		return false;
+		return (fontName == dfx::kFontName_Snooty10px) || 
+			   (fontName == dfx::kFontName_Pasement9px) ||
+			   (fontName == dfx::kFontName_Wetar16px);
 	}(inFontName ? inFontName : std::string_view{});
 }
 
