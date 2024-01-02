@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -1389,11 +1389,7 @@ public:
 			return DfxPlugin::audioEffectFactory<PluginClass>(inAudioMaster);	\
 		}
 
-#endif  // TARGET_API_VST
-
-
-
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 
 	#ifdef TARGET_API_AUDIOSUITE
 		#define DFX_NewEffectProcess	DFX_NewEffectProcessAS
@@ -1409,7 +1405,7 @@ public:
 			return nullptr;												\
 		}
 
-#endif  // TARGET_API_RTAS
+#endif  // TARGET_API_VST/TARGET_API_RTAS
 
 
 // template implementations follow

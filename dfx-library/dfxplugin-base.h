@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier and Tom Murphy 7
+Copyright (C) 2002-2024  Sophia Poirier and Tom Murphy 7
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -67,7 +67,7 @@ To contact the author, use the contact form at http://destroyfx.org
 	#endif
 
 // using Steinberg's VST2 API
-#elif defined(TARGET_API_VST)
+#elifdef TARGET_API_VST
 	#pragma clang diagnostic push
 	#pragma clang diagnostic ignored "-Wshadow"
 	#include "public.sdk/source/vst2.x/audioeffectx.h"
@@ -95,7 +95,7 @@ To contact the author, use the contact form at http://destroyfx.org
 	#endif
 
 // using Digidesign's RTAS/AudioSuite API
-#elif defined(TARGET_API_RTAS)
+#elifdef TARGET_API_RTAS
 	#if TARGET_PLUGIN_HAS_GUI
 		#include "ITemplateProcess.h"
 		using TARGET_API_EDITOR_PARENT_INSTANCE_TYPE = ITemplateProcess*;

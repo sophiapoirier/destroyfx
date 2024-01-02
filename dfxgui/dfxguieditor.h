@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -51,11 +51,9 @@ To contact the author, use the contact form at http://destroyfx.org
 #ifdef TARGET_API_AUDIOUNIT
 	#include <AudioToolbox/AudioUnitUtilities.h>
 	using DGEditorListenerInstance = AudioComponentInstance;
-#endif
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	using DGEditorListenerInstance = class DfxPlugin*;
-#endif
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	using DGEditorListenerInstance = ITemplateProcess*;
 	#if TARGET_OS_WIN32
 		using sRect = RECT;

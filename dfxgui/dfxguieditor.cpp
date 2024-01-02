@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -58,9 +58,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #ifdef TARGET_API_AUDIOUNIT
 	#include <AudioUnitSDK/AUUtility.h>
 	#include "dfx-au-utilities.h"
-#endif
-
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	#include "dfxmisc.h"
 	#include "dfxplugin.h"
 	#include "dfxsettings.h"
@@ -70,9 +68,7 @@ To contact the author, use the contact form at http://destroyfx.org
 	#if TARGET_OS_WIN32
 	#include "uidescription/base64codec.h"
 	#endif
-#endif
-
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	#include "ConvertUtils.h"
 #endif
 
@@ -336,11 +332,9 @@ void DfxGuiEditor::valueChanged(VSTGUI::CControl* inControl)
 		// XXX or should I call setparameter_f()?
 		auto const auParam = dfxgui_MakeAudioUnitParameter(parameterID);
 		AUParameterSet(mAUEventListener.get(), inControl, &auParam, parameterValue_literal, 0);
-#endif
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 		getEffect()->setParameterAutomated(dfx::ParameterID_ToVST(parameterID), parameterValue_norm);
-#endif
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 		// XXX though the model of calling SetControlValue might make more seem like 
 		// better design than calling setparameter_gen on the effect, in practice, 
 		// our DfxParam objects won't get their values updated to reflect the change until 
@@ -591,15 +585,11 @@ void DfxGuiEditor::automationgesture_begin(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	SendAUParameterEvent(inParameterID, kAudioUnitEvent_BeginParameterChangeGesture);
-#endif
-
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	TARGET_API_EDITOR_BASE_CLASS::beginEdit(dfx::ParameterID_ToVST(inParameterID));
-#endif
-
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	// called by GUI when mouse down event has occured; NO_UI: Call process' TouchControl()
-	// This and endEdit are necessary for Touch Automation to work properly
+	// (this and endEdit are necessary for Touch Automation to work properly)
 	dfxgui_GetEffectInstance()->ProcessTouchControl(dfx::ParameterID_ToRTAS(inParameterID));
 #endif
 }
@@ -609,13 +599,9 @@ void DfxGuiEditor::automationgesture_end(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	SendAUParameterEvent(inParameterID, kAudioUnitEvent_EndParameterChangeGesture);
-#endif
-
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	TARGET_API_EDITOR_BASE_CLASS::endEdit(dfx::ParameterID_ToVST(inParameterID));
-#endif
-
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	// called by GUI when mouse up event has occured; NO_UI: Call process' ReleaseControl()
 	dfxgui_GetEffectInstance()->ProcessReleaseControl(dfx::ParameterID_ToRTAS(inParameterID));
 #endif
@@ -632,17 +618,15 @@ void DfxGuiEditor::randomizeparameter(dfx::ParameterID inParameterID, bool inWri
 #ifdef TARGET_API_AUDIOUNIT
 	dfxgui_SetProperty(dfx::kPluginProperty_RandomizeParameter, dfx::kScope_Global, inParameterID, 
 					   static_cast<Boolean>(inWriteAutomation));
-#endif
 
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	dfxgui_GetEffectInstance()->randomizeparameter(inParameterID);
 	if (inWriteAutomation)
 	{
 		getEffect()->setParameterAutomated(dfx::ParameterID_ToVST(inParameterID), getparameter_gen(inParameterID));
 	}
-#endif
 
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	#warning "implementation missing"
 	assert(false);  // TODO: implement
 #endif
@@ -675,13 +659,11 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 	dfxgui_SetProperty(dfx::kPluginProperty_RandomizeParameter, 
 					   dfx::kScope_Global, kAUParameterListener_AnyParameter, 
 					   static_cast<Boolean>(inWriteAutomation));
-#endif
 
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	dfxgui_GetEffectInstance()->randomizeparameters();
-#endif
 
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	#warning "implementation missing"
 	assert(false);  // TODO: implement
 #endif
@@ -1046,7 +1028,7 @@ double DfxGuiEditor::getparameter_gen(dfx::ParameterID inParameterID)
 #ifdef TARGET_API_VST
 	return getEffect()->getParameter(dfx::ParameterID_ToVST(inParameterID));
 #else
-	double currentValue = getparameter_f(inParameterID);
+	auto const currentValue = getparameter_f(inParameterID);
 	return dfxgui_ContractParameterValue(inParameterID, currentValue);
 #endif
 }
@@ -1066,14 +1048,12 @@ void DfxGuiEditor::setparameter_f(dfx::ParameterID inParameterID, double inValue
 	request.value.f = inValue;
 
 	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, inParameterID, request);
-#endif
 
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	auto const value_norm = dfxgui_ContractParameterValue(inParameterID, inValue);
 	getEffect()->setParameterAutomated(dfx::ParameterID_ToVST(inParameterID), value_norm);
-#endif
 
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	#warning "implementation missing"
 	assert(false);  // TODO: implement
 #endif
@@ -1099,14 +1079,12 @@ void DfxGuiEditor::setparameter_i(dfx::ParameterID inParameterID, long inValue, 
 	request.value.i = inValue;
 
 	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, inParameterID, request);
-#endif
 
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	auto const value_norm = dfxgui_ContractParameterValue(inParameterID, inValue);
 	getEffect()->setParameterAutomated(dfx::ParameterID_ToVST(inParameterID), value_norm);
-#endif
 
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	#warning "implementation missing"
 	assert(false);  // TODO: implement
 #endif
@@ -1132,13 +1110,11 @@ void DfxGuiEditor::setparameter_b(dfx::ParameterID inParameterID, bool inValue, 
 	request.value.b = inValue;
 
 	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, inParameterID, request);
-#endif
 
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	getEffect()->setParameterAutomated(dfx::ParameterID_ToVST(inParameterID), inValue ? 1.f : 0.f);
-#endif
 
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	#warning "implementation missing"
 	assert(false);  // TODO: implement
 #endif
@@ -1169,15 +1145,13 @@ void DfxGuiEditor::setparameter_default(dfx::ParameterID inParameterID, bool inW
 			automationgesture_end(inParameterID);
 		}
 	}
-#endif
 
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	auto const defaultValue = GetParameter_defaultValue(inParameterID);
 	auto const defaultValue_norm = dfxgui_ContractParameterValue(inParameterID, defaultValue);
 	getEffect()->setParameterAutomated(dfx::ParameterID_ToVST(inParameterID), defaultValue_norm);
-#endif
 
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	#warning "implementation missing"
 	assert(false);  // TODO: implement
 #endif
@@ -1429,11 +1403,9 @@ size_t DfxGuiEditor::GetNumParameters()
 		assert((dataSize % sizeof(AudioUnitParameterID)) == 0);
 		return dataSize / sizeof(AudioUnitParameterID);
 	}
-#endif
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	return dfx::math::ToUnsigned(getEffect()->getAeffect()->numParams);
-#endif
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	return dfxgui_GetEffectInstance()->getnumparameters();
 #endif
 	return 0;
@@ -1609,8 +1581,7 @@ void DfxGuiEditor::LoadPresetFile()
 				}
 			}
 		}
-#endif
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 		fileSelector->addFileExtension(kVSTProgramFileExtension);
 //		fileSelector->addFileExtension(kVSTBankFileExtension);  // TODO: could also support banks of programs
 #endif
@@ -1625,9 +1596,9 @@ void DfxGuiEditor::LoadPresetFile()
 					Require(fileURL.get(), "failed to create file URL");
 					auto const status = RestoreAUStateFromPresetFile(dfxgui_GetEffectInstance(), fileURL.get());
 					ausdk::ThrowQuietIf(status != noErr, status);
-#elif defined(TARGET_API_VST)
+#elifdef TARGET_API_VST
 					RestoreVSTStateFromProgramFile(filePath);
-#elif
+#else
 	#warning "implementation missing"
 					assert(false);  // TODO: implement
 #endif  // TARGET_API_AUDIOUNIT/TARGET_API_VST
@@ -1730,8 +1701,7 @@ void DfxGuiEditor::SavePresetFile()
 		};
 		auto const success = mTextEntryDialog->runModal(getFrame(), textEntryCallback);
 		Require(success, "could not display save preset dialog");
-#endif
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 		VSTGUI::SharedPointer<VSTGUI::CNewFileSelector> fileSelector(VSTGUI::CNewFileSelector::create(getFrame(), VSTGUI::CNewFileSelector::kSelectSaveFile), false);
 		Require(fileSelector, "could not create save file dialog");
 		fileSelector->setTitle("Save");
@@ -1751,7 +1721,7 @@ void DfxGuiEditor::SavePresetFile()
 				}
 			}
 		});
-#endif
+#endif  // TARGET_API_AUDIOUNIT/TARGET_API_VST
 	}
 	catch (std::exception const& e)
 	{
@@ -1991,11 +1961,9 @@ size_t DfxGuiEditor::getNumInputChannels()
 #ifdef TARGET_API_AUDIOUNIT
 	auto const streamDesc = dfxgui_GetProperty<AudioStreamBasicDescription>(kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input);
 	return streamDesc ? streamDesc->mChannelsPerFrame : 0;
-#endif
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	return dfx::math::ToUnsigned(getEffect()->getAeffect()->numInputs);
-#endif
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	return dfxgui_GetEffectInstance()->getnuminputs();
 #endif
 }
@@ -2006,11 +1974,9 @@ size_t DfxGuiEditor::getNumOutputChannels()
 #ifdef TARGET_API_AUDIOUNIT
 	auto const streamDesc = dfxgui_GetProperty<AudioStreamBasicDescription>(kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output);
 	return streamDesc ? streamDesc->mChannelsPerFrame : 0;
-#endif
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	return dfx::math::ToUnsigned(getEffect()->getAeffect()->numOutputs);
-#endif
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	return dfxgui_GetEffectInstance()->getnumoutputs();
 #endif
 }
@@ -2563,7 +2529,7 @@ dfx::StatusCode DfxGuiEditor::copySettings()
 	}
 	status = PasteboardPutItemFlavor(mClipboardRef.get(), pasteboardItemID, kDfxGui_SettingsPasteboardFlavorType, auSettingsCFData.get(), kPasteboardFlavorNoFlags);
 
-#elif defined(TARGET_API_VST)
+#elifdef TARGET_API_VST
 	void* vstSettingsData {};
 	VstInt32 vstSettingsDataSize {};
 	std::vector<float> parameterValues;
@@ -2695,7 +2661,7 @@ dfx::StatusCode DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 							AUParameterChange_TellListeners(dfxgui_GetEffectInstance(), kAUParameterListener_AnyParameter);
 						}
 					}
-	#elif defined(TARGET_API_VST)
+	#elifdef TARGET_API_VST
 					CFDataRef vstSettingsDataCF = nullptr;
 					dfx::UniqueCFType<CFPropertyListRef> auSettingsPropertyList;
 					if (isAUSettings)

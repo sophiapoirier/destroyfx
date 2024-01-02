@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -42,14 +42,14 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 
 #ifdef TARGET_API_AUDIOUNIT
 	#include "dfx-au-utilities.h"
-#endif
 
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
+#elifdef TARGET_API_VST
+	#if TARGET_PLUGIN_HAS_GUI
 	#include "dfxguieditor.h"
 	[[nodiscard]] extern std::unique_ptr<DfxGuiEditor> DFXGUI_NewEditorInstance(DGEditorListenerInstance inEffectInstance);
-#endif
+	#endif
 
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	#include "ConvertUtils.h"
 	#if TARGET_PLUGIN_HAS_GUI
 		extern void* gThisModule;
@@ -160,12 +160,10 @@ void DfxIdleRegistrar::remove(DfxPlugin* const inIdleClient)
 #pragma mark init
 
 //-----------------------------------------------------------------------------
-DfxPlugin::DfxPlugin(
-					TARGET_API_BASE_INSTANCE_TYPE inInstance
-					, size_t inNumParameters
-					, size_t inNumPresets
-					) :
-
+DfxPlugin::DfxPlugin(TARGET_API_BASE_INSTANCE_TYPE inInstance,
+					 size_t inNumParameters,
+					 size_t inNumPresets)
+:
 // setup the constructors of the inherited base classes, for the appropriate API
 #ifdef TARGET_API_AUDIOUNIT
 	#if TARGET_PLUGIN_IS_INSTRUMENT
@@ -173,9 +171,7 @@ DfxPlugin::DfxPlugin(
 	#else
 	TARGET_API_BASE_CLASS(inInstance), 
 	#endif
-#endif
-
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	TARGET_API_BASE_CLASS(inInstance, static_cast<VstInt32>(inNumPresets), static_cast<VstInt32>(inNumParameters)), 
 #endif
 // end API-specific base constructors
@@ -650,9 +646,8 @@ void DfxPlugin::update_parameter(dfx::ParameterID inParameterID)
 #ifdef TARGET_API_AUDIOUNIT
 	// make the global-scope element aware of the parameter's value
 	TARGET_API_BASE_CLASS::SetParameter(inParameterID, kAudioUnitScope_Global, AudioUnitElement(0), getparameter_f(inParameterID), 0);
-#endif
 
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	auto const vstPresetIndex = getProgram();
 	if ((vstPresetIndex >= 0) && presetisvalid(dfx::math::ToIndex(vstPresetIndex)))
 	{
@@ -663,9 +658,8 @@ void DfxPlugin::update_parameter(dfx::ParameterID inParameterID)
 	// always needs notification pushed in any circumstance where a parameter value changes
 	postupdate_parameter(inParameterID);
 	#endif
-#endif
 
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	SetControlValue(dfx::ParameterID_ToRTAS(inParameterID), ConvertToDigiValue(getparameter_gen(inParameterID)));  // XXX yeah do this?
 #endif
 
@@ -692,18 +686,16 @@ void DfxPlugin::postupdate_parameter(dfx::ParameterID inParameterID)
 
 #ifdef TARGET_API_AUDIOUNIT
 	AUParameterChange_TellListeners(GetComponentInstance(), inParameterID);
-#endif
 
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	#if TARGET_PLUGIN_HAS_GUI
 	if (auto const guiEditor = dynamic_cast<VSTGUI::AEffGUIEditor*>(getEditor()))
 	{
 		guiEditor->setParameter(dfx::ParameterID_ToVST(inParameterID), getparameter_gen(inParameterID));
 	}
 	#endif
-#endif
 
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	#warning "implementation required?"
 #endif
 }
@@ -1040,9 +1032,8 @@ void DfxPlugin::postupdate_preset()
 	SetAFactoryPresetAsCurrent(au_preset);
 	PropertyChanged(kAudioUnitProperty_PresentPreset, kAudioUnitScope_Global, AudioUnitElement(0));
 	PropertyChanged(kAudioUnitProperty_CurrentPreset, kAudioUnitScope_Global, AudioUnitElement(0));
-#endif
 
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	TARGET_API_BASE_CLASS::setProgram(static_cast<VstInt32>(getcurrentpresetnum()));
 	// XXX Cubase SX will crash if custom-GUI plugs call updateDisplay 
 	// while the editor is closed, so as a workaround, only do it 
@@ -1260,11 +1251,9 @@ void DfxPlugin::updatesamplerate()
 	{
 		setsamplerate(kAUDefaultSampleRate);
 	}
-#endif
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	setsamplerate(static_cast<double>(getSampleRate()));
-#endif
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	setsamplerate(GetSampleRate());
 #endif
 }
@@ -1297,13 +1286,14 @@ void DfxPlugin::dfx_PropertyChanged(dfx::PropertyID inPropertyID, dfx::Scope inS
 {
 #ifdef TARGET_API_AUDIOUNIT
 	PropertyChanged(inPropertyID, inScope, inItemIndex);
-#endif
 
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
+#elifdef TARGET_API_VST
+	#if TARGET_PLUGIN_HAS_GUI
 	if (auto const guiEditor = dynamic_cast<DfxGuiEditor*>(getEditor()))
 	{
 		guiEditor->PropertyChanged(inPropertyID, inScope, inItemIndex);
 	}
+	#endif
 #endif
 }
 
@@ -1417,13 +1407,11 @@ size_t DfxPlugin::getnuminputs()
 		return GetStreamFormat(kAudioUnitScope_Input, AudioUnitElement(0)).mChannelsPerFrame;
 	}
 	return 0;
-#endif
 
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	return mNumInputs;
-#endif
 
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	if (IsAS() && mAudioIsRendering)  // XXX checking connections is only valid while rendering
 	{
 		for (SInt32 ch = 0; ch < GetNumInputs(); ch++)
@@ -1449,13 +1437,11 @@ size_t DfxPlugin::getnumoutputs()
 		return GetStreamFormat(kAudioUnitScope_Output, AudioUnitElement(0)).mChannelsPerFrame;
 	}
 	return 0;
-#endif
 
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	return mNumOutputs;
-#endif
 
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	if (IsAS() && mAudioIsRendering)  // XXX checking connections is only valid while rendering
 	{
 		for (SInt32 ch = 0; ch < GetNumOutputs(); ch++)
@@ -1482,13 +1468,9 @@ size_t DfxPlugin::getmaxframes()
 {
 #ifdef TARGET_API_AUDIOUNIT
 	return GetMaxFramesPerSlice();
-#endif
-
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	return dfx::math::ToUnsigned(getBlockSize());
-#endif
-
-#ifdef TARGET_API_RTAS
+#elifdef TARGET_API_RTAS
 	return dfx::math::ToUnsigned(GetMaximumRTASQuantum());
 #endif
 }
@@ -1662,9 +1644,7 @@ void DfxPlugin::postupdate_latency()
 {
 #ifdef TARGET_API_AUDIOUNIT
 	PropertyChanged(kAudioUnitProperty_Latency, kAudioUnitScope_Global, AudioUnitElement(0));
-#endif
-
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	ioChanged();
 #endif
 }
@@ -1758,8 +1738,7 @@ void DfxPlugin::postupdate_tailsize()
 {
 #ifdef TARGET_API_AUDIOUNIT
 	PropertyChanged(kAudioUnitProperty_TailTime, kAudioUnitScope_Global, AudioUnitElement(0));
-#endif
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	noTail(gettailsize_samples() <= 0);
 #endif
 }
@@ -1769,7 +1748,7 @@ void DfxPlugin::setInPlaceAudioProcessingAllowed(bool inEnable)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	assert(!IsInitialized());
-#elif defined(TARGET_API_VST)
+#elifdef TARGET_API_VST
 	assert(!mIsInitialized);
 #endif
 
@@ -1881,11 +1860,9 @@ std::fprintf(stderr, "is playing = %s\ntransport changed = %s\n", isPlaying ? "t
 #ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
 else std::fprintf(stderr, "CallHostTransportState() error %ld\n", status);
 #endif
-#endif
-// TARGET_API_AUDIOUNIT
 
 
-#ifdef TARGET_API_VST
+#elifdef TARGET_API_VST
 	VstTimeInfo* vstTimeInfo = getTimeInfo(kVstTempoValid 
 										   | kVstTransportChanged 
 										   | kVstBarsValid 
@@ -1930,8 +1907,7 @@ else std::fprintf(stderr, "CallHostTransportState() error %ld\n", status);
 
 		mTimeInfo.mPlaybackIsOccurring = (kVstTransportPlaying & vstTimeInfo->flags) ? true : false;
 	}
-#endif
-// TARGET_API_VST
+#endif  // TARGET_API_AUDIOUNIT/TARGET_API_VST
 
 
 	// check for lies
@@ -2267,5 +2243,4 @@ void DfxPlugin::postupdate_midilearner()
 	dfx_PropertyChanged(dfx::kPluginProperty_MidiLearner);
 }
 
-#endif
-// TARGET_PLUGIN_USES_MIDI
+#endif  // TARGET_PLUGIN_USES_MIDI
