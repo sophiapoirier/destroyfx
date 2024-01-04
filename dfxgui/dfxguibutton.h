@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -93,7 +93,7 @@ private:
 	static constexpr long kMinValue = 0;
 	long getMaxValue() const;
 	long getRadioValue(VSTGUI::CPoint const& inPos) const;
-	long getRange() const;  // the salient view dimension per the orientation
+	long getMouseableRange() const;  // the salient view dimension per the orientation
 
 	bool mMouseIsDown = false;
 	long mEntryValue = 0, mNewValue = 0;

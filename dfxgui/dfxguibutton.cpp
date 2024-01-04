@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -347,7 +347,7 @@ void DGButton::setRadioThresholds(std::vector<VSTGUI::CCoord> const& inThreshold
 {
 	assert(mMode == Mode::Radio);
 	assert((inThresholds.size() + 1) == getNumStates());
-	assert(std::ranges::all_of(inThresholds, std::bind(std::less<>{}, _1, getRange())));
+	assert(std::ranges::all_of(inThresholds, std::bind(std::less<>{}, _1, getMouseableRange())));
 	assert(std::ranges::all_of(inThresholds, std::bind(std::greater<>{}, _1, 0)));
 
 	mRadioThresholds = inThresholds;
@@ -371,13 +371,13 @@ long DGButton::getRadioValue(VSTGUI::CPoint const& inPos) const
 		{
 			return std::ranges::count_if(mRadioThresholds, std::bind(std::less_equal<>{}, _1, pos));
 		}
-		return std::lround(pos) / (getRange() / dfx::math::ToSigned(getNumStates()));
+		return std::lround(pos) / (getMouseableRange() / dfx::math::ToSigned(getNumStates()));
 	}();
 	return std::clamp(result, kMinValue, getMaxValue());
 }
 
 //-----------------------------------------------------------------------------
-long DGButton::getRange() const
+long DGButton::getMouseableRange() const
 {
 	assert(mMode == Mode::Radio);
 	return std::lround((mOrientation & dfx::kAxis_Horizontal) ? getWidth() : getHeight());
