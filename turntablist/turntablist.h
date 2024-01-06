@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2022 Sophia Poirier
+Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2024 Sophia Poirier
 All rights reserved.
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. 
@@ -41,8 +41,10 @@ To contact the developer, use the contact form at http://destroyfx.org
 
 #include <CoreServices/CoreServices.h>
 #include <atomic>
+#include <expected>
 #include <vector>
 
+#include "dfxmisc.h"
 #include "dfxmutex.h"
 #include "dfxplugin.h"
 
@@ -162,9 +164,14 @@ private:
 #endif
 	};
 
+	using UniqueAliasHandle = dfx::UniqueOpaqueType<AliasHandle, [](AliasHandle alias)
+	{
+		DisposeHandle(reinterpret_cast<Handle>(alias));
+	}>;
+
 	OSStatus loadAudioFile(FSRef const& inFileRef);
-	OSStatus createAudioFileAlias(AliasHandle* outAlias, Size* outDataSize = nullptr);
-	OSStatus resolveAudioFileAlias(AliasHandle const inAlias);
+	std::expected<UniqueAliasHandle, OSStatus> createAudioFileAlias() const;
+	OSStatus resolveAudioFileAlias(AliasHandle inAlias);
 
 	void processMidiEvent(size_t inEventIndex);
 	void processScratch(bool inSetParameter = false);

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2023 Sophia Poirier
+Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2024 Sophia Poirier
 All rights reserved.
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. 
@@ -289,21 +289,16 @@ OSStatus Turntablist::SaveState(CFPropertyListRef* outData)
 		}
 
 		// also save an alias of the loaded audio file, as a fall-back
-		AliasHandle aliasHandle = nullptr;
-		Size aliasSize = 0;
-		auto const aliasStatus = createAudioFileAlias(&aliasHandle, &aliasSize);
-		if (aliasStatus == noErr)
+		if (auto const aliasResult = createAudioFileAlias())
 		{
-			aliasSize = GetAliasSize(aliasHandle);
-			if (aliasSize > 0)
+			if (auto const aliasSize = GetAliasSize(aliasResult->get()); aliasSize > 0)
 			{
-				auto const aliasCFData = dfx::MakeUniqueCFType(CFDataCreate(kCFAllocatorDefault, (UInt8*)(*aliasHandle), (CFIndex)aliasSize));
+				auto const aliasCFData = dfx::MakeUniqueCFType(CFDataCreate(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(*aliasResult->get()), static_cast<CFIndex>(aliasSize)));
 				if (aliasCFData)
 				{
 					CFDictionarySetValue(dict, kTurntablistPreset_AudioFileAliasKey, aliasCFData.get());
 				}
 			}
-			DisposeHandle(reinterpret_cast<Handle>(aliasHandle));
 		}
 	}
 
@@ -369,6 +364,7 @@ OSStatus Turntablist::RestoreState(CFPropertyListRef inData)
 					auto aliasError = PtrToHand(aliasData, reinterpret_cast<Handle*>(&aliasHandle), aliasDataSize);
 					if ((aliasError == noErr) && aliasHandle)
 					{
+						UniqueAliasHandle const ownedAlias(aliasHandle);
 						FSRef audioFileRef {};
 						Boolean wasChanged {};
 						aliasError = FSResolveAlias(nullptr, aliasHandle, &audioFileRef, &wasChanged);
@@ -391,7 +387,6 @@ OSStatus Turntablist::RestoreState(CFPropertyListRef inData)
 								}
 							}
 						}
-						DisposeHandle(reinterpret_cast<Handle>(aliasHandle));
 					}
 				}
 			}
@@ -454,12 +449,10 @@ dfx::StatusCode Turntablist::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID,
 			{
 				return errFSBadFSRef;
 			}
-			AliasHandle alias = nullptr;
-			Size aliasSize = 0;
-			AUSDK_Require_noerr(createAudioFileAlias(&alias, &aliasSize));
-			outDataSize = aliasSize;
+			auto const aliasResult = createAudioFileAlias();
+			AUSDK_Require(aliasResult, aliasResult ? noErr : aliasResult.error());
+			outDataSize = GetAliasSize(aliasResult->get());
 			outFlags = dfx::kPropertyFlag_Readable | dfx::kPropertyFlag_Writable;
-			DisposeHandle(reinterpret_cast<Handle>(alias));
 			return dfx::kStatus_NoError;
 		}
 
@@ -485,11 +478,9 @@ dfx::StatusCode Turntablist::dfx_GetProperty(dfx::PropertyID inPropertyID,
 			{
 				return errFSBadFSRef;
 			}
-			AliasHandle alias = nullptr;
-			Size aliasSize = 0;
-			AUSDK_Require_noerr(createAudioFileAlias(&alias, &aliasSize));
-			std::memcpy(outData, *alias, aliasSize);
-			DisposeHandle(reinterpret_cast<Handle>(alias));
+			auto const aliasResult = createAudioFileAlias();
+			AUSDK_Require(aliasResult, aliasResult ? noErr : aliasResult.error());
+			std::memcpy(outData, *aliasResult->get(), GetAliasSize(aliasResult->get()));
 			return dfx::kStatus_NoError;
 		}
 
@@ -518,9 +509,8 @@ dfx::StatusCode Turntablist::dfx_SetProperty(dfx::PropertyID inPropertyID,
 			{
 				return memFullErr;
 			}
-			auto const status = resolveAudioFileAlias(alias);
-			DisposeHandle(reinterpret_cast<Handle>(alias));
-			return status;
+			UniqueAliasHandle const ownedAlias(alias);
+			return resolveAudioFileAlias(alias);
 		}
 
 		default:
@@ -636,29 +626,23 @@ void Turntablist::setPlay(bool inPlayState, bool inShouldSendNotification)
 }
 
 //-----------------------------------------------------------------------------
-OSStatus Turntablist::createAudioFileAlias(AliasHandle* outAlias, Size* outDataSize)
+std::expected<UniqueAliasHandle, OSStatus> Turntablist::createAudioFileAlias() const
 {
-	if (!outAlias)
+	AliasHandle alias {};
+	if (auto const status = FSNewAlias(nullptr, &m_fsAudioFile, &alias); status != noErr)
 	{
-		return paramErr;
+		return std::unexpected(status);
+	}
+	if (alias == nullptr)
+	{
+		return std::unexpected(nilHandleErr);
 	}
 
-	AUSDK_Require_noerr(FSNewAlias(nullptr, &m_fsAudioFile, outAlias));
-	if (*outAlias == nullptr)
-	{
-		return nilHandleErr;
-	}
-
-	if (outDataSize)
-	{
-		*outDataSize = GetAliasSize(*outAlias);
-	}
-
-	return noErr;
+	return UniqueAliasHandle(alias);
 }
 
 //-----------------------------------------------------------------------------
-OSStatus Turntablist::resolveAudioFileAlias(AliasHandle const inAlias)
+OSStatus Turntablist::resolveAudioFileAlias(AliasHandle inAlias)
 {
 	FSRef audioFileRef {};
 	Boolean wasChanged {};
@@ -683,6 +667,7 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 #ifndef USE_LIBSNDFILE
 	ExtAudioFileRef audioFileRef = nullptr;
 	AUSDK_Require_noerr(ExtAudioFileOpen(&inFileRef, &audioFileRef));
+	dfx::UniqueOpaqueType<ExtAudioFileRef, ExtAudioFileDispose> const ownedAudioFileRef(audioFileRef);
 
 	SInt64 audioFileNumFrames = 0;
 	UInt32 dataSize = sizeof(audioFileNumFrames);
@@ -714,8 +699,6 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 		std::fprintf(stderr, PLUGIN_NAME_STRING ":  audio data size mismatch!\nsize requested: %ld, size read: %u\n\n", static_cast<long>(audioFileNumFrames), static_cast<unsigned int>(audioFileNumFrames_temp));
 	}
 
-	status = ExtAudioFileDispose(audioFileRef);
-
 	m_nNumChannels = clientStreamFormat.mChannelsPerFrame;
 	m_nSampleRate = dfx::math::IRound(clientStreamFormat.mSampleRate);
 	m_nNumSamples = dfx::math::ToUnsigned(audioFileNumFrames);
@@ -736,15 +719,15 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 //std::fprintf(stderr, PLUGIN_NAME_STRING " audio file:  %s\n", file.data());
 
 	SF_INFO sfInfo {};
-	SNDFILE* const sndFile = sf_open(reinterpret_cast<char const*>(file.data()), SFM_READ, &sfInfo);
+	dfx::UniqueOpaqueType<SNDFILE*, sf_close> const sndFile(sf_open(reinterpret_cast<char const*>(file.data()), SFM_READ, &sfInfo));
 
 	if (!sndFile)
 	{
 		// print error
 		std::array<char, 256> buffer {};
-		sf_error_str(sndFile, buffer.data(), buffer.size() - 1);
+		sf_error_str(sndFile.get(), buffer.data(), buffer.size() - 1);
 		std::fprintf(stderr, "\n" PLUGIN_NAME_STRING " could not open the audio file:  %s\nlibsndfile error message:  %s\n", file.data(), buffer.data());
-		return sf_error(sndFile);
+		return sf_error(sndFile.get());
 	}
 
 #if 0
@@ -757,7 +740,7 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 	std::fprintf(stderr, "     seekable:  %d\n", sfInfo.seekable);
 #endif
 
-	sf_command(sndFile, SFC_SET_NORM_FLOAT, nullptr, SF_TRUE);
+	sf_command(sndFile.get(), SFC_SET_NORM_FLOAT, nullptr, SF_TRUE);
 
 	std::unique_lock guard(m_AudioFileLock);
 
@@ -780,9 +763,9 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 	m_fLeft = m_fBuffer.data();
 	m_fRight = m_fBuffer.data() + ((m_nNumChannels == 1) ? 0 : m_nNumSamples);
 
-	// do file loading here!!
+	// do file loading here
 	sf_count_t const sizein = sfInfo.frames * sfInfo.channels;
-	sf_count_t sizeout = sf_read_float(sndFile, m_fBuffer.data(), sizein);
+	sf_count_t sizeout = sf_read_float(sndFile.get(), m_fBuffer.data(), sizein);
 	if (sizeout != sizein)
 	{
 		// XXX error?
@@ -806,12 +789,8 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 		}
 	}
 
-	// end file loading here!!
 
-	if (sf_close(sndFile) != 0)
-	{
-		// error closing
-	}
+	// end file loading here
 #endif
 
 

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2004-2023  Sophia Poirier
+Copyright (C) 2004-2024  Sophia Poirier
 
 This file is part of Turntablist.
 
@@ -32,6 +32,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "dfxgui.h"
 #include "dfxmath.h"
 #include "dfxmisc.h"
+#include "dfxparameter.h"
 #include "lib/platform/iplatformframe.h"
 #include "turntablist.h"
 
@@ -162,7 +163,6 @@ private:
 	void HandlePlayChange();
 	void HandleMidiLearnButton(bool inLearn);
 	void HandleMidiResetButton();
-	void HandleParameterChange(dfx::ParameterID inParameterID, float inValue);
 
 	void SetFileNameDisplay(CFStringRef inText);
 	OSStatus NotifyAudioFileLoadError(OSStatus inErrorCode, FSRef const& inAudioFileRef) const;
@@ -191,13 +191,8 @@ public:
 
 	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override
 	{
-		//setValue(0.5f);
-		setValue(((getMax() - getMin()) * 0.5f) + getMin());
-		auto const result = DGSlider::onMouseUp(inPos, inButtons);
-
-//		dynamic_cast<TurntablistEditor*>(getOwnerEditor())->HandleParameterChange(getParameterID(), 0.0f);
-
-		return result;
+		setValueNormalized(0.5f);
+		return DGSlider::onMouseUp(inPos, inButtons);
 	}
 
 	CLASS_METHODS(TurntablistScratchSlider, DGSlider)
@@ -632,12 +627,6 @@ void TurntablistEditor::CloseEditor()
 }
 
 //-----------------------------------------------------------------------------
-void TurntablistEditor::parameterChanged(dfx::ParameterID inParameterID)
-{
-	HandleParameterChange(inParameterID, getparameter_f(inParameterID));
-}
-
-//-----------------------------------------------------------------------------
 void TurntablistEditor::HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex)
 {
 	switch (inPropertyID)
@@ -856,13 +845,9 @@ OSStatus TurntablistEditor::LoadAudioFile(FSRef const& inAudioFileRef)
 		return nilHandleErr;
 	}
 
+	UniqueAliasHandle const ownedAlias(aliasHandle);
 	auto const dataSize = GetAliasSize(aliasHandle);
-	auto const status = dfxgui_SetProperty(kTurntablistProperty_AudioFile, kAudioUnitScope_Global, 0, 
-										   *aliasHandle, dataSize);
-
-	DisposeHandle(reinterpret_cast<Handle>(aliasHandle));
-
-	return status;
+	return dfxgui_SetProperty(kTurntablistProperty_AudioFile, kAudioUnitScope_Global, 0, *aliasHandle, dataSize);
 }
 
 
@@ -917,9 +902,9 @@ void TurntablistEditor::HandleAudioFileChange()
 										 dataSize, propertyFlags);
 	if ((status == dfx::kStatus_NoError) && (dataSize > 0))
 	{
-		auto const aliasHandle = reinterpret_cast<AliasHandle>(NewHandle(dataSize));
-		if (aliasHandle)
+		if (auto const aliasHandle = reinterpret_cast<AliasHandle>(NewHandle(dataSize)))
 		{
+			UniqueAliasHandle const ownedAlias(aliasHandle);
 			status = dfxgui_GetProperty(kTurntablistProperty_AudioFile, kAudioUnitScope_Global, 0, 
 										*aliasHandle, dataSize);
 			assert(status == dfx::kStatus_NoError);
@@ -934,7 +919,6 @@ void TurntablistEditor::HandleAudioFileChange()
 					displayString = DFX_CopyFileNameString(audioFileRef);
 				}
 			}
-			DisposeHandle(reinterpret_cast<Handle>(aliasHandle));
 		}
 	}
 
@@ -1053,12 +1037,10 @@ bool TurntablistEditor::HandleEvent(EventHandlerCallRef inHandlerRef, EventRef i
 				case kEventControlDragWithin:
 				case kEventControlDragLeave:
 				case kEventControlDragReceive:
+					status = GetEventParameter(inEvent, kEventParamDragRef, typeDragRef, nullptr, sizeof(drag), nullptr, &drag);
+					if ((status != noErr) || !drag)
 					{
-						status = GetEventParameter(inEvent, kEventParamDragRef, typeDragRef, nullptr, sizeof(drag), nullptr, &drag);
-						if ((status != noErr) || !drag)
-						{
-							return false;
-						}
+						return false;
 					}
 					break;
 				default:
@@ -1072,28 +1054,26 @@ bool TurntablistEditor::HandleEvent(EventHandlerCallRef inHandlerRef, EventRef i
 //std::fprintf(stderr, "kEventControlDragEnter\n");
 						getBackgroundControl()->setDragActive(true);
 						mDragAudioFileError = noErr;
-						Boolean acceptDrop = true;
+						constexpr Boolean acceptDrop = true;
 						status = SetEventParameter(inEvent, kEventParamControlWouldAcceptDrop, typeBoolean, sizeof(acceptDrop), &acceptDrop);
 /*
-						RgnHandle dragRegion = NewRgn();
+						dfx::UniqueOpaqueType<RgnHandle, DisposeRgn> const dragRegion(NewRgn());
 						if (dragRegion)
 						{
-							Rect dragRegionBounds;
+							Rect dragRegionBounds {};
 							GetControlBounds(carbonControl, &dragRegionBounds);
-							RectRgn(dragRegion, &dragRegionBounds);
+							RectRgn(dragRegion.get(), &dragRegionBounds);
 
 							CGrafPtr oldPort = nullptr;
 							GetPort(&oldPort);
 							SetPortWindowPort(GetCarbonWindow());
 
-							status = ShowDragHilite(drag, dragRegion, true);
+							status = ShowDragHilite(drag, dragRegion.get(), true);
 
 							if (oldPort)
 							{
 								SetPort(oldPort);
 							}
-
-							DisposeRgn(dragRegion);
 						}
 */
 //						HiliteControl(carbonControl, 1);
@@ -1101,26 +1081,19 @@ bool TurntablistEditor::HandleEvent(EventHandlerCallRef inHandlerRef, EventRef i
 //						HIViewSetNeedsDisplay(carbonControl, true);
 						return true;
 					}
-					break;
 
 				case kEventControlDragWithin:
-					{
 //std::fprintf(stderr, "kEventControlDragWithin\n");
-						return true;
-					}
-					break;
+					return true;
 
 				case kEventControlDragLeave:
 //std::fprintf(stderr, "kEventControlDragLeave\n");
-					{
-//						status = HideDragHilite(drag);
-						getBackgroundControl()->setDragActive(false);
-//						HiliteControl(carbonControl, kControlNoPart);
-//						HIViewSetHilite(carbonControl, kHIViewNoPart);
-//						HIViewSetNeedsDisplay(carbonControl, true);
-						return true;
-					}
-					break;
+//					status = HideDragHilite(drag);
+					getBackgroundControl()->setDragActive(false);
+//					HiliteControl(carbonControl, kControlNoPart);
+//					HIViewSetHilite(carbonControl, kHIViewNoPart);
+//					HIViewSetNeedsDisplay(carbonControl, true);
+					return true;
 
 				case kEventControlDragReceive:
 					{
@@ -1249,7 +1222,6 @@ std::fprintf(stderr, "flavor = '%.4s', size = %ld\n", (char*)(&dragFlavorType_bi
 
 						return false;
 					}
-					break;
 
 				default:
 					break;
@@ -1304,9 +1276,10 @@ static dfx::UniqueCFType<CFArrayRef> DFX_CopyAUParameterValueStrings(AudioUnit i
 }
 
 //-----------------------------------------------------------------------------
-void TurntablistEditor::HandleParameterChange(dfx::ParameterID inParameterID, float inValue)
+void TurntablistEditor::parameterChanged(dfx::ParameterID inParameterID)
 {
-	auto const value_i = (inValue >= 0.f) ? static_cast<int>(inValue + 0.001f) : static_cast<int>(inValue - 0.001f);
+	auto const value = getparameter_f(inParameterID);
+	auto const value_i = (value >= 0.f) ? static_cast<int>(value + DfxParam::kIntegerPadding) : static_cast<int>(value - DfxParam::kIntegerPadding);
 
 	if ((inParameterID == kParam_ScratchMode) && mScratchSpeedKnob)
 	{
@@ -1345,26 +1318,28 @@ void TurntablistEditor::HandleParameterChange(dfx::ParameterID inParameterID, fl
 		case kParam_ScratchAmount:
 			{
 				// XXX float2string(m_fPlaySampleRate, text);
-				auto const format = (inValue > 0.0f) ? CFSTR("%+.3f") : CFSTR("%.3f");
-				universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, format, inValue));
+				auto const format = (value > 0.f) ? CFSTR("%+.3f") : CFSTR("%.3f");
+				universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, format, value));
 			}
 			break;
 		case kParam_ScratchSpeed_scrub:
-			universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%.3f  second%s"), inValue, (std::fabs(inValue) > 1.0f) ? "s" : ""));
+			universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%.3f  second%s"), value, (std::fabs(value) > 1.f) ? "s" : ""));
 			break;
 		case kParam_ScratchSpeed_spin:
-			universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%.3f x"), inValue));
+			universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%.3f x"), value));
 			break;
 		case kParam_SpinUpSpeed:
 		case kParam_SpinDownSpeed:
-			universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%.4f"), inValue));
+			universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%.4f"), value));
 			break;
 		case kParam_PitchShift:
-			inValue = inValue * 0.01f * getparameter_f(kParam_PitchRange);
-			universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%+.2f  semitone%s"), inValue, (std::fabs(inValue) > 1.0f) ? "s" : ""));
+		{
+			auto const value_scalar = value * 0.01f * getparameter_f(kParam_PitchRange);
+			universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%+.2f  semitone%s"), value_scalar, (std::fabs(value_scalar) > 1.f) ? "s" : ""));
 			break;
+		}
 		case kParam_PitchRange:
-			universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%.2f  semitone%s"), inValue, (std::fabs(inValue) > 1.0f) ? "s" : ""));
+			universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%.2f  semitone%s"), value, (std::fabs(value) > 1.f) ? "s" : ""));
 			break;
 		case kParam_RootKey:
 			universalDisplayText.reset(CFStringCreateWithCString(cfAllocator, dfx::GetNameForMIDINote(value_i).c_str(), DfxParam::kDefaultCStringEncoding));
@@ -1372,7 +1347,7 @@ void TurntablistEditor::HandleParameterChange(dfx::ParameterID inParameterID, fl
 
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
 		case kParam_Volume:
-			if (inValue <= 0.0f)
+			if (value <= 0.f)
 			{
 				constexpr UniChar minusInfinity[] = { '-', 0x221E, ' ', ' ', 'd', 'B' };
 				universalDisplayText.reset(CFStringCreateWithCharacters(cfAllocator, minusInfinity, std::ssize(minusInfinity)));
@@ -1381,12 +1356,12 @@ void TurntablistEditor::HandleParameterChange(dfx::ParameterID inParameterID, fl
 			{
 				#define DB_FORMAT_STRING	"%.2f  dB"
 				CFStringRef format = CFSTR(DB_FORMAT_STRING);
-				if (inValue > 1.0f)
+				if (value > 1.f)
 				{
 					format = CFSTR("+" DB_FORMAT_STRING);
 				}
 				#undef DB_FORMAT_STRING
-				universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, format, dfx::math::Linear2dB(inValue)));
+				universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, format, dfx::math::Linear2dB(value)));
 			}
 			break;
 #endif
