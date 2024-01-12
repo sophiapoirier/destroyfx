@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2015-2023  Sophia Poirier
+Copyright (C) 2015-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -159,7 +159,7 @@ public:
 		setMouseableArea(newSize);
 	}
 
-	CLASS_METHODS(DGDialogButton, VSTGUI::CTextButton)
+	CLASS_METHODS_NOCOPY(DGDialogButton, VSTGUI::CTextButton)
 
 private:
 	DGDialog::Selection const mSelection;
