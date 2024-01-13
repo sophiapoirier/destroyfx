@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 DFX_METADATA_TOOL="${BUILT_PRODUCTS_DIR}"/dfxplugin-metadata
 cc "${DFX_ROOT_SOURCE_PATH}"/dfx-library/dfxplugin-metadata.cpp -o "${DFX_METADATA_TOOL}" -std=${CLANG_CXX_LANGUAGE_STANDARD} -l"${CLANG_CXX_LIBRARY##lib}" -include "${GCC_PREFIX_HEADER}" -I "${DFX_ROOT_SOURCE_PATH}"/dfx-library
 

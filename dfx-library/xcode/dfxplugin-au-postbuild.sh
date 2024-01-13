@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 "${DFX_ROOT_SOURCE_PATH}"/dfx-library/xcode/dfxplugin-postbuild.sh
 
 DFX_METADATA_TOOL="${BUILT_PRODUCTS_DIR}"/dfxplugin-metadata
@@ -9,6 +11,9 @@ SUBTYPE=`"${DFX_METADATA_TOOL}" id`
 VERSION=`"${DFX_METADATA_TOOL}" version`
 VERSION_NUMS_ARRAY=( ${VERSION//./ } )
 (( VERSION_NUM = (${VERSION_NUMS_ARRAY[0]} * 256 * 256) + (${VERSION_NUMS_ARRAY[1]} * 256) + ${VERSION_NUMS_ARRAY[2]} ))
+
+# disable immediate exit on error because error is eventually expected as the break condition of the following loop
+set +e
 
 INDEX=0
 PLIST_ERROR=0

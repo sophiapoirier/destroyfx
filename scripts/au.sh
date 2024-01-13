@@ -14,6 +14,8 @@ if (( $# < 1 )); then
 	exit 1
 fi
 
+set -e
+
 # the first argument should be the full proper name of the plugin
 PLUGINNAME="${1}"
 # this is the plugin file name
@@ -40,5 +42,3 @@ fi
 #  * ummm, also assumes some other stuff being where it happens 
 #    to be on my hard disk, hmmm, maybe I should improve this...
 `dirname $0`/makedist.sh ~/dfx/_misc/distributions/"${PLUGINNAME}"/$PLUGINNAME_STRIPPED "${VERSION}" ~/dfx/destroyfx/docs/${DOCSNAME}.html "${PLUGINNAME}" $MIDIPLUGIN "${PLUGINPATH}"
-
-exit 0
