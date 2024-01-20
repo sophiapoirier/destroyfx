@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -e
-
 DOCS_SOURCE_DIR="${DFX_ROOT_SOURCE_PATH}"/docs
 DOCS_INSTALL_DIR="${BUILT_PRODUCTS_DIR}/${LOCALIZED_RESOURCES_FOLDER_PATH}"
 DOCS_SOURCE_FILENAME=`echo "${DFX_PLUGIN_FULL_NAME}".html | tr -d " " | tr '[:upper:]' '[:lower:]'`
