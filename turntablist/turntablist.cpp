@@ -279,8 +279,8 @@ OSStatus Turntablist::SaveState(CFPropertyListRef* outData)
 			auto const audioFileUrlString = dfx::MakeUniqueCFType(CFURLCopyFileSystemPath(audioFileUrl.get(), kCFURLPOSIXPathStyle));
 			if (audioFileUrlString)
 			{
-				auto const audioFileUrlString_ptr = audioFileUrlString.get();
-				auto const fileReferencesDictionary = dfx::MakeUniqueCFType(CFDictionaryCreate(kCFAllocatorDefault, (void const**)(&kTurntablistPreset_AudioFileReferenceKey), (void const**)(&audioFileUrlString_ptr), 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
+				auto audioFileUrlString_ptr = audioFileUrlString.get();
+				auto const fileReferencesDictionary = dfx::MakeUniqueCFType(CFDictionaryCreate(kCFAllocatorDefault, reinterpret_cast<void const**>(const_cast<CFStringRef*>(&kTurntablistPreset_AudioFileReferenceKey)), reinterpret_cast<void const**>(&audioFileUrlString_ptr), 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
 				if (fileReferencesDictionary)
 				{
 					CFDictionarySetValue(dict, CFSTR(kAUPresetExternalFileRefs), fileReferencesDictionary.get());

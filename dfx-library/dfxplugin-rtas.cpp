@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2023  Sophia Poirier
+Copyright (C) 2009-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -308,7 +308,7 @@ ComponentResult DfxPlugin::GetValueString(long inParameterIndex, long inValue, S
 		auto const shortValueString = GetParameterValueShortString(dfx::ParameterID_FromRTAS(inParameterIndex), inValue);
 		if (shortValueString != nullptr)
 		{
-			strlcpy((char*)(outValueString + 1), shortValueString, inMaxLength + 1);
+			strlcpy(static_cast<char*>(outValueString + 1), shortValueString, inMaxLength + 1);
 			outValueString[0] = (static_cast<long>(std::strlen(shortValueString)) > inMaxLength) ? inMaxLength : std::strlen(shortValueString);
 			return noErr;
 		}
@@ -744,9 +744,9 @@ void DfxPlugin::SetViewPort(GrafPtr inPort)
 
 			void* windowPtr = nullptr;
 		#if TARGET_OS_WIN32
-			windowPtr = (void*) ASI_GethWnd((WindowPtr)mMainPort);
+			windowPtr = static_cast<void*>(ASI_GethWnd(reinterpret_cast<WindowPtr>(mMainPort)));
 		#elif TARGET_OS_MAC
-			windowPtr = (void*) GetWindowFromPort(mMainPort);
+			windowPtr = static_cast<void*>(GetWindowFromPort(mMainPort));
 		#endif
 			mCustomUI_p->Open(windowPtr, mLeftOffset, mTopOffset);
 

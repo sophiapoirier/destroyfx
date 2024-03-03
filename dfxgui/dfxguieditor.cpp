@@ -114,7 +114,7 @@ DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 #if TARGET_OS_MAC
 		VSTGUI::init(CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER)));
 #elif TARGET_OS_WIN32 && defined(TARGET_API_VST)
-		VSTGUI::init((HINSTANCE)hInstance);
+		VSTGUI::init(static_cast<HINSTANCE>(hInstance));
 #else
 	#error "implementation needed"
 #endif

@@ -1,7 +1,7 @@
  /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier and Tom Murphy VII
+Copyright (C) 2002-2024  Sophia Poirier and Tom Murphy VII
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -107,7 +107,7 @@ std::optional<std::string> InstallFontWin32(const char *resource_name) {
     return {};
   }
 
-  HANDLE temp_fh = CreateFileA((LPTSTR)temp_filename,
+  HANDLE temp_fh = CreateFileA(static_cast<LPTSTR>(temp_filename),
                                GENERIC_WRITE,
                                0,
                                nullptr,
@@ -271,11 +271,11 @@ public:
                                 char *name,
                                 LONG_PTR param) -> int {
                                 // MessageBoxA(nullptr, name, name, 0);
-                                ((FFImpl*)param)->RegisterFont(name);
+                                reinterpret_cast<FFImpl*>(param)->RegisterFont(name);
                                 // Continue enumeration.
                                 return true;
                               },
-                            (LONG_PTR)this)) {
+                            reinterpret_cast<LONG_PTR>(this))) {
       // Note: this also "fails" if no resources of type DFX_TTF are found,
       // which would be normal for plugins without embedded fonts.
       return;

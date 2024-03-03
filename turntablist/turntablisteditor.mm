@@ -1127,8 +1127,8 @@ bool TurntablistEditor::HandleEvent(EventHandlerCallRef inHandlerRef, EventRef i
 											{
 												Size dragFlavorDataSize = 0;
 												status = GetFlavorDataSize(drag, dragItem, dragFlavorType, &dragFlavorDataSize);
-FlavorType dragFlavorType_bigEndian = CFSwapInt32HostToBig(dragFlavorType);
-std::fprintf(stderr, "flavor = '%.4s', size = %ld\n", (char*)(&dragFlavorType_bigEndian), dragFlavorDataSize);
+FlavorType const dragFlavorType_bigEndian = CFSwapInt32HostToBig(dragFlavorType);
+std::fprintf(stderr, "flavor = '%.4s', size = %ld\n", reinterpret_cast<char const*>(&dragFlavorType_bigEndian), dragFlavorDataSize);
 											}
 										}
 									}
@@ -1163,7 +1163,7 @@ std::fprintf(stderr, "flavor = '%.4s', size = %ld\n", (char*)(&dragFlavorType_bi
 										dragFlavorType = kDragFlavorTypeHFS;
 										dragFlavorDataSize = 0;
 										status = GetFlavorDataSize(drag, dragItem, dragFlavorType, &dragFlavorDataSize);
-										if ((status == noErr) && ((size_t)dragFlavorDataSize >= sizeof(HFSFlavor)))
+										if ((status == noErr) && (static_cast<size_t>(dragFlavorDataSize) >= sizeof(HFSFlavor)))
 										{
 											dfx::UniqueMemoryBlock<HFSFlavor> const hfsFlavorData(dragFlavorDataSize);
 											if (hfsFlavorData)
