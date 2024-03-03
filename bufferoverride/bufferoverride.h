@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -22,13 +22,13 @@ To contact the author, use the contact form at http://destroyfx.org
 #pragma once
 
 #include <array>
-#include <atomic>
 #include <optional>
 #include <span>
 #include <vector>
 
 #include "bufferoverride-base.h"
 #include "dfxmath.h"
+#include "dfxmisc.h"
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
 #include "iirfilter.h"
@@ -126,11 +126,7 @@ private:
 	dfx::LFO mDivisorLFO, mBufferLFO;
 
 	AtomicBufferOverrideViewData mViewDataCache;
-	std::atomic<uint64_t> mViewDataCacheTimestamp {0u};
-	static_assert(decltype(mViewDataCacheTimestamp)::is_always_lock_free);
-	std::atomic<double> mHostTempoBPS_viewCache {0.};
-	static_assert(decltype(mHostTempoBPS_viewCache)::is_always_lock_free);
-	std::atomic<float> mDivisorLFOValue_viewCache {kLFOValueDefault}, mBufferLFOValue_viewCache {kLFOValueDefault};
-	static_assert(decltype(mDivisorLFOValue_viewCache)::is_always_lock_free);
-	static_assert(decltype(mBufferLFOValue_viewCache)::is_always_lock_free);
+	dfx::LockFreeAtomic<uint64_t> mViewDataCacheTimestamp {0u};
+	dfx::LockFreeAtomic<double> mHostTempoBPS_viewCache {0.};
+	dfx::LockFreeAtomic<float> mDivisorLFOValue_viewCache {kLFOValueDefault}, mBufferLFOValue_viewCache {kLFOValueDefault};
 };

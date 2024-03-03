@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -436,7 +436,7 @@ double DfxParam::get_gen() const
 //-----------------------------------------------------------------------------
 // set a Value with a value of a float type
 // (perform type conversion if float is not the parameter's "native" type)
-bool DfxParam::accept_f(double inValue, std::atomic<Value>& ioValue) const
+bool DfxParam::accept_f(double inValue, dfx::LockFreeAtomic<Value>& ioValue) const
 {
 	auto const translatedValue = pack_f(inValue);
 	return (ioValue.exchange(translatedValue) != translatedValue);
@@ -445,7 +445,7 @@ bool DfxParam::accept_f(double inValue, std::atomic<Value>& ioValue) const
 //-----------------------------------------------------------------------------
 // set a Value with a value of a int type
 // (perform type conversion if int is not the parameter's "native" type)
-bool DfxParam::accept_i(int64_t inValue, std::atomic<Value>& ioValue) const noexcept
+bool DfxParam::accept_i(int64_t inValue, dfx::LockFreeAtomic<Value>& ioValue) const noexcept
 {
 	auto const translatedValue = pack_i(inValue);
 	return (ioValue.exchange(translatedValue) != translatedValue);
@@ -454,7 +454,7 @@ bool DfxParam::accept_i(int64_t inValue, std::atomic<Value>& ioValue) const noex
 //-----------------------------------------------------------------------------
 // set a Value with a value of a boolean type
 // (perform type conversion if boolean is not the parameter's "native" type)
-bool DfxParam::accept_b(bool inValue, std::atomic<Value>& ioValue) const noexcept
+bool DfxParam::accept_b(bool inValue, dfx::LockFreeAtomic<Value>& ioValue) const noexcept
 {
 	auto const translatedValue = pack_b(inValue);
 	return (ioValue.exchange(translatedValue) != translatedValue);

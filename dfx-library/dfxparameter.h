@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -172,7 +172,6 @@ setusevaluestrings is used to set this property.
 #pragma once
 
 
-#include <atomic>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -550,9 +549,9 @@ private:
 	// set a Value with a value of a scalar type
 	// (perform type conversion if the incoming variable type is not "native")
 	// returns whether the provided Value changed upon accepting the scalar value
-	bool accept_f(double inValue, std::atomic<Value>& ioValue) const;
-	bool accept_i(int64_t inValue, std::atomic<Value>& ioValue) const noexcept;
-	bool accept_b(bool inValue, std::atomic<Value>& ioValue) const noexcept;
+	bool accept_f(double inValue, dfx::LockFreeAtomic<Value>& ioValue) const;
+	bool accept_i(int64_t inValue, dfx::LockFreeAtomic<Value>& ioValue) const noexcept;
+	bool accept_b(bool inValue, dfx::LockFreeAtomic<Value>& ioValue) const noexcept;
 
 	// clip the current parameter value within the min/max range
 	[[nodiscard]] double limit_f(double inValue) const;
@@ -565,8 +564,7 @@ private:
 	bool mEnforceValueLimits = false;  // default to allowing values outside of the min/max range
 	std::string mName;
 	std::vector<std::string> mShortNames;
-	std::atomic<Value> mValue {};
-	static_assert(decltype(mValue)::is_always_lock_free);
+	dfx::LockFreeAtomic<Value> mValue {};
 	Value mDefaultValue {}, mMinValue {}, mMaxValue {};
 	ValueType mValueType = ValueType::Float;  // the variable type of the parameter values
 	Unit mUnit = Unit::Generic;  // the unit type of the parameter
@@ -574,10 +572,8 @@ private:
 	double mCurveSpec = 1.0;  // special specification, like the exponent in Curve::Pow
 	std::vector<std::string> mValueStrings;  // an array of value strings
 	std::string mCustomUnitString;  // a text string display for parameters using custom unit types
-	std::atomic<bool> mChanged {true};  // indicates if the value has changed
-	static_assert(decltype(mChanged)::is_always_lock_free);
-	std::atomic<bool> mTouched {false};  // indicates if the value has been newly set
-	static_assert(decltype(mTouched)::is_always_lock_free);
+	dfx::LockFreeAtomic<bool> mChanged {true};  // indicates if the value has changed
+	dfx::LockFreeAtomic<bool> mTouched {false};  // indicates if the value has been newly set
 	Attribute mAttributes = 0;  // a bit-mask of various parameter attributes
 
 #ifdef TARGET_API_AUDIOUNIT

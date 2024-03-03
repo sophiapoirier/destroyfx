@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -41,7 +41,7 @@ constexpr float getStepAmount(long const inLength)
 
 //-----------------------------------------------------------------------------
 template <typename T>
-static void updateViewCacheValue(std::atomic<T>& ioAtomicValue, T const inReplacementValue, bool& ioChanged)
+static void updateViewCacheValue(dfx::LockFreeAtomic<T>& ioAtomicValue, T const inReplacementValue, bool& ioChanged)
 {
 	ioChanged |= ioAtomicValue.exchange(inReplacementValue, std::memory_order_relaxed) != inReplacementValue;
 };

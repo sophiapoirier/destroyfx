@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2023  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2024  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -24,10 +24,10 @@ Geometer, starring the Super Destroy FX Windowing System!
 #pragma once
 
 #include <array>
-#include <atomic>
 #include <vector>
 
 #include "dfxmath.h"
+#include "dfxmisc.h"
 #include "dfxmutex.h"
 #include "dfxplugin.h"
 #include "geometer-base.h"
@@ -75,8 +75,7 @@ private:
   std::array<int, GeometerViewData::arraysize> tmpx {};
   std::array<float, GeometerViewData::arraysize> tmpy {};
   dfx::SpinLock windowcachelock;
-  std::atomic<uint64_t> lastwindowtimestamp {0};
-  static_assert(decltype(lastwindowtimestamp)::is_always_lock_free);
+  dfx::LockFreeAtomic<uint64_t> lastwindowtimestamp {0};
 };
 
 class PLUGINCORE final : public DfxPluginCore {

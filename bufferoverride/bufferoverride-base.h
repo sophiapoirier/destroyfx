@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier and Tom Murphy VII
+Copyright (C) 2001-2024  Sophia Poirier and Tom Murphy VII
 
 This file is part of Buffer Override.
 
@@ -126,9 +126,8 @@ using UnifiedT = std::atomic<BufferOverrideViewData>;
 // where 16-byte lock-free atomics are not supported, we slice it into halves (Clang can but GCC cannot)
 struct CompositeT
 {
-	using SegmentT = std::atomic<BufferOverrideViewData::Segment>;
+	using SegmentT = dfx::LockFreeAtomic<BufferOverrideViewData::Segment>;
 	SegmentT mPreLFO, mPostLFO;
-	static_assert(SegmentT::is_always_lock_free);
 
 	void store(BufferOverrideViewData value, std::memory_order order) noexcept
 	{

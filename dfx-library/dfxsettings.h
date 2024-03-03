@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -72,7 +72,6 @@ This is our Destroy FX plugin data storage stuff
 #pragma once
 
 
-#include <atomic>
 #include <bit>
 #include <cstddef>
 #include <span>
@@ -80,6 +79,7 @@ This is our Destroy FX plugin data storage stuff
 #include <vector>
 
 #include "dfx-base.h"
+#include "dfxmisc.h"
 #include "dfxpluginproperties.h"
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -438,15 +438,15 @@ private:
 	CrisisBehavior mCrisisBehavior = CrisisBehavior::LoadWhatYouCan;
 
 #if TARGET_PLUGIN_USES_MIDI
-	std::atomic<bool> mMidiLearn {false};  // switch value for MIDI learn mode
-	std::atomic<dfx::ParameterID> mLearner {dfx::kParameterID_Invalid};  // the parameter currently selected for MIDI learning
+	dfx::LockFreeAtomic<bool> mMidiLearn {false};  // switch value for MIDI learn mode
+	dfx::LockFreeAtomic<dfx::ParameterID> mLearner {dfx::kParameterID_Invalid};  // the parameter currently selected for MIDI learning
 
 	// the array of which MIDI event, if any, is assigned to each parameter
 	std::vector<dfx::ParameterAssignment> mParameterAssignments;
 
 	// whether to allow only one parameter assignment per MIDI event, or steal them
-	std::atomic<bool> mStealAssignments {false};
-	std::atomic<bool> mDeactivateLearningUponLearnt {true};
+	dfx::LockFreeAtomic<bool> mStealAssignments {false};
+	dfx::LockFreeAtomic<bool> mDeactivateLearningUponLearnt {true};
 	bool mAllowChannelAftertouchEvents = true;
 	// whether to allow pitchbend events to be assigned to control parameters
 	bool mAllowPitchbendEvents = false;
@@ -454,18 +454,18 @@ private:
 	bool mAllowNoteEvents = false;
 	// whether to differentiate events and parameter assignments based 
 	// on MIDI channel or whether to ignore channel (omni-style)
-	std::atomic<bool> mUseChannel {false};
+	dfx::LockFreeAtomic<bool> mUseChannel {false};
 
 	// this lets the plugin specify any MIDI control behavior characterists 
 	// for the current MIDI-learning parameter
 	dfx::MidiEventBehaviorFlags mLearnerEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None;
 	// lets the plugin pass along an extra context-specific data bytes
-	std::atomic<int> mLearnerDataInt1 {0}, mLearnerDataInt2 {0};
-	std::atomic<float> mLearnerDataFloat1 {0.0f}, mLearnerDataFloat2 {0.0f};  // TODO: unused, remove? (but serialized data compatibility)
+	dfx::LockFreeAtomic<int> mLearnerDataInt1 {0}, mLearnerDataInt2 {0};
+	dfx::LockFreeAtomic<float> mLearnerDataFloat1 {0.f}, mLearnerDataFloat2 {0.f};  // TODO: unused, remove? (but serialized data compatibility)
 
 	// if a note range is being learned for a parameter, this will be true
-	std::atomic<bool> mNoteRangeHalfwayDone {false};
+	dfx::LockFreeAtomic<bool> mNoteRangeHalfwayDone {false};
 	// the note that is the first part of the 2-note range being learned
-	std::atomic<int> mHalfwayNoteNum {0};
+	dfx::LockFreeAtomic<int> mHalfwayNoteNum {0};
 #endif // TARGET_PLUGIN_USES_MIDI
 };

@@ -28,6 +28,7 @@ These are some generally useful functions.
 
 
 #include <algorithm>
+#include <atomic>
 #include <bit>
 #include <cassert>
 #include <concepts>
@@ -54,6 +55,12 @@ namespace dfx
 template <typename>
 inline constexpr bool AlwaysFalse = false;
 
+
+
+//-----------------------------------------------------------------------------
+template <typename T>
+requires std::atomic<T>::is_always_lock_free
+using LockFreeAtomic = std::atomic<T>;
 
 
 //-----------------------------------------------------------------------------
