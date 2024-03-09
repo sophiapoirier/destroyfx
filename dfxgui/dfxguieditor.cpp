@@ -640,16 +640,14 @@ void DfxGuiEditor::randomizeparameter(dfx::ParameterID inParameterID, bool inWri
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 {
-	// TODO C++23: std::ranges::to<std::vector>
-	auto const parameterList = GetParameterList();
-	auto randomizableParameterList = std::views::filter(parameterList, [this](auto parameterID)
+	auto const parameterList = std::ranges::to<std::vector>(std::views::filter(GetParameterList(), [this](auto parameterID)
 	{
 		return !HasParameterAttribute(parameterID, DfxParam::kAttribute_OmitFromRandomizeAll);
-	});
+	}));
 
 	if (inWriteAutomation)
 	{
-		for (auto const parameterID : randomizableParameterList)
+		for (auto const parameterID : parameterList)
 		{
 			automationgesture_begin(parameterID);
 		}
@@ -670,7 +668,7 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 
 	if (inWriteAutomation)
 	{
-		for (auto const parameterID : randomizableParameterList)
+		for (auto const parameterID : parameterList)
 		{
 #ifdef TARGET_API_VST
 			getEffect()->setParameterAutomated(dfx::ParameterID_ToVST(parameterID), getparameter_gen(parameterID));
@@ -2279,18 +2277,15 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 //-----------------------------------------------------------------------------
 VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParametersContextualMenu()
 {
-	// TODO C++23: std::ranges::to<std::vector>
-	auto const parameterList = GetParameterList();
+	auto const parameterList = std::ranges::to<std::vector>(std::views::filter(GetParameterList(), [this](auto parameterID)
+	{
+		return !HasParameterAttribute(parameterID, DfxParam::kAttribute_Hidden);
+	}));
 	auto const resultMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
 	resultMenu->setStyle(kDfxGui_ContextualMenuStyle);
 	std::map<size_t, VSTGUI::COptionMenu&> groupSubMenus;
 
-	auto const isParameterVisible = [this](auto parameterID)
-	{
-		return !HasParameterAttribute(parameterID, DfxParam::kAttribute_Hidden);
-	};
-
-	for (auto const parameterID : std::views::filter(parameterList, isParameterVisible))
+	for (auto const parameterID : parameterList)
 	{
 		if (auto const parameterSubMenu = createParameterContextualMenu(parameterID))
 		{
