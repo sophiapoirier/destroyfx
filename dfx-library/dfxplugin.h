@@ -1181,23 +1181,23 @@ public:
 	}
 	std::optional<double> getparameterifchanged_f(dfx::ParameterID inParameterID) const
 	{
-		return getparameterchanged(inParameterID) ? std::make_optional(getparameter_f(inParameterID)) : std::nullopt;
+		return mDfxPlugin.getparameterifchanged_f(inParameterID);;
 	}
 	std::optional<int64_t> getparameterifchanged_i(dfx::ParameterID inParameterID) const
 	{
-		return getparameterchanged(inParameterID) ? std::make_optional(getparameter_i(inParameterID)) : std::nullopt;
+		return mDfxPlugin.getparameterifchanged_i(inParameterID);
 	}
 	std::optional<bool> getparameterifchanged_b(dfx::ParameterID inParameterID) const
 	{
-		return getparameterchanged(inParameterID) ? std::make_optional(getparameter_b(inParameterID)) : std::nullopt;
+		return mDfxPlugin.getparameterifchanged_b(inParameterID);
 	}
 	std::optional<double> getparameterifchanged_gen(dfx::ParameterID inParameterID) const
 	{
-		return getparameterchanged(inParameterID) ? std::make_optional(getparameter_gen(inParameterID)) : std::nullopt;
+		return mDfxPlugin.getparameterifchanged_gen(inParameterID);
 	}
 	std::optional<double> getparameterifchanged_scalar(dfx::ParameterID inParameterID) const
 	{
-		return getparameterchanged(inParameterID) ? std::make_optional(getparameter_scalar(inParameterID)) : std::nullopt;
+		return mDfxPlugin.getparameterifchanged_scalar(inParameterID);
 	}
 	double getparametermin_f(dfx::ParameterID inParameterID) const
 	{
