@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code
 for creating audio processing plug-ins.
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -79,9 +79,9 @@ static bool DFXGUI_IsBitmapFont(char const* inFontName) noexcept
 static int DFXGUI_GetYOffsetTweak(char const* inFontName) noexcept
 {
 #if TARGET_OS_WIN32
-	if (inFontName != nullptr) {
-		if (0 == std::strcmp(inFontName, dfx::kFontName_Snooty10px))
-			return -2;
+	if (inFontName && (std::strcmp(inFontName, dfx::kFontName_Snooty10px) == 0))
+	{
+		return -2;
 	}
 #endif
 	return 0;
@@ -92,15 +92,23 @@ static std::tuple<int, int, int> GetPlatformViewAdjustments(char const* inFontNa
 {
 #if TARGET_OS_WIN32
 	if (inFontName == nullptr)
+	{
 		return std::make_tuple(0, 0, 0);
+	}
 
 	std::string const name(inFontName);
 	if (name == dfx::kFontName_Snooty10px)
+	{
 		return std::make_tuple(0, 1, 0);
-	else if (name == dfx::kFontName_Pasement9px)
+	}
+	if (name == dfx::kFontName_Pasement9px)
+	{
 		return std::make_tuple(0, 0, 0);
-	else if (name == dfx::kFontName_Wetar16px)
+	}
+	if (name == dfx::kFontName_Wetar16px)
+	{
 		return std::make_tuple(0, -3, 3);
+	}
 #endif
 
 	return std::make_tuple(0, 0, 0);
@@ -149,9 +157,7 @@ static void DFXGUI_ConfigureTextDisplay(DfxGuiEditor* inOwnerEditor,
 
 	inTextDisplay->setAntialias(!DFXGUI_IsBitmapFont(inFontName));
 
-	auto const adjustedRegion =
-	  detail::AdjustTextViewForPlatform(inFontName,
-										inTextDisplay->getViewSize());
+	auto const adjustedRegion = detail::AdjustTextViewForPlatform(inFontName, inTextDisplay->getViewSize());
 	inTextDisplay->setViewSize(adjustedRegion, false);
 }
 
@@ -325,7 +331,7 @@ std::optional<float> DGTextDisplay::textToValueProc_Generic(std::string const& i
 {
 	auto const parameterID = inTextDisplay->getParameterID();
 	auto const value_d = inTextDisplay->getOwnerEditor()->dfxgui_GetParameterValueFromString_f(parameterID, inText);
-	return value_d ? std::make_optional(static_cast<float>(*value_d)) : std::nullopt;
+	return value_d.transform([](auto value){ return static_cast<float>(value); });
 }
 
 //-----------------------------------------------------------------------------
