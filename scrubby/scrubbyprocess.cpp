@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -120,21 +120,18 @@ void Scrubby::checkTempoSyncStuff()
 			// check if audio playback has just restarted and reset buffer stuff if it has (for measure sync)
 			if (gettimeinfo().mPlaybackChanged)
 			{
-				// TODO: std::ranges::fill once bug with std::vector<bool> is resolved
-				std::fill(mNeedResync.begin(), mNeedResync.end(), true);
+				std::ranges::fill(mNeedResync, true);
 			}
 		}
 		else  // get the tempo from the user parameter
 		{
 			mCurrentTempoBPS = mUserTempo / 60.0;
-			// TODO: std::ranges::fill once bug with std::vector<bool> is resolved
-			std::fill(mNeedResync.begin(), mNeedResync.end(), false);  // we don't want it true if we're not syncing to host tempo
+			std::ranges::fill(mNeedResync, false);  // we don't want it true if we're not syncing to host tempo
 		}
 	}
 	else
 	{
-		// TODO: std::ranges::fill once bug with std::vector<bool> is resolved
-		std::fill(mNeedResync.begin(), mNeedResync.end(), false);  // we don't want it true if we're not syncing to host tempo
+		std::ranges::fill(mNeedResync, false);  // we don't want it true if we're not syncing to host tempo
 	}
 
 	// reset cycle state stuff if playback has changed (for measure sync)
@@ -336,7 +333,7 @@ void Scrubby::generateNewTarget(size_t channel)
 }
 
 // this is a necessary value for calculating the pitches related to the playback speeds
-static double const kLn2ToTheOneTwelfthPower = std::log(std::pow(2.0, 1.0/12.0));
+static double const kLn2ToTheOneTwelfthPower = std::log(std::pow(2., 1. / 12.));  // TODO C++26: constexpr
 //constexpr double kLn2ToTheOneTwelfthPower = 0.05776226504666215;
 
 //-----------------------------------------------------------------------------------------

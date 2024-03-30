@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -199,8 +199,7 @@ void Scrubby::reset()
 	std::ranges::fill(mMoveCount, 0);
 	std::ranges::fill(mSeekCount, 0);
 	// some hosts may call reset when restarting playback
-	// TODO: std::ranges::fill once bug with std::vector<bool> is resolved
-	std::fill(mNeedResync.begin(), mNeedResync.end(), true);
+	std::ranges::fill(mNeedResync, true);
 
 	std::ranges::for_each(mHighpassFilters, [](auto& filter){ filter.reset(); });
 
@@ -445,8 +444,7 @@ void Scrubby::processparameters()
 	// or if tempo sync mode has just been switched on
 	if (getparameterchanged(kSeekRate_Sync) || (getparameterchanged(kTempoSync) && mTempoSync))
 	{
-		// TODO: std::ranges::fill once bug with std::vector<bool> is resolved
-		std::fill(mNeedResync.begin(), mNeedResync.end(), true);
+		std::ranges::fill(mNeedResync, true);
 	}
 
 	if (getparameterchanged(kPredelay))
@@ -458,8 +456,7 @@ void Scrubby::processparameters()
 	auto const entryUseSeekRateRandMin = std::exchange(mUseSeekRateRandMin, mTempoSync ? (seekRateRandMinSync < mSeekRateSync) : (seekRateRandMinHz < mSeekRateHz));
 	if (entryUseSeekRateRandMin && !mUseSeekRateRandMin && mTempoSync)
 	{
-		// TODO: std::ranges::fill once bug with std::vector<bool> is resolved
-		std::fill(mNeedResync.begin(), mNeedResync.end(), true);
+		std::ranges::fill(mNeedResync, true);
 	}
 	mUseSeekDurRandMin = (mSeekDurRandMin < mSeekDur);
 }
