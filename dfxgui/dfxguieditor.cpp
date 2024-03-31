@@ -1823,12 +1823,11 @@ void DfxGuiEditor::setparametermidiassignment(dfx::ParameterID inParameterID, df
 dfx::ParameterAssignment DfxGuiEditor::getparametermidiassignment(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	auto const parameterAssignment = dfxgui_GetProperty<dfx::ParameterAssignment>(dfx::kPluginProperty_ParameterMidiAssignment,
-																				  dfx::kScope_Global,
-																				  inParameterID);
 	dfx::ParameterAssignment none;
 	none.mEventType = dfx::MidiEventType::None;
-	return parameterAssignment.value_or(none);
+	return dfxgui_GetProperty<dfx::ParameterAssignment>(dfx::kPluginProperty_ParameterMidiAssignment,
+														dfx::kScope_Global,
+														inParameterID).value_or(none);
 #else
 	return dfxgui_GetEffectInstance()->getparametermidiassignment(inParameterID);
 #endif
@@ -1901,7 +1900,7 @@ void DfxGuiEditor::TextEntryForParameterMidiCC(dfx::ParameterID inParameterID)
 	auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID inParameterID)
 	{
 		int value {};
-		auto const readCount = std::sscanf(inText.c_str(), "%d", &value);
+		auto const readCount = std::sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%d", &value);
 		if ((readCount < 1) || (readCount == EOF) || (value < 0) || (value > DfxMidi::kMaxValue))
 		{
 			return false;
@@ -1933,7 +1932,7 @@ void DfxGuiEditor::TextEntryForParameterMidiChannel(dfx::ParameterID inParameter
 	auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID inParameterID)
 	{
 		int value {};
-		auto const readCount = std::sscanf(inText.c_str(), "%d", &value);
+		auto const readCount = std::sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%d", &value);
 		value -= 1;  // transform from display value to zero-based index as used by MIDI
 		if ((readCount < 1) || (readCount == EOF) || (value < 0) || (value > DfxMidi::kMaxChannelValue))
 		{
