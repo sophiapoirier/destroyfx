@@ -190,12 +190,12 @@ void DfxPlugin::AddParametersToList()
 			AddControl( new CPluginControl_List(paramFourCharID, paramName.c_str(), valueStringsVector, paramDefault_i - paramMin_i, paramAutomatable) );
 		}
 
-		else if (getparametervaluetype(i) == DfxParam::ValueType::Int)
+		else if (getparametervaluetype(i) == DfxParam::Value::Type::Int)
 		{
 			AddControl( new CPluginControl_Discrete(paramFourCharID, paramName.c_str(), paramMin_i, paramMax_i, paramDefault_i, paramAutomatable) );
 		}
 
-		else if (getparametervaluetype(i) == DfxParam::ValueType::Boolean)
+		else if (getparametervaluetype(i) == DfxParam::Value::Type::Boolean)
 		{
 			AddControl( new CPluginControl_OnOff(paramFourCharID, paramName.c_str(), getparameterdefault_b(i), paramAutomatable) );
 		}
@@ -335,13 +335,13 @@ void DfxPlugin::UpdateControlValueInAlgorithm(long inParameterIndex)
 
 	switch (getparametervaluetype(parameterID))
 	{
-		case DfxParam::ValueType::Float:
+		case DfxParam::Value::Type::Float:
 			parameters[parameterID].set_f(GetParameter_f_FromRTAS(parameterID));
 			break;
-		case DfxParam::ValueType::Int:
+		case DfxParam::Value::Type::Int:
 			parameters[parameterID].set_i(GetParameter_i_FromRTAS(parameterID));
 			break;
-		case DfxParam::ValueType::Boolean:
+		case DfxParam::Value::Type::Boolean:
 			parameters[parameterID].set_b(GetParameter_b_FromRTAS(parameterID));
 			break;
 		default:

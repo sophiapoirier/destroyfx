@@ -28,7 +28,7 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 There are a number of things that we wanted our parameter system to support.  
 There are a number of concepts from which we're working.  Here's an outline:
 
-multiple variable types
+multiple value types
 	set/get values by type
 		derive/accept
 	set/get "generically"
@@ -42,25 +42,21 @@ unit types
 	value strings
 
 
-multiple variable types:
+multiple value types:
 
 This parameter system allows a parameter to operate using whichever 
-variable type is most appropriate:  integer, float, boolean, etc.  
-The variable type that the parameter uses "natively" is stored in a 
-DfxParam::ValueType type member called mValueType.  
-The actual storage of parameter values is done in a union (DfxParam::Value) 
-that includes fields for each supported variable type.
+value type is most appropriate:  integer, float, boolean, etc.  
+The actual storage of parameter values is done in a variant (DfxParam::Value) 
+that includes fields for each supported value type.
 
-You can get and set parameter values using entire DfxParam::Value unions 
-(in which case only the field of the union for the native value type 
-actually affects the value) or using individual values of a particular 
-variable type.  Rather than being restricted to setting and getting a 
-parameter's value only in its native variable type, you can actually use 
-any variable type and the parameter will internally interpret values 
-appropriately given the parameter's native type.  The process of 
-interpretation is done via the derive and accept routines.  
-accept is used when setting a parameter value and derive is used when 
-getting a parameter value.
+You can get and set parameter values using entire DfxParam::Value variants 
+or using individual values of a particular value type.  Rather than 
+being restricted to setting and getting a parameter's value only in its 
+native value type, you can actually use any value type and the 
+parameter will internally interpret values appropriately given the 
+parameter's native type.  The process of interpretation is done via the 
+derive and accept routines.  accept is used when setting a parameter value 
+and derive is used when getting a parameter value.
 
 Going even further than that, you can also set and get values "generically."  
 By this I mean you can get and set using float values constrained within 
@@ -72,7 +68,7 @@ convenient way to handle value distribution curves (more on that below).
 There are certain suffixes that are appended to function names to 
 indicate how they operate.  You will see multiple variations of the 
 same function with varying suffixes.  Most of the suffixes indicate 
-that the functions are handling a specific variable type.  Those are:  
+that the functions are handling a specific value type.  Those are:  
 _f for 64-bit float, _i for 64-bit signed integer, and _b for boolean.  
 The suffix _gen indicates that the function handles parameter values 
 in the generic 0 to 1 float fashion.
@@ -175,6 +171,7 @@ setusevaluestrings is used to set this property.
 #include <optional>
 #include <string>
 #include <string_view>
+#include <variant>
 #include <vector>
 
 #include "dfx-base.h"
@@ -197,53 +194,36 @@ public:
 	static constexpr CFStringEncoding kDefaultCStringEncoding = kCFStringEncodingMacRoman;
 #endif
 
-	// the Value union holds every type of supported value variable type
-	// all values (current, min, max, default) are stored in these
-	union Value
+	// Value holds every supported value type
+	// all parameter values (current, min, max, default) are stored in these
+	struct Value : public std::variant<double, int64_t, bool>
 	{
-		double f;
-		int64_t i;
-		int64_t b;  // would be bool, but bool can vary in byte size depending on the compiler
+		// these are the different representation types that a parameter can 
+		// declare as its "native" value type
+		enum class Type : uint32_t
+		{
+			Float,
+			Int,
+			Boolean
+		};
 
-		Value() noexcept
-		{
-			static_assert(sizeof(Value) == sizeof(Value::i));
-			this->i = 0;
-		}
-		Value(double inValue) noexcept
-		{
-			this->f = inValue;
-		}
-		Value(int64_t inValue) noexcept
-		{
-			this->i = inValue;
-		}
-		Value(bool inValue) noexcept
-		{
-			this->b = inValue ? 1 : 0;
-		}
+		using Parent = std::variant<double, int64_t, bool>;
+		using Parent::variant;
+		using Parent::operator=;
 
-		bool operator==(Value const& other) const noexcept
+		constexpr auto get_f() const
 		{
-			// these must be true in order for the simple bitwise comparison logic to suffice
-			static_assert(sizeof(Value) == sizeof(Value::i));
-			static_assert(sizeof(Value::i) == sizeof(Value::f));
-			static_assert(sizeof(Value::i) == sizeof(Value::b));
-			return (this->i == other.i);
+			return std::get<double>(*this);
 		}
-		bool operator!=(Value const& other) const noexcept
+		constexpr auto get_i() const
 		{
-			return !operator==(other);
+			return std::get<int64_t>(*this);
 		}
-	};
-
-	// these are the different variable types that a parameter can 
-	// declare as its "native" type
-	enum class ValueType : uint32_t
-	{
-		Float,
-		Int,
-		Boolean
+		constexpr auto get_b() const
+		{
+			return std::get<bool>(*this);
+		}
+		Type gettype() const noexcept;
 	};
 
 	// these are the different value unit types that a parameter can have
@@ -305,12 +285,6 @@ public:
 	// and any additional are used to match for short name requests. The names
 	// must all be different lengths. Recommended short lengths to support
 	// (common in control surfaces): 6, 4, 7
-	void init(std::vector<std::string_view> const& inNames, ValueType inType, 
-			  Value inInitialValue, Value inDefaultValue, 
-			  Value inMinValue, Value inMaxValue, 
-			  Unit inUnit = Unit::Generic, 
-			  Curve inCurve = Curve::Linear);
-	// the rest of these are just convenience wrappers for initializing with a certain variable type
 	void init_f(std::vector<std::string_view> const& inNames, 
 				double inInitialValue, double inDefaultValue, 
 				double inMinValue, double inMaxValue, 
@@ -430,17 +404,17 @@ public:
 		return derive_b(mDefaultValue);
 	}
 
-	// extract the value of a Value as a scalar type
-	// (perform type conversion if the desired variable type is not "native")
-	double derive_f(Value inValue) const noexcept;
-	int64_t derive_i(Value inValue) const;
-	bool derive_b(Value inValue) const noexcept;
+	// extract the active value of a Value as a scalar type
+	// (perform type conversion if the desired output type is not the contained type)
+	static double derive_f(Value inValue) noexcept;
+	static int64_t derive_i(Value inValue);
+	static bool derive_b(Value inValue) noexcept;
 
-	// produce a Value with a value of a scalar type
-	// (perform type conversion if the incoming variable type is not "native")
-	Value pack_f(double inValue) const;
-	Value pack_i(int64_t inValue) const noexcept;
-	Value pack_b(bool inValue) const noexcept;
+	// produce a Value holding the "native" type coerced from a value of a scalar type
+	// (perform type conversion if the incoming value type is not "native")
+	Value coerce_f(double inValue) const;
+	Value coerce_i(int64_t inValue) const noexcept;
+	Value coerce_b(bool inValue) const noexcept;
 
 	// expand and contract routines for setting and getting values generically
 	// these take into account the parameter curve
@@ -471,11 +445,11 @@ public:
 	}
 #endif
 
-	// set/get the variable type of the parameter values
-	//void setvaluetype(ValueType inNewType);
-	ValueType getvaluetype() const noexcept
+	// get the value type of the parameter values
+	Value::Type getvaluetype() const noexcept
 	{
-		return mValueType;
+		// relying upon default value to avoid atomic overhead with current value
+		return mDefaultValue.gettype();
 	}
 
 	// set/get the unit type of the parameter
@@ -544,14 +518,20 @@ public:
 
 
 private:
+	void init(std::vector<std::string_view> const& inNames, 
+			  Value inInitialValue, Value inDefaultValue, 
+			  Value inMinValue, Value inMaxValue, 
+			  Unit inUnit = Unit::Generic, 
+			  Curve inCurve = Curve::Linear);
+
 	void initNames(std::vector<std::string_view> const& inNames);
 
-	// set a Value with a value of a scalar type
-	// (perform type conversion if the incoming variable type is not "native")
-	// returns whether the provided Value changed upon accepting the scalar value
-	bool accept_f(double inValue, dfx::LockFreeAtomic<Value>& ioValue) const;
-	bool accept_i(int64_t inValue, dfx::LockFreeAtomic<Value>& ioValue) const noexcept;
-	bool accept_b(bool inValue, dfx::LockFreeAtomic<Value>& ioValue) const noexcept;
+	// apply a value of a scalar type to the current value
+	// (perform type conversion if the incoming value type is not "native")
+	// returns whether the provided Value changed upon storing the scalar value
+	bool accept_f(double inValue);
+	bool accept_i(int64_t inValue) noexcept;
+	bool accept_b(bool inValue) noexcept;
 
 	// clip the current parameter value within the min/max range
 	[[nodiscard]] double limit_f(double inValue) const;
@@ -566,7 +546,6 @@ private:
 	std::vector<std::string> mShortNames;
 	dfx::LockFreeAtomic<Value> mValue {};
 	Value mDefaultValue {}, mMinValue {}, mMaxValue {};
-	ValueType mValueType = ValueType::Float;  // the variable type of the parameter values
 	Unit mUnit = Unit::Generic;  // the unit type of the parameter
 	Curve mCurve = Curve::Linear;  // the shape of the distribution of parameter values
 	double mCurveSpec = 1.0;  // special specification, like the exponent in Curve::Pow

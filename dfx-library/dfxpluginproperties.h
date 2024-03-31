@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2003-2023  Sophia Poirier
+Copyright (C) 2003-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -113,7 +113,7 @@ enum class ParameterValueItem : uint32_t
 struct ParameterValueRequest
 {
 	ParameterValueItem inValueItem {};
-	DfxParam::ValueType inValueType {};
+	DfxParam::Value::Type inValueType {};
 	DfxParam::Value value {};
 };
 static_assert(IsTriviallySerializable<ParameterValueRequest>);

@@ -254,7 +254,6 @@ public:
 	// ***
 	// do the audio processing (override with real stuff)
 	// pass in arrays of float buffers for input and output ([channel][sample]), 
-	// TODO C++23: std::mdspan<float> 
 	virtual void processaudio(float const* const* inStreams, float* const* outStreams, size_t inNumFrames) {}
 
 	auto getnumparameters() const noexcept
@@ -403,7 +402,7 @@ public:
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].getcfname() : nullptr;
 	}
 #endif
-	DfxParam::ValueType getparametervaluetype(dfx::ParameterID inParameterID) const;
+	DfxParam::Value::Type getparametervaluetype(dfx::ParameterID inParameterID) const;
 	DfxParam::Unit getparameterunit(dfx::ParameterID inParameterID) const;
 	bool getparameterchanged(dfx::ParameterID inParameterID) const;  // only reliable when called during processaudio
 	bool getparametertouched(dfx::ParameterID inParameterID) const;  // only reliable when called during processaudio
@@ -647,15 +646,15 @@ public:
 #if TARGET_PLUGIN_USES_DSPCORE
 	double getdspcoreparameter_f(dfx::ParameterID inParameterID) const
 	{
-		return parameterisvalid(inParameterID) ? mParameters[inParameterID].derive_f(mDSPCoreParameterValuesCache[inParameterID]) : 0.;
+		return parameterisvalid(inParameterID) ? DfxParam::derive_f(mDSPCoreParameterValuesCache[inParameterID]) : 0.;
 	}
 	int64_t getdspcoreparameter_i(dfx::ParameterID inParameterID) const
 	{
-		return parameterisvalid(inParameterID) ? mParameters[inParameterID].derive_i(mDSPCoreParameterValuesCache[inParameterID]) : 0;
+		return parameterisvalid(inParameterID) ? DfxParam::derive_i(mDSPCoreParameterValuesCache[inParameterID]) : 0;
 	}
 	bool getdspcoreparameter_b(dfx::ParameterID inParameterID) const
 	{
-		return parameterisvalid(inParameterID) ? mParameters[inParameterID].derive_b(mDSPCoreParameterValuesCache[inParameterID]) : false;
+		return parameterisvalid(inParameterID) ? DfxParam::derive_b(mDSPCoreParameterValuesCache[inParameterID]) : false;
 	}
 	double getdspcoreparameter_gen(dfx::ParameterID inParameterID) const;
 	double getdspcoreparameter_scalar(dfx::ParameterID inParameterID) const;

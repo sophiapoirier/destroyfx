@@ -696,7 +696,7 @@ void DfxGuiEditor::GenerateParametersAutomationSnapshot()
 //-----------------------------------------------------------------------------
 std::optional<double> DfxGuiEditor::dfxgui_GetParameterValueFromString_f(dfx::ParameterID inParameterID, std::string const& inText)
 {
-	if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
+	if (GetParameterValueType(inParameterID) == DfxParam::Value::Type::Float)
 	{
 		double value {};
 		auto const readCount = std::sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%lf", &value);
@@ -707,9 +707,9 @@ std::optional<double> DfxGuiEditor::dfxgui_GetParameterValueFromString_f(dfx::Pa
 	}
 	else
 	{
-		if (auto const newValue_i = dfxgui_GetParameterValueFromString_i(inParameterID, inText))
+		if (auto const parsedValue_i = dfxgui_GetParameterValueFromString_i(inParameterID, inText))
 		{
-			return static_cast<double>(*newValue_i);
+			return static_cast<double>(*parsedValue_i);
 		}
 	}
 
@@ -719,15 +719,11 @@ std::optional<double> DfxGuiEditor::dfxgui_GetParameterValueFromString_f(dfx::Pa
 //-----------------------------------------------------------------------------
 std::optional<long> DfxGuiEditor::dfxgui_GetParameterValueFromString_i(dfx::ParameterID inParameterID, std::string const& inText)
 {
-	if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
+	if (GetParameterValueType(inParameterID) == DfxParam::Value::Type::Float)
 	{
-		if (auto const newValue_f = dfxgui_GetParameterValueFromString_f(inParameterID, inText))
+		if (auto const parsedValue_f = dfxgui_GetParameterValueFromString_f(inParameterID, inText))
 		{
-			DfxParam parameter;
-			parameter.init_f({""}, 0.0, 0.0, -1.0, 1.0);
-			DfxParam::Value parameterValue {};
-			parameterValue.f = *newValue_f;
-			return parameter.derive_i(parameterValue);
+			return DfxParam::derive_i(*parsedValue_f);
 		}
 	}
 	else
@@ -749,7 +745,7 @@ bool DfxGuiEditor::dfxgui_SetParameterValueWithString(dfx::ParameterID inParamet
 	if (dfxgui_IsValidParameterID(inParameterID))
 	{
 		constexpr bool automationGesture = true;
-		if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
+		if (GetParameterValueType(inParameterID) == DfxParam::Value::Type::Float)
 		{
 			if (auto const newValue = dfxgui_GetParameterValueFromString_f(inParameterID, inText))
 			{
@@ -795,7 +791,7 @@ void DfxGuiEditor::TextEntryForParameterValue(dfx::ParameterID inParameterID)
 
 	mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>(inParameterID, getparametername(inParameterID), "enter value:");
 	std::array<char, dfx::kParameterValueStringMaxLength> textValue {};
-	if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
+	if (GetParameterValueType(inParameterID) == DfxParam::Value::Type::Float)
 	{
 		std::snprintf(textValue.data(), textValue.size(), "%.6lf", getparameter_f(inParameterID));
 	}
@@ -964,13 +960,13 @@ double DfxGuiEditor::getparameter_f(dfx::ParameterID inParameterID)
 	dfx::ParameterValueRequest request;
 	size_t dataSize = sizeof(request);
 	request.inValueItem = dfx::ParameterValueItem::Current;
-	request.inValueType = DfxParam::ValueType::Float;
+	request.inValueType = DfxParam::Value::Type::Float;
 
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, 
 										   inParameterID, &request, dataSize);
 	if (status == dfx::kStatus_NoError)
 	{
-		return request.value.f;
+		return request.value.get_f();
 	}
 	return 0.0;
 #else
@@ -985,13 +981,13 @@ long DfxGuiEditor::getparameter_i(dfx::ParameterID inParameterID)
 	dfx::ParameterValueRequest request;
 	size_t dataSize = sizeof(request);
 	request.inValueItem = dfx::ParameterValueItem::Current;
-	request.inValueType = DfxParam::ValueType::Int;
+	request.inValueType = DfxParam::Value::Type::Int;
 
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, 
 										   inParameterID, &request, dataSize);
 	if (status == dfx::kStatus_NoError)
 	{
-		return request.value.i;
+		return request.value.get_i();
 	}
 	return 0;
 #else
@@ -1006,13 +1002,13 @@ bool DfxGuiEditor::getparameter_b(dfx::ParameterID inParameterID)
 	dfx::ParameterValueRequest request;
 	size_t dataSize = sizeof(request);
 	request.inValueItem = dfx::ParameterValueItem::Current;
-	request.inValueType = DfxParam::ValueType::Boolean;
+	request.inValueType = DfxParam::Value::Type::Boolean;
 
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, 
 										   inParameterID, &request, dataSize);
 	if (status == dfx::kStatus_NoError)
 	{
-		return request.value.b;
+		return request.value.get_b();
 	}
 	return false;
 #else
@@ -1042,8 +1038,8 @@ void DfxGuiEditor::setparameter_f(dfx::ParameterID inParameterID, double inValue
 #ifdef TARGET_API_AUDIOUNIT
 	dfx::ParameterValueRequest request;
 	request.inValueItem = dfx::ParameterValueItem::Current;
-	request.inValueType = DfxParam::ValueType::Float;
-	request.value.f = inValue;
+	request.inValueType = DfxParam::Value::Type::Float;
+	request.value = inValue;
 
 	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, inParameterID, request);
 
@@ -1073,8 +1069,8 @@ void DfxGuiEditor::setparameter_i(dfx::ParameterID inParameterID, long inValue, 
 #ifdef TARGET_API_AUDIOUNIT
 	dfx::ParameterValueRequest request;
 	request.inValueItem = dfx::ParameterValueItem::Current;
-	request.inValueType = DfxParam::ValueType::Int;
-	request.value.i = inValue;
+	request.inValueType = DfxParam::Value::Type::Int;
+	request.value = inValue;
 
 	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, inParameterID, request);
 
@@ -1104,8 +1100,8 @@ void DfxGuiEditor::setparameter_b(dfx::ParameterID inParameterID, bool inValue, 
 #ifdef TARGET_API_AUDIOUNIT
 	dfx::ParameterValueRequest request;
 	request.inValueItem = dfx::ParameterValueItem::Current;
-	request.inValueType = DfxParam::ValueType::Boolean;
-	request.value.b = inValue;
+	request.inValueType = DfxParam::Value::Type::Boolean;
+	request.value = inValue;
 
 	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, inParameterID, request);
 
@@ -1355,12 +1351,12 @@ float DfxGuiEditor::GetParameter_defaultValue(dfx::ParameterID inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::ValueType DfxGuiEditor::GetParameterValueType(dfx::ParameterID inParameterID)
+DfxParam::Value::Type DfxGuiEditor::GetParameterValueType(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	return dfxgui_GetProperty<DfxParam::ValueType>(dfx::kPluginProperty_ParameterValueType, 
-												   dfx::kScope_Global, 
-												   inParameterID).value_or(DfxParam::ValueType::Float);
+	return dfxgui_GetProperty<DfxParam::Value::Type>(dfx::kPluginProperty_ParameterValueType, 
+													 dfx::kScope_Global, 
+													 inParameterID).value_or(DfxParam::Value::Type::Float);
 #else
 	return dfxgui_GetEffectInstance()->getparametervaluetype(inParameterID);
 #endif
@@ -2205,7 +2201,7 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 		assert(valueStringsSubMenu->getNbEntries() > 0);
 		resultMenu->addEntry(valueStringsSubMenu, "Select value");
 	}
-	else if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Boolean)
+	else if (GetParameterValueType(inParameterID) == DfxParam::Value::Type::Boolean)
 	{
 		auto const parameterIsOn = getparameter_b(inParameterID);
 		constexpr bool enabled = true;

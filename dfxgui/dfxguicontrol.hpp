@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -272,7 +272,7 @@ void DGControl<T>::pullNumStatesFromParameter()
 	{
 		size_t numStates = 0;
 		auto const parameterID = getParameterID();
-		if (mOwnerEditor->GetParameterValueType(parameterID) != DfxParam::ValueType::Float)
+		if (mOwnerEditor->GetParameterValueType(parameterID) != DfxParam::Value::Type::Float)
 		{
 			auto const valueRange = mOwnerEditor->GetParameter_maxValue(parameterID) - mOwnerEditor->GetParameter_minValue(parameterID);
 			numStates = static_cast<size_t>(std::max(std::lround(valueRange), 0L) + 1);

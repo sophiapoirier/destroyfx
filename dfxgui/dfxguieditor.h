@@ -253,7 +253,7 @@ public:
 	float GetParameter_minValue(dfx::ParameterID inParameterID);
 	float GetParameter_maxValue(dfx::ParameterID inParameterID);
 	float GetParameter_defaultValue(dfx::ParameterID inParameterID);
-	DfxParam::ValueType GetParameterValueType(dfx::ParameterID inParameterID);
+	DfxParam::Value::Type GetParameterValueType(dfx::ParameterID inParameterID);
 	DfxParam::Unit GetParameterUnit(dfx::ParameterID inParameterID);
 	bool GetParameterUseValueStrings(dfx::ParameterID inParameterID);
 	bool HasParameterAttribute(dfx::ParameterID inParameterID, DfxParam::Attribute inFlag);

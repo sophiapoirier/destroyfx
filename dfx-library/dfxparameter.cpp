@@ -103,23 +103,27 @@ static auto CreateCFStringWithStringView(std::string_view inText) noexcept
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-void DfxParam::init(std::vector<std::string_view> const& inNames, ValueType inType, 
+void DfxParam::init(std::vector<std::string_view> const& inNames, 
 					Value inInitialValue, Value inDefaultValue, 
 					Value inMinValue, Value inMaxValue, 
 					Unit inUnit, Curve inCurve)
 {
 	assert(mName.empty());  // shortcut test ensuring init is only called once
 
+	auto const valueType = inInitialValue.gettype();
+	assert(valueType == inDefaultValue.gettype());
+	assert(valueType == inMinValue.gettype());
+	assert(valueType == inMaxValue.gettype());
+
 	// accept all of the incoming init values
 	initNames(inNames);
-	mValueType = inType;
 	mValue = inInitialValue;
 	mDefaultValue = inDefaultValue;
 	mMinValue = inMinValue;
 	mMaxValue = inMaxValue;
 	mCurve = inCurve;
 	mUnit = inUnit;
-	if ((mValueType == ValueType::Boolean) || (mUnit == Unit::List))
+	if ((valueType == Value::Type::Boolean) || (mUnit == Unit::List))
 	{
 		SetEnforceValueLimits(true);  // make sure not to go out of any array bounds
 	}
@@ -128,43 +132,41 @@ void DfxParam::init(std::vector<std::string_view> const& inNames, ValueType inTy
 
 	// do some checks to make sure that the min and max are not swapped 
 	// and that the default value is between the min and max
-	switch (inType)
+	switch (valueType)
 	{
-		case ValueType::Float:
-			assert(!std::isnan(inInitialValue.f));
-			assert(!std::isinf(inInitialValue.f));
-			assert(!std::isnan(inDefaultValue.f));
-			assert(!std::isinf(inDefaultValue.f));
-			assert(!std::isnan(inMinValue.f));
-			assert(!std::isinf(inMinValue.f));
-			assert(!std::isnan(inMaxValue.f));
-			assert(!std::isinf(inMaxValue.f));
-			if (mMinValue.f > mMaxValue.f)
+		case Value::Type::Float:
+			assert(!std::isnan(inInitialValue.get_f()));
+			assert(!std::isinf(inInitialValue.get_f()));
+			assert(!std::isnan(inDefaultValue.get_f()));
+			assert(!std::isinf(inDefaultValue.get_f()));
+			assert(!std::isnan(inMinValue.get_f()));
+			assert(!std::isinf(inMinValue.get_f()));
+			assert(!std::isnan(inMaxValue.get_f()));
+			assert(!std::isinf(inMaxValue.get_f()));
+			if (mMinValue.get_f() > mMaxValue.get_f())
 			{
-				std::swap(mMinValue.f, mMaxValue.f);
+				std::swap(mMinValue, mMaxValue);
 			}
-			if ((mDefaultValue.f > mMaxValue.f) || (mDefaultValue.f < mMinValue.f))
+			if ((mDefaultValue.get_f() > mMaxValue.get_f()) || (mDefaultValue.get_f() < mMinValue.get_f()))
 			{
-				mDefaultValue.f = ((mMaxValue.f - mMinValue.f) * 0.5) + mMinValue.f;
+				mDefaultValue = ((mMaxValue.get_f() - mMinValue.get_f()) * 0.5) + mMinValue.get_f();
 			}
-			mValue = limit_f(inInitialValue.f);
+			mValue.store(limit_f(inInitialValue.get_f()));
 			break;
-		case ValueType::Int:
-			if (mMinValue.i > mMaxValue.i)
+		case Value::Type::Int:
+			if (mMinValue.get_i() > mMaxValue.get_i())
 			{
-				std::swap(mMinValue.i, mMaxValue.i);
+				std::swap(mMinValue, mMaxValue);
 			}
-			if ((mDefaultValue.i > mMaxValue.i) || (mDefaultValue.i < mMinValue.i))
+			if ((mDefaultValue.get_i() > mMaxValue.get_i()) || (mDefaultValue.get_i() < mMinValue.get_i()))
 			{
-				mDefaultValue.i = ((mMaxValue.i - mMinValue.i) / 2) + mMinValue.i;
+				mDefaultValue = ((mMaxValue.get_i() - mMinValue.get_i()) / 2) + mMinValue.get_i();
 			}
-			mValue = limit_i(inInitialValue.i);
+			mValue.store(limit_i(inInitialValue.get_i()));
 			break;
-		case ValueType::Boolean:
-			mMinValue.b = false;
-			mMaxValue.b = true;
-			mDefaultValue = Int2Boolean(inDefaultValue.b);
-			mValue = Int2Boolean(inInitialValue.b);
+		case Value::Type::Boolean:
+			mMinValue = false;
+			mMaxValue = true;
 			break;
 		default:
 			std::unreachable();
@@ -173,41 +175,31 @@ void DfxParam::init(std::vector<std::string_view> const& inNames, ValueType inTy
 
 
 //-----------------------------------------------------------------------------
-// convenience wrapper of init() for initializing with float variable type
+// convenience wrapper of init() for initializing with float value type
 void DfxParam::init_f(std::vector<std::string_view> const& inNames, 
 					  double inInitialValue, double inDefaultValue, 
 					  double inMinValue, double inMaxValue, 
 					  Unit inUnit, Curve inCurve)
 {
-	Value const val(inInitialValue);
-	Value const def(inDefaultValue);
-	Value const min(inMinValue);
-	Value const max(inMaxValue);
-	init(inNames, ValueType::Float, val, def, min, max, inUnit, inCurve);
+	init(inNames, inInitialValue, inDefaultValue, inMinValue, inMaxValue, inUnit, inCurve);
 }
 //-----------------------------------------------------------------------------
-// convenience wrapper of init() for initializing with int variable type
+// convenience wrapper of init() for initializing with int value type
 void DfxParam::init_i(std::vector<std::string_view> const& inNames, 
 					  int64_t inInitialValue, int64_t inDefaultValue, 
 					  int64_t inMinValue, int64_t inMaxValue, 
 					  Unit inUnit, Curve inCurve)
 {
-	Value const val(inInitialValue);
-	Value const def(inDefaultValue);
-	Value const min(inMinValue);
-	Value const max(inMaxValue);
-	init(inNames, ValueType::Int, val, def, min, max, inUnit, inCurve);
+	init(inNames, inInitialValue, inDefaultValue, inMinValue, inMaxValue, inUnit, inCurve);
 }
 //-----------------------------------------------------------------------------
-// convenience wrapper of init() for initializing with boolean variable type
+// convenience wrapper of init() for initializing with boolean value type
 void DfxParam::init_b(std::vector<std::string_view> const& inNames, 
 					  bool inInitialValue, bool inDefaultValue, Unit inUnit)
 {
-	Value const val(inInitialValue);
-	Value const def(inDefaultValue);
-	Value const min(false);
-	Value const max(true);
-	init(inNames, ValueType::Boolean, val, def, min, max, inUnit, Curve::Linear);
+	constexpr Value min(false);
+	constexpr Value max(true);
+	init(inNames, inInitialValue, inDefaultValue, min, max, inUnit, Curve::Linear);
 }
 
 //-----------------------------------------------------------------------------
@@ -325,57 +317,57 @@ bool DfxParam::ValueStringIndexIsValid(int64_t inIndex) const
 
 //-----------------------------------------------------------------------------
 // extract the value of a Value as float type
-// (perform type conversion if float is not the parameter's "native" type)
-double DfxParam::derive_f(Value inValue) const noexcept
+// (perform type conversion if float is not contained in the Value)
+double DfxParam::derive_f(Value inValue) noexcept
 {
-	switch (mValueType)
+	switch (inValue.gettype())
 	{
-		case ValueType::Float:
-			assert(!std::isnan(inValue.f));
-			assert(!std::isinf(inValue.f));
-			return inValue.f;
-		case ValueType::Int:
-			return static_cast<double>(inValue.i);
-		case ValueType::Boolean:
-			return Int2Boolean(inValue.b) ? 1. : 0.;
+		case Value::Type::Float:
+			assert(!std::isnan(inValue.get_f()));
+			assert(!std::isinf(inValue.get_f()));
+			return inValue.get_f();
+		case Value::Type::Int:
+			return static_cast<double>(inValue.get_i());
+		case Value::Type::Boolean:
+			return inValue.get_b() ? 1. : 0.;
 	}
 	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------
 // extract the value of a Value as int type
-// (perform type conversion if int is not the parameter's "native" type)
-int64_t DfxParam::derive_i(Value inValue) const
+// (perform type conversion if int is not contained in the Value)
+int64_t DfxParam::derive_i(Value inValue)
 {
-	switch (mValueType)
+	switch (inValue.gettype())
 	{
-		case ValueType::Float:
-			assert(!std::isnan(inValue.f));
-			assert(!std::isinf(inValue.f));
-			return Float2Int(inValue.f);
-		case ValueType::Int:
-			return inValue.i;
-		case ValueType::Boolean:
-			return Int2Boolean(inValue.b) ? 1 : 0;
+		case Value::Type::Float:
+			assert(!std::isnan(inValue.get_f()));
+			assert(!std::isinf(inValue.get_f()));
+			return Float2Int(inValue.get_f());
+		case Value::Type::Int:
+			return inValue.get_i();
+		case Value::Type::Boolean:
+			return inValue.get_b() ? 1 : 0;
 	}
 	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------
 // extract the value of a Value as boolean type
-// (perform type conversion if boolean is not the parameter's "native" type)
-bool DfxParam::derive_b(Value inValue) const noexcept
+// (perform type conversion if boolean is not contained in the Value)
+bool DfxParam::derive_b(Value inValue) noexcept
 {
-	switch (mValueType)
+	switch (inValue.gettype())
 	{
-		case ValueType::Float:
-			assert(!std::isnan(inValue.f));
-			assert(!std::isinf(inValue.f));
-			return Float2Boolean(inValue.f);
-		case ValueType::Int:
-			return Int2Boolean(inValue.i);
-		case ValueType::Boolean:
-			return Int2Boolean(inValue.b);
+		case Value::Type::Float:
+			assert(!std::isnan(inValue.get_f()));
+			assert(!std::isinf(inValue.get_f()));
+			return Float2Boolean(inValue.get_f());
+		case Value::Type::Int:
+			return Int2Boolean(inValue.get_i());
+		case Value::Type::Boolean:
+			return inValue.get_b();
 	}
 	std::unreachable();
 }
@@ -434,72 +426,72 @@ double DfxParam::get_gen() const
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-// set a Value with a value of a float type
+// apply a value of float type to the current value
 // (perform type conversion if float is not the parameter's "native" type)
-bool DfxParam::accept_f(double inValue, dfx::LockFreeAtomic<Value>& ioValue) const
+bool DfxParam::accept_f(double inValue)
 {
-	auto const translatedValue = pack_f(inValue);
-	return (ioValue.exchange(translatedValue) != translatedValue);
+	auto const coercedValue = coerce_f(inValue);
+	return (mValue.exchange(coercedValue) != coercedValue);
 }
 
 //-----------------------------------------------------------------------------
-// set a Value with a value of a int type
+// apply a value of int type to the current value
 // (perform type conversion if int is not the parameter's "native" type)
-bool DfxParam::accept_i(int64_t inValue, dfx::LockFreeAtomic<Value>& ioValue) const noexcept
+bool DfxParam::accept_i(int64_t inValue) noexcept
 {
-	auto const translatedValue = pack_i(inValue);
-	return (ioValue.exchange(translatedValue) != translatedValue);
+	auto const coercedValue = coerce_i(inValue);
+	return (mValue.exchange(coercedValue) != coercedValue);
 }
 
 //-----------------------------------------------------------------------------
-// set a Value with a value of a boolean type
+// apply a value of boolean type to the current value
 // (perform type conversion if boolean is not the parameter's "native" type)
-bool DfxParam::accept_b(bool inValue, dfx::LockFreeAtomic<Value>& ioValue) const noexcept
+bool DfxParam::accept_b(bool inValue) noexcept
 {
-	auto const translatedValue = pack_b(inValue);
-	return (ioValue.exchange(translatedValue) != translatedValue);
+	auto const coercedValue = coerce_b(inValue);
+	return (mValue.exchange(coercedValue) != coercedValue);
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value DfxParam::pack_f(double inValue) const
+DfxParam::Value DfxParam::coerce_f(double inValue) const
 {
-	switch (mValueType)
+	switch (getvaluetype())
 	{
-		case ValueType::Float:
+		case Value::Type::Float:
 			return inValue;
-		case ValueType::Int:
+		case Value::Type::Int:
 			return Float2Int(inValue);
-		case ValueType::Boolean:
+		case Value::Type::Boolean:
 			return Float2Boolean(inValue);
 	}
 	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value DfxParam::pack_i(int64_t inValue) const noexcept
+DfxParam::Value DfxParam::coerce_i(int64_t inValue) const noexcept
 {
-	switch (mValueType)
+	switch (getvaluetype())
 	{
-		case ValueType::Float:
+		case Value::Type::Float:
 			return static_cast<double>(inValue);
-		case ValueType::Int:
+		case Value::Type::Int:
 			return inValue;
-		case ValueType::Boolean:
+		case Value::Type::Boolean:
 			return Int2Boolean(inValue);
 	}
 	std::unreachable();
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value DfxParam::pack_b(bool inValue) const noexcept
+DfxParam::Value DfxParam::coerce_b(bool inValue) const noexcept
 {
-	switch (mValueType)
+	switch (getvaluetype())
 	{
-		case ValueType::Float:
+		case Value::Type::Float:
 			return (inValue ? 1. : 0.);
-		case ValueType::Int:
+		case Value::Type::Int:
 			return int64_t(inValue ? 1 : 0);
-		case ValueType::Boolean:
+		case Value::Type::Boolean:
 			return inValue;
 	}
 	std::unreachable();
@@ -548,18 +540,19 @@ double DfxParam::expand(double inGenValue, double inMinValue, double inMaxValue,
 // set the parameter's current value using a Value
 void DfxParam::set(Value inValue)
 {
-	switch (mValueType)
+	assert(inValue.gettype() == getvaluetype());
+
+	switch (inValue.gettype())
 	{
-		case ValueType::Float:
-			assert(!std::isnan(inValue.f));
-			assert(!std::isinf(inValue.f));
-			inValue.f = limit_f(inValue.f);
+		case Value::Type::Float:
+			assert(!std::isnan(inValue.get_f()));
+			assert(!std::isinf(inValue.get_f()));
+			inValue = limit_f(inValue.get_f());
 			break;
-		case ValueType::Int:
-			inValue.i = limit_i(inValue.i);
+		case Value::Type::Int:
+			inValue = limit_i(inValue.get_i());
 			break;
-		case ValueType::Boolean:
-			inValue = Int2Boolean(inValue.b);
+		case Value::Type::Boolean:
 			break;
 		default:
 			std::unreachable();
@@ -576,7 +569,7 @@ void DfxParam::set(Value inValue)
 // set the current parameter value using a float type value
 void DfxParam::set_f(double inValue)
 {
-	auto const changed = accept_f(limit_f(inValue), mValue);
+	auto const changed = accept_f(limit_f(inValue));
 	if (changed)
 	{
 		setchanged(true);
@@ -588,7 +581,7 @@ void DfxParam::set_f(double inValue)
 // set the current parameter value using an int type value
 void DfxParam::set_i(int64_t inValue)
 {
-	auto const changed = accept_i(limit_i(inValue), mValue);
+	auto const changed = accept_i(limit_i(inValue));
 	if (changed)
 	{
 		setchanged(true);
@@ -600,7 +593,7 @@ void DfxParam::set_i(int64_t inValue)
 // set the current parameter value using a boolean type value
 void DfxParam::set_b(bool inValue)
 {
-	auto const changed = accept_b(inValue, mValue);
+	auto const changed = accept_b(inValue);
 	if (changed)
 	{
 		setchanged(true);
@@ -618,19 +611,19 @@ void DfxParam::set_gen(double inGenValue)
 //-----------------------------------------------------------------------------
 void DfxParam::setquietly_f(double inValue)
 {
-	accept_f(inValue, mValue);
+	accept_f(inValue);
 }
 
 //-----------------------------------------------------------------------------
 void DfxParam::setquietly_i(int64_t inValue)
 {
-	accept_i(inValue, mValue);
+	accept_i(inValue);
 }
 
 //-----------------------------------------------------------------------------
 void DfxParam::setquietly_b(bool inValue)
 {
-	accept_b(inValue, mValue);
+	accept_b(inValue);
 }
 
 
@@ -642,7 +635,7 @@ void DfxParam::setquietly_b(bool inValue)
 //-----------------------------------------------------------------------------
 void DfxParam::SetEnforceValueLimits(bool inMode)
 {
-	assert(!inMode ? (mValueType != ValueType::Boolean) : true);
+	assert(!(!inMode && (getvaluetype() == Value::Type::Boolean)));
 
 	auto const oldMode = std::exchange(mEnforceValueLimits, inMode);
 	if (inMode && !oldMode)
@@ -783,6 +776,24 @@ void DfxParam::setcustomunitstring(std::string_view inText)
 {
 	assert(!inText.empty());
 	mCustomUnitString.assign(inText, 0, dfx::kParameterUnitStringMaxLength - 1);
+}
+
+//-----------------------------------------------------------------------------
+DfxParam::Value::Type DfxParam::Value::gettype() const noexcept
+{
+	if (std::holds_alternative<double>(*this))
+	{
+		return Value::Type::Float;
+	}
+	if (std::holds_alternative<int64_t>(*this))
+	{
+		return Value::Type::Int;
+	}
+	if (std::holds_alternative<bool>(*this))
+	{
+		return Value::Type::Boolean;
+	}
+	std::unreachable();
 }
 
 

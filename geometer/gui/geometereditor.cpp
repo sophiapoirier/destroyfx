@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2023  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2024  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -378,7 +378,7 @@ void GeometerEditor::parameterChanged(dfx::ParameterID inParameterID) {
     }
   }
 
-  if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Int) {
+  if (GetParameterValueType(inParameterID) == DfxParam::Value::Type::Int) {
     assert(helpbox);
     helpbox->redraw();
   }

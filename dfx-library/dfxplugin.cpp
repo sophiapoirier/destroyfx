@@ -27,6 +27,7 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 #include "dfxplugin.h"
 
 #include <algorithm>
+#include <atomic>
 #include <bitset>
 #include <cassert>
 #include <cmath>
@@ -602,13 +603,13 @@ void DfxPlugin::randomizeparameter(dfx::ParameterID inParameterID)
 		auto& parameter = mParameters[inParameterID];
 		switch (getparametervaluetype(inParameterID))
 		{
-			case DfxParam::ValueType::Float:
+			case DfxParam::Value::Type::Float:
 				parameter.set_gen(generateParameterRandomValue<double>());
 				break;
-			case DfxParam::ValueType::Int:
+			case DfxParam::Value::Type::Int:
 				parameter.set_i(generateParameterRandomValue(parameter.getmin_i(), parameter.getmax_i()));
 				break;
-			case DfxParam::ValueType::Boolean:
+			case DfxParam::Value::Type::Boolean:
 				// we don't need to worry about a curve for boolean values
 				parameter.set_b(generateParameterRandomValue<bool>());
 				break;
@@ -815,13 +816,13 @@ std::string DfxPlugin::getparametername(dfx::ParameterID inParameterID, size_t i
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::ValueType DfxPlugin::getparametervaluetype(dfx::ParameterID inParameterID) const
+DfxParam::Value::Type DfxPlugin::getparametervaluetype(dfx::ParameterID inParameterID) const
 {
 	if (parameterisvalid(inParameterID))
 	{
 		return mParameters[inParameterID].getvaluetype();
 	}
-	return DfxParam::ValueType::Float;
+	return DfxParam::Value::Type::Float;
 }
 
 //-----------------------------------------------------------------------------
@@ -1077,7 +1078,7 @@ double DfxPlugin::getpresetparameter_f(size_t inPresetIndex, dfx::ParameterID in
 {
 	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
-		return mParameters[inParameterID].derive_f(mPresets[inPresetIndex].getvalue(inParameterID));
+		return DfxParam::derive_f(mPresets[inPresetIndex].getvalue(inParameterID));
 	}
 	return 0.0;
 }
@@ -1087,7 +1088,7 @@ int64_t DfxPlugin::getpresetparameter_i(size_t inPresetIndex, dfx::ParameterID i
 {
 	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
-		return mParameters[inParameterID].derive_i(mPresets[inPresetIndex].getvalue(inParameterID));
+		return DfxParam::derive_i(mPresets[inPresetIndex].getvalue(inParameterID));
 	}
 	return 0;
 }
@@ -1097,7 +1098,7 @@ bool DfxPlugin::getpresetparameter_b(size_t inPresetIndex, dfx::ParameterID inPa
 {
 	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
-		return mParameters[inParameterID].derive_b(mPresets[inPresetIndex].getvalue(inParameterID));
+		return DfxParam::derive_b(mPresets[inPresetIndex].getvalue(inParameterID));
 	}
 	return false;
 }
@@ -1116,7 +1117,7 @@ void DfxPlugin::setpresetparameter_f(size_t inPresetIndex, dfx::ParameterID inPa
 {
 	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
-		auto const paramValue = mParameters[inParameterID].pack_f(inValue);
+		auto const paramValue = mParameters[inParameterID].coerce_f(inValue);
 		mPresets[inPresetIndex].setvalue(inParameterID, paramValue);
 	}
 }
@@ -1126,7 +1127,7 @@ void DfxPlugin::setpresetparameter_i(size_t inPresetIndex, dfx::ParameterID inPa
 {
 	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
-		auto const paramValue = mParameters[inParameterID].pack_i(inValue);
+		auto const paramValue = mParameters[inParameterID].coerce_i(inValue);
 		mPresets[inPresetIndex].setvalue(inParameterID, paramValue);
 	}
 }
@@ -1136,7 +1137,7 @@ void DfxPlugin::setpresetparameter_b(size_t inPresetIndex, dfx::ParameterID inPa
 {
 	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
-		auto const paramValue = mParameters[inParameterID].pack_b(inValue);
+		auto const paramValue = mParameters[inParameterID].coerce_b(inValue);
 		mPresets[inPresetIndex].setvalue(inParameterID, paramValue);
 	}
 }
@@ -1146,7 +1147,7 @@ void DfxPlugin::setpresetparameter_gen(size_t inPresetIndex, dfx::ParameterID in
 {
 	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
-		auto const paramValue = mParameters[inParameterID].pack_f(expandparametervalue(inParameterID, inValue));
+		auto const paramValue = mParameters[inParameterID].coerce_f(expandparametervalue(inParameterID, inValue));
 		mPresets[inPresetIndex].setvalue(inParameterID, paramValue);
 	}
 }
@@ -1495,7 +1496,7 @@ void DfxPlugin::addchannelconfig(short inNumInputs, short inNumOutputs)
 //-----------------------------------------------------------------------------
 void DfxPlugin::addchannelconfig(ChannelConfig inChannelConfig)
 {
-	// TODO C++23: std::ranges::contains
+	// TODO C++23: !std::ranges::contains
 	assert(std::ranges::find(mChannelConfigs, inChannelConfig) == mChannelConfigs.cend());
 	assert((inChannelConfig == kChannelConfig_AnyInAnyOut) || ((inChannelConfig.inChannels >= kChannelConfigCount_Any) && (inChannelConfig.outChannels >= kChannelConfigCount_Any)));
 #if TARGET_PLUGIN_USES_DSPCORE
@@ -2025,7 +2026,7 @@ double DfxPlugin::getdspcoreparameter_gen(dfx::ParameterID inParameterID) const
 {
 	if (parameterisvalid(inParameterID))
 	{
-		return contractparametervalue(inParameterID, mParameters[inParameterID].derive_f(mDSPCoreParameterValuesCache[inParameterID]));
+		return contractparametervalue(inParameterID, DfxParam::derive_f(mDSPCoreParameterValuesCache[inParameterID]));
 	}
 	return 0.;
 }
@@ -2035,7 +2036,7 @@ double DfxPlugin::getdspcoreparameter_scalar(dfx::ParameterID inParameterID) con
 {
 	if (parameterisvalid(inParameterID))
 	{
-		return getparameter_scalar(inParameterID, mParameters[inParameterID].derive_f(mDSPCoreParameterValuesCache[inParameterID]));
+		return getparameter_scalar(inParameterID, DfxParam::derive_f(mDSPCoreParameterValuesCache[inParameterID]));
 	}
 	return 0.;
 }
@@ -2149,7 +2150,7 @@ void DfxPlugin::setmidilearner(dfx::ParameterID inParameterID)
 								 assignmentData->mDataInt1, assignmentData->mDataInt2, 
 								 assignmentData->mDataFloat1, assignmentData->mDataFloat2);
 	}
-	else if (getparametervaluetype(inParameterID) == DfxParam::ValueType::Float)
+	else if (getparametervaluetype(inParameterID) == DfxParam::Value::Type::Float)
 	{
 		mDfxSettings->setLearner(inParameterID);
 	}

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -405,13 +405,13 @@ void DfxPlugin::getParameterDisplay(VstInt32 index, char* text)
 
 	switch (getparametervaluetype(parameterID))
 	{
-		case DfxParam::ValueType::Float:
+		case DfxParam::Value::Type::Float:
 			std::snprintf(text, kVstMaxParamStrLen + 1, "%.3f", getparameter_f(parameterID));
 			break;
-		case DfxParam::ValueType::Int:
+		case DfxParam::Value::Type::Int:
 			std::snprintf(text, kVstMaxParamStrLen + 1, "%" PRIi64, getparameter_i(parameterID));
 			break;
-		case DfxParam::ValueType::Boolean:
+		case DfxParam::Value::Type::Boolean:
 			vst_strncpy(text, getparameter_b(parameterID) ? "on" : "off", kVstMaxParamStrLen);
 			break;
 		default:
@@ -474,10 +474,10 @@ bool DfxPlugin::getParameterProperties(VstInt32 index, VstParameterProperties* p
 
 	switch (getparametervaluetype(parameterID))
 	{
-		case DfxParam::ValueType::Boolean:
+		case DfxParam::Value::Type::Boolean:
 			properties->flags |= kVstParameterIsSwitch;
 			break;
-		case DfxParam::ValueType::Int:
+		case DfxParam::Value::Type::Int:
 			properties->minInteger = static_cast<VstInt32>(getparametermin_i(parameterID));
 			properties->maxInteger = static_cast<VstInt32>(getparametermax_i(parameterID));
 			properties->flags |= kVstParameterUsesIntegerMinMax;
