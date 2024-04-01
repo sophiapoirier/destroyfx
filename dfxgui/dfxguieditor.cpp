@@ -73,6 +73,9 @@ To contact the author, use the contact form at http://destroyfx.org
 #endif
 
 
+using namespace std::string_literals;
+
+
 #if TARGET_OS_MAC
 	#define kDfxGui_AUPresetFileUTI "com.apple.audio-unit-preset"  // XXX implemented in Mac OS X 10.4.11 or maybe a little earlier, but no public constant published yet
 	static CFStringRef const kDfxGui_SettingsPasteboardFlavorType_AU = CFSTR(kDfxGui_AUPresetFileUTI);
@@ -709,7 +712,7 @@ std::optional<double> DfxGuiEditor::dfxgui_GetParameterValueFromString_f(dfx::Pa
 	{
 		if (auto const parsedValue_i = dfxgui_GetParameterValueFromString_i(inParameterID, inText))
 		{
-			return static_cast<double>(*parsedValue_i);
+			return DfxParam::derive_f(*parsedValue_i);
 		}
 	}
 
@@ -1599,7 +1602,7 @@ void DfxGuiEditor::LoadPresetFile()
 				}
 				catch (std::exception const& e)
 				{
-					auto const message = std::string("failed to load preset file:\n") + e.what();
+					auto const message = "failed to load preset file:\n"s + e.what();
 					ShowMessage(message);
 				}
 			}

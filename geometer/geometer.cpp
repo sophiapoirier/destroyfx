@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2023  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2024  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -39,6 +39,8 @@ Featuring the Super Destroy FX Windowing System!
 
 #include "dfxmath.h"
 #include "dfxmisc.h"
+
+using namespace std::string_literals;
 
 /* this macro does boring entry point stuff for us */
 DFX_EFFECT_ENTRY(Geometer)
@@ -86,9 +88,9 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
   auto const allop = [this](auto n, auto str, auto shortstr, auto def, auto unit, std::string_view unitstr) {
     constexpr auto curve = DfxParam::Curve::Linear;
-    initparameter_f(P_OPPAR1S + n, {std::string("op1:") + str, std::string("1") + shortstr}, def, def, 0.0, 1.0, unit, curve, unitstr);
-    initparameter_f(P_OPPAR2S + n, {std::string("op2:") + str, std::string("2") + shortstr}, def, def, 0.0, 1.0, unit, curve, unitstr);
-    initparameter_f(P_OPPAR3S + n, {std::string("op3:") + str, std::string("3") + shortstr}, def, def, 0.0, 1.0, unit, curve, unitstr);
+    initparameter_f(P_OPPAR1S + n, {"op1:"s + str, "1"s + shortstr}, def, def, 0., 1., unit, curve, unitstr);
+    initparameter_f(P_OPPAR2S + n, {"op2:"s + str, "2"s + shortstr}, def, def, 0., 1., unit, curve, unitstr);
+    initparameter_f(P_OPPAR3S + n, {"op3:"s + str, "3"s + shortstr}, def, def, 0., 1., unit, curve, unitstr);
   };
 
   allop(OP_DOUBLE, "double", "duble", 0.5, DfxParam::Unit::LinearGain, {});
@@ -317,7 +319,7 @@ void PLUGINCORE::updatewindowcache()
 
 std::optional<dfx::ParameterAssignment> PLUGIN::settings_getLearningAssignData(dfx::ParameterID inParameterID) const
 {
-  auto const getConstrainedToggleAssignment = [](int inNumStates, int inNumUsableStates)
+  constexpr auto getConstrainedToggleAssignment = [](int inNumStates, int inNumUsableStates)
   {
     assert(inNumStates > 0);
     assert(inNumUsableStates > 0);
