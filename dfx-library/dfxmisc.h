@@ -194,10 +194,5 @@ inline constexpr std::initializer_list<std::string_view> kParameterNames_Release
 inline constexpr std::initializer_list<std::string_view> kParameterNames_VelocityInfluence = {"velocity influence", "VelInfl", "VelInf", "Velo"};
 inline constexpr std::initializer_list<std::string_view> kParameterNames_PitchBendRange = {"pitch bend range", "PtchBnd", "PtchBd", "PB"};
 inline constexpr std::initializer_list<std::string_view> kParameterNames_MidiMode = {"MIDI mode", "MIDIMod", "MIDIMd", "MIDI"};
-// convenience function to produce the required initparameter_* argument from the above compile-time representation
-static inline auto MakeParameterNames(std::initializer_list<std::string_view> inNamesArray)
-{
-	return std::vector(inNamesArray.begin(), inNamesArray.end());
-}
 
 }  // namespace

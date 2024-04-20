@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2024  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -55,7 +55,7 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_f(kFeed2, {"2:feedback", "2feedbk", "2fedbk", "2fdb"}, 0.0, 33.3, 0.0, 100.0, DfxParam::Unit::Percent);
   initparameter_list(kQuality, {"quality", "Qualty", "Qlty"}, kQualityMode_UltraHiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes);
   initparameter_b(kTomsound, {"TOMSOUND", "TomSnd", "Tom7"}, false);
-  initparameter_b(kFreeze, dfx::MakeParameterNames(dfx::kParameterNames_Freeze), false);
+  initparameter_b(kFreeze, {dfx::kParameterNames_Freeze}, false);
   initparameter_b(kAttenuateFeedbackByMixLevel, {"attenuate feedback by mix level", "AtnFdbk", "AtnFdb", "-fdb"}, false);
 
   setparameterenforcevaluelimits(kBsize, true);

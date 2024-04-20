@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -38,9 +38,9 @@ EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	auto const numTempoRates = mTempoRateTable.getNumRates();
 	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.);
 	initparameter_list(kRate_Sync, {"rate"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
-	initparameter_f(kSmooth, {"smooth", "Smth"}, 3.0, 33.333, 0.0, 100.0, DfxParam::Unit::Percent);  // % of cycle
-	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 39.0, 480.0, DfxParam::Unit::BPM);
-	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true);
+	initparameter_f(kSmooth, {"smooth", "Smth"}, 3., 33.333, 0., 100., DfxParam::Unit::Percent);  // % of cycle
+	initparameter_f(kTempo, {dfx::kParameterNames_Tempo}, 120., 120., 39., 480., DfxParam::Unit::BPM);
+	initparameter_b(kTempoAuto, {dfx::kParameterNames_TempoAuto}, true);
 //	for (dfx::ParameterID i = kA0; i <= kB2; i++)
 	{
 //		initparameter_f(i, {""}, 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);

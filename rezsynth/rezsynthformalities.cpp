@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -45,19 +45,19 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kSepAmount_Linear, {"band separation (linear)", "BandSpL", "BndSpL", "BdSL"}, 1.0, 1.0, 0.0, 3.0, DfxParam::Unit::Scalar);  // % of center frequency
 	initparameter_list(kSepMode, {"separation mode", "SepMode", "SepMod", "SpMd"}, kSeparationMode_Octaval, kSeparationMode_Octaval, kNumSeparationModes);
 	initparameter_b(kFoldover, {"filter frequency aliasing", "Alias"}, false);
-	initparameter_f(kEnvAttack, dfx::MakeParameterNames(dfx::kParameterNames_Attack), 3.0, 3.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
-	initparameter_f(kEnvDecay, {"decay", "Deca"}, 30.0, 30.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
-	initparameter_f(kEnvSustain, {"sustain", "Sustan"}, 100.0, 50.0, 0.0, 100.0, DfxParam::Unit::Percent, DfxParam::Curve::Squared);
-	initparameter_f(kEnvRelease, dfx::MakeParameterNames(dfx::kParameterNames_Release), 300.0, 300.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
+	initparameter_f(kEnvAttack, {dfx::kParameterNames_Attack}, 3., 3., 0., 3000., DfxParam::Unit::MS, DfxParam::Curve::Squared);
+	initparameter_f(kEnvDecay, {"decay", "Deca"}, 30., 30., 0., 3000., DfxParam::Unit::MS, DfxParam::Curve::Squared);
+	initparameter_f(kEnvSustain, {"sustain", "Sustan"}, 100., 50., 0., 100., DfxParam::Unit::Percent, DfxParam::Curve::Squared);
+	initparameter_f(kEnvRelease, {dfx::kParameterNames_Release}, 300., 300., 0., 3000., DfxParam::Unit::MS, DfxParam::Curve::Squared);
 	initparameter_list(kFadeType, {"envelope fades", "EnvFade", "EnvFad", "EnvF"}, DfxEnvelope::kCurveType_Cubed, DfxEnvelope::kCurveType_Cubed, kCurveType_NumTypes);
 	initparameter_b(kLegato, {"legato", "Lgto"}, false);
-	initparameter_f(kVelocityInfluence, dfx::MakeParameterNames(dfx::kParameterNames_VelocityInfluence), 60.0, 100.0, 0.0, 100.0, DfxParam::Unit::Percent);
-	initparameter_f(kVelocityCurve, {"velocity curve", "VelCurv", "VelCrv", "VelC"}, 2.0, 1.0, 0.3, 3.0, DfxParam::Unit::Exponent);
-	initparameter_f(kPitchBendRange, dfx::MakeParameterNames(dfx::kParameterNames_PitchBendRange), 3.0, 3.0, 0.0, DfxMidi::kPitchBendSemitonesMax, DfxParam::Unit::Semitones);
+	initparameter_f(kVelocityInfluence, {dfx::kParameterNames_VelocityInfluence}, 60., 100., 0., 100., DfxParam::Unit::Percent);
+	initparameter_f(kVelocityCurve, {"velocity curve", "VelCurv", "VelCrv", "VelC"}, 2., 1., 0.3, 3., DfxParam::Unit::Exponent);
+	initparameter_f(kPitchBendRange, {dfx::kParameterNames_PitchBendRange}, 3., 3., 0., DfxMidi::kPitchBendSemitonesMax, DfxParam::Unit::Semitones);
 	initparameter_list(kScaleMode, {"filter response scaling mode", "GainMod", "GainMd", "GnMd"}, kScaleMode_RMS, kScaleMode_None, kNumScaleModes);
-	initparameter_f(kFilterOutputGain, {"filtered output gain", "Level", "Levl"}, 1.0, 1.0, 0.0, dfx::math::Db2Linear(12.0), DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
-	initparameter_f(kBetweenGain, {"between gain", "BtwenGn", "BtwnGn", "Btwn"}, 0.0, 1.0, 0.0, dfx::math::Db2Linear(12.0), DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
-	initparameter_f(kDryWetMix, dfx::MakeParameterNames(dfx::kParameterNames_DryWetMix), 100.0, 50.0, 0.0, 100.0, DfxParam::Unit::DryWetMix);
+	initparameter_f(kFilterOutputGain, {"filtered output gain", "Level", "Levl"}, 1., 1., 0., dfx::math::Db2Linear(12.), DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
+	initparameter_f(kBetweenGain, {"between gain", "BtwenGn", "BtwnGn", "Btwn"}, 0., 1., 0., dfx::math::Db2Linear(12.), DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
+	initparameter_f(kDryWetMix, {dfx::kParameterNames_DryWetMix}, 100., 50., 0., 100., DfxParam::Unit::DryWetMix);
 	initparameter_list(kDryWetMixMode, {"dry/wet mix mode", "DW Mode", "DWMode", "DWMd"}, kDryWetMixMode_EqualPower, kDryWetMixMode_Linear, kNumDryWetMixModes);
 	initparameter_b(kWiseAmp, {"careful", "Carefl", "Crfl"}, true);
 

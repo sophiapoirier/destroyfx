@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -41,10 +41,10 @@ DFX_EFFECT_ENTRY(MIDIGater)
 MIDIGater::MIDIGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 :	DfxPlugin(inInstance, kNumParameters, 1)
 {
-	initparameter_f(kAttack, dfx::MakeParameterNames(dfx::kParameterNames_Attack), 3.0, 3.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
-	initparameter_f(kRelease, dfx::MakeParameterNames(dfx::kParameterNames_Release), 30.0, 30.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
-	initparameter_f(kVelocityInfluence, dfx::MakeParameterNames(dfx::kParameterNames_VelocityInfluence), 0.0, 1.0, 0.0, 1.0, DfxParam::Unit::Scalar);
-	initparameter_f(kFloor, dfx::MakeParameterNames(dfx::kParameterNames_Floor), 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
+	initparameter_f(kAttack, {dfx::kParameterNames_Attack}, 3., 3., 0., 3000., DfxParam::Unit::MS, DfxParam::Curve::Squared);
+	initparameter_f(kRelease, {dfx::kParameterNames_Release}, 30., 30., 0., 3000., DfxParam::Unit::MS, DfxParam::Curve::Squared);
+	initparameter_f(kVelocityInfluence, {dfx::kParameterNames_VelocityInfluence}, 0., 1., 0., 1., DfxParam::Unit::Scalar);
+	initparameter_f(kFloor, {dfx::kParameterNames_Floor}, 0., 0., 0., 1., DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
 	initparameter_list(kGateMode, {"gate mode", "GateMod", "GatMod", "G8Md"}, kGateMode_Amplitude, kGateMode_Amplitude, kNumGateModes);
 
 	setparametervaluestring(kGateMode, kGateMode_Amplitude, "amplitude");

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier and Keith Fullerton Whitman
+Copyright (C) 2001-2024  Sophia Poirier and Keith Fullerton Whitman
 
 This file is part of Thrush.
 
@@ -40,8 +40,8 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.);
 
 	initparameter_i(kDelay, {"inverse delay", "seven", "six", "four"}, 9, 9, kDelaySamplesMin, kDelaySamplesMax, DfxParam::Unit::Samples);
-	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120., 120., 39.f, 480.f, DfxParam::Unit::BPM);
-	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true);
+	initparameter_f(kTempo, {dfx::kParameterNames_Tempo}, 120., 120., 39.f, 480.f, DfxParam::Unit::BPM);
+	initparameter_b(kTempoAuto, {dfx::kParameterNames_TempoAuto}, true);
 	initparameter_f(kLFO1Rate_Hz, {"LFO1 rate (free)", "seven", "six", "four"}, 3., 3., kLFORateMin, kLFORateMax, DfxParam::Unit::Hz, DfxParam::Curve::Squared);
 	initparameter_list(kLFO1Rate_Sync, {"LFO1 rate (sync)", "seven", "six", "four"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
 	initparameter_b(kLFO1TempoSync, {"LFO1 tempo sync", "seven", "six", "four"}, false);
@@ -64,7 +64,7 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_b(kLFO2TempoSync2, {"LFO2 tempo sync R", "seven", "six", "four"}, false);
 	initparameter_f(kLFO2Depth2, {"LFO2 depth R", "seven", "six", "four"}, 0., 0., kLFO2DepthMin, kLFO2DepthMax, DfxParam::Unit::Scalar);
 	initparameter_list(kLFO2Shape2, {"LFO2 shape R", "seven", "six", "four"}, dfx::LFO::kShape_Saw, dfx::LFO::kShape_Saw, dfx::LFO::kNumShapes);
-	initparameter_f(kDryWetMix, dfx::MakeParameterNames(dfx::kParameterNames_DryWetMix), 100., 50., 0.0, 100.0, DfxParam::Unit::DryWetMix);
+	initparameter_f(kDryWetMix, {dfx::kParameterNames_DryWetMix}, 100., 50., 0., 100., DfxParam::Unit::DryWetMix);
 
 	setparameterenforcevaluelimits(kDelay, true);
 	setparameterenforcevaluelimits(kDelay2, true);

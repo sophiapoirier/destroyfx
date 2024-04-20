@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -57,14 +57,14 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kBufferLFODepth, {"buffer LFO depth", "BfLFODp", "BfLFOD", "BfLD"}, 0.0, 0.0, 0.0, 100.0, DfxParam::Unit::Percent);
 	initparameter_list(kBufferLFOShape, {"buffer LFO shape", "BfLFOSh", "BLFOSh", "BLSh"}, 0, 0, dfx::LFO::kNumShapes);
 	initparameter_b(kBufferLFOTempoSync, {"buffer LFO tempo sync", "BfLFOSc", "BLFOSc", "BLSc"}, false);
-	initparameter_f(kSmooth, {"smooth", "Smth"}, 9.0, 3.0, 0.0, 100.0, DfxParam::Unit::Percent);
-	initparameter_f(kDryWetMix, dfx::MakeParameterNames(dfx::kParameterNames_DryWetMix), 100.0, 50.0, 0.0, 100.0, DfxParam::Unit::DryWetMix);
-	initparameter_f(kPitchBendRange, dfx::MakeParameterNames(dfx::kParameterNames_PitchBendRange), 6.0, 3.0, 0.0, DfxMidi::kPitchBendSemitonesMax, DfxParam::Unit::Semitones);
-	initparameter_list(kMidiMode, dfx::MakeParameterNames(dfx::kParameterNames_MidiMode), kMidiMode_Nudge, kMidiMode_Nudge, kNumMidiModes);
-	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 57.0, 480.0, DfxParam::Unit::BPM);
-	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true);
-	initparameter_f(kMinibufferPortion, {"mini-buffer duration", "MBufDur", "MBfDur", "MBDr"}, 100.0, 100.0, 1.0, 100.0, DfxParam::Unit::Percent);
-	initparameter_f(kMinibufferPortionRandomMin, {"mini-buffer duration random min", "MBfDurM", "MBDurM", "MBDM"}, 100.0, 100.0, 1.0, 100.0, DfxParam::Unit::Percent);
+	initparameter_f(kSmooth, {"smooth", "Smth"}, 9., 3., 0., 100., DfxParam::Unit::Percent);
+	initparameter_f(kDryWetMix, {dfx::kParameterNames_DryWetMix}, 100., 50., 0., 100., DfxParam::Unit::DryWetMix);
+	initparameter_f(kPitchBendRange, {dfx::kParameterNames_PitchBendRange}, 6., 3., 0., DfxMidi::kPitchBendSemitonesMax, DfxParam::Unit::Semitones);
+	initparameter_list(kMidiMode, {dfx::kParameterNames_MidiMode}, kMidiMode_Nudge, kMidiMode_Nudge, kNumMidiModes);
+	initparameter_f(kTempo, {dfx::kParameterNames_Tempo}, 120., 120., 57., 480., DfxParam::Unit::BPM);
+	initparameter_b(kTempoAuto, {dfx::kParameterNames_TempoAuto}, true);
+	initparameter_f(kMinibufferPortion, {"mini-buffer duration", "MBufDur", "MBfDur", "MBDr"}, 100., 100., 1., 100., DfxParam::Unit::Percent);
+	initparameter_f(kMinibufferPortionRandomMin, {"mini-buffer duration random min", "MBfDurM", "MBDurM", "MBDM"}, 100., 100., 1., 100., DfxParam::Unit::Percent);
 	initparameter_f(kDecayDepth, {"decay depth", "DecaDep", "DecDep", "DecD"}, 0., 0., -100., 100., DfxParam::Unit::Percent);
 	initparameter_list(kDecayMode, {"decay mode", "DecaMod", "DecMod", "DecM"}, kDecayMode_Gain, kDecayMode_Gain, kDecayModeCount);
 	initparameter_list(kDecayShape, {"decay shape", "DecaShp", "DecShp", "DecS"}, kDecayShape_Ramp, kDecayShape_Ramp, kDecayShapeCount);
