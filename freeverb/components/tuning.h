@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <stddef.h>
+#include <cstddef>
 
 
 namespace freeverb
@@ -54,8 +54,9 @@ namespace detail
 }
 
 static constexpr auto kStereoSpread = detail::referenceSamplesToSeconds(23);
-static constexpr std::array<double, kNumCombFilters> kCombTuningL =
-{{
+
+static constexpr auto kCombTuningL = std::to_array(
+{
     detail::referenceSamplesToSeconds(1116),
     detail::referenceSamplesToSeconds(1188),
     detail::referenceSamplesToSeconds(1277),
@@ -64,14 +65,17 @@ static constexpr std::array<double, kNumCombFilters> kCombTuningL =
     detail::referenceSamplesToSeconds(1491),
     detail::referenceSamplesToSeconds(1557),
     detail::referenceSamplesToSeconds(1617)
-}};
-static constexpr std::array<double, kNumAllPassFilters> kAllPassTuningL =
-{{
+});
+static_assert(kCombTuningL.size() == kNumCombFilters);
+
+static constexpr auto kAllPassTuningL = std::to_array(
+{
     detail::referenceSamplesToSeconds(556),
     detail::referenceSamplesToSeconds(441),
     detail::referenceSamplesToSeconds(341),
     detail::referenceSamplesToSeconds(225)
-}};
+});
+static_assert(kAllPassTuningL.size() == kNumAllPassFilters);
 
 
 }

@@ -531,7 +531,7 @@ void BufferOverrideEditor::parameterChanged(dfx::ParameterID inParameterID)
 		case kBufferTempoSync:
 		{
 			HandleTempoSyncChange();
-			constexpr std::array<dfx::ParameterID, 2> parameterIDs = { kBufferSize_MS, kBufferSize_Sync };
+			constexpr auto parameterIDs = std::to_array({ kBufferSize_MS, kBufferSize_Sync });
 			newParameterID = parameterIDs[useSyncParam];
 			slider = mDivisorBufferBox->getControlByParameterID(parameterIDs[!useSyncParam]);
 			textDisplay = mBufferSizeDisplay;

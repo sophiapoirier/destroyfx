@@ -6,7 +6,7 @@
 // This code is public domain
 // 
 // Audio Unit implementation written by Sophia Poirier, September 2002, May 2016
-// http://destroyfx.org/
+// http://destroyfx.org
 
 
 #include "freeverb.h"
@@ -136,11 +136,11 @@ OSStatus FreeverbAU::GetParameterInfo(AudioUnitScope inScope, AudioUnitParameter
 // state that Freeverb supports only mono or stereo-in/stereo-out processing
 UInt32 FreeverbAU::SupportedNumChannels(const AUChannelInfo** outInfo)
 {
-	static constexpr std::array<AUChannelInfo, 2> channelInfo = 
-	{{
+	static constexpr auto channelInfo = std::to_array<AUChannelInfo>(
+	{
 		{ kMonoChannelCount, kMonoChannelCount },
 		{ kStereoChannelCount, kStereoChannelCount }
-	}};
+	});
 
 	if (outInfo != nullptr)
 	{
