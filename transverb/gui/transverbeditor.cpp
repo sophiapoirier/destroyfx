@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2024  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -30,6 +30,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <cstdint>
 #include <cstdio>
 #include <functional>
+#include <optional>
 
 #include "dfxmath.h"
 #include "dfxmisc.h"
@@ -97,26 +98,7 @@ constexpr T modfMagnitude(T inValue)
 	return std::fabs(std::modf(inValue, &integral_ignored));
 }
 
-static bool bsizeDisplayProcedure(float inValue, char* outText, void*)
-{
-	int const thousands = static_cast<int>(inValue) / 1000;
-	auto const remainder = std::fmod(inValue, 1000.0f);
-
-	bool success = false;
-	if (thousands > 0)
-	{
-		success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%d,%05.1f", thousands, remainder) > 0;
-	}
-	else
-	{
-		success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
-	}
-	dfx::StrlCat(outText, " ms", DGTextDisplay::kTextMaxLength);
-
-	return success;
-}
-
-static bool speedDisplayProcedure(float inValue, char* outText, void*)
+static std::string speedDisplayProcedure(float inValue, DGTextDisplay&)
 {
 	std::array<char, 16> semitonesString {};
 	auto speed = inValue;
@@ -124,7 +106,8 @@ static bool speedDisplayProcedure(float inValue, char* outText, void*)
 	float semitones = remainder * kSemitonesPerOctave;
 	// make sure that these float crap doesn't result in wacky stuff
 	// like displays that say "-1 octave & 12.00 semitones"
-	std::snprintf(semitonesString.data(), semitonesString.size(), "%.3f", semitones);
+	[[maybe_unused]] auto printCount = std::snprintf(semitonesString.data(), semitonesString.size(), "%.3f", semitones);
+	assert(printCount > 0);
 	std::string const semitonesStdString(semitonesString.data());
 	if ((semitonesStdString == "12.000") || (semitonesStdString == "-12.000"))
 	{
@@ -140,27 +123,33 @@ static bool speedDisplayProcedure(float inValue, char* outText, void*)
 	}
 	auto const octaves = static_cast<int>(speed);
 
+	std::array<char, DGTextDisplay::kTextMaxLength> text {};
 	if (speed > 0.0f)
 	{
 		if (octaves == 0)
 		{
-			return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%s%.2f semitones", (semitones < 0.000003f) ? "" : "+", semitones) > 0;
+			printCount = std::snprintf(text.data(), text.size(), "%s%.2f semitones", (semitones < 0.000003f) ? "" : "+", semitones);
 		}
-		auto const octavesSuffix = (octaves == 1) ? "" : "s";
-		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "+%d octave%s & %.2f semitones", octaves, octavesSuffix, semitones) > 0;
+		else
+		{
+			auto const octavesSuffix = (octaves == 1) ? "" : "s";
+			printCount = std::snprintf(text.data(), text.size(), "+%d octave%s & %.2f semitones", octaves, octavesSuffix, semitones);
+		}
 	}
 	else if (octaves == 0)
 	{
-		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "-%.2f semitones", semitones) > 0;
+		printCount = std::snprintf(text.data(), text.size(), "-%.2f semitones", semitones);
 	}
 	else
 	{
 		auto const octavesSuffix = (octaves == -1) ? "" : "s";
-		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%d octave%s & %.2f semitones", octaves, octavesSuffix, semitones) > 0;
+		printCount = std::snprintf(text.data(), text.size(), "%d octave%s & %.2f semitones", octaves, octavesSuffix, semitones);
 	}
+	assert(printCount > 0);
+	return text.data();
 }
 
-static std::optional<float> speedTextConvertProcedure(std::string const& inText, DGTextDisplay*)
+static std::optional<float> speedTextConvertProcedure(std::string const& inText, DGTextDisplay&)
 {
 	auto filteredText = inText;
 	// TODO: does not support locale for number format, and ignores minus and periods that are not part of fractional numbers
@@ -194,34 +183,15 @@ static std::optional<float> speedTextConvertProcedure(std::string const& inText,
 	return {};
 }
 
-static bool feedbackDisplayProcedure(float inValue, char* outText, void*)
+static std::string distDisplayProcedure(float inValue, DGTextDisplay& inTextDisplay)
 {
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%d%%", static_cast<int>(inValue)) > 0;
+	float const distance = inValue * inTextDisplay.getOwnerEditor()->getparameter_f(kBsize);
+	return DGTextDisplay::valueToTextProc_Generic(distance, inTextDisplay);
 }
 
-static bool distDisplayProcedure(float inValue, char* outText, void* inEditor)
+static float distValueFromTextConvertProcedure(float inValue, DGTextDisplay& inTextDisplay)
 {
-	float const distance = inValue * static_cast<DfxGuiEditor*>(inEditor)->getparameter_f(kBsize);
-	int const thousands = static_cast<int>(distance) / 1000;
-	auto const remainder = std::fmod(distance, 1000.0f);
-
-	bool success = false;
-	if (thousands > 0)
-	{
-		success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%d,%06.2f", thousands, remainder) > 0;
-	}
-	else
-	{
-		success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", distance) > 0;
-	}
-	dfx::StrlCat(outText, " ms", DGTextDisplay::kTextMaxLength);
-
-	return success;
-}
-
-static float distValueFromTextConvertProcedure(float inValue, DGTextDisplay* inTextDisplay)
-{
-	auto const bsize = static_cast<float>(inTextDisplay->getOwnerEditor()->getparameter_f(kBsize));
+	auto const bsize = static_cast<float>(inTextDisplay.getOwnerEditor()->getparameter_f(kBsize));
 	return !dfx::math::IsZero(bsize) ? (inValue / bsize) : inValue;
 }
 
@@ -366,8 +336,8 @@ void TransverbEditor::OpenEditor()
 	tuneUpButtonPos.set(kFineUpButtonX, kFineButtonY, fineUpButtonImage->getWidth(), fineUpButtonImage->getHeight() / 2);
 	for (dfx::ParameterID parameterID = kSpeed1; parameterID <= kDistParameters.back(); parameterID++)
 	{
-		VSTGUI::CParamDisplayValueToStringProc displayProc = nullptr;
-		void* userData = nullptr;
+		DGTextDisplay::ValueToTextProc displayProc;
+		std::optional<uint8_t> displayPrecision;
 		// TODO C++23: std::ranges::contains
 		if (std::ranges::find(kSpeedParameters, parameterID) != kSpeedParameters.cend())
 		{
@@ -376,18 +346,23 @@ void TransverbEditor::OpenEditor()
 		// TODO C++23: std::ranges::contains
 		else if (std::ranges::find(kFeedParameters, parameterID) != kFeedParameters.cend())
 		{
-			displayProc = feedbackDisplayProcedure;
+			displayProc = DGTextDisplay::valueToTextProc_Percent;
+			displayPrecision = 0;
 		}
 		else
 		{
 			displayProc = distDisplayProcedure;
-			userData = this;
+			displayPrecision = 2;
 		}
 		assert(displayProc);
 		emplaceControl<DGSlider>(this, parameterID, pos, dfx::kAxis_Horizontal, horizontalSliderHandleImage, horizontalSliderBackgroundImage, sliderRangeMargin)->setAlternateHandle(horizontalSliderHandleImage_glowing);
 
-		auto const textDisplay = emplaceControl<DGTextDisplay>(this, parameterID, textDisplayPos, displayProc, userData, nullptr,
+		auto const textDisplay = emplaceControl<DGTextDisplay>(this, parameterID, textDisplayPos, displayProc, nullptr,
 															   dfx::TextAlignment::Right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
+		if (displayPrecision)
+		{
+			textDisplay->setPrecision(*displayPrecision);
+		}
 
 		if (auto const speedParameterID = std::ranges::find(kSpeedParameters, parameterID); speedParameterID != kSpeedParameters.cend())
 		{
@@ -402,16 +377,16 @@ void TransverbEditor::OpenEditor()
 			emplaceControl<DGFineTuneButton>(this, parameterID, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
 		}
 
+
 		auto yoff = kWideFaderInc;
-		for (size_t head = 0; head < kNumDelays; head++)
+		if (auto const distParameterID = std::ranges::find(kDistParameters, parameterID); distParameterID != kDistParameters.cend())
 		{
-			if (parameterID == kDistParameters[head])
-			{
-				bool const lastHead = (kDistParameters[head] == kDistParameters.back());
-				yoff = lastHead ? kWideFaderEvenMoreInc : kWideFaderMoreInc;
-				mDistanceTextDisplays[head] = textDisplay;
-				textDisplay->setValueFromTextConvertProc(distValueFromTextConvertProcedure);
-			}
+			auto const head = static_cast<size_t>(std::ranges::distance(kDistParameters.cbegin(), distParameterID));
+			bool const lastHead = (*distParameterID == kDistParameters.back());
+			yoff = lastHead ? kWideFaderEvenMoreInc : kWideFaderMoreInc;
+			mDistanceTextDisplays[head] = textDisplay;
+			textDisplay->setValueToTextSuffix(" ms");
+			textDisplay->setValueFromTextConvertProc(distValueFromTextConvertProcedure);
 		}
 		pos.offset(0, yoff);
 		textDisplayPos.offset(0, yoff);
@@ -421,8 +396,10 @@ void TransverbEditor::OpenEditor()
 
 	emplaceControl<DGSlider>(this, kBsize, pos, dfx::kAxis_Horizontal, grayHorizontalSliderHandleImage, grayHorizontalSliderBackgroundImage, sliderRangeMargin)->setAlternateHandle(horizontalSliderHandleImage_glowing);
 
-	emplaceControl<DGTextDisplay>(this, kBsize, textDisplayPos, bsizeDisplayProcedure, nullptr, nullptr,
-								  dfx::TextAlignment::Right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
+	auto textDisplay = emplaceControl<DGTextDisplay>(this, kBsize, textDisplayPos, DGTextDisplay::valueToTextProc_Generic, nullptr,
+													 dfx::TextAlignment::Right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
+	textDisplay->setValueToTextSuffix(" ms");
+	textDisplay->setPrecision(1);
 
 	emplaceControl<DGFineTuneButton>(this, kBsize, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
 	emplaceControl<DGFineTuneButton>(this, kBsize, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);

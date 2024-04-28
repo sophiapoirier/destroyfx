@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -27,6 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "dfxguicontrol.h"
@@ -44,16 +45,22 @@ DGRect AdjustTextViewForPlatform(char const* inFontName,
 class DGTextDisplay : public DGControl<VSTGUI::CTextEdit>
 {
 public:
-	static constexpr size_t kTextMaxLength = 256;
+	static constexpr size_t kTextMaxLength = 256;  // legacy CParamDisplay limit (TODO C++20: remove with std::format)
+
+	// customization point to override the default textual display of numerical value with your own
+	using ValueToTextProc = std::function<std::string(float, DGTextDisplay&)>;
 
 	// inBackgroundImage may be null
 	DGTextDisplay(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion, 
-				  VSTGUI::CParamDisplayValueToStringProc inTextProc, void* inUserData, DGImage* inBackgroundImage, 
+				  ValueToTextProc inValueToTextProc = valueToTextProc_Generic, DGImage* inBackgroundImage = nullptr, 
 				  dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.f,
 				  DGColor inFontColor = DGColor::kBlack, char const* inFontName = nullptr);
 
 	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
 	void onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent) override;
+
+	// overrides the default decimal precision used by the common ValueToText functions
+	void setPrecision(uint8_t inPrecision) override;
 
 	void setTextAlignment(dfx::TextAlignment inTextAlignment);
 	dfx::TextAlignment getTextAlignment() const noexcept;
@@ -62,27 +69,32 @@ public:
 	void setTextEditEnabled(bool inEnable) noexcept;
 
 	// customization point to override the default text entry numerical value parsing with your own
-	using TextToValueProc = std::function<std::optional<float>(std::string const& inText, DGTextDisplay* inTextDisplay)>;
+	using TextToValueProc = std::function<std::optional<float>(std::string const&, DGTextDisplay&)>;
 	void setTextToValueProc(TextToValueProc const& inTextToValueProc);
 	void setTextToValueProc(TextToValueProc&& inTextToValueProc);
 
 	// if you don't need to parse actual text input, but you want to be able to transform the value parsed, 
 	// specify this to hook in your transformation
-	using ValueFromTextConvertProc = std::function<float(float inValue, DGTextDisplay* inTextDisplay)>;
+	using ValueFromTextConvertProc = std::function<float(float, DGTextDisplay&)>;
 	void setValueFromTextConvertProc(ValueFromTextConvertProc const& inValueFromTextConvertProc);
 	void setValueFromTextConvertProc(ValueFromTextConvertProc&& inValueFromTextConvertProc);
+
+	// prepends or appends text to the result of the common ValueToText functions
+	void setValueToTextPrefix(std::string_view inText);
+	void setValueToTextSuffix(std::string_view inText);
 
 	void refreshText();  // trigger a re-conversion of the numerical value to text
 
 	// some common text<->value translation routines for reuse
 	// HACK: as a rather unpleasant hack, you can provide an intptr_t "user data" as a "precision offset", 
 	// a delta that will be applied to the printf-style fractional precision value
-	static bool valueToTextProc_LinearToDb(float inValue, char outTextUTF8[], void* inPrecisionOffset);
-	static bool valueToTextProc_Percent(float inValue, char outTextUTF8[], void* inUserData);
-	static bool valueToTextProc_LinearToPercent(float inValue, char outTextUTF8[], void* inUserData);
-	static std::optional<float> textToValueProc_Generic(std::string const& inText, DGTextDisplay* inTextDisplay);
-	static std::optional<float> textToValueProc_DbToLinear(std::string const& inText, DGTextDisplay* inTextDisplay);
-	static float valueFromTextConvertProc_PercentToLinear(float inValue, DGTextDisplay* inTextDisplay);
+	static std::string valueToTextProc_Generic(float inValue, DGTextDisplay& inTextDisplay);
+	static std::string valueToTextProc_LinearToDb(float inValue, DGTextDisplay& inTextDisplay);
+	static std::string valueToTextProc_Percent(float inValue, DGTextDisplay& inTextDisplay);
+	static std::string valueToTextProc_LinearToPercent(float inValue, DGTextDisplay& inTextDisplay);
+	static std::optional<float> textToValueProc_Generic(std::string const& inText, DGTextDisplay& inTextDisplay);
+	static std::optional<float> textToValueProc_DbToLinear(std::string const& inText, DGTextDisplay& inTextDisplay);
+	static float valueFromTextConvertProc_PercentToLinear(float inValue, DGTextDisplay& inTextDisplay);
 
 	CLASS_METHODS(DGTextDisplay, VSTGUI::CTextEdit)
 
@@ -90,20 +102,21 @@ protected:
 	void takeFocus() override;
 	void drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion) override;
 
-	bool valueToTextProcBridge(float inValue, char outTextUTF8[kTextMaxLength], CParamDisplay* inUserData);
-	bool textToValueProcBridge(VSTGUI::UTF8StringPtr inText, float& outValue, VSTGUI::CTextEdit* textEdit);
+private:
+	int getPrecisionIfCustomizedOr(int inDefaultPrecision) const;
 
-	VSTGUI::CParamDisplayValueToStringProc const mValueToTextProc;
-	void* const mValueToTextUserData;
+	static bool valueToTextProcBridge(float inValue, std::string& outText, VSTGUI::CParamDisplay* inDisplay);
+	static bool textToValueProcBridge(VSTGUI::UTF8StringPtr inText, float& outValue, VSTGUI::CTextEdit* inTextEdit);
+
+	ValueToTextProc const mValueToTextProc;
 	TextToValueProc mTextToValueProc;
 	ValueFromTextConvertProc mValueFromTextConvertProc;
-
-private:
-	static bool valueToTextProc_Generic(float inValue, char outTextUTF8[], void* inUserData);
 
 	int const mYOffsetTweak = 0;
 	bool const mIsBitmapFont;
 	bool mTextEditEnabled = true;
+	std::string mValueToTextPrefix, mValueToTextSuffix;
+	bool mPrecisionWasCustomized = false;
 };
 
 
@@ -150,7 +163,7 @@ public:
 
 	CLASS_METHODS(DGTextArrayDisplay, DGTextDisplay)
 
-protected:
+private:
 	std::vector<std::string> mDisplayStrings;
 };
 

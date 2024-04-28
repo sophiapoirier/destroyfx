@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of Monomaker.
 
@@ -20,8 +20,6 @@ To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "monomakereditor.h"
-
-#include <cstdio>
 
 #include "monomaker.h"
 
@@ -65,15 +63,10 @@ constexpr float kUnusedControlAlpha = 0.36f;
 //-----------------------------------------------------------------------------
 // parameter value display text conversion functions
 
-static bool monomergeDisplayProc(float inValue, char* outText, void*)
+static std::string panDisplayProc(float inValue, DGTextDisplay& inTextDisplay)
 {
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, " %.1f%%", inValue) > 0;
-}
-
-static bool panDisplayProc(float inValue, char* outText, void*)
-{
-	char const* const prefix = (inValue >= 0.0005f) ? "+" : "";
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, " %s%.1f%%", prefix, inValue * 100.0f) > 0;
+	auto const prefix = (inValue >= 0.0005f) ? "+" : "";
+	return prefix + DGTextDisplay::valueToTextProc_Percent(inValue * 100.f, inTextDisplay);
 }
 
 
@@ -129,12 +122,12 @@ void MonomakerEditor::OpenEditor()
 
 	// mono merge
 	pos.set(kDisplayX, kDisplayY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kMonomerge, pos, monomergeDisplayProc, nullptr, nullptr, dfx::TextAlignment::Center,
-								  kValueTextSize, DGColor::kBlack, kValueTextFont);
+	emplaceControl<DGTextDisplay>(this, kMonomerge, pos, DGTextDisplay::valueToTextProc_Percent, nullptr,
+								  dfx::TextAlignment::Center, kValueTextSize, DGColor::kBlack, kValueTextFont);
 
 	// pan
 	pos.offset(0, kSliderInc);
-	auto const panDisplay = emplaceControl<DGTextDisplay>(this, kPan, pos, panDisplayProc, nullptr, nullptr,
+	auto const panDisplay = emplaceControl<DGTextDisplay>(this, kPan, pos, panDisplayProc, nullptr,
 														  dfx::TextAlignment::Center, kValueTextSize,
 														  DGColor::kBlack, kValueTextFont);
 	panDisplay->setValueFromTextConvertProc(DGTextDisplay::valueFromTextConvertProc_PercentToLinear);

@@ -22,10 +22,13 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "skiddereditor.h"
 
 #include <algorithm>
+#include <array>
+#include <cassert>
 #include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <string>
 
 #include "dfxmath.h"
 #include "dfxmisc.h"
@@ -102,57 +105,40 @@ enum
 //-----------------------------------------------------------------------------
 // parameter value string display conversion functions
 
-static bool rateGenDisplayProc(float inValue, dfx::ParameterID inSyncParameterID, char* outText, DfxGuiEditor* inEditor, bool inShowUnits)
+static std::string rateGenDisplayProc(dfx::ParameterID inSyncParameterID, bool inShowUnits, float inValue, DGTextDisplay& inTextDisplay)
 {
-	if (inEditor->getparameter_b(kTempoSync))
+	if (auto const dgEditor = inTextDisplay.getOwnerEditor(); dgEditor->getparameter_b(kTempoSync))
 	{
-		if (auto const valueString = inEditor->getparametervaluestring(inSyncParameterID))
+		if (auto const valueString = dgEditor->getparametervaluestring(inSyncParameterID))
 		{
-			bool success = dfx::StrLCpy(outText, *valueString, DGTextDisplay::kTextMaxLength) > 0;
 			dfx::TempoRateTable const tempoRateTable;
 			if (*valueString == tempoRateTable.getDisplay(tempoRateTable.getNumRates() - 1))
 			{
-				success = dfx::StrLCpy(outText, VSTGUI::kInfiniteSymbol, DGTextDisplay::kTextMaxLength) > 0;
+				return VSTGUI::kInfiniteSymbol;
 			}
-			if (inShowUnits)
-			{
-				dfx::StrlCat(outText, " cyc/beat", DGTextDisplay::kTextMaxLength);
-			}
-			return success;
+			auto const units = inShowUnits ? " cyc/beat" : "";
+			return *valueString + units;
 		}
+		return {};
 	}
-	else
-	{
-		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f%s", inValue, inShowUnits ? " Hz" : "") > 0;
-	}
-	return false;
+
+	auto const units = inShowUnits ? " Hz" : "";
+	return DGTextDisplay::valueToTextProc_Generic(inValue, inTextDisplay) + units;
 }
 
-static bool rateDisplayProc(float inValue, char* outText, void* inEditor)
-{
-	return rateGenDisplayProc(inValue, kRate_Sync, outText, static_cast<DfxGuiEditor*>(inEditor), true);
-}
-
-static bool rateRandMinDisplayProc(float inValue, char* outText, void* inEditor)
-{
-	return rateGenDisplayProc(inValue, kRateRandMin_Sync, outText, static_cast<DfxGuiEditor*>(inEditor), false);
-}
-
-static bool slopeDisplayProc(float inValue, char* outText, void*)
-{
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f ms", inValue) > 0;
-}
-
-static bool crossoverDisplayProc(float inValue, char* outText, void*)
+static std::string crossoverDisplayProc(float inValue, DGTextDisplay&)
 {
 	if (inValue >= 1'000.f)
 	{
-		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f kHz", inValue / 1'000.f) > 0;
+		std::array<char, DGTextDisplay::kTextMaxLength> text {};
+		[[maybe_unused]] auto const printCount = std::snprintf(text.data(), text.size(), "%.2f kHz", inValue / 1'000.f);
+		assert(printCount > 0);
+		return text.data();
 	}
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f Hz", inValue) > 0;
+	return std::to_string(std::lround(inValue)) + " Hz";
 }
 
-static std::optional<float> crossoverTextToValueProc(std::string const& inText, DGTextDisplay* inTextDisplay)
+static std::optional<float> crossoverTextToValueProc(std::string const& inText, DGTextDisplay& inTextDisplay)
 {
 	auto const value = DGTextDisplay::textToValueProc_Generic(inText, inTextDisplay);
 	if (value && dfx::ToLower(inText).contains("khz"))
@@ -162,23 +148,12 @@ static std::optional<float> crossoverTextToValueProc(std::string const& inText, 
 	return value;
 }
 
-static bool gainRandMinDisplayProc(float inValue, char* outText, void* inUserData)
+static std::string gainRandMinDisplayProc(float inValue, DGTextDisplay& inTextDisplay)
 {
-	auto const success = DGTextDisplay::valueToTextProc_LinearToDb(inValue, outText, inUserData);
-	if (success)
-	{
-		// truncate units or any suffix beyond the numerical value
-		std::transform(outText, outText + std::strlen(outText), outText, [](auto character)
-		{
-			return std::isspace(character) ? '\0' : character;
-		});
-	}
-	return success;
-}
-
-static bool tempoDisplayProc(float inValue, char* outText, void*)
-{
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f bpm", inValue) > 0;
+	auto const result = DGTextDisplay::valueToTextProc_LinearToDb(inValue, inTextDisplay);
+	// truncate units or any suffix beyond the numerical value
+	auto const resultEnd = std::ranges::find_if(result, [](auto character){ return std::isspace(character); });
+	return {result.begin(), resultEnd};
 }
 
 
@@ -300,55 +275,62 @@ void SkidderEditor::OpenEditor()
 	//--initialize the displays---------------------------------------------
 
 	// rate   (unified display for "free" Hz rate and tempo synced rate)
+	constexpr uint8_t ratePrecision = 3;
 	pos.set(kDisplayX, kDisplayY, kDisplayWidth, kDisplayHeight);
-	mRateDisplay = emplaceControl<DGTextDisplay>(this, rateParameterID, pos, rateDisplayProc, this, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mRateDisplay = emplaceControl<DGTextDisplay>(this, rateParameterID, pos, std::bind_front(rateGenDisplayProc, kRate_Sync, true), nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mRateDisplay->setPrecision(ratePrecision);
 
 	// rate random minimum
 	pos.set(kRandMinDisplayX, kRandMinDisplayY, kRandMinDisplayWidth, kRandMinDisplayHeight);
-	mRateRandMinDisplay = emplaceControl<DGTextDisplay>(this, rateRandMinParameterID, pos, rateRandMinDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mRateRandMinDisplay = emplaceControl<DGTextDisplay>(this, rateRandMinParameterID, pos, std::bind_front(rateGenDisplayProc, kRateRandMin_Sync, false), nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mRateRandMinDisplay->setPrecision(ratePrecision);
 
 	// pulsewidth
 	pos.set(kDisplayX, kDisplayY + (kSliderInc * 1), kDisplayWidth, kDisplayHeight);
-	auto textDisplay = emplaceControl<DGTextDisplay>(this, kPulsewidth, pos, DGTextDisplay::valueToTextProc_LinearToPercent, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	auto textDisplay = emplaceControl<DGTextDisplay>(this, kPulsewidth, pos, DGTextDisplay::valueToTextProc_LinearToPercent, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 	textDisplay->setValueFromTextConvertProc(DGTextDisplay::valueFromTextConvertProc_PercentToLinear);
 
 	// pulsewidth random minimum
 	pos.set(kRandMinDisplayX, kRandMinDisplayY + (kSliderInc * 1), kRandMinDisplayWidth, kRandMinDisplayHeight);
-	mPulsewidthRandMinDisplay = emplaceControl<DGTextDisplay>(this, kPulsewidthRandMin, pos, DGTextDisplay::valueToTextProc_LinearToPercent, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mPulsewidthRandMinDisplay = emplaceControl<DGTextDisplay>(this, kPulsewidthRandMin, pos, DGTextDisplay::valueToTextProc_LinearToPercent, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 	mPulsewidthRandMinDisplay->setValueFromTextConvertProc(DGTextDisplay::valueFromTextConvertProc_PercentToLinear);
 
 	// slope
 	pos.set(kDisplayX, kDisplayY + (kSliderInc * 2), kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kSlope, pos, slopeDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kSlope, pos, DGTextDisplay::valueToTextProc_Generic, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay->setValueToTextSuffix(" ms");
+	textDisplay->setPrecision(3);
 
 	// floor
 	pos.offset(0, kSliderInc);
-	textDisplay = emplaceControl<DGTextDisplay>(this, kFloor, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kFloor, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 	textDisplay->setTextToValueProc(DGTextDisplay::textToValueProc_DbToLinear);
 
 	// floor random minimum
 	pos.set(kRandMinDisplayX, kRandMinDisplayY + (kSliderInc * 3), kRandMinDisplayWidth, kRandMinDisplayHeight);
-	mFloorRandMinDisplay = emplaceControl<DGTextDisplay>(this, kFloorRandMin, pos, gainRandMinDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mFloorRandMinDisplay = emplaceControl<DGTextDisplay>(this, kFloorRandMin, pos, gainRandMinDisplayProc, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 	mFloorRandMinDisplay->setTextToValueProc(DGTextDisplay::textToValueProc_DbToLinear);
 
 	// crossover
 	pos.set(kDisplayX, kDisplayY + (kSliderInc * 4), kDisplayWidth, kDisplayHeight);
-	textDisplay = emplaceControl<DGTextDisplay>(this, kCrossoverFrequency, pos, crossoverDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kCrossoverFrequency, pos, crossoverDisplayProc, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 	textDisplay->setTextToValueProc(crossoverTextToValueProc);
 
 	// pan
 	pos.offset(0, kSliderInc);
-	textDisplay = emplaceControl<DGTextDisplay>(this, kPan, pos, DGTextDisplay::valueToTextProc_LinearToPercent, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kPan, pos, DGTextDisplay::valueToTextProc_LinearToPercent, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 	textDisplay->setValueFromTextConvertProc(DGTextDisplay::valueFromTextConvertProc_PercentToLinear);
 
 	// noise
 	pos.offset(0, kSliderInc);
-	textDisplay = emplaceControl<DGTextDisplay>(this, kNoise, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kNoise, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 	textDisplay->setTextToValueProc(DGTextDisplay::textToValueProc_DbToLinear);
 
-	// tempo (in bpm)
+	// tempo (in BPM)
 	pos.offset(0, kSliderInc);
-	emplaceControl<DGTextDisplay>(this, kTempo, pos, tempoDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kTempo, pos, DGTextDisplay::valueToTextProc_Generic, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay->setValueToTextSuffix(" bpm");
+	textDisplay->setPrecision(2);
 
 
 	UpdateRandomMinimumDisplays();

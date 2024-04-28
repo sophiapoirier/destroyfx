@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -20,8 +20,6 @@ To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #include "eqsynceditor.h"
-
-#include <cstdio>
 
 #include "dfxmisc.h"
 #include "eqsync.h"
@@ -189,57 +187,51 @@ void EQSyncEditor::OpenEditor()
 
 	DGRect pos;
 
-	for (dfx::ParameterID i = kRate_Sync; i <= kTempo; i++)
+	for (dfx::ParameterID parameterID = kRate_Sync; parameterID <= kTempo; parameterID++)
 	{
 		// create the horizontal sliders
-		pos.set(wideFaderX, wideFaderY + (kWideFaderInc * i), horizontalSliderBackgroundImage->getWidth(), horizontalSliderBackgroundImage->getHeight());
-		emplaceControl<EQSyncSlider>(this, i, pos, dfx::kAxis_Horizontal, sliderHandleImage, sliderHandleClickedImage, horizontalSliderBackgroundImage);
+		pos.set(wideFaderX, wideFaderY + (kWideFaderInc * parameterID), horizontalSliderBackgroundImage->getWidth(), horizontalSliderBackgroundImage->getHeight());
+		emplaceControl<EQSyncSlider>(this, parameterID, pos, dfx::kAxis_Horizontal, sliderHandleImage, sliderHandleClickedImage, horizontalSliderBackgroundImage);
 
 		// create the displays
-		VSTGUI::CParamDisplayValueToStringProc textProc = nullptr;
-		if (i == kRate_Sync)
+		DGTextDisplay::ValueToTextProc textProc;
+		if (parameterID == kRate_Sync)
 		{
-			textProc = [](float inValue, char* outText, void* inEditor)
+			textProc = [](float inValue, DGTextDisplay& inTextDisplay) -> std::string
 			{
-				if (auto const valueString = static_cast<DfxGuiEditor*>(inEditor)->getparametervaluestring(kRate_Sync))
+				if (auto const valueString = inTextDisplay.getOwnerEditor()->getparametervaluestring(kRate_Sync))
 				{
 					dfx::TempoRateTable const tempoRateTable;
 					if (*valueString == tempoRateTable.getDisplay(tempoRateTable.getNumRates() - 1))
 					{
-						return dfx::StrLCpy(outText, VSTGUI::kInfiniteSymbol, DGTextDisplay::kTextMaxLength) > 0;
+						return VSTGUI::kInfiniteSymbol;
 					}
-					return dfx::StrLCpy(outText, *valueString, DGTextDisplay::kTextMaxLength) > 0;
+					return *valueString;
 				}
-				return false;
+				return {};
 			};
 		}
-		else if (i == kSmooth)
+		else if (parameterID == kSmooth)
 		{
-			textProc = [](float inValue, char* outText, void*)
-			{
-				return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f%%", inValue) > 0;
-			};
+			textProc = DGTextDisplay::valueToTextProc_Percent;
 		}
-		else if (i == kTempo)
-		{
-			textProc = [](float inValue, char* outText, void*)
-			{
-				return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
-			};
-		}
-		pos.set(wideFaderX + kDisplayOffsetX, wideFaderY + kDisplayOffsetY + (kWideFaderInc * i), kDisplayWidth, kDisplayHeight);
-		auto const textDisplay = emplaceControl<DGTextDisplay>(this, i, pos, textProc, this, nullptr, dfx::TextAlignment::Left, kValueTextSize, DGColor::kBlack, kValueTextFont);
-		if (i == kRate_Sync)
+		pos.set(wideFaderX + kDisplayOffsetX, wideFaderY + kDisplayOffsetY + (kWideFaderInc * parameterID), kDisplayWidth, kDisplayHeight);
+		auto const textDisplay = emplaceControl<DGTextDisplay>(this, parameterID, pos, textProc, nullptr, dfx::TextAlignment::Left, kValueTextSize, DGColor::kBlack, kValueTextFont);
+		if (parameterID == kRate_Sync)
 		{
 			textDisplay->setTextEditEnabled(false);
+		}
+		else if (parameterID == kTempo)
+		{
+			textDisplay->setValueToTextPrecision(3);
 		}
 	}
 
 	// create the vertical sliders
-	for (dfx::ParameterID i = kA0; i <= kB2; i++)
+	for (dfx::ParameterID parameterID = kA0; parameterID <= kB2; parameterID++)
 	{
-		pos.set(tallFaderX + (kTallFaderInc * (i - kA0)), tallFaderY, verticalSliderBackgroundImage->getWidth(), verticalSliderBackgroundImage->getHeight());
-		emplaceControl<EQSyncSlider>(this, i, pos, dfx::kAxis_Vertical, sliderHandleImage, sliderHandleClickedImage, verticalSliderBackgroundImage);
+		pos.set(tallFaderX + (kTallFaderInc * (parameterID - kA0)), tallFaderY, verticalSliderBackgroundImage->getWidth(), verticalSliderBackgroundImage->getHeight());
+		emplaceControl<EQSyncSlider>(this, parameterID, pos, dfx::kAxis_Vertical, sliderHandleImage, sliderHandleClickedImage, verticalSliderBackgroundImage);
 	}
 
 

@@ -23,8 +23,6 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include <algorithm>
 #include <cassert>
-#include <cstdio>
-#include <sstream>
 
 #include "geometer-base.h"
 #include "geometerhelp.h"
@@ -265,12 +263,10 @@ void GeometerEditor::OpenEditor() {
     fineupbuttons[i] = emplaceControl<DGFineTuneButton>(this, param, fupos, g_fineupbutton, finetuneinc);
 
     // value display
-    auto const geometerDisplayProc = [](float value, char * outText, void *) -> bool {
-      return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.7f", value) > 0;
-    };
-    displays[i] = emplaceControl<DGTextDisplay>(this, param, dpos, geometerDisplayProc,
-                                                nullptr, nullptr, dfx::TextAlignment::Right, dfx::kFontSize_Snooty10px,
+    displays[i] = emplaceControl<DGTextDisplay>(this, param, dpos, DGTextDisplay::valueToTextProc_Generic,
+                                                nullptr, dfx::TextAlignment::Right, dfx::kFontSize_Snooty10px,
                                                 fontcolor_values, dfx::kFontName_Snooty10px);
+    displays[i]->setValueToTextPrecision(7);
     // units label
     auto const label = emplaceControl<DGTextArrayDisplay>(this, baseparam, lpos, labelstrings->size(),
                                                           dfx::TextAlignment::Center, nullptr,

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -21,13 +21,13 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include "rezsyntheditor.h"
 
-#include <cmath>
+#include <array>
 #include <cstdio>
 #include <map>
+#include <tuple>
 #include <utility>
 
 #include "dfxmath.h"
-#include "dfxmisc.h"
 #include "rezsynth.h"
 
 
@@ -110,81 +110,26 @@ constexpr float kUnusedControlAlpha = 0.39f;
 //-----------------------------------------------------------------------------
 // value text display procedures
 
-static bool bandwidthAmountDisplayProc(float inValue, char* outText, void* inEditor)
+static std::string bandwidthAmountDisplayProc(float inValue, DGTextDisplay& inTextDisplay)
 {
-	auto const success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
-	if (static_cast<DfxGuiEditor*>(inEditor)->getparameter_i(kBandwidthMode) == kBandwidthMode_Hz)
-	{
-		dfx::StrlCat(outText, " Hz", DGTextDisplay::kTextMaxLength);
-	}
-	else
-	{
-		dfx::StrlCat(outText, " Q", DGTextDisplay::kTextMaxLength);
-	}
-	return success;
+	char const* const unit = (inTextDisplay.getOwnerEditor()->getparameter_i(kBandwidthMode) == kBandwidthMode_Hz) ? "Hz" : "Q";
+	return DGTextDisplay::valueToTextProc_Generic(inValue, inTextDisplay) + " " + unit;
 }
 
-static bool numBandsDisplayProc(float inValue, char* outText, void*)
+static std::string sepAmountDisplayProc(float inValue, DGTextDisplay& inTextDisplay)
 {
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f", inValue) > 0;
+	char const* const unit = (inTextDisplay.getOwnerEditor()->getparameter_i(kSepMode) == kSeparationMode_Octaval) ? "semitones" : "x";
+	return DGTextDisplay::valueToTextProc_Generic(inValue, inTextDisplay) + " " + unit;
 }
 
-static bool sepAmountDisplayProc(float inValue, char* outText, void* inEditor)
-{
-	if (static_cast<DfxGuiEditor*>(inEditor)->getparameter_i(kSepMode) == kSeparationMode_Octaval)
-	{
-		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f semitones", inValue) > 0;
-	}
-	else  // linear values
-	{
-		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f x", inValue) > 0;
-	}
-}
-
-static bool attackDecayReleaseDisplayProc(float inValue, char* outText, void*)
-{
-	int const thousands = static_cast<int>(inValue) / 1000;
-	float const remainder = std::fmod(inValue, 1000.0f);
-
-	bool success = false;
-	if (thousands > 0)
-	{
-		success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%d,%05.1f", thousands, remainder) > 0;
-	}
-	else
-	{
-		success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
-	}
-	dfx::StrlCat(outText, " ms", DGTextDisplay::kTextMaxLength);
-
-	return success;
-}
-
-static bool percentGenDisplayProc(float inValue, char* outText, int inPrecision)
-{
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.*f%%", inPrecision, inValue) > 0;
-}
-
-static bool percentDisplayProc(float inValue, char* outText, void*)
-{
-	return percentGenDisplayProc(inValue, outText, 0);
-}
-
-static bool sustainDisplayProc(float inValue, char* outText, void*)
+static std::string sustainDisplayProc(float inValue, DGTextDisplay&)
 {
 	// the parameter is scaled and has a lot more resolution at low values, so add display precision
 	int const precision = (inValue <= 0.9f) ? 1 : 0;
-	return percentGenDisplayProc(inValue, outText, precision);
-}
-
-static bool velocityCurveDisplayProc(float inValue, char* outText, void*)
-{
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
-}
-
-static bool pitchBendDisplayProc(float inValue, char* outText, void*)
-{
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%s%.2f semitones", dfx::kPlusMinusUTF8, inValue) > 0;
+	std::array<char, DGTextDisplay::kTextMaxLength> text {};
+	[[maybe_unused]] auto const printCount = std::snprintf(text.data(), text.size(), "%.*f%%", precision, inValue);
+	assert(printCount > 0);
+	return text.data();
 }
 
 
@@ -230,7 +175,7 @@ void RezSynthEditor::OpenEditor()
 	pos.set(kHorizontalSliderX, kHorizontalSliderY, kHorizontalSliderWidth, kHorizontalSliderHeight);
 	valueDisplayPos.set(kHorizontalDisplayX, kHorizontalDisplayY, kHorizontalDisplayWidth, kHorizontalDisplayHeight);
 
-	auto const addSliderComponents = [&](dfx::ParameterID const inParameterID, auto const& inDisplayProc)
+	auto const addSliderComponents = [&](dfx::ParameterID const inParameterID, DGTextDisplay::ValueToTextProc const inDisplayProc = DGTextDisplay::valueToTextProc_Generic)
 	{
 		auto const horizontalSliderHandleImage = std::map<Section, DGImage*>{
 			{Section::Bands, horizontalSliderHandleImage_bands},
@@ -244,18 +189,7 @@ void RezSynthEditor::OpenEditor()
 		slider->setAlternateHandle(horizontalSliderHandleImage_learning);
 
 		// value display
-		auto const display = emplaceControl<DGTextDisplay>(this, inParameterID, valueDisplayPos, inDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueTextFontSize, kValueTextFontColor, kValueTextFont);
-
-		if ((inParameterID == kBandwidthAmount_Hz) || (inParameterID == kBandwidthAmount_Q))
-		{
-			mBandwidthAmountSlider = slider;
-			mBandwidthAmountDisplay = display;
-		}
-		else if ((inParameterID == kSepAmount_Octaval) || (inParameterID == kSepAmount_Linear))
-		{
-			mSepAmountSlider = slider;
-			mSepAmountDisplay = display;
-		}
+		auto const display = emplaceControl<DGTextDisplay>(this, inParameterID, valueDisplayPos, inDisplayProc, nullptr, dfx::TextAlignment::Right, kValueTextFontSize, kValueTextFontColor, kValueTextFont);
 
 		// help mouseover region where the parameter name is displayed
 		auto parameterNamePos = valueDisplayPos;
@@ -265,36 +199,55 @@ void RezSynthEditor::OpenEditor()
 
 		pos.offset(0, kHorizontalSliderInc);
 		valueDisplayPos.offset(0, kHorizontalSliderInc);
+
+		return std::make_pair(slider, display);
 	};
 
-	addSliderComponents((getparameter_i(kBandwidthMode) == kBandwidthMode_Hz) ? kBandwidthAmount_Hz : kBandwidthAmount_Q, bandwidthAmountDisplayProc);
-	addSliderComponents(kNumBands, numBandsDisplayProc);
-	addSliderComponents((getparameter_i(kSepMode) == kSeparationMode_Octaval) ? kSepAmount_Octaval : kSepAmount_Linear, sepAmountDisplayProc);
-	addSliderComponents(kEnvAttack, attackDecayReleaseDisplayProc);
-	addSliderComponents(kEnvDecay, attackDecayReleaseDisplayProc);
+	auto const addEnvDurationSliderComponents = [&addSliderComponents](dfx::ParameterID const inParameterID)
+	{
+		auto const display = addSliderComponents(inParameterID).second;
+		display->setValueToTextSuffix(" ms");
+		display->setPrecision(1);
+	};
+
+	std::tie(mBandwidthAmountSlider, mBandwidthAmountDisplay) = addSliderComponents((getparameter_i(kBandwidthMode) == kBandwidthMode_Hz) ? kBandwidthAmount_Hz : kBandwidthAmount_Q, bandwidthAmountDisplayProc);
+	mBandwidthAmountDisplay->setPrecision(3);
+
+	addSliderComponents(kNumBands).second->setPrecision(0);
+
+	std::tie(mSepAmountSlider, mSepAmountDisplay) = addSliderComponents((getparameter_i(kSepMode) == kSeparationMode_Octaval) ? kSepAmount_Octaval : kSepAmount_Linear, sepAmountDisplayProc);
+	mSepAmountDisplay->setPrecision(3);
+
+	addEnvDurationSliderComponents(kEnvAttack);
+	addEnvDurationSliderComponents(kEnvDecay);
 	addSliderComponents(kEnvSustain, sustainDisplayProc);
-	addSliderComponents(kEnvRelease, attackDecayReleaseDisplayProc);
-	addSliderComponents(kVelocityInfluence, percentDisplayProc);
-	addSliderComponents(kVelocityCurve, velocityCurveDisplayProc);
-	addSliderComponents(kPitchBendRange, pitchBendDisplayProc);
+	addEnvDurationSliderComponents(kEnvRelease);
+
+	addSliderComponents(kVelocityInfluence, DGTextDisplay::valueToTextProc_Percent).second->setPrecision(0);
+
+	addSliderComponents(kVelocityCurve).second->setPrecision(3);
+
+	auto textDisplay = addSliderComponents(kPitchBendRange).second;
+	textDisplay->setValueToTextPrefix(dfx::kPlusMinusUTF8);
+	textDisplay->setValueToTextSuffix(" semitones");
+	textDisplay->setPrecision(2);
 
 	//--create the vertical gain sliders---------------------------------
 	pos.set(kVerticalSliderX, kVerticalSliderY, kVerticalSliderWidth, kVerticalSliderHeight);
 	valueDisplayPos.set(kVerticalDisplayX, kVerticalDisplayY, kVerticalDisplayWidth, kVerticalDisplayHeight);
 	for (dfx::ParameterID parameterID = kFilterOutputGain; parameterID <= kDryWetMix; parameterID++)
 	{
-		auto const displayProc = (parameterID == kDryWetMix) ? percentDisplayProc : DGTextDisplay::valueToTextProc_LinearToDb;
-		constexpr intptr_t decibelPrecisionOffset = -1;
-		auto const displayProcUserData = (parameterID == kDryWetMix) ? nullptr : reinterpret_cast<void*>(decibelPrecisionOffset);
-		auto const textToValueProc = (parameterID == kDryWetMix) ? nullptr : DGTextDisplay::textToValueProc_DbToLinear;
 		// slider control
 		emplaceControl<DGSlider>(this, parameterID, pos, dfx::kAxis_Vertical, verticalSliderHandleImage)->setAlternateHandle(verticalSliderHandleImage_learning);
 
 		// value display
-		auto const textDisplay = emplaceControl<DGTextDisplay>(this, parameterID, valueDisplayPos, displayProc, displayProcUserData, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kValueTextFontColor, kValueTextFont);
-		if (textToValueProc)
+		auto const valueToTextProc = (parameterID == kDryWetMix) ? DGTextDisplay::valueToTextProc_Percent : DGTextDisplay::valueToTextProc_LinearToDb;
+		uint8_t const precision = (parameterID == kDryWetMix) ? 0 : 1;
+		textDisplay = emplaceControl<DGTextDisplay>(this, parameterID, valueDisplayPos, valueToTextProc, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kValueTextFontColor, kValueTextFont);
+		textDisplay->setPrecision(precision);
+		if (parameterID != kDryWetMix)
 		{
-			textDisplay->setTextToValueProc(textToValueProc);
+			textDisplay->setTextToValueProc(DGTextDisplay::textToValueProc_DbToLinear);
 		}
 
 		// help mouseover region where the parameter name is displayed

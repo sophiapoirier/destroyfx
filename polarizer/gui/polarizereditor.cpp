@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of Polarizer.
 
@@ -22,7 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "polarizereditor.h"
 
 #include <cmath>
-#include <cstdio>
+#include <string>
 
 #include "dfxmisc.h"
 #include "polarizer.h"
@@ -58,23 +58,19 @@ constexpr float kValueTextSize = 16.8f;
 //-----------------------------------------------------------------------------
 // parameter value string display conversion functions
 
-static bool leapDisplayProc(float inValue, char* outText, void*)
+static std::string leapDisplayProc(float inValue, DGTextDisplay&)
 {
 	auto const value_i = static_cast<long>(inValue);
-	bool const success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld sample", value_i) > 0;
-	if (success && (std::abs(value_i) > 1))
-	{
-		dfx::StrlCat(outText, "s", DGTextDisplay::kTextMaxLength);
-	}
-	return success;
+	std::string const pluralization((std::abs(value_i) == 1) ? "" : "s");
+	return std::to_string(value_i) + " sample" + pluralization;
 }
 
-static bool amountDisplayProc(float inValue, char* outText, void*)
+static std::string amountDisplayProc(float inValue, DGTextDisplay& inTextDisplay)
 {
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue * 10.0f) > 0;
+	return DGTextDisplay::valueToTextProc_Percent(inValue * 10.f, inTextDisplay);
 }
 
-static float amountValueFromTextConvertProc(float inValue, DGTextDisplay*)
+static float amountValueFromTextConvertProc(float inValue, DGTextDisplay&)
 {
 	return inValue / 10.0f;
 }
@@ -158,14 +154,15 @@ void PolarizerEditor::OpenEditor()
 
 	// leap size read-out
 	pos.set(kDisplayX, kDisplayY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kSkip, pos, leapDisplayProc, nullptr, nullptr, dfx::TextAlignment::Center,
+	emplaceControl<DGTextDisplay>(this, kSkip, pos, leapDisplayProc, nullptr, dfx::TextAlignment::Center,
 								  kValueTextSize, DGColor::kBlack, kValueTextFont);
 
 	// polarization amount read-out
 	pos.offset(kSliderInc, 0);
-	auto const amountDisplay = emplaceControl<DGTextDisplay>(this, kAmount, pos, amountDisplayProc, nullptr, nullptr,
+	auto const amountDisplay = emplaceControl<DGTextDisplay>(this, kAmount, pos, amountDisplayProc, nullptr,
 															 dfx::TextAlignment::Center, kValueTextSize,
 															 DGColor::kBlack, kValueTextFont);
+	amountDisplay->setPrecision(0);
 	amountDisplay->setValueFromTextConvertProc(amountValueFromTextConvertProc);
 
 

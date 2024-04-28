@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -23,7 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include <algorithm>
 #include <cassert>
-#include <cstdio>
+#include <string>
 #include <utility>
 
 #include "dfxmisc.h"
@@ -153,69 +153,38 @@ enum : size_t
 //-----------------------------------------------------------------------------
 // parameter value string display conversion functions
 
-static bool seekRangeDisplayProc(float inValue, char* outText, void*)
+static std::string seekRateGenDisplayProc(dfx::ParameterID inSyncParameterID, float inValue, DGTextDisplay& inTextDisplay)
 {
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f ms", inValue) > 0;
-}
-
-static bool seekRateGenDisplayProc(float inValue, dfx::ParameterID inParameterID, char* outText, DfxGuiEditor* inEditor)
-{
-	if (inEditor->getparameter_b(kTempoSync))
+	if (auto const dgEditor = inTextDisplay.getOwnerEditor(); dgEditor->getparameter_b(kTempoSync))
 	{
-		if (auto const valueString = inEditor->getparametervaluestring(inParameterID)) //&& (valueString->length() <= 3)
+		if (auto const valueString = dgEditor->getparametervaluestring(inSyncParameterID))
 		{
-			return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%s cycles/beat", valueString->c_str()) > 0;
+			return *valueString + " cycles/beat";
 		}
+		return {};
 	}
-	else
-	{
-		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f Hz", inValue) > 0;
-	}
-	return false;
+	return DGTextDisplay::valueToTextProc_Generic(inValue, inTextDisplay);
 }
 
-static bool seekRateDisplayProc(float inValue, char* outText, void* inEditor)
-{
-	return seekRateGenDisplayProc(inValue, kSeekRate_Sync, outText, static_cast<DfxGuiEditor*>(inEditor));
-}
-
-static bool seekRateRandMinDisplayProc(float inValue, char* outText, void* inEditor)
-{
-	return seekRateGenDisplayProc(inValue, kSeekRateRandMin_Sync, outText, static_cast<DfxGuiEditor*>(inEditor));
-}
-
-static bool octaveMinDisplayProc(float inValue, char* outText, void*)
+static std::string octaveMinDisplayProc(float inValue, DGTextDisplay&)
 {
 	auto const octaves = static_cast<long>(inValue);
 	if (octaves <= kOctave_MinValue)
 	{
-		return dfx::StrLCpy(outText, "no min", DGTextDisplay::kTextMaxLength) > 0;
+		return "no min";
 	}
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld", octaves) > 0;
+	return std::to_string(octaves);
 }
 
-static bool octaveMaxDisplayProc(float inValue, char* outText, void*)
+static std::string octaveMaxDisplayProc(float inValue, DGTextDisplay&)
 {
 	auto const octaves = static_cast<long>(inValue);
 	if (octaves >= kOctave_MaxValue)
 	{
-		return dfx::StrLCpy(outText, "no max", DGTextDisplay::kTextMaxLength) > 0;
+		return "no max";
 	}
-	if (octaves == 0)
-	{
-		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "0") > 0;
-	}
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%+ld", octaves) > 0;
-}
-
-static bool tempoDisplayProc(float inValue, char* outText, void*)
-{
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f bpm", inValue) > 0;
-}
-
-static bool predelayDisplayProc(float inValue, char* outText, void*)
-{
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
+	auto const sign = (octaves > 0) ? "+" : "";
+	return sign + std::to_string(octaves);
 }
 
 
@@ -335,49 +304,60 @@ void ScrubbyEditor::OpenEditor()
 	//--create the displays---------------------------------------------
 
 	// seek rate random minimum
+	auto const seekRateSuffix = " Hz";
+	uint8_t const seekRatePrecision = 3;
 	pos.set(kSeekRateSliderX + kDisplayInsetX_leftAlign, kSeekRateSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth_big, kDisplayHeight);
-	mSeekRateRandMinDisplay = emplaceControl<DGTextDisplay>(this, seekRateRandMinParameterID, pos, seekRateRandMinDisplayProc, this, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mSeekRateRandMinDisplay = emplaceControl<DGTextDisplay>(this, seekRateRandMinParameterID, pos, std::bind_front(seekRateGenDisplayProc, kSeekRateRandMin_Sync), nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mSeekRateRandMinDisplay->setValueToTextSuffix(seekRateSuffix);
+	mSeekRateRandMinDisplay->setPrecision(seekRatePrecision);
 
 	// seek rate
 	pos.set(kSeekRateSliderX + kSeekRateSliderWidth - kDisplayWidth_big - kDisplayInsetX, kSeekRateSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth_big, kDisplayHeight);
-	mSeekRateDisplay = emplaceControl<DGTextDisplay>(this, seekRateParameterID, pos, seekRateDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mSeekRateDisplay = emplaceControl<DGTextDisplay>(this, seekRateParameterID, pos, std::bind_front(seekRateGenDisplayProc, kSeekRate_Sync), nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mSeekRateDisplay->setValueToTextSuffix(seekRateSuffix);
+	mSeekRateDisplay->setPrecision(seekRatePrecision);
 
 	// seek range
 	pos.set(kSeekRangeSliderX + kSeekRangeSliderWidth - kDisplayWidth - kDisplayInsetX, kSeekRangeSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kSeekRange, pos, seekRangeDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	auto textDisplay = emplaceControl<DGTextDisplay>(this, kSeekRange, pos, DGTextDisplay::valueToTextProc_Generic, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay->setValueToTextSuffix(" ms");
+	textDisplay->setPrecision(1);
 
 	// seek duration random minimum
 	pos.set(kSeekDurSliderX + kDisplayInsetX_leftAlign, kSeekDurSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	mSeekDurRandMinDisplay = emplaceControl<DGTextDisplay>(this, kSeekDurRandMin, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mSeekDurRandMinDisplay = emplaceControl<DGTextDisplay>(this, kSeekDurRandMin, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// seek duration
 	pos.set(kSeekDurSliderX + kSeekDurSliderWidth - kDisplayWidth - kDisplayInsetX, kSeekDurSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kSeekDur, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kSeekDur, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// octave mininum
 	pos.set(kOctaveMinSliderX + kDisplayInsetX_leftAlign, kOctaveMinSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kOctaveMin, pos, octaveMinDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kOctaveMin, pos, octaveMinDisplayProc, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// octave maximum
 	pos.set(kOctaveMaxSliderX + kOctaveMaxSliderWidth - kDisplayWidth - kDisplayInsetX, kOctaveMaxSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kOctaveMax, pos, octaveMaxDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kOctaveMax, pos, octaveMaxDisplayProc, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// tempo
 	pos.set(kTempoSliderX + kDisplayInsetX_leftAlign, kTempoSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kTempo, pos, tempoDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kTempo, pos, DGTextDisplay::valueToTextProc_Generic, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay->setValueToTextSuffix(" bpm");
+	textDisplay->setPrecision(3);
 
 	// predelay
 	pos.set(kPredelaySliderX + kPredelaySliderWidth - kDisplayWidth - kDisplayInsetX, kPredelaySliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kPredelay, pos, predelayDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kPredelay, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay->setPrecision(0);
 
 	// dry level
 	pos.set(kDryLevelSliderX + kMixLevelSliderWidth - kDisplayWidth - kDisplayInsetX, kDryLevelSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	auto textDisplay = emplaceControl<DGTextDisplay>(this, kDryLevel, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kDryLevel, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 	textDisplay->setTextToValueProc(DGTextDisplay::textToValueProc_DbToLinear);
 
 	// wet level
 	pos.set(kWetLevelSliderX + kMixLevelSliderWidth - kDisplayWidth - kDisplayInsetX, kWetLevelSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	textDisplay = emplaceControl<DGTextDisplay>(this, kWetLevel, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kWetLevel, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 	textDisplay->setTextToValueProc(DGTextDisplay::textToValueProc_DbToLinear);
 
 
@@ -394,8 +374,7 @@ void ScrubbyEditor::OpenEditor()
 		// this visually syncs the top and bottom button images upon mouse clicks
 		auto const keyboardButtonProc = [](DGButton* button, long value)
 		{
-			auto const editor = button->getOwnerEditor();
-			editor->getFrame()->forEachChild([originalButton = button->asCControl()](VSTGUI::CView* child)
+			button->getOwnerEditor()->getFrame()->forEachChild([originalButton = button->asCControl()](VSTGUI::CView* child)
 			{
 				auto const parameterIndex = originalButton->getTag();
 				auto const childControl = dynamic_cast<VSTGUI::CControl*>(child);

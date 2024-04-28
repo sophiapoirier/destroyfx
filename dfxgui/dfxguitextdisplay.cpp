@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "dfxguitextdisplay.h"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -34,6 +35,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "dfxguieditor.h"
 #include "dfxguimisc.h"
 #include "dfxmath.h"
+#include "dfxmisc.h"
 
 
 //-----------------------------------------------------------------------------
@@ -182,29 +184,22 @@ static DGRect DFXGUI_GetTextDrawRegion(DGRect const& inRegion, int inYOffsetTwea
 //-----------------------------------------------------------------------------
 // Text Display
 //-----------------------------------------------------------------------------
-DGTextDisplay::DGTextDisplay(DfxGuiEditor*							inOwnerEditor,
-							 dfx::ParameterID						inParameterID,
-							 DGRect const&							inRegion,
-							 VSTGUI::CParamDisplayValueToStringProc	inTextProc,
-							 void*									inUserData,
-							 DGImage*								inBackgroundImage,
-							 dfx::TextAlignment						inTextAlignment,
-							 float									inFontSize,
-							 DGColor								inFontColor,
-							 char const*							inFontName)
+DGTextDisplay::DGTextDisplay(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion,
+							 ValueToTextProc inValueToTextProc, DGImage* inBackgroundImage,
+							 dfx::TextAlignment inTextAlignment, float inFontSize,
+							 DGColor inFontColor, char const* inFontName)
 :	DGControl<VSTGUI::CTextEdit>(inRegion, inOwnerEditor, dfx::ParameterID_ToVST(inParameterID), nullptr, inBackgroundImage),
-	mValueToTextProc(inTextProc ? inTextProc : valueToTextProc_Generic),
-	mValueToTextUserData(inUserData),
+	mValueToTextProc(inValueToTextProc ? inValueToTextProc : valueToTextProc_Generic),
 	mYOffsetTweak(DFXGUI_GetYOffsetTweak(inFontName)),
 	mIsBitmapFont(DFXGUI_IsBitmapFont(inFontName))
 {
 	DFXGUI_ConfigureTextDisplay(inOwnerEditor, this, inTextAlignment, inFontSize, inFontColor, inFontName);
 
-	setValueToStringFunction(std::bind_front(&DGTextDisplay::valueToTextProcBridge, this));
+	setValueToStringFunction2(DGTextDisplay::valueToTextProcBridge);
 	refreshText();	// trigger an initial value->text conversion
 
 	mTextToValueProc = textToValueProc_Generic;
-	setStringToValueFunction(std::bind_front(&DGTextDisplay::textToValueProcBridge, this));
+	setStringToValueFunction(DGTextDisplay::textToValueProcBridge);
 }
 
 //-----------------------------------------------------------------------------
@@ -227,6 +222,20 @@ void DGTextDisplay::onMouseWheelEvent(VSTGUI::MouseWheelEvent& ioEvent)
 	{
 		DGControl<VSTGUI::CTextEdit>::onMouseWheelEvent(ioEvent);
 	}
+}
+
+//-----------------------------------------------------------------------------
+void DGTextDisplay::setPrecision(uint8_t inPrecision)
+{
+	VSTGUI::CTextEdit::setPrecision(inPrecision);
+	mPrecisionWasCustomized = true;
+	refreshText();
+}
+
+//-----------------------------------------------------------------------------
+int DGTextDisplay::getPrecisionIfCustomizedOr(int inDefaultPrecision) const
+{
+	return mPrecisionWasCustomized ? static_cast<int>(getPrecision()) : inDefaultPrecision;
 }
 
 //-----------------------------------------------------------------------------
@@ -273,13 +282,29 @@ void DGTextDisplay::setTextToValueProc(TextToValueProc&& inTextToValueProc)
 //-----------------------------------------------------------------------------
 void DGTextDisplay::setValueFromTextConvertProc(ValueFromTextConvertProc const& inValueFromTextConvertProc)
 {
+	assert(inValueFromTextConvertProc);
 	mValueFromTextConvertProc = inValueFromTextConvertProc;
 }
 
 //-----------------------------------------------------------------------------
 void DGTextDisplay::setValueFromTextConvertProc(ValueFromTextConvertProc&& inValueFromTextConvertProc)
 {
+	assert(inValueFromTextConvertProc);
 	mValueFromTextConvertProc = std::move(inValueFromTextConvertProc);
+}
+
+//-----------------------------------------------------------------------------
+void DGTextDisplay::setValueToTextPrefix(std::string_view inText)
+{
+	mValueToTextPrefix = inText;
+	refreshText();
+}
+
+//-----------------------------------------------------------------------------
+void DGTextDisplay::setValueToTextSuffix(std::string_view inText)
+{
+	mValueToTextSuffix = inText;
+	refreshText();
 }
 
 //-----------------------------------------------------------------------------
@@ -290,52 +315,80 @@ void DGTextDisplay::refreshText()
 }
 
 //-----------------------------------------------------------------------------
-bool DGTextDisplay::valueToTextProc_Generic(float inValue, char outTextUTF8[], void* /*inUserData*/)
+std::string DGTextDisplay::valueToTextProc_Generic(float inValue, DGTextDisplay& inTextDisplay)
 {
-	return std::snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "%.2f", inValue) > 0;
+	int const thousands = static_cast<int>(inValue) / 1000;
+	auto const remainder = std::fmod(std::fabs(inValue), 1000.f);
+	std::array<char, DGTextDisplay::kTextMaxLength> text {};
+	
+	if (thousands != 0)
+	{
+		auto const precision = inTextDisplay.getPrecisionIfCustomizedOr(1);
+		[[maybe_unused]] auto const printCount = std::snprintf(text.data(), text.size(), "%d,%0*.*f",
+															   thousands, 4 + precision, precision, remainder);
+		assert(printCount > 0);
+	}
+	else
+	{
+		[[maybe_unused]] auto const printCount = std::snprintf(text.data(), text.size(), "%.*f",
+															   inTextDisplay.getPrecisionIfCustomizedOr(2), inValue);
+		assert(printCount > 0);
+	}
+	return inTextDisplay.mValueToTextPrefix + text.data() + inTextDisplay.mValueToTextSuffix;
 }
 
 //-----------------------------------------------------------------------------
-bool DGTextDisplay::valueToTextProc_LinearToDb(float inValue, char outTextUTF8[], void* inPrecisionOffset)
+std::string DGTextDisplay::valueToTextProc_LinearToDb(float inValue, DGTextDisplay& inTextDisplay)
 {
-	constexpr auto units = "dB";
-	if (inValue <= 0.0f)
+	constexpr auto units = " dB";
+	if (inValue <= 0.f)
 	{
-		return std::snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "-%s %s", dfx::kInfinityUTF8, units) > 0;
+		return inTextDisplay.mValueToTextPrefix + "-" + dfx::kInfinityUTF8 + units + inTextDisplay.mValueToTextSuffix;
 	}
 
 	auto const decibelValue = dfx::math::Linear2dB(inValue);
-	auto precisionOffset = reinterpret_cast<intptr_t>(inPrecisionOffset);  // HACK :(
-	precisionOffset = (std::abs(precisionOffset) > 15) ? 0 : precisionOffset;  // reasonable range check to avert misuse with actual pointer
-	auto const prefix = (decibelValue >= (0.01f / std::pow(10.f, precisionOffset))) ? "+" : "";
-	int precision = (std::fabs(decibelValue) >= 100.0f) ? 0 : ((std::fabs(decibelValue) >= 10.0f) ? 1 : 2);
-	precision = std::max(precision + static_cast<int>(precisionOffset), 0);
-	return std::snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "%s%.*f %s", prefix, precision, decibelValue, units) > 0;
+	auto const decibelMagnitude = std::fabs(decibelValue);
+	auto const singleDigitPrecision = inTextDisplay.getPrecisionIfCustomizedOr(2);
+	int const precisionOffset = (decibelMagnitude >= 100.f) ? -2 : ((decibelMagnitude >= 10.f) ? -1 : 0);
+	auto const precision = std::max(singleDigitPrecision + precisionOffset, 0);
+	float const positiveThreshold = 1.f / std::pow(10.f, singleDigitPrecision);
+	auto const prefix = (decibelValue >= positiveThreshold) ? "+" : "";
+	std::array<char, DGTextDisplay::kTextMaxLength> text {};
+	[[maybe_unused]] auto const printCount = std::snprintf(text.data(), text.size(), "%s%.*f",
+														   prefix, precision, decibelValue);
+	assert(printCount > 0);
+	return inTextDisplay.mValueToTextPrefix + text.data() + units + inTextDisplay.mValueToTextSuffix;
 }
 
 //-----------------------------------------------------------------------------
-bool DGTextDisplay::valueToTextProc_Percent(float inValue, char outTextUTF8[], void* /*inUserData*/)
+std::string DGTextDisplay::valueToTextProc_Percent(float inValue, DGTextDisplay& inTextDisplay)
 {
-	int const precision = ((inValue >= 0.1f) && (inValue <= 99.9f)) ? 1 : 0;
-	return std::snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "%.*f%%", precision, inValue) > 0;
+	auto precision = inTextDisplay.getPrecisionIfCustomizedOr(1);
+	float const precisionThreshold = 1.f / std::pow(10.f, precision);
+	auto const magnitude = std::fabs(inValue);
+	precision = ((magnitude >= precisionThreshold) && (magnitude <= (100.f - precisionThreshold))) ? precision : 0;
+	std::array<char, DGTextDisplay::kTextMaxLength> text {};
+	[[maybe_unused]] auto const printCount = std::snprintf(text.data(), text.size(), "%.*f%%", precision, inValue);
+	assert(printCount > 0);
+	return inTextDisplay.mValueToTextPrefix + text.data() + inTextDisplay.mValueToTextSuffix;
 }
 
 //-----------------------------------------------------------------------------
-bool DGTextDisplay::valueToTextProc_LinearToPercent(float inValue, char outTextUTF8[], void* inUserData)
+std::string DGTextDisplay::valueToTextProc_LinearToPercent(float inValue, DGTextDisplay& inTextDisplay)
 {
-	return valueToTextProc_Percent(inValue * 100.0f, outTextUTF8, inUserData);
+	return valueToTextProc_Percent(inValue * 100.f, inTextDisplay);
 }
 
 //-----------------------------------------------------------------------------
-std::optional<float> DGTextDisplay::textToValueProc_Generic(std::string const& inText, DGTextDisplay* inTextDisplay)
+std::optional<float> DGTextDisplay::textToValueProc_Generic(std::string const& inText, DGTextDisplay& inTextDisplay)
 {
-	auto const parameterID = inTextDisplay->getParameterID();
-	auto const value_d = inTextDisplay->getOwnerEditor()->dfxgui_GetParameterValueFromString_f(parameterID, inText);
+	auto const parameterID = inTextDisplay.getParameterID();
+	auto const value_d = inTextDisplay.getOwnerEditor()->dfxgui_GetParameterValueFromString_f(parameterID, inText);
 	return value_d.transform([](auto value){ return static_cast<float>(value); });
 }
 
 //-----------------------------------------------------------------------------
-std::optional<float> DGTextDisplay::textToValueProc_DbToLinear(std::string const& inText, DGTextDisplay* inTextDisplay)
+std::optional<float> DGTextDisplay::textToValueProc_DbToLinear(std::string const& inText, DGTextDisplay& inTextDisplay)
 {
 	if (inText.empty())
 	{
@@ -359,7 +412,7 @@ std::optional<float> DGTextDisplay::textToValueProc_DbToLinear(std::string const
 }
 
 //-----------------------------------------------------------------------------
-float DGTextDisplay::valueFromTextConvertProc_PercentToLinear(float inValue, DGTextDisplay* /*inTextDisplay*/)
+float DGTextDisplay::valueFromTextConvertProc_PercentToLinear(float inValue, DGTextDisplay& /*inTextDisplay*/)
 {
 	return inValue / 100.0f;
 }
@@ -389,40 +442,50 @@ void DGTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IP
 }
 
 //-----------------------------------------------------------------------------
-bool DGTextDisplay::valueToTextProcBridge(float inValue, char outTextUTF8[256], CParamDisplay* /*inUserData*/)
+bool DGTextDisplay::valueToTextProcBridge(float inValue, std::string& outText, VSTGUI::CParamDisplay* inDisplay)
 {
-	if (isParameterAttached())
+	assert(inDisplay);
+	if (!inDisplay)
 	{
-		inValue = getOwnerEditor()->dfxgui_ExpandParameterValue(getParameterID(), inValue);
+		return false;
 	}
-	return mValueToTextProc(inValue, outTextUTF8, mValueToTextUserData);
+
+	auto const dgTextDisplay = dynamic_cast<DGTextDisplay*>(inDisplay);
+	assert(dgTextDisplay);
+	if (dgTextDisplay->isParameterAttached())
+	{
+		inValue = dgTextDisplay->getOwnerEditor()->dfxgui_ExpandParameterValue(dgTextDisplay->getParameterID(), inValue);
+	}
+	outText = dgTextDisplay->mValueToTextProc(inValue, *dgTextDisplay);
+	return true;
 }
 
 //-----------------------------------------------------------------------------
-bool DGTextDisplay::textToValueProcBridge(VSTGUI::UTF8StringPtr inText, float& outValue, VSTGUI::CTextEdit* textEdit)
+bool DGTextDisplay::textToValueProcBridge(VSTGUI::UTF8StringPtr inText, float& outValue, VSTGUI::CTextEdit* inTextEdit)
 {
 	assert(inText);
-	assert(textEdit == this);
-	if (!inText)
-	{
-		return false;
-	}
-	if (!mTextEditEnabled)
+	assert(inTextEdit);
+	if (!inText || !inTextEdit)
 	{
 		return false;
 	}
 
-	auto const dgTextEdit = dynamic_cast<DGTextDisplay*>(textEdit);
+	auto const dgTextEdit = dynamic_cast<DGTextDisplay*>(inTextEdit);
 	assert(dgTextEdit);
-	auto const valueFromText = mTextToValueProc(dfx::SanitizeNumericalInput(inText), dgTextEdit);
-	outValue = valueFromText.value_or(0.0f);
-	if (valueFromText && isParameterAttached())
+	if (!dgTextEdit->mTextEditEnabled)
 	{
-		if (mValueFromTextConvertProc)
+		return false;
+	}
+
+	auto const valueFromText = dgTextEdit->mTextToValueProc(dfx::SanitizeNumericalInput(inText), *dgTextEdit);
+	outValue = valueFromText.value_or(0.f);
+	if (valueFromText && dgTextEdit->isParameterAttached())
+	{
+		if (dgTextEdit->mValueFromTextConvertProc)
 		{
-			outValue = mValueFromTextConvertProc(outValue, dgTextEdit);
+			outValue = dgTextEdit->mValueFromTextConvertProc(outValue, *dgTextEdit);
 		}
-		outValue = getOwnerEditor()->dfxgui_ContractParameterValue(getParameterID(), outValue);
+		outValue = dgTextEdit->getOwnerEditor()->dfxgui_ContractParameterValue(dgTextEdit->getParameterID(), outValue);
 	}
 
 	return valueFromText.has_value();
@@ -486,7 +549,7 @@ void DGStaticTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTG
 DGTextArrayDisplay::DGTextArrayDisplay(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, DGRect const& inRegion,
 									   size_t inNumStrings, dfx::TextAlignment inTextAlignment, DGImage* inBackground,
 									   float inFontSize, DGColor inFontColor, char const* inFontName)
-:	DGTextDisplay(inOwnerEditor, inParameterID, inRegion, nullptr, nullptr, inBackground,
+:	DGTextDisplay(inOwnerEditor, inParameterID, inRegion, {}, inBackground,
 				  inTextAlignment, inFontSize, inFontColor, inFontName),
 	mDisplayStrings(std::max(inNumStrings, 1uz))
 {

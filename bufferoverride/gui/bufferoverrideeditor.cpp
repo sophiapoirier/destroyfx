@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -179,77 +179,56 @@ enum
 //-----------------------------------------------------------------------------
 // value text display procedures
 
-static bool divisorDisplayProc(float inValue, char* outText, void*)
+static std::string divisorDisplayProc(float inValue, DGTextDisplay&)
 {
 	int const precision = (inValue <= 99.99f) ? 2 : 1;
-	float const effectiveValue = (inValue < 2.0f) ? 1.0f : inValue;
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.*f", precision, effectiveValue) > 0;
+	float const effectiveValue = (inValue < 2.f) ? 1.f : inValue;
+	std::array<char, DGTextDisplay::kTextMaxLength> text {};
+	[[maybe_unused]] auto const printCount = std::snprintf(text.data(), text.size(), "%.*f", precision, effectiveValue);
+	assert(printCount > 0);
+	return text.data();
 }
 
-static bool bufferSizeDisplayProc(float inValue, char* outText, void* inEditor)
+static std::string bufferSizeDisplayProc(float inValue, DGTextDisplay& inTextDisplay)
 {
-	auto const dgEditor = static_cast<DfxGuiEditor*>(inEditor);
-	if (dgEditor->getparameter_b(kBufferTempoSync))
+	if (auto const dgEditor = inTextDisplay.getOwnerEditor(); dgEditor->getparameter_b(kBufferTempoSync))
 	{
 		if (auto const valueString = dgEditor->getparametervaluestring(kBufferSize_Sync))
 		{
-			return dfx::StrLCpy(outText, *valueString, DGTextDisplay::kTextMaxLength) > 0;
+			return *valueString;
 		}
-		return false;
+		return {};
 	}
-	else
-	{
-		return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
-	}
+	return DGTextDisplay::valueToTextProc_Generic(inValue, inTextDisplay);
 }
 
 // Generate the display text for the divisor or buffer LFO rate.
 // This depends on the slider value and whether we're synced to tempo.
-static bool lfoRateGenDisplayProc(float inValue, char* outText, void* inEditor, dfx::ParameterID rateSyncParameterID, dfx::ParameterID tempoSyncParameterID)
+static std::string lfoRateGenDisplayProc(dfx::ParameterID inRateSyncParameterID, dfx::ParameterID inTempoSyncParameterID, float inValue, DGTextDisplay& inTextDisplay)
 {
-	auto const dgEditor = static_cast<DfxGuiEditor*>(inEditor);
-	if (dgEditor->getparameter_b(tempoSyncParameterID))
+	if (auto const dgEditor = inTextDisplay.getOwnerEditor(); dgEditor->getparameter_b(inTempoSyncParameterID))
 	{
-		if (std::optional<std::string> const valueString = dgEditor->getparametervaluestring(rateSyncParameterID))
+		if (auto const valueString = dgEditor->getparametervaluestring(inRateSyncParameterID))
 		{
-			return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%s / beat", valueString->c_str()) > 0;
+			return *valueString + " / beat";
 		}
-		return false;
+		return {};
 	}
 
 	int const precision = (inValue <= 9.99f) ? 2 : 1;
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.*f Hz", precision, inValue) > 0;
+	std::array<char, DGTextDisplay::kTextMaxLength> text {};
+	[[maybe_unused]] auto const printCount = std::snprintf(text.data(), text.size(), "%.*f Hz", precision, inValue);
+	assert(printCount > 0);
+	return text.data();
 }
 
-static bool divisorLFORateDisplayProc(float inValue, char* outText, void* inEditor)
-{
-	return lfoRateGenDisplayProc(inValue, outText, inEditor, kDivisorLFORate_Sync, kDivisorLFOTempoSync);
-}
-
-static bool bufferLFORateDisplayProc(float inValue, char* outText, void* inEditor)
-{
-	return lfoRateGenDisplayProc(inValue, outText, inEditor, kBufferLFORate_Sync, kBufferLFOTempoSync);
-}
-
-static bool lfoDepthDisplayProc(float inValue, char* outText, void*)
-{
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
-}
-
-static bool dryWetMixDisplayProc(float inValue, char* outText, void*)
-{
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
-}
-
-static bool pitchBendRangeDisplayProc(float inValue, char* outText, void*)
+static std::string pitchBendRangeDisplayProc(float inValue, DGTextDisplay&)
 {
 	int const precision = (inValue <= 9.99f) ? 2 : 1;
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%s %.*f", dfx::kPlusMinusUTF8, precision, inValue) > 0;
-}
-
-static bool tempoDisplayProc(float inValue, char* outText, void*)
-{
-	return std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", inValue) > 0;
+	std::array<char, DGTextDisplay::kTextMaxLength> text {};
+	[[maybe_unused]] auto const printCount = std::snprintf(text.data(), text.size(), "%s %.*f", dfx::kPlusMinusUTF8, precision, inValue);
+	assert(printCount > 0);
+	return text.data();
 }
 
 
@@ -367,34 +346,39 @@ void BufferOverrideEditor::OpenEditor()
 
 
 	pos.set(kDivisorDisplayX, kDivisorDisplayY, kOLEDDisplayWidth, kOLEDDisplayHeight);
-	emplaceControl<BODivisorTextDisplay>(this, kDivisor, pos, divisorDisplayProc, nullptr, nullptr, dfx::TextAlignment::Center, kValueDisplayFontSize * 2.0f, kLCDCyanTextColor, kValueDisplayFont);
+	emplaceControl<BODivisorTextDisplay>(this, kDivisor, pos, divisorDisplayProc, nullptr, dfx::TextAlignment::Center, kValueDisplayFontSize * 2.0f, kLCDCyanTextColor, kValueDisplayFont);
 
 	pos.set(kBufferDisplayX, kBufferDisplayY, kOLEDDisplayWidth, kOLEDDisplayHeight);
-	mBufferSizeDisplay = emplaceControl<DGTextDisplay>(this, bufferSizeParameterID, pos, bufferSizeDisplayProc, this, nullptr, dfx::TextAlignment::Center, kValueDisplayFontSize * 2.0f, kLCDCyanTextColor, kValueDisplayFont);
+	mBufferSizeDisplay = emplaceControl<DGTextDisplay>(this, bufferSizeParameterID, pos, bufferSizeDisplayProc, nullptr, dfx::TextAlignment::Center, kValueDisplayFontSize * 2.f, kLCDCyanTextColor, kValueDisplayFont);
+	mBufferSizeDisplay->setPrecision(1);
 
 	pos.set(kDivisorLFORateDisplayX, kDivisorLFORateDisplayY, kLCDDisplayWidth, kLCDDisplayHeight);
-	mDivisorLFORateDisplay = emplaceControl<DGTextDisplay>(this, divisorLFORateParameterID, pos, divisorLFORateDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	mDivisorLFORateDisplay = emplaceControl<DGTextDisplay>(this, divisorLFORateParameterID, pos, std::bind_front(lfoRateGenDisplayProc, kDivisorLFORate_Sync, kDivisorLFOTempoSync), nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
 
 	pos.set(kDivisorLFODepthDisplayX, kDivisorLFODepthDisplayY, kLCDDisplayWidth, kLCDDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kDivisorLFODepth, pos, lfoDepthDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	auto textDisplay = emplaceControl<DGTextDisplay>(this, kDivisorLFODepth, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	textDisplay->setPrecision(0);
 
 	pos.set(kBufferLFORateDisplayX, kBufferLFORateDisplayY, kLCDDisplayWidth, kLCDDisplayHeight);
-	mBufferLFORateDisplay = emplaceControl<DGTextDisplay>(this, bufferLFORateParameterID, pos, bufferLFORateDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	mBufferLFORateDisplay = emplaceControl<DGTextDisplay>(this, bufferLFORateParameterID, pos, std::bind_front(lfoRateGenDisplayProc, kBufferLFORate_Sync, kBufferLFOTempoSync), nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
 
 	pos.set(kBufferLFODepthDisplayX, kBufferLFODepthDisplayY, kLCDDisplayWidth, kLCDDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kBufferLFODepth, pos, lfoDepthDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kBufferLFODepth, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	textDisplay->setPrecision(0);
 
 	pos.set(kSmoothDisplayX, kSmoothDisplayY, kLCDDisplayWidth, kLCDDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kSmooth, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kSmooth, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
 
 	pos.set(kDryWetMixDisplayX, kDryWetMixDisplayY, kLCDDisplayWidth, kLCDDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kDryWetMix, pos, dryWetMixDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kDryWetMix, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	textDisplay->setPrecision(0);
 
 	pos.set(kPitchBendRangeDisplayX, kPitchBendRangeDisplayY, kPitchbendDisplayWidth, kLCDDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kPitchBendRange, pos, pitchBendRangeDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDCyanTextColor, kValueDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kPitchBendRange, pos, pitchBendRangeDisplayProc, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDCyanTextColor, kValueDisplayFont);
 
 	pos.set(kTempoDisplayX, kTempoDisplayY, kLCDDisplayWidth, kLCDDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kTempo, pos, tempoDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kTempo, pos, DGTextDisplay::valueToTextProc_Generic, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	textDisplay->setPrecision(2);
 
 
 	// forced buffer size tempo sync button
@@ -475,9 +459,11 @@ void BufferOverrideEditor::OpenEditor()
 	minibufferPortionSlider->setAlternateHandles(sliderHandleImage_glowing, sliderHandleImage_glowing);
 	minibufferPortionSlider->setBackgroundOffset({kDryWetMixSliderX, kDryWetMixSliderY});
 	pos.set(pos.left, pos.top + 24 + kVTextOffset, kLCDDisplayWidth, kLCDDisplayHeight);
-	mMinibufferPortionRandomMinDisplay = emplaceControl<DGTextDisplay>(this, kMinibufferPortionRandomMin, pos, dryWetMixDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	mMinibufferPortionRandomMinDisplay = emplaceControl<DGTextDisplay>(this, kMinibufferPortionRandomMin, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	mMinibufferPortionRandomMinDisplay->setPrecision(0);
 	pos.setX(pos.left + kDryWetMixDisplayX - kDryWetMixSliderX);
-	emplaceControl<DGTextDisplay>(this, kMinibufferPortion, pos, dryWetMixDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kMinibufferPortion, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	textDisplay->setPrecision(0);
 
 	pos.set(pos.right + (spacingX * 4), appendixY, 88, dfx::kFontSize_Wetar16px * 2);
 	emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Left, dfx::kFontSize_Wetar16px * 2, DGColor::kBlack, dfx::kFontName_Wetar16px)->setText("DECAY");
@@ -487,7 +473,8 @@ void BufferOverrideEditor::OpenEditor()
 	decayDepthSlider->setAlternateHandle(sliderHandleImage_glowing);
 	decayDepthSlider->setBackgroundOffset({kDryWetMixSliderX, kDryWetMixSliderY});
 	pos.set(pos.left + kDryWetMixDisplayX - kDryWetMixSliderX, pos.top + 24 + kVTextOffset, kLCDDisplayWidth, kLCDDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kDecayDepth, pos, dryWetMixDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kDecayDepth, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kLCDGreenTextColor, kValueDisplayFont);
+	textDisplay->setPrecision(0);
 
 	pos.set(pos.right + spacingX, appendixY, 160, 32);
 	emplaceControl<DGPopUpMenu>(this, kDecayMode, pos, dfx::TextAlignment::Center, kValueDisplayFontSize, DGColor::kWhite, kValueDisplayFont, DGColor::kBlack);

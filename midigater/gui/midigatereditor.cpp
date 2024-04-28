@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -21,11 +21,6 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include "midigatereditor.h"
 
-#include <cmath>
-#include <cstdio>
-
-#include "dfxmath.h"
-#include "dfxmisc.h"
 #include "midigater.h"
 
 
@@ -64,29 +59,6 @@ constexpr DGColor kValueTextColor(152, 221, 251);
 //constexpr char const* const kValueTextFont = "Arial";
 constexpr char const* const kValueTextFont = "Trebuchet MS";
 constexpr float kValueTextSize = 11.0f;
-
-
-//-----------------------------------------------------------------------------
-// parameter value display text conversion functions
-
-static bool envelopeDisplayProc(float inValue, char* outText, void*)
-{
-	int const thousands = static_cast<int>(inValue) / 1000;
-	auto const remainder = std::fmod(inValue, 1000.0f);
-
-	bool success = false;
-	if (thousands > 0)
-	{
-		success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%d,%05.1f", thousands, remainder) > 0;
-	}
-	else
-	{
-		success = std::snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
-	}
-	dfx::StrlCat(outText, " ms", DGTextDisplay::kTextMaxLength);
-
-	return success;
-}
 
 
 
@@ -133,6 +105,8 @@ void MIDIGaterEditor::OpenEditor()
 
 
 	// --- text displays ---
+	constexpr auto envelopeDisplaySuffix = " ms";
+	constexpr unsigned int envelopeDisplayPrecision = 1;
 
 	// attack duration
 	pos.set(kDisplayX, kAttackDisplayY, kDisplayWidthHalf, kDisplayHeight);
@@ -140,8 +114,11 @@ void MIDIGaterEditor::OpenEditor()
 	label->setText(getparametername(kAttack));
 	//
 	pos.offset(kDisplayWidthHalf, 0);
-	emplaceControl<DGTextDisplay>(this, kAttack, pos, envelopeDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right,
-								  kValueTextSize, kValueTextColor, kValueTextFont);
+	auto textDisplay = emplaceControl<DGTextDisplay>(this, kAttack, pos, DGTextDisplay::valueToTextProc_Generic,
+													 nullptr, dfx::TextAlignment::Right,
+													 kValueTextSize, kValueTextColor, kValueTextFont);
+	textDisplay->setValueToTextSuffix(envelopeDisplaySuffix);
+	textDisplay->setValueToTextPrecision(envelopeDisplayPrecision);
 
 	// release duration
 	pos.set(kDisplayX, kReleaseDisplayY, kDisplayWidthHalf, kDisplayHeight);
@@ -149,8 +126,11 @@ void MIDIGaterEditor::OpenEditor()
 	label->setText(getparametername(kRelease));
 	//
 	pos.offset(kDisplayWidthHalf, 0);
-	emplaceControl<DGTextDisplay>(this, kRelease, pos, envelopeDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right,
-								  kValueTextSize, kValueTextColor, kValueTextFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kRelease, pos, DGTextDisplay::valueToTextProc_Generic,
+												nullptr, dfx::TextAlignment::Right,
+												kValueTextSize, kValueTextColor, kValueTextFont);
+	textDisplay->setValueToTextSuffix(envelopeDisplaySuffix);
+	textDisplay->setValueToTextPrecision(envelopeDisplayPrecision);
 
 	// velocity influence
 	pos.set(kDisplayX - 1, kVelocityInfluenceDisplayY, kVelocityInfluenceLabelWidth + 1, kDisplayHeight);
@@ -158,10 +138,10 @@ void MIDIGaterEditor::OpenEditor()
 	label->setText(getparametername(kVelocityInfluence));
 	//
 	pos.set(kDisplayX + kVelocityInfluenceLabelWidth, kVelocityInfluenceDisplayY, kDisplayWidth - kVelocityInfluenceLabelWidth, kDisplayHeight);
-	auto textDisplay = emplaceControl<DGTextDisplay>(this, kVelocityInfluence, pos,
-													 DGTextDisplay::valueToTextProc_LinearToPercent, nullptr,
-													 nullptr, dfx::TextAlignment::Right,
-													 kValueTextSize, kValueTextColor, kValueTextFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kVelocityInfluence, pos,
+												DGTextDisplay::valueToTextProc_LinearToPercent,
+												nullptr, dfx::TextAlignment::Right,
+												kValueTextSize, kValueTextColor, kValueTextFont);
 	textDisplay->setValueFromTextConvertProc(DGTextDisplay::valueFromTextConvertProc_PercentToLinear);
 
 	// floor
@@ -170,7 +150,7 @@ void MIDIGaterEditor::OpenEditor()
 	label->setText(getparametername(kFloor));
 	//
 	pos.offset(kDisplayWidthHalf, 0);
-	textDisplay = emplaceControl<DGTextDisplay>(this, kFloor, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, nullptr,
+	textDisplay = emplaceControl<DGTextDisplay>(this, kFloor, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr,
 												dfx::TextAlignment::Right, kValueTextSize, kValueTextColor, kValueTextFont);
 	textDisplay->setTextToValueProc(DGTextDisplay::textToValueProc_DbToLinear);
 
