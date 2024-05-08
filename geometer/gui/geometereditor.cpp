@@ -266,7 +266,7 @@ void GeometerEditor::OpenEditor() {
     displays[i] = emplaceControl<DGTextDisplay>(this, param, dpos, DGTextDisplay::valueToTextProc_Generic,
                                                 nullptr, dfx::TextAlignment::Right, dfx::kFontSize_Snooty10px,
                                                 fontcolor_values, dfx::kFontName_Snooty10px);
-    displays[i]->setValueToTextPrecision(7);
+    displays[i]->setPrecision(7);
     // units label
     auto const label = emplaceControl<DGTextArrayDisplay>(this, baseparam, lpos, labelstrings->size(),
                                                           dfx::TextAlignment::Center, nullptr,

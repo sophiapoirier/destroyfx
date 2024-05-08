@@ -223,7 +223,7 @@ void EQSyncEditor::OpenEditor()
 		}
 		else if (parameterID == kTempo)
 		{
-			textDisplay->setValueToTextPrecision(3);
+			textDisplay->setPrecision(3);
 		}
 	}
 

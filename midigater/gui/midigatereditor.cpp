@@ -118,7 +118,7 @@ void MIDIGaterEditor::OpenEditor()
 													 nullptr, dfx::TextAlignment::Right,
 													 kValueTextSize, kValueTextColor, kValueTextFont);
 	textDisplay->setValueToTextSuffix(envelopeDisplaySuffix);
-	textDisplay->setValueToTextPrecision(envelopeDisplayPrecision);
+	textDisplay->setPrecision(envelopeDisplayPrecision);
 
 	// release duration
 	pos.set(kDisplayX, kReleaseDisplayY, kDisplayWidthHalf, kDisplayHeight);
@@ -130,7 +130,7 @@ void MIDIGaterEditor::OpenEditor()
 												nullptr, dfx::TextAlignment::Right,
 												kValueTextSize, kValueTextColor, kValueTextFont);
 	textDisplay->setValueToTextSuffix(envelopeDisplaySuffix);
-	textDisplay->setValueToTextPrecision(envelopeDisplayPrecision);
+	textDisplay->setPrecision(envelopeDisplayPrecision);
 
 	// velocity influence
 	pos.set(kDisplayX - 1, kVelocityInfluenceDisplayY, kVelocityInfluenceLabelWidth + 1, kDisplayHeight);
