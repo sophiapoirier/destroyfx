@@ -119,6 +119,13 @@ enum : dfx::PropertyID
 };
 
 
+//------------------------------------------------------------------------------------------
+using UniqueAliasHandle = dfx::UniqueOpaqueType<AliasHandle, [](AliasHandle alias)
+{
+	DisposeHandle(reinterpret_cast<Handle>(alias));
+}>;
+
+
 
 //------------------------------------------------------------------------------------------
 class Turntablist final : public DfxPlugin
@@ -163,11 +170,6 @@ private:
 		, kParamGroup_Output
 #endif
 	};
-
-	using UniqueAliasHandle = dfx::UniqueOpaqueType<AliasHandle, [](AliasHandle alias)
-	{
-		DisposeHandle(reinterpret_cast<Handle>(alias));
-	}>;
 
 	OSStatus loadAudioFile(FSRef const& inFileRef);
 	std::expected<UniqueAliasHandle, OSStatus> createAudioFileAlias() const;
