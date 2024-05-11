@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -26,9 +26,9 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "dfxmath.h"
 
 
-void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames)
+void RezSynth::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
 {
-	auto const numChannels = getnumoutputs();
+	auto const numChannels = outAudio.size();
 	auto numFramesToProcess = inNumFrames;  // for dividing up the block according to events
 
 
@@ -174,7 +174,8 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 				mUnaffectedFadeSamples = entryUnaffectedFadeSamples;
 				mBetweenGain = entryBetweenGain;
 				mWetGain = entryUnaffectedWetGain;
-				processUnaffected(&(inAudio[ch][currentBlockPosition]), &(outAudio[ch][currentBlockPosition]), numFramesToProcess);
+				processUnaffected({&(inAudio[ch][currentBlockPosition]), numFramesToProcess},
+								  {&(outAudio[ch][currentBlockPosition]), numFramesToProcess});
 			}
 		}
 		else

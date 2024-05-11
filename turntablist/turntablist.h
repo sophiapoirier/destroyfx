@@ -139,7 +139,7 @@ public:
 
 	void idle() override;
 
-	void processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames) override;
+	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) override;
 	void processparameters() override;
 
 	dfx::StatusCode dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,

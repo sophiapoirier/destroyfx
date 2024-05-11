@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -111,7 +111,7 @@ public:
 	void randomizeparameters() override;
 
 	void processparameters() override;
-	void processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames) override;
+	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) override;
 
 
 private:

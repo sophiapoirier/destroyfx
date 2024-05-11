@@ -115,9 +115,9 @@ void MIDIGater::processparameters()
 
 
 //-----------------------------------------------------------------------------------------
-void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames)
+void MIDIGater::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
 {
-	auto const numChannels = getnumoutputs();
+	auto const numChannels = outAudio.size();
 	auto numFramesToProcess = inNumFrames;  // for dividing up the block according to events
 	auto const filterSmoothingStride = dfx::math::GetFrequencyBasedSmoothingStride(getsamplerate());
 

@@ -603,7 +603,7 @@ void DfxPlugin::RenderAudio(float** inAudioStreams, float** outAudioStreams, lon
 #if !TARGET_PLUGIN_USES_DSPCORE
 	if (!mGlobalBypass_rtas)
 	{
-		processaudio(const_cast<float const* const*>(mInputAudioStreams.data()), const_cast<float* const*>(outAudioStreams), dfx::math::ToUnsigned(inNumFramesToProcess));
+		processaudio(mInputAudioStreams, {outAudioStreams, getnumoutputs()}, dfx::math::ToUnsigned(inNumFramesToProcess));
 	}
 #endif
 

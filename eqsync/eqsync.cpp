@@ -123,9 +123,9 @@ void EQSync::processparameters()
 
 
 //-----------------------------------------------------------------------------
-void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames)
+void EQSync::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
 {
-	auto const numChannels = getnumoutputs();
+	auto const numChannels = outAudio.size();
 	bool eqChanged = false;
 
 	// . . . . . . . . . . . tempo stuff . . . . . . . . . . . . .

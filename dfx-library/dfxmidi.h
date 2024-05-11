@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -28,6 +28,7 @@ This is our MIDI stuff.
 
 #include <array>
 #include <optional>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -224,11 +225,11 @@ public:
 
 	// this writes the audio output for smoothing the tips of cut-off notes
 	// by sloping down from the last sample outputted by the note
-	void processSmoothingOutputSample(float* const* outAudio, size_t inNumFrames, int inMidiNote);
+	void processSmoothingOutputSample(std::span<float* const> outAudio, size_t inNumFrames, int inMidiNote);
 
 	// this writes the audio output for smoothing the tips of cut-off notes
 	// by fading out the samples stored in the tail buffers
-	void processSmoothingOutputBuffer(float* const* outAudio, size_t inNumFrames, int inMidiNote);
+	void processSmoothingOutputBuffer(std::span<float* const> outAudio, size_t inNumFrames, int inMidiNote);
 
 
 private:

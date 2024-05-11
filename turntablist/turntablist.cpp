@@ -816,13 +816,13 @@ void Turntablist::calculateSpinSpeeds()
 }
 
 //-----------------------------------------------------------------------------------------
-void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* outAudio, size_t inNumFrames)
+void Turntablist::processaudio(std::span<float const* const> /*inAudio*/, std::span<float* const> outAudio, size_t inNumFrames)
 {
 	std::optional<size_t> eventFrame;
 	auto const numEvents = getmidistate().getBlockEventCount();
 	size_t eventIndex = 0;
 
-	auto const numOutputs = getnumoutputs();
+	auto const numOutputs = outAudio.size();
 	auto interpolateHermiteFunction = dfx::math::InterpolateHermite_NoWrap;
 	if (m_bLoop)
 	{

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -247,7 +247,7 @@ void DfxStub::processparameters()
 //-----------------------------------------------------------------------------
 // passes one stream of input audio, one stream of output audio, 
 // and the number of sample frames in each stream
-void DfxStubDSP::process(std::span<float const> inStream, std::span<float> outStream)
+void DfxStubDSP::process(std::span<float const> inAudio, std::span<float> outAudio)
 {
 	// do your audio processing here
 }
@@ -256,7 +256,7 @@ void DfxStubDSP::process(std::span<float const> inStream, std::span<float> outSt
 //-----------------------------------------------------------------------------
 // passes an array of input streams, an array of output streams, 
 // and the number of sample frames in each stream
-void DfxStub::processaudio(float const* const* in, float** out, size_t inNumFrames)
+void DfxStub::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
 {
 	// do your audio processing here
 

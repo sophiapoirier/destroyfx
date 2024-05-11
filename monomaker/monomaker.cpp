@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of Monomaker.
 
@@ -200,12 +200,12 @@ void Monomaker::processparameters()
 }
 
 //-----------------------------------------------------------------------------------------
-void Monomaker::processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames)
+void Monomaker::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
 {
 	// point the input signal pointers to the correct input streams,
-	// according to the input selection (or dual-left if we only have 1 input)
+	// according to the input selection (or dual-left if we only have one input)
 	float const* inAudioL {}, * inAudioR {};
-	if (getnuminputs() == getnumoutputs())
+	if (inAudio.size() == outAudio.size())
 	{
 		inAudioL = inAudio[0];
 		inAudioR = inAudio[1];
@@ -214,7 +214,7 @@ void Monomaker::processaudio(float const* const* inAudio, float* const* outAudio
 	{
 		assert(mAsymmetricalInputAudioBuffer.size() >= inNumFrames);
 		// copy to an intermediate input buffer in case processing in-place
-		std::copy_n(inAudio[0], inNumFrames, mAsymmetricalInputAudioBuffer.data());
+		std::copy_n(inAudio.front(), inNumFrames, mAsymmetricalInputAudioBuffer.data());
 		inAudioL = inAudioR = mAsymmetricalInputAudioBuffer.data();
 	}
 

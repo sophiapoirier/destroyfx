@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -57,7 +57,7 @@ public:
 	void cleanup() override;
 	void reset() override;
 
-	void processaudio(float const* const* in, float** out, size_t inNumFrames) override;
+	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) override;
 	void processparameters() override;
 #endif
 
@@ -100,7 +100,7 @@ public:
 	void reset() override;
 
 	void processparameters() override;
-	void process(std::span<float const> inStream, std::span<float> outStream) override;
+	void process(std::span<float const> inAudio, std::span<float> outAudio) override;
 
 private:
 	// handy usable copies of the parameters

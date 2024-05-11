@@ -318,7 +318,7 @@ void Thrush::processparameters()
 }
 
 //-------------------------------------------------------------------------
-void Thrush::processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames)
+void Thrush::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
 {
 	// set up the basic startup conditions of all of the LFOs if any LFOs are turned on
 	calculateEffectiveTempo();

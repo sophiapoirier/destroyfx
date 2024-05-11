@@ -412,9 +412,9 @@ double Scrubby::processPitchConstraint(double readStep) const
 
 
 //-----------------------------------------------------------------------------------------
-void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames)
+void Scrubby::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
 {
-	auto const numChannels = getnumoutputs();
+	auto const numChannels = outAudio.size();
 
 	processMidiNotes();
 	checkTempoSyncStuff();
@@ -433,14 +433,14 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 	for (size_t sampleIndex = 0; sampleIndex < inNumFrames; sampleIndex++)
 	{
 		// cache first channel input audio sample so that in-place processing can overwrite it for subsequent channels
-		auto const inputValue_firstChannel = inAudio[0][sampleIndex];
+		auto const inputValue_firstChannel = inAudio.front()[sampleIndex];
 
 		// update the buffers with the latest samples
 		if (!mFreeze)
 		{
 			for (size_t ch = 0; ch < numChannels; ch++)
 			{
-				mAudioBuffers[ch][mWritePos] = inAudio[std::min(ch, getnuminputs() - 1)][sampleIndex];
+				mAudioBuffers[ch][mWritePos] = inAudio[std::min(ch, inAudio.size() - 1)][sampleIndex];
 			}
 #if 0  // melody test
 			for (size_t ch = 0; ch < numChannels; ch++)
@@ -459,7 +459,7 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 		// write the output to the output streams, interpolated for smoothness
 		for (size_t ch = 0; ch < numChannels; ch++)
 		{
-			auto const inputValue = (ch < getnuminputs()) ? inAudio[ch][sampleIndex] : inputValue_firstChannel;
+			auto const inputValue = (ch < inAudio.size()) ? inAudio[ch][sampleIndex] : inputValue_firstChannel;
 			auto outputValue = dfx::math::InterpolateHermite(std::span(mAudioBuffers[ch]).subspan(0, mMaxAudioBufferSize), mReadPos[ch]);
 			outputValue = mHighpassFilters[ch].process(outputValue);
 			outAudio[ch][sampleIndex] = (inputValue * mInputGain.getValue()) + (outputValue * mOutputGain.getValue());

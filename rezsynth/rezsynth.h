@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 
 #include <array>
+#include <span>
 #include <vector>
 
 #include "dfxplugin.h"
@@ -129,7 +130,7 @@ public:
 	void reset() override;
 
 	void processparameters() override;
-	void processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames) override;
+	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) override;
 
 private:
 	static constexpr int64_t kMaxBands = 30;  // the maximum number of resonant bands
@@ -150,10 +151,10 @@ private:
 
 	double calculateAmpEvener(int currentNote) const;
 	[[nodiscard]] int calculateCoefficients(int currentNote);
-	void processFilterOuts(float const* const* inAudio, float* const* outAudio,
+	void processFilterOuts(std::span<float const* const> inAudio, std::span<float* const> outAudio,
 						   size_t sampleFrameOffset, size_t sampleFrames,
 						   int currentNote, int numBands);
-	void processUnaffected(float const* inAudio, float* outAudio, size_t sampleFrames);
+	void processUnaffected(std::span<float const> inAudio, std::span<float> outAudio);
 	double getBandwidthForFreq(double inFreq) const;
 	void checkForNewNote(size_t currentEvent);
 

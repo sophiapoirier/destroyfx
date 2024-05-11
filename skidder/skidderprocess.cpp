@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2023  Sophia Poirier
+Copyright (C) 2000-2024  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -283,11 +283,11 @@ float Skidder::processOutput(float in1, float in2, float panGain)
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames)
+void Skidder::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
 {
-	auto const numInputs = getnuminputs();
-	auto const numOutputs = getnumoutputs();
-	float const channelScalar = 1.0f / static_cast<float>(numOutputs);
+	auto const numInputs = inAudio.size();
+	auto const numOutputs = outAudio.size();
+	float const channelScalar = 1.f / static_cast<float>(numOutputs);
 	auto const filterSmoothingStride = dfx::math::GetFrequencyBasedSmoothingStride(getsamplerate());
 	assert(std::ranges::all_of(mEffectualInputAudioBuffers, [inNumFrames](auto const& buffer){ return buffer.size() >= inNumFrames; }));
 
@@ -326,7 +326,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 		else
 		{
 			// fan-out the already-rendered persistent crossover output
-			std::copy_n(outAudio[0], inNumFrames, outAudio[ch]);
+			std::copy_n(outAudio.front(), inNumFrames, outAudio[ch]);
 		}
 
 		mOutputAudio[ch] = outAudio[ch];

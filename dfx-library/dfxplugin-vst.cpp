@@ -557,7 +557,7 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 		}
 	}
 #else
-	processaudio(mInputAudioStreams.data(), outputs, dfx::math::ToUnsigned(sampleFrames));
+	processaudio(mInputAudioStreams, {outputs, getnumoutputs()}, dfx::math::ToUnsigned(sampleFrames));
 #endif
 
 	postprocessaudio();

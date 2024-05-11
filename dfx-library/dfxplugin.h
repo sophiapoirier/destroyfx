@@ -254,7 +254,7 @@ public:
 	// ***
 	// do the audio processing (override with real stuff)
 	// pass in arrays of float buffers for input and output ([channel][sample]), 
-	virtual void processaudio(float const* const* inStreams, float* const* outStreams, size_t inNumFrames) {}
+	virtual void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) {}
 
 	auto getnumparameters() const noexcept
 	{
@@ -823,7 +823,7 @@ private:
 #ifdef TARGET_API_AUDIOUNIT
 	bool mAUElementsHaveBeenCreated = false;
 	// array of float pointers to input and output audio buffers, 
-	// just for the sake of making processaudio(float**, float**, etc.) possible
+	// just for the sake of making processaudio(std::span<float const*>, std::span<float*>, etc.) possible
 	std::vector<float const*> mInputAudioStreams_au;
 	std::vector<float*> mOutputAudioStreams_au;
 
@@ -1139,7 +1139,7 @@ public:
 		reset();
 	}
 
-	virtual void process(std::span<float const> inStream, std::span<float> outStream) = 0;
+	virtual void process(std::span<float const> inAudio, std::span<float> outAudio) = 0;
 	virtual void reset() {}
 	// NOTE: a weakness of the processparameters design, and then subsequent snapping of 
 	// all smoothed values if it is the first audio render since audio reset, is that you 
@@ -1228,7 +1228,7 @@ public:
 	}
 
 #ifdef TARGET_API_AUDIOUNIT
-	void Process(Float32 const* inStream, Float32* outStream, UInt32 inNumFrames, bool& ioSilence) final
+	void Process(Float32 const* inAudio, Float32* outAudio, UInt32 inNumFrames, bool& ioSilence) final
 	{
 		process({inStream, inNumFrames}, {outStream, inNumFrames});
 		ioSilence = false;  // TODO: allow DSP cores to communicate their output silence status

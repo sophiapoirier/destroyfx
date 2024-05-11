@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -559,12 +559,13 @@ void DfxMidi::postprocessEnvelope(MusicNote& inNote)
 // this function writes the audio output for smoothing the tips of cut-off notes
 // by sloping down from the last sample outputted by the note
 // TODO: should this accommodate the legato voice?
-void DfxMidi::processSmoothingOutputSample(float* const* outAudio, size_t inNumFrames, int inMidiNote)
+void DfxMidi::processSmoothingOutputSample(std::span<float* const> outAudio, size_t inNumFrames, int inMidiNote)
 {
 	auto& noteAudio = mNoteAudioTable[inMidiNote];
+	assert(outAudio.size() == noteAudio.mLastOutValue.size());
 	auto& smoothSamples = noteAudio.mSmoothSamples;
 	auto const entrySmoothSamples = smoothSamples;
-	for (size_t channelIndex = 0; channelIndex < noteAudio.mLastOutValue.size(); channelIndex++)
+	for (size_t channelIndex = 0; channelIndex < outAudio.size(); channelIndex++)
 	{
 		smoothSamples = entrySmoothSamples;
 		auto const lastOutValue = noteAudio.mLastOutValue[channelIndex];
@@ -583,12 +584,13 @@ void DfxMidi::processSmoothingOutputSample(float* const* outAudio, size_t inNumF
 // this function writes the audio output for smoothing the tips of cut-off notes
 // by fading out the samples stored in the tail buffers
 // TODO: should this accommodate the legato voice?
-void DfxMidi::processSmoothingOutputBuffer(float* const* outAudio, size_t inNumFrames, int inMidiNote)
+void DfxMidi::processSmoothingOutputBuffer(std::span<float* const> outAudio, size_t inNumFrames, int inMidiNote)
 {
 	auto& noteAudio = mNoteAudioTable[inMidiNote];
+	assert(outAudio.size() == noteAudio.mTails.size());
 	auto& smoothSamples = noteAudio.mSmoothSamples;
 	auto const entrySmoothSamples = smoothSamples;
-	for (size_t channelIndex = 0; channelIndex < noteAudio.mTails.size(); channelIndex++)
+	for (size_t channelIndex = 0; channelIndex < outAudio.size(); channelIndex++)
 	{
 		smoothSamples = entrySmoothSamples;
 		auto const& tail = noteAudio.mTails[channelIndex];

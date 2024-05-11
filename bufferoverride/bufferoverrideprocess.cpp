@@ -360,9 +360,9 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 
 //---------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------
-void BufferOverride::processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames)
+void BufferOverride::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
 {
-	auto const numChannels = getnumoutputs();
+	auto const numChannels = outAudio.size();
 	auto const entryDivisor = mDivisor;
 	constexpr float halfPi = std::numbers::pi_v<float> / 2.f;
 

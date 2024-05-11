@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2024  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -21,6 +21,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include "rezsynth.h"
 
+#include <cassert>
 #include <cmath>
 #include <tuple>
 #include <type_traits>
@@ -169,11 +170,13 @@ int RezSynth::calculateCoefficients(int currentNote)
 
 //-----------------------------------------------------------------------------------------
 // This function writes the filtered audio output.
-void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outAudio,
+void RezSynth::processFilterOuts(std::span<float const* const> inAudio, std::span<float* const> outAudio,
 								 size_t sampleFrameOffset, size_t sampleFrames,
 								 int currentNote, int numBands)
 {
-	auto const numChannels = getnumoutputs();
+	assert(inAudio.size() == outAudio.size());
+
+	auto const numChannels = outAudio.size();
 	float envAmp = 1.f;
 	auto& channelFilters = mLowpassGateFilters[currentNote];
 
@@ -259,9 +262,11 @@ void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outA
 
 //-----------------------------------------------------------------------------------------
 // this function outputs the unprocessed audio input between notes, if desired
-void RezSynth::processUnaffected(float const* inAudio, float* outAudio, size_t sampleFrames)
+void RezSynth::processUnaffected(std::span<float const> inAudio, std::span<float> outAudio)
 {
-	for (size_t sampleIndex = 0; sampleIndex < sampleFrames; sampleIndex++)
+	assert(inAudio.size() == outAudio.size());
+
+	for (size_t sampleIndex = 0; sampleIndex < outAudio.size(); sampleIndex++)
 	{
 		float unEnvAmp = 1.0f;
 

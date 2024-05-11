@@ -46,7 +46,7 @@ public:
 	void cleanup() override;
 	void reset() override;
 
-	void processaudio(float const* const* inAudio, float* const* outAudio, size_t inNumFrames) override;
+	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) override;
 	void processparameters() override;
 	void parameterChanged(dfx::ParameterID inParameterID) override;
 
