@@ -1230,7 +1230,7 @@ public:
 #ifdef TARGET_API_AUDIOUNIT
 	void Process(Float32 const* inAudio, Float32* outAudio, UInt32 inNumFrames, bool& ioSilence) final
 	{
-		process({inStream, inNumFrames}, {outStream, inNumFrames});
+		process({inAudio, inNumFrames}, {outAudio, inNumFrames});
 		ioSilence = false;  // TODO: allow DSP cores to communicate their output silence status
 	}
 	void Reset() final
