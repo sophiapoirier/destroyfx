@@ -435,7 +435,7 @@ void DGTextDisplay::takeFocus()
 }
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion)
+void DGTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::UTF8String const& inString, VSTGUI::CRect const& inRegion)
 {
 	auto const textArea = DFXGUI_GetTextDrawRegion(inRegion, mYOffsetTweak, mIsBitmapFont);
 	VSTGUI::CTextEdit::drawPlatformText(inContext, inString, textArea);
@@ -529,7 +529,7 @@ void DGStaticTextDisplay::setCFText(CFStringRef inText)
 #endif
 
 //-----------------------------------------------------------------------------
-void DGStaticTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion)
+void DGStaticTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::UTF8String const& inString, VSTGUI::CRect const& inRegion)
 {
 	auto const textArea = DFXGUI_GetTextDrawRegion(inRegion, mYOffsetTweak, mIsBitmapFont);
 	VSTGUI::CTextLabel::drawPlatformText(inContext, inString, textArea);
@@ -591,7 +591,7 @@ void DGTextArrayDisplay::draw(VSTGUI::CDrawContext* inContext)
 
 	if (stringIndex < mDisplayStrings.size())
 	{
-		drawPlatformText(inContext, VSTGUI::UTF8String(mDisplayStrings[stringIndex]).getPlatformString(), getViewSize());
+		drawPlatformText(inContext, VSTGUI::UTF8String(mDisplayStrings[stringIndex]), getViewSize());
 	}
 
 	setDirty(false);
@@ -658,15 +658,15 @@ void DGHelpBox::draw(VSTGUI::CDrawContext* inContext)
 		{
 			auto const entryFontColor = getFontColor();
 			setFontColor(mHeaderFontColor);
-			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textArea);
+			drawPlatformText(inContext, VSTGUI::UTF8String(line), textArea);
 			textArea.offset(1, 0);
-			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textArea);
+			drawPlatformText(inContext, VSTGUI::UTF8String(line), textArea);
 			textArea.offset(-1, fontHeight + mLineSpacing + mHeaderSpacing);
 			setFontColor(entryFontColor);
 		}
 		else
 		{
-			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textArea);
+			drawPlatformText(inContext, VSTGUI::UTF8String(line), textArea);
 			textArea.offset(0, fontHeight + mLineSpacing);
 		}
 	}

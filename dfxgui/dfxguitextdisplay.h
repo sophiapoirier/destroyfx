@@ -100,7 +100,7 @@ public:
 
 protected:
 	void takeFocus() override;
-	void drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion) override;
+	void drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::UTF8String const& inString, VSTGUI::CRect const& inRegion) override;
 
 private:
 	int getPrecisionIfCustomizedOr(int inDefaultPrecision) const;
@@ -138,7 +138,7 @@ public:
 	CLASS_METHODS(DGStaticTextDisplay, VSTGUI::CTextLabel)
 
 protected:
-	void drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion) override;
+	void drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::UTF8String const& inString, VSTGUI::CRect const& inRegion) override;
 
 private:
 	int const mYOffsetTweak = 0;
