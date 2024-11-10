@@ -145,7 +145,7 @@ void DfxMidi::preprocessEvents(size_t inNumFrames)
 
 	// Sort the events in our queue so that they are in chronological order.
 	// The host is supposed to send them in order, but just in case...
-	std::span const activeBlockEvents(mBlockEvents.begin(), mNumBlockEvents);
+	auto const activeBlockEvents = std::span(mBlockEvents).subspan(0, mNumBlockEvents);
 	// we can postpone filling the arrival indices until now since this is the only place they are used
 	for (size_t i = 0; i < activeBlockEvents.size(); i++)
 	{

@@ -332,7 +332,7 @@ void DfxGuiEditor::valueChanged(VSTGUI::CControl* inControl)
 	{
 #ifdef TARGET_API_AUDIOUNIT
 		auto const parameterValue_literal = dfxgui_ExpandParameterValue(parameterID, parameterValue_norm);
-		// XXX or should I call setparameter_f()?
+		// XXX or should we call setparameter_f()?
 		auto const auParam = dfxgui_MakeAudioUnitParameter(parameterID);
 		AUParameterSet(mAUEventListener.get(), inControl, &auParam, parameterValue_literal, 0);
 #elifdef TARGET_API_VST
@@ -2463,7 +2463,7 @@ private:
 					   kPasteTextSuffix.size());
 		constexpr auto toByte = []<typename T> requires(sizeof(T) == 1) (T value){ return static_cast<std::byte>(value); };
 		std::ranges::transform(kPasteTextPrefix, std::back_inserter(result), toByte);
-		std::ranges::transform(std::span(base64.data.begin(), base64.dataSize), std::back_inserter(result), toByte);
+		std::ranges::transform(std::span(base64.data).subspan(0, base64.dataSize), std::back_inserter(result), toByte);
 		std::ranges::transform(kPasteTextSuffix, std::back_inserter(result), toByte);
 		std::ranges::transform(kPasteTextPadding, std::back_inserter(result), toByte);
 		return result;
@@ -2848,7 +2848,7 @@ void DfxGuiEditor::Require(bool inCondition, std::string const& inFailureMessage
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::InstallAUEventListeners()
 {
-	// TODO: should I use kCFRunLoopCommonModes instead, like AUCarbonViewBase does?
+	// TODO: should we use kCFRunLoopCommonModes instead, like AUCarbonViewBase does?
 	AUEventListenerRef auEventListener_temp = nullptr;
 	auto const status = AUEventListenerCreate(AudioUnitEventListenerProc, this, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 
 											  kNotificationInterval, kNotificationInterval, &auEventListener_temp);

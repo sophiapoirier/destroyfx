@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -27,6 +27,7 @@ These are some generally useful functions.
 #include "dfxmisc.h"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cctype>
 #include <cstddef>
@@ -34,6 +35,7 @@ These are some generally useful functions.
 #include <functional>
 #include <iterator>
 #include <locale>
+#include <span>
 #include <string_view>
 #include <string>
 
@@ -67,7 +69,7 @@ namespace dfx
 void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount)
 {
 	size_t const halfItemSize = inItemSize / 2;
-	auto dataBytes = static_cast<std::byte*>(ioData);
+	std::span dataBytes(static_cast<std::byte*>(ioData), inItemSize * inItemCount);
 
 	for (size_t itemIndex = 0; itemIndex < inItemCount; itemIndex++)
 	{
@@ -76,7 +78,7 @@ void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount)
 			size_t const complementIndex = (inItemSize - 1) - byteIndex;
 			std::swap(dataBytes[byteIndex], dataBytes[complementIndex]);
 		}
-		dataBytes += inItemSize;
+		dataBytes = dataBytes.subspan(inItemSize);
 	}
 }
 
@@ -288,8 +290,9 @@ bool LaunchDocumentation()
 //-----------------------------------------------------------------------------
 std::string GetNameForMIDINote(int inMidiNote)
 {
-	constexpr int kNumNotesInOctave = 12;
-	constexpr char const* const keyNames[kNumNotesInOctave] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+	constexpr auto keyNames = std::to_array({ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" });
+	constexpr int kNumNotesInOctave = static_cast<int>(keyNames.size());
+	static_assert(kNumNotesInOctave == 12);
 	auto const keyNameIndex = inMidiNote % kNumNotesInOctave;
 	auto const octaveNumber = (inMidiNote / kNumNotesInOctave) - 1;
 	return std::string(keyNames[keyNameIndex]) + " " + std::to_string(octaveNumber);

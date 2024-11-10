@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2024  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -24,11 +24,13 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "dfxguimisc.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 #include <cmath>
 #include <cstring>
 #include <functional>
 #include <optional>
+#include <span>
 #include <utility>
 
 #include "dfxmisc.h"
@@ -94,15 +96,14 @@ DGColor DGColor::getSystem(System inSystemColorID)
 	{
 		if (inColor)
 		{
-			auto const rgbColor = [inColor colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
-			if (rgbColor)
+			if (auto const rgbColor = [inColor colorUsingColorSpace:NSColorSpace.sRGBColorSpace])
 			{
 //std::printf("%lf %lf %lf %lf\n", rgbColor.redComponent * 255., rgbColor.greenComponent * 255., rgbColor.blueComponent * 255., rgbColor.alphaComponent);
 				return DGColor(static_cast<float>(rgbColor.redComponent), static_cast<float>(rgbColor.greenComponent), 
 							   static_cast<float>(rgbColor.blueComponent), static_cast<float>(rgbColor.alphaComponent));
 			}
 			// failure workaround: fill a bitmap context with the color to snoop it
-			dfx::UniqueOpaqueType<CGColorSpaceRef, CGColorSpaceRelease> const colorSpace(CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB));
+			dfx::UniqueOpaqueType<CGColorSpaceRef, CGColorSpaceRelease> const colorSpace(CGColorSpaceCreateWithName(kCGColorSpaceSRGB));
 			if (colorSpace)
 			{
 				constexpr size_t width = 1, height = 1, bitsPerComponent = 8, bytesPerRow = 0;
@@ -111,9 +112,11 @@ DGColor DGColor::getSystem(System inSystemColorID)
 				{
 					CGContextSetFillColorWithColor(bitmapContext.get(), inColor.CGColor);
 					CGContextFillRect(bitmapContext.get(), CGRectMake(0, 0, width, height));
-					if (auto const bitmapData = static_cast<uint8_t*>(CGBitmapContextGetData(bitmapContext.get())))
+					if (auto const bitmapDataPtr = static_cast<uint8_t*>(CGBitmapContextGetData(bitmapContext.get())))
 					{
-						return DGColor(bitmapData[0], bitmapData[1], bitmapData[2], bitmapData[3]);
+						std::span const bitmapData(bitmapDataPtr, CGColorSpaceGetNumberOfComponents(colorSpace.get()));
+						assert(bitmapData.size() == 3);
+						return DGColor(bitmapData[0], bitmapData[1], bitmapData[2]);
 					}
 				}
 			}
