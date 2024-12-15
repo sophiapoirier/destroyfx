@@ -76,7 +76,7 @@
     forgot to &quot;notarize&quot; the download package. The easiest solution is to convince macOS
     that it was not downloaded from the wilds of the internet via the following command in Terminal:
     <br />
-    <code>xattr -d com.apple.quarantine ~/Downloads/transverb-1.5.2-mac.dmg</code>
+    <code>xattr -c ~/Downloads/transverb-1.5.2-mac.dmg</code>
     <br />
     (which assumes the default downloaded path to the disk image file, though adjust the end of that
     command accordingly if you relocated the file). You may need to unmount and remount the
