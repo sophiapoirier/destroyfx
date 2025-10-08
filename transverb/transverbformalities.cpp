@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2025  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -430,8 +430,7 @@ void Transverb::randomizeparameters()
 			continue;
 		}
 		// make slow speeds more probable (for fairer distribution)
-		// TODO C++23: std::ranges::contains
-		if (std::ranges::find(kSpeedParameters, i) != kSpeedParameters.cend())
+		if (std::ranges::contains(kSpeedParameters, i))
 		{
 			auto const rand = generateParameterRandomValue<double>(-1., 1.);
 			auto const range = (rand < 0.) ? getparametermin_f(i) : getparametermax_f(i); 
@@ -595,8 +594,7 @@ void Transverb::settings_doChunkRestoreSetParameterStuff(dfx::ParameterID parame
 	if (dataVersion <= 0x00010502)
 	{
 		// invert old erroneously reversed dist parameter values
-		// TODO C++23: std::ranges::contains
-		if (std::ranges::find(kDistParameters, parameterID) != kDistParameters.cend())
+		if (std::ranges::contains(kDistParameters, parameterID))
 		{
 			auto const valueNormalized = 1. - contractparametervalue(parameterID, value);
 			if (presetIndex)

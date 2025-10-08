@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2024  Sophia Poirier
+Copyright (C) 2002-2025  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -462,8 +462,7 @@ void DfxGuiEditor::PropertyChanged(dfx::PropertyID inPropertyID, dfx::Scope inSc
 bool DfxGuiEditor::IsPropertyRegistered(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex) const
 {
 	PropertyDescriptor const property{inPropertyID, inScope, inItemIndex};
-	// TODO C++23: std::ranges::contains
-	return std::ranges::find(mRegisteredProperties, property) != mRegisteredProperties.cend();
+	return std::ranges::contains(mRegisteredProperties, property);
 }
 
 //-----------------------------------------------------------------------------
@@ -474,8 +473,7 @@ IDGControl* DfxGuiEditor::addControl(IDGControl* inControl)
 	// XXX only add it to our controls list if it is attached to a parameter (?)
 	if (dfxgui_IsValidParameterID(inControl->getParameterID()))
 	{
-		// TODO C++23: std::ranges::contains
-		assert(std::ranges::find(mControlsList, inControl) == mControlsList.cend());
+		assert(!std::ranges::contains(mControlsList, inControl));
 		mControlsList.push_back(inControl);
 		inControl->asCControl()->registerViewEventListener(this);
 	}
@@ -491,8 +489,7 @@ void DfxGuiEditor::removeControl(IDGControl* inControl)
 {
 	assert(false);  // TODO: test or remove this method? (it currently is not used anywhere)
 
-	// TODO C++23: std::ranges::contains
-	assert(std::ranges::find(mControlsList, inControl) != mControlsList.cend());
+	assert(std::ranges::contains(mControlsList, inControl));
 	std::erase(mControlsList, inControl);
 
 	inControl->asCControl()->unregisterViewEventListener(this);

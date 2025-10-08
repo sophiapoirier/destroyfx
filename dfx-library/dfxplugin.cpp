@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2024  Sophia Poirier
+Copyright (C) 2002-2025  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -30,6 +30,7 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 #include <atomic>
 #include <bitset>
 #include <cassert>
+#include <climits>
 #include <cmath>
 #include <functional>
 #include <mutex>
@@ -1496,8 +1497,7 @@ void DfxPlugin::addchannelconfig(short inNumInputs, short inNumOutputs)
 //-----------------------------------------------------------------------------
 void DfxPlugin::addchannelconfig(ChannelConfig inChannelConfig)
 {
-	// TODO C++23: !std::ranges::contains
-	assert(std::ranges::find(mChannelConfigs, inChannelConfig) == mChannelConfigs.cend());
+	assert(!std::ranges::contains(mChannelConfigs, inChannelConfig));
 	assert((inChannelConfig == kChannelConfig_AnyInAnyOut) || ((inChannelConfig.inChannels >= kChannelConfigCount_Any) && (inChannelConfig.outChannels >= kChannelConfigCount_Any)));
 #if TARGET_PLUGIN_USES_DSPCORE
 	assert((inChannelConfig.inChannels == inChannelConfig.outChannels) || (inChannelConfig.inChannels == 1));

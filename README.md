@@ -244,7 +244,7 @@ platforms. I think it is possible to install mingw on say, linux, and
 the build process shouldn't need to run anything other than the
 compiler, resource compiler, and linker. I haven't tried it, though.
 
-We are using C++17 features in DFX now, so you might need a pretty
+We are using C++23 features in DFX now, so you might need a pretty
 new compiler. This is known to work:
 
 	$ x86_64-w64-mingw32-g++ --version
