@@ -84,7 +84,7 @@ private:
 	DfxIdleRegistrar() = default;
 
 	std::atomic<bool> mThreadShouldRun {false};
-	std::optional<std::thread> mThread;  // TODO C++20: use std::jthread
+	std::optional<std::jthread> mThread;
 	std::mutex mThreadLock;
 	std::unordered_set<DfxPlugin*> mClients;
 	std::mutex mClientsLock;
@@ -144,11 +144,7 @@ void DfxIdleRegistrar::remove(DfxPlugin* const inIdleClient)
 	{
 		mThreadShouldRun = false;
 		std::lock_guard const guard(mThreadLock);
-		if (mThread)
-		{
-			mThread->join();
-			mThread.reset();
-		}
+		mThread.reset();
 	}
 }
 
