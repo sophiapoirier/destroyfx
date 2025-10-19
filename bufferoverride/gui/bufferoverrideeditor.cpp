@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2025  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -266,14 +266,14 @@ public:
 //-----------------------------------------------------------------------------
 DFX_EDITOR_ENTRY(BufferOverrideEditor)
 
+#if DEBUG
 //-----------------------------------------------------------------------------
 BufferOverrideEditor::BufferOverrideEditor(DGEditorListenerInstance inInstance)
 :	DfxGuiEditor(inInstance)
 {
-#if DEBUG
 	rect.bottom += 64;
-#endif
 }
+#endif
 
 //-----------------------------------------------------------------------------
 void BufferOverrideEditor::OpenEditor()
@@ -340,7 +340,7 @@ void BufferOverrideEditor::OpenEditor()
 	auto const bufferSizeParameterID = getparameter_b(kBufferTempoSync) ? kBufferSize_Sync : kBufferSize_MS;
 	pos.set(kDivisorBufferBoxX, kDivisorBufferBoxY, kDivisorBufferBoxWidth, kDivisorBufferBoxHeight);
 	mDivisorBufferBox = emplaceControl<DGXYBox>(this, kDivisor, bufferSizeParameterID, pos, xyBoxHandleImage, nullptr,
-												VSTGUI::CSliderBase::kLeft | VSTGUI::CSliderBase::kTop);
+												VSTGUI::CSlider::Styles({VSTGUI::CSliderBase::kLeft, VSTGUI::CSliderBase::kTop}));
 	mDivisorBufferBox->setAlternateHandles(xyBoxHandleImage_divisor_glowing, xyBoxHandleImage_buffer_glowing);
 	mDivisorBufferBox->setIntegralPosition(true);
 

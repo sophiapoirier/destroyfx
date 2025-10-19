@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2025  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -133,7 +133,7 @@ class DGXYBox : public DGMultiControl<VSTGUI::CControl>
 public:
 	DGXYBox(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterIDX, dfx::ParameterID inParameterIDY, 
 			DGRect const& inRegion, DGImage* inHandleImage, DGImage* inBackgroundImage = nullptr, 
-			int inStyle = VSTGUI::CSliderBase::kLeft | VSTGUI::CSliderBase::kBottom);
+			VSTGUI::CSliderBase::Styles inStyle = {{VSTGUI::CSliderBase::kLeft, VSTGUI::CSliderBase::kBottom}});
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
 	void onMouseDownEvent(VSTGUI::MouseDownEvent& ioEvent) override;
@@ -168,7 +168,7 @@ private:
 	IDGControl* const mControlX;
 	IDGControl* const mControlY;
 	VSTGUI::SharedPointer<VSTGUI::CBitmap> const mMainHandleImage;
-	/*VSTGUI::CSliderBase::Style*/int const mStyle;
+	VSTGUI::CSliderBase::Styles const mStyle;
 	VSTGUI::SharedPointer<VSTGUI::CBitmap> mAlternateHandleImageX, mAlternateHandleImageY;
 	VSTGUI::CCoord const mHandleWidth, mHandleHeight;
 	VSTGUI::CCoord const mMinXPos, mMaxXPos, mMinYPos, mMaxYPos;

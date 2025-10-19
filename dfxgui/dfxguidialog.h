@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2015-2023  Sophia Poirier
+Copyright (C) 2015-2025  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -154,10 +154,6 @@ public:
 	bool runModal(VSTGUI::CFrame* inFrame);
 
 	CLASS_METHODS_NOCOPY(DGTextScrollDialog, VSTGUI::CScrollView)
-
-protected:
-	// CScrollView override
-	void recalculateSubViews() override;
 
 private:
 	std::optional<detail::DGModalSession> mModalSession;

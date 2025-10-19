@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2025  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -121,7 +121,7 @@ DGSlider::DGSlider(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterID, 
 							   inHandleImage, 
 							   inBackgroundImage, 
 							   VSTGUI::CPoint(0, 0), 
-							   (inOrientation & dfx::kAxis_Horizontal) ? (kLeft | kHorizontal) : (kBottom | kVertical)),
+							   (inOrientation & dfx::kAxis_Horizontal) ? VSTGUI::CSlider::Styles({kLeft, kHorizontal}) : VSTGUI::CSlider::Styles({kBottom, kVertical})),
 	mMainHandleImage(inHandleImage)
 {
 	setTransparency(true);
@@ -559,7 +559,7 @@ void DGRangeSlider::setMidiLearner(bool /*inEnable*/)
 
 //-----------------------------------------------------------------------------
 DGXYBox::DGXYBox(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterIDX, dfx::ParameterID inParameterIDY, 
-				 DGRect const& inRegion, DGImage* inHandleImage, DGImage* inBackgroundImage, int inStyle)
+				 DGRect const& inRegion, DGImage* inHandleImage, DGImage* inBackgroundImage, VSTGUI::CSliderBase::Styles inStyle)
 :	DGMultiControl<VSTGUI::CControl>(inRegion, 
 									 inOwnerEditor, 
 									 dfx::ParameterID_ToVST(inParameterIDX), 
@@ -578,9 +578,10 @@ DGXYBox::DGXYBox(DfxGuiEditor* inOwnerEditor, dfx::ParameterID inParameterIDX, d
 	mEffectiveRangeX(static_cast<float>(mMaxXPos - mMinXPos)), 
 	mEffectiveRangeY(static_cast<float>(mMaxYPos - mMinYPos))
 {
-	assert((inStyle & VSTGUI::CSliderBase::kLeft) ^ (inStyle & VSTGUI::CSliderBase::kRight));
-	assert((inStyle & VSTGUI::CSliderBase::kBottom) ^ (inStyle & VSTGUI::CSliderBase::kTop));
-	assert(!(inStyle & (VSTGUI::CSliderBase::kHorizontal | VSTGUI::CSliderBase::kVertical)));
+	assert(!(inStyle & VSTGUI::CSliderBase::kLeft) != !(inStyle & VSTGUI::CSliderBase::kRight));
+	assert(!(inStyle & VSTGUI::CSliderBase::kBottom) != !(inStyle & VSTGUI::CSliderBase::kTop));
+	assert(!(inStyle & VSTGUI::CSliderBase::kHorizontal));
+	assert(!(inStyle & VSTGUI::CSliderBase::kVertical));
 
 	setTransparency(true);
 }

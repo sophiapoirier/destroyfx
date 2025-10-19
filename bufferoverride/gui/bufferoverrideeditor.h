@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2023  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -31,7 +31,11 @@ To contact the author, use the contact form at http://destroyfx.org
 class BufferOverrideEditor final : public DfxGuiEditor
 {
 public:
+#if DEBUG
 	explicit BufferOverrideEditor(DGEditorListenerInstance inInstance);
+#else
+	using DfxGuiEditor::DfxGuiEditor;
+#endif
 
 	void OpenEditor() override;
 	void CloseEditor() override;

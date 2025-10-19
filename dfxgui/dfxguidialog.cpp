@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2015-2024  Sophia Poirier
+Copyright (C) 2015-2025  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -660,6 +660,12 @@ DGTextScrollDialog::DGTextScrollDialog(DGRect const& inRegion, std::string const
 //	label->setAutoHeight(true);
 	label->setFont(DFXGUI_GetDialogFont());
 	addView(label);
+
+	auto const scrollbar = getVerticalScrollbar();
+	assert(scrollbar);
+	scrollbar->setFrameColor(VSTGUI::kTransparentCColor);
+	scrollbar->setBackgroundColor(VSTGUI::kTransparentCColor);
+	scrollbar->setScrollerColor(DGColor::getSystem(DGColor::System::ScrollBarColor));
 }
 
 //-----------------------------------------------------------------------------
@@ -710,19 +716,6 @@ bool DGTextScrollDialog::attached(VSTGUI::CView* inParent)
 bool DGTextScrollDialog::runModal(VSTGUI::CFrame* inFrame)
 {
 	return mModalSession.emplace(inFrame, this).isSessionActive();
-}
-
-//-----------------------------------------------------------------------------
-void DGTextScrollDialog::recalculateSubViews()
-{
-	VSTGUI::CScrollView::recalculateSubViews();
-
-	// the scrollbar controls are created in this method, so we need to apply our styling every time this is called
-	auto const scrollbar = getVerticalScrollbar();
-	assert(scrollbar);
-	scrollbar->setFrameColor(VSTGUI::kTransparentCColor);
-	scrollbar->setBackgroundColor(VSTGUI::kTransparentCColor);
-	scrollbar->setScrollerColor(DGColor::getSystem(DGColor::System::ScrollBarColor));
 }
 
 
