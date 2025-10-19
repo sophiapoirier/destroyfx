@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2025  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -338,13 +338,11 @@ void TransverbEditor::OpenEditor()
 	{
 		DGTextDisplay::ValueToTextProc displayProc;
 		std::optional<uint8_t> displayPrecision;
-		// TODO C++23: std::ranges::contains
-		if (std::ranges::find(kSpeedParameters, parameterID) != kSpeedParameters.cend())
+		if (std::ranges::contains(kSpeedParameters, parameterID))
 		{
 			displayProc = speedDisplayProcedure;
 		}
-		// TODO C++23: std::ranges::contains
-		else if (std::ranges::find(kFeedParameters, parameterID) != kFeedParameters.cend())
+		else if (std::ranges::contains(kFeedParameters, parameterID))
 		{
 			displayProc = DGTextDisplay::valueToTextProc_Percent;
 			displayPrecision = 0;
