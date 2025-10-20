@@ -106,19 +106,19 @@ public:
 		auto const fillColorHighlighted = DGColor::getSystem(DGColor::System::AccentPressed).withAlpha(accentFillAlpha);
 		setGradientHighlighted(VSTGUI::owned(VSTGUI::CGradient::create(gradientStart, gradientEnd, fillColorHighlighted, fillColorHighlighted.darker(gradientDarkAmount))));
 
-		looseFocus();  // HACK: trigger remaining frame styling
+		styleFocus(false);
 	}
 
 	void takeFocus() override
 	{
-		setFrameColor(DGColor::getSystem(DGColor::System::FocusIndicator));
-		setFrameWidth(kFocusIndicatorThickness);
+		VSTGUI::CTextButton::takeFocus();
+		styleFocus(true);
 	}
 
 	void looseFocus() override
 	{
-		setFrameColor(DGColor::getSystem(mIsDefaultButton ? DGColor::System::Accent : DGColor::System::WindowFrame));
-		setFrameWidth(1.0);
+		VSTGUI::CTextButton::looseFocus();
+		styleFocus(false);
 	}
 
 	void onKeyboardEvent(VSTGUI::KeyboardEvent& ioEvent) override
@@ -162,6 +162,13 @@ public:
 	CLASS_METHODS_NOCOPY(DGDialogButton, VSTGUI::CTextButton)
 
 private:
+	void styleFocus(bool inFocus)
+	{
+		auto const unfocusedColor = DGColor::getSystem(mIsDefaultButton ? DGColor::System::Accent : DGColor::System::WindowFrame);
+		setFrameColor(inFocus ? DGColor::getSystem(DGColor::System::FocusIndicator) : unfocusedColor);
+		setFrameWidth(inFocus ? kFocusIndicatorThickness : 1.);
+	}
+
 	DGDialog::Selection const mSelection;
 	bool const mIsDefaultButton;
 };
@@ -208,40 +215,6 @@ public:
 				inContext->setFrameColor(DGColor::getSystem(DGColor::System::FocusIndicator));
 				inContext->drawGraphicsPath(path, VSTGUI::CDrawContext::kPathStroked);
 			}
-		}
-	}
-
-	void onKeyboardEvent(VSTGUI::KeyboardEvent& ioEvent) override
-	{
-		if (ioEvent.virt == VSTGUI::VirtualKey::Escape)
-		{
-			// HACK: Workaround for bug where pressing the dialog's OK button in Logic produces
-			// a platform text edit cancel event. This event is mapped to an ESC key event,
-			// so by consuming those, we avert the text-discarding effect of the cancellation.
-			// This is definitely a hack, but I don't think there is a good reason for this
-			// text edit object itself to be cancellable (we handle that at the dialog level).
-			if (ioEvent.type == VSTGUI::EventType::KeyDown)
-			{
-				ioEvent.consumed = true;
-			}
-			// HACK: unfortunately the Logic bug workaround results in failing to act on 
-			// actual ESC key presses in the text edit field, but a real key press event 
-			// will also be followed by a key-up event, and so we can work around the 
-			// workaround by taking the pair of actions upon ESC key-up events
-			else
-			{
-				auto const entryConsumed = ioEvent.consumed;
-				ioEvent.type = VSTGUI::EventType::KeyDown;
-				VSTGUI::CTextEdit::onKeyboardEvent(ioEvent);
-				bool const downConsumed = std::exchange(ioEvent.consumed, entryConsumed);
-				ioEvent.type = VSTGUI::EventType::KeyUp;
-				VSTGUI::CTextEdit::onKeyboardEvent(ioEvent);
-				ioEvent.consumed = ioEvent.consumed || downConsumed;
-			}
-		}
-		else
-		{
-			VSTGUI::CTextEdit::onKeyboardEvent(ioEvent);
 		}
 	}
 
