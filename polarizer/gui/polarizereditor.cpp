@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2025  Sophia Poirier
 
 This file is part of Polarizer.
 
@@ -86,7 +86,6 @@ public:
 		mHandleImage(inHandleImage)  // store handle image independently so that CSlider does not base control range on it
 	{
 		setOffsetHandle(VSTGUI::CPoint(0, kSliderFrameThickness));
-		setViewSize(inRegion, false);  // HACK to trigger a recalculation of the slider range based on new handle offset
 	}
 
 	void draw(VSTGUI::CDrawContext* inContext) override
