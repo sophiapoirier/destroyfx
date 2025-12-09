@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2025  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -18,7 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 This file includes many important #defines for making a DfxPlugin.  
 Make this a "prefix" or "entry" header file of your project, 
@@ -26,8 +26,8 @@ or somehow define this stuff another way (in compiler settings, or whatever).
 ------------------------------------------------------------------------*/
 
 
-#ifndef _DFXPLUGIN_STUB_DEF_H
-#define _DFXPLUGIN_STUB_DEF_H
+#ifndef DFX_PLUGIN_STUB_DEF_H
+#define DFX_PLUGIN_STUB_DEF_H
 
 
 #include "dfxplugin-prefix.h"
@@ -77,4 +77,4 @@ or somehow define this stuff another way (in compiler settings, or whatever).
 #endif
 
 
-#endif
+#endif  /* include guard */

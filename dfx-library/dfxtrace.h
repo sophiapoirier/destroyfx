@@ -1,5 +1,28 @@
-#ifndef _DFX_TRACE_H
-#define _DFX_TRACE_H
+/*------------------------------------------------------------------------
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2020-2025  Tom Murphy 7
+
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 2 of the License, or 
+(at your option) any later version.
+
+Destroy FX Library is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org
+------------------------------------------------------------------------*/
+
+#ifndef DFX_TRACE_H
+#define DFX_TRACE_H
 
 // Feel free to ignore this! Tom is using it for rudimentary debugging
 // of plugins in live hosts where there aren't other good options for
@@ -32,4 +55,4 @@
 #endif
 
 
-#endif  // _DFX_TRACE_H
+#endif  // DFX_TRACE_H

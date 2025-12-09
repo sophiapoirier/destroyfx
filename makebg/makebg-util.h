@@ -1,17 +1,37 @@
+/*---------------------------------------------------------------
+Copyright (C) 2020-2025  Tom Murphy 7
 
-#ifndef _DESTROYFX_MAKEBG_MAKEBG_UTIL_H
-#define _DESTROYFX_MAKEBG_MAKEBG_UTIL_H
+This file is part of MakeBG.
+
+MakeBG is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 2 of the License, or 
+(at your option) any later version.
+
+MakeBG is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with MakeBG.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org
+---------------------------------------------------------------*/
+
+#ifndef DESTROYFX_MAKEBG_UTIL_H
+#define DESTROYFX_MAKEBG_UTIL_H
 
 
 #include <cstdint>
-#include <utility>
 #include <memory>
+#include <string>
+#include <utility>
+#include <unordered_map>
 
 #include "base/logging.h"
 #include "color-util.h"
 #include "image.h"
-
-using namespace std;
 
 using uint8 = uint8_t;
 using uint32 = uint32_t;

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2021  Sophia Poirier and Tom Murphy 7
+Copyright (C) 2009-2025  Sophia Poirier and Tom Murphy 7
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -18,14 +18,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This file should be included by any prefix header that you use for your plugin.
 ------------------------------------------------------------------------*/
 
-#ifndef _DFXPLUGIN_PREFIX_H
-#define _DFXPLUGIN_PREFIX_H
+#ifndef DFX_PLUGIN_PREFIX_H
+#define DFX_PLUGIN_PREFIX_H
 
 /*-----------------------------------------------------------------------------*/
 /* General stuff */
@@ -61,7 +61,7 @@ This file should be included by any prefix header that you use for your plugin.
 		/* turn off warnings about default but no cases in switch, unknown pragma, etc. 
 		   if using Microsoft's C compiler */
 		#pragma warning( disable : 4065 57 4200 4244 4068 4326 )
-		/* turn off warnings about not using secure versions of C Run-Time Library functions */
+		/* turn off warnings about not using secure versions of C Runtime Library functions */
 		#define _CRT_SECURE_NO_WARNINGS	1
 		#define _CRT_SECURE_NO_DEPRECATE	1
 	#endif
@@ -94,4 +94,4 @@ This file should be included by any prefix header that you use for your plugin.
 #endif
 
 
-#endif
+#endif  /* include guard */
