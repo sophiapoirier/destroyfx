@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2024  Sophia Poirier
+Copyright (C) 2002-2025  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -164,18 +164,10 @@ void ReverseBytes(TriviallySerializable auto& ioData)
 }
 
 std::string ToLower(std::string_view inText);
-// Same as the nonstandard strlcat() function.
-// Appends 'appendme' to the nul-terminated string in buf, assuming that
-// buf has at least maxlen bytes allocated. If the input buffer is nul-
-// terminated, then the output buffer always will be too.
-size_t StrlCat(char* buf, std::string_view appendme, size_t maxlen);
 // same as the nonstandard strlcpy() function
 size_t StrLCpy(char* dst, std::string_view src, size_t maxlen);
 
 unsigned int CompositePluginVersionNumberValue() noexcept;
-bool LaunchURL(std::string const& inURL);
-bool LaunchDocumentation();
-std::string GetNameForMIDINote(int inMidiNote);
 
 #if TARGET_OS_MAC
 std::unique_ptr<char[]> CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding inCStringEncoding = kCFStringEncodingUTF8);

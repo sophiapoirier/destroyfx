@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2025  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -28,7 +28,9 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <cassert>
 #include <cmath>
 #include <limits>
+#include <memory>
 #include <string>
+#include <string_view>
 
 #include "dfxgui-base.h"
 
@@ -209,7 +211,11 @@ namespace dfx
 static inline char const* const kPlusMinusUTF8 = reinterpret_cast<char const*>(u8"\U000000B1");
 static inline auto const kInfinityUTF8 = VSTGUI::kInfiniteSymbol;
 
-std::string SanitizeNumericalInput(std::string const& inText);
+std::string GetNameForMIDINote(int inMidiNote);
+std::string SanitizeNumericalInput(std::string_view inText);
+
+bool LaunchURL(std::string_view inURL);
+bool LaunchDocumentation();
 
 // perform some platform fixups for the GUI library
 void InitGUI();

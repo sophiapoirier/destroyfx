@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2024  Sophia Poirier
+Copyright (C) 2002-2025  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -24,15 +24,18 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "dfxguimisc.h"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cctype>
 #include <cmath>
 #include <cstring>
 #include <functional>
+#include <locale>
 #include <optional>
 #include <span>
 #include <utility>
 
+#include "dfx-base.h"
 #include "dfxmisc.h"
 
 #if TARGET_OS_MAC
@@ -42,7 +45,16 @@ To contact the author, use the contact form at http://destroyfx.org
 		#error "you must compile this file with Automatic Reference Counting (ARC) enabled"
 	#endif
 	#import <AppKit/AppKit.h>
+	#include <CoreFoundation/CoreFoundation.h>
+	#include <CoreServices/CoreServices.h>
 	#include "lib/platform/mac/macfactory.h"
+#endif
+
+#if TARGET_OS_WIN32
+	#include <windows.h>
+	// for ShellExecute
+	#include <shellapi.h>
+	#include <shlobj.h>
 #endif
 
 
@@ -198,11 +210,22 @@ DGColor DGColor::getSystem(System inSystemColorID)
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-std::string dfx::SanitizeNumericalInput(std::string const& inText)
+std::string dfx::GetNameForMIDINote(int inMidiNote)
+{
+	constexpr auto keyNames = std::to_array({ "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" });
+	constexpr int kNumNotesInOctave = static_cast<int>(keyNames.size());
+	static_assert(kNumNotesInOctave == 12);
+	auto const keyNameIndex = inMidiNote % kNumNotesInOctave;
+	auto const octaveNumber = (inMidiNote / kNumNotesInOctave) - 1;
+	return std::string(keyNames[keyNameIndex]) + " " + std::to_string(octaveNumber);
+}
+
+//-----------------------------------------------------------------------------
+std::string dfx::SanitizeNumericalInput(std::string_view inText)
 {
 	// remove digit separators
 	// XXX TODO: this doesn't support locale, assumes comma
-	auto resultText = inText;
+	std::string resultText(inText);
 	std::erase_if(resultText, std::bind_front(std::equal_to<>{}, ','));
 
 	// trim white space and any other noise (with respect to numerical parsing)
@@ -227,6 +250,158 @@ std::string dfx::SanitizeNumericalInput(std::string const& inText)
 	}
 
 	return resultText;
+}
+
+//-----------------------------------------------------------------------------
+// open up an URL in the user's default web browser
+// returns whether it was successful
+bool dfx::LaunchURL(std::string_view inURL)
+{
+	if (inURL.empty())
+	{
+		return false;
+	}
+
+#if TARGET_OS_MAC
+	auto const cfURL = dfx::MakeUniqueCFType(CFURLCreateWithBytes(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(inURL.data()), static_cast<CFIndex>(inURL.length()), kCFStringEncodingASCII, nullptr));
+	if (cfURL)
+	{
+		auto const status = LSOpenCFURLRef(cfURL.get(), nullptr);  // try to launch the URL
+		return status == noErr;
+	}
+#endif
+
+#if TARGET_OS_WIN32
+	// Return value is a fake HINSTANCE that will be >32 (if successful) or some error code
+	// otherwise. If we care about error handling, should update to ShellExecuteEx.
+	auto const status = reinterpret_cast<intptr_t>(ShellExecute(nullptr, "open",
+																std::string(inURL).c_str(),
+																nullptr, nullptr, SW_SHOWNORMAL));
+	return status > 32;
+#endif
+
+	return false;
+}
+
+#if TARGET_OS_MAC
+//-----------------------------------------------------------------------------
+// this function looks for the plugin's documentation file in the appropriate system location, 
+// within a given file system domain, and returns a CFURLRef for the file if it is found, 
+// and null otherwise (or if some error is encountered along the way)
+dfx::UniqueCFType<CFURLRef> DFX_FindDocumentationFileInDomain(CFStringRef inDocsFileName, NSSearchPathDomainMask inDomain)
+{
+	assert(inDocsFileName);
+
+	// first find the base directory for the system documentation directory
+	auto const docsDirURL = [NSFileManager.defaultManager URLForDirectory:NSDocumentationDirectory inDomain:inDomain appropriateForURL:nil create:NO error:nil];
+	if (docsDirURL)
+	{
+		// create a CFURL for the "manufacturer name" directory within the documentation directory
+		auto const dfxDocsDirURL = dfx::MakeUniqueCFType(CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, (__bridge CFURLRef)docsDirURL, CFSTR(PLUGIN_CREATOR_NAME_STRING), true));
+		if (dfxDocsDirURL)
+		{
+			// create a CFURL for the documentation file within the "manufacturer name" directory
+			auto docsFileURL = dfx::MakeUniqueCFType(CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, dfxDocsDirURL.get(), inDocsFileName, false));
+			if (docsFileURL)
+			{
+				// check to see if the hypothetical documentation file actually exists 
+				// (CFURLs can reference files that don't exist)
+				// and only return the CFURL if the file does exists
+				if (CFURLResourceIsReachable(docsFileURL.get(), nullptr))
+				{
+					return docsFileURL;
+				}
+			}
+		}
+	}
+
+	return {};
+}
+#endif
+
+//-----------------------------------------------------------------------------
+bool dfx::LaunchDocumentation()
+{
+#if TARGET_OS_MAC
+	// no assumptions can be made about how long the reference is valid, 
+	// and the caller should not attempt to release the CFBundleRef object
+	auto const pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+	assert(pluginBundleRef);
+	if (pluginBundleRef)
+	{
+		CFStringRef docsFileName = CFSTR(PLUGIN_NAME_STRING " manual.html");
+	#ifdef PLUGIN_DOCUMENTATION_FILE_NAME
+		docsFileName = CFSTR(PLUGIN_DOCUMENTATION_FILE_NAME);
+	#endif
+		CFStringRef docsSubdirName = nullptr;
+	#ifdef PLUGIN_DOCUMENTATION_SUBDIRECTORY_NAME
+		docsSubdirName = CFSTR(PLUGIN_DOCUMENTATION_SUBDIRECTORY_NAME);
+	#endif
+		auto docsFileURL = dfx::MakeUniqueCFType(CFBundleCopyResourceURL(pluginBundleRef, docsFileName, nullptr, docsSubdirName));
+		// if the documentation file is not found in the bundle, then search in appropriate system locations
+		if (!docsFileURL)
+		{
+			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, NSUserDomainMask);
+		}
+		if (!docsFileURL)
+		{
+			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, NSLocalDomainMask);
+		}
+		if (!docsFileURL)
+		{
+			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, NSNetworkDomainMask);
+		}
+		if (docsFileURL)
+		{
+// open the manual with the default application for the file type
+#if 1
+			auto const status = LSOpenCFURLRef(docsFileURL.get(), nullptr);
+// open the manual with Apple's system Help Viewer
+#else
+			// XXX I don't know why the Help Viewer code is not working anymore (Help Viewer can't load the page, since 10.6)
+		#if 1
+			// starting in Mac OS X 10.5.7, we get an error if the help book is not registered
+			// XXX please note that this also requires adding a CFBundleHelpBookFolder key/value to your Info.plist
+			static bool helpBookRegistered = false;
+			if (!helpBookRegistered)
+			{
+				auto const bundleURL = dfx::MakeUniqueCFType(CFBundleCopyBundleURL(pluginBundleRef));
+				if (bundleURL)
+				{
+					if (AHRegisterHelpBookWithURL)  // available starting in Mac OS X 10.6
+					{
+						helpBookRegistered = (AHRegisterHelpBookWithURL(bundleURL.get()) == noErr);
+					}
+					else
+					{
+						FSRef bundleRef {};
+						if (CFURLGetFSRef(bundleURL.get(), &bundleRef))
+						{
+							helpBookRegistered = (AHRegisterHelpBook(&bundleRef) == noErr);
+						}
+					}
+				}
+			}
+		#endif
+			OSStatus status = coreFoundationUnknownErr;
+			if (auto const docsFileUrlString = CFURLGetString(docsFileURL.get()))
+			{
+				status = AHGotoPage(nullptr, docsFileUrlString, nullptr);
+			}
+#endif
+			return status == noErr;
+		}
+	}
+#else
+	// XXX this will load latest docs on our website which may not match the version of the running software
+	// TODO: embed the documentation into Windows builds somehow?
+	auto docsFileName = dfx::ToLower(PLUGIN_NAME_STRING ".html");
+	auto const isSpace = std::bind(std::isspace<std::string::value_type>, std::placeholders::_1, std::locale::classic());
+	std::erase_if(docsFileName, isSpace);
+	return dfx::LaunchURL(DESTROYFX_URL "/docs/" + docsFileName);
+#endif  // TARGET_OS_MAC
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------

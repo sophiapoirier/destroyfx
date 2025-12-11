@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2025  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -21,7 +21,6 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include "eqsynceditor.h"
 
-#include "dfxmisc.h"
 #include "eqsync.h"
 #include "temporatetable.h"
 
