@@ -36,11 +36,13 @@ using namespace dfx::TV;
 
 void TransverbDSP::process(std::span<float const> inAudio, std::span<float> outAudio) {
 
-  std::array<float, kNumDelays> delayvals {};  // delay buffer output values
   auto const bsize_float = static_cast<double>(bsize);  // cut down on casting
+  auto const quality = getparameter_i(kQuality);
+  auto const tomsound = getparameter_b(kTomsound);
   auto const freeze = getparameter_b(kFreeze);
   int const writerIncrement = freeze ? 0 : 1;
   auto const attenuateFeedbackByMixLevel = getparameter_b(kAttenuateFeedbackByMixLevel);
+  std::array<float, kNumDelays> delayvals {};  // delay buffer output values
 
 
   /////////////   S O P H I A S O U N D   //////////////
@@ -69,6 +71,9 @@ void TransverbDSP::process(std::span<float const> inAudio, std::span<float> outA
       for (size_t h = 0; h < kNumDelays; h++)  // delay heads loop
       {
         auto const read_int = static_cast<int>(heads[h].read);
+        auto const reverseread = (distchangemode == kDistChangeMode_Reverse) && heads[h].targetdist.has_value();
+        auto const distcatchup = (distchangemode == kDistChangeMode_AdHocVarispeed) && heads[h].targetdist.has_value();
+        auto const speed = heads[h].speed.getValue() * (distcatchup ? heads[h].distspeedfactor : 1.);
 
         // filter setup
         if (quality == kQualityMode_UltraHiFi)
@@ -77,27 +82,27 @@ void TransverbDSP::process(std::span<float const> inAudio, std::span<float> outA
           {
             lowpasspos[h] = read_int;
             // check to see if we need to lowpass the first delay head and init coefficients if so
-            if (heads[h].speed.getValue() > kUnitySpeed)
+            if (speed > kUnitySpeed)
             {
               filtermodes[h] = FilterMode::LowpassIIR;
-              speed_ints[h] = static_cast<int>(heads[h].speed.getValue());
+              speed_ints[h] = static_cast<int>(speed);
               // it becomes too costly to try to IIR at higher speeds, so switch to FIR filtering
-              if (heads[h].speed.getValue() >= kFIRSpeedThreshold)
+              if (speed >= kFIRSpeedThreshold)
               {
                 filtermodes[h] = FilterMode::LowpassFIR;
                 // compensate for gain lost from filtering
-                mugs[h] = static_cast<float>(std::pow(heads[h].speed.getValue() / kFIRSpeedThreshold, 0.78));
+                mugs[h] = static_cast<float>(std::pow(speed / kFIRSpeedThreshold, 0.78));
                 // update the coefficients only if necessary
                 if (std::exchange(heads[h].speedHasChanged, false))
                 {
-                  dfx::FIRFilter::calculateIdealLowpassCoefficients((samplerate / heads[h].speed.getValue()) * dfx::FIRFilter::kShelfStartLowpass,
+                  dfx::FIRFilter::calculateIdealLowpassCoefficients((samplerate / speed) * dfx::FIRFilter::kShelfStartLowpass,
                                                                     samplerate, heads[h].firCoefficients, firCoefficientsWindow);
                   heads[h].filter.reset();
                 }
               }
               else if (std::exchange(heads[h].speedHasChanged, false))
               {
-                heads[h].filter.setLowpassCoefficients((samplerate / heads[h].speed.getValue()) * dfx::IIRFilter::kShelfStartLowpass);
+                heads[h].filter.setLowpassCoefficients((samplerate / speed) * dfx::IIRFilter::kShelfStartLowpass);
               }
             }
             // we need to highpass the delay head to remove mega sub bass
@@ -106,7 +111,7 @@ void TransverbDSP::process(std::span<float const> inAudio, std::span<float> outA
               filtermodes[h] = FilterMode::Highpass;
               if (std::exchange(heads[h].speedHasChanged, false))
               {
-                heads[h].filter.setHighpassCoefficients(kHighpassFilterCutoff / heads[h].speed.getValue());
+                heads[h].filter.setHighpassCoefficients(kHighpassFilterCutoff / speed);
               }
             }
           }
@@ -173,18 +178,18 @@ void TransverbDSP::process(std::span<float const> inAudio, std::span<float> outA
         // start smoothing if the writer has passed a reader or vice versa,
         // though not if reader and writer move at the same speed
         // (check the positions before wrapping around the heads)
-        auto const nextRead = static_cast<int>(heads[h].read + heads[h].speed.getValue());
+        auto const nextRead = static_cast<int>(heads[h].read + speed);
         auto const nextWrite = writer + 1;
         bool const readCrossingAhead = (read_int < writer) && (nextRead >= nextWrite);
         bool const readCrossingBehind = (read_int >= writer) && (nextRead <= nextWrite);
-        bool const speedIsUnity = heads[h].speed.getValue() == kUnitySpeed;
+        bool const speedIsUnity = (speed == kUnitySpeed);
         if ((readCrossingAhead || readCrossingBehind) && !speedIsUnity) {
           // check because, at slow speeds, it's possible to go into this twice or more in a row
           if (heads[h].smoothcount <= 0) {
             // store the most recent output as the head's smoothing sample
             heads[h].lastdelayval = delayvals[h];
             // truncate the smoothing duration if we're using too small of a buffer size
-            auto const bufferReadSteps = static_cast<int>(bsize_float / heads[h].speed.getValue());
+            auto const bufferReadSteps = static_cast<int>(bsize_float / speed);
             auto const smoothdur = std::min(bufferReadSteps, kAudioSmoothingDur_samples);
             heads[h].smoothstep = 1.f / static_cast<float>(smoothdur);  // the scalar step value
             heads[h].smoothcount = smoothdur;  // set the counter to the total duration
@@ -192,9 +197,21 @@ void TransverbDSP::process(std::span<float const> inAudio, std::span<float> outA
         }
 
         // update read heads, wrapping around if they have gone past the end of the buffer
-        heads[h].read += heads[h].speed.getValue();
-        if (heads[h].read >= bsize_float) {
-          heads[h].read = fmod_bipolar(heads[h].read, bsize_float);
+        if (reverseread) {
+          heads[h].read -= speed;
+          while (heads[h].read < 0.) {
+            heads[h].read += bsize_float;
+          }
+        } else {
+          heads[h].read += speed;
+          if (heads[h].read >= bsize_float) {
+            heads[h].read = std::fmod(heads[h].read, bsize_float);
+          }
+        }
+        if (distcatchup || reverseread) {
+          if (std::fabs(getdist(heads[h].read) - *heads[h].targetdist) < speed) {
+            heads[h].targetdist.reset();
+          }
         }
 
         // if we're doing IIR lowpass filtering,
@@ -204,40 +221,47 @@ void TransverbDSP::process(std::span<float const> inAudio, std::span<float> outA
         if (filtermodes[h] == FilterMode::LowpassIIR)
         {
           int lowpasscount = 0;
+          int const direction = reverseread ? -1 : 1;
           while (lowpasscount < speed_ints[h])
           {
             switch (speed_ints[h] - lowpasscount)
             {
               case 1:
                 heads[h].filter.processToCacheH1(heads[h].buf[lowpasspos[h]]);
-                lowpasspos[h] = (lowpasspos[h] + 1) % bsize;
+                lowpasspos[h] = mod_bipolar(lowpasspos[h] + (1 * direction), bsize);
                 lowpasscount++;
                 break;
               case 2:
                 heads[h].filter.processToCacheH2(std::span(heads[h].buf).subspan(0, bsize), dfx::math::ToUnsigned(lowpasspos[h]));
-                lowpasspos[h] = (lowpasspos[h] + 2) % bsize;
+                lowpasspos[h] = mod_bipolar(lowpasspos[h] + (2 * direction), bsize);
                 lowpasscount += 2;
                 break;
               case 3:
                 heads[h].filter.processToCacheH3(std::span(heads[h].buf).subspan(0, bsize), dfx::math::ToUnsigned(lowpasspos[h]));
-                lowpasspos[h] = (lowpasspos[h] + 3) % bsize;
+                lowpasspos[h] = mod_bipolar(lowpasspos[h] + (3 * direction), bsize);
                 lowpasscount += 3;
                 break;
               default:
                 heads[h].filter.processToCacheH4(std::span(heads[h].buf).subspan(0, bsize), dfx::math::ToUnsigned(lowpasspos[h]));
-                lowpasspos[h] = (lowpasspos[h] + 4) % bsize;
+                lowpasspos[h] = mod_bipolar(lowpasspos[h] + (4 * direction), bsize);
                 lowpasscount += 4;
                 break;
             }
           }
           auto const nextread_int = static_cast<int>(heads[h].read);
           // check whether we need to consume one more sample
-          bool const extrasample = ((lowpasspos[h] < nextread_int) && ((lowpasspos[h] + 1) == nextread_int)) ||
-                                   ((lowpasspos[h] == (bsize - 1)) && (nextread_int == 0));
+          bool const extrasample = [=, this] {
+            if (reverseread) {
+              return ((lowpasspos[h] > nextread_int) && ((lowpasspos[h] - 1) == nextread_int)) ||
+                     ((lowpasspos[h] == 0) && (nextread_int == (bsize - 1)));
+            }
+            return ((lowpasspos[h] < nextread_int) && ((lowpasspos[h] + 1) == nextread_int)) ||
+                   ((lowpasspos[h] == (bsize - 1)) && (nextread_int == 0));
+          }();
           if (extrasample)
           {
             heads[h].filter.processToCacheH1(heads[h].buf[lowpasspos[h]]);
-            lowpasspos[h] = (lowpasspos[h] + 1) % bsize;
+            lowpasspos[h] = mod_bipolar(lowpasspos[h] + (1 * direction), bsize);
           }
         }
         // it's simpler for highpassing;
