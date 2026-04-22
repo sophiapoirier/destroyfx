@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2023  Sophia Poirier
+	Copyright (C) 2003-2026  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -331,7 +331,7 @@ void CollectAllAUPresetFilesInDir(CFURLRef inDirURL, CFTreeRef inParentTree, Aud
 		// otherwise it's a file, so we add it (if it is an AU preset file)
 		else if (CFURLIsAUPreset(urlCF))
 		{
-			// XXX should I also open and examine each file and make sure that it's a valid dictionary for the particular AU?
+			// XXX should we also open and examine each file and make sure that it's a valid dictionary for the particular AU?
 #if 1
 			// we only do this examination if an AudioComponent argument was given
 			if (inAUComponent != NULL)
@@ -622,7 +622,7 @@ OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData,
 	auStateDictionary = (CFDictionaryRef)inAUStateData;
 
 	// first check to make sure that the version of the AU state data is one that we know understand
-	// XXX should I really do this?  later versions would probably still hold these ID keys, right?
+	// XXX should we really do this?  later versions would probably still hold these ID keys, right?
 	versionValue = GetDictionarySInt32Value(auStateDictionary, CFSTR(kAUPresetVersionKey), &gotValue);
 	if (!gotValue)
 	{
@@ -710,7 +710,7 @@ OSStatus SaveAUStateToPresetFile_Bundle(AudioComponentInstance inAUComponentInst
 	OSStatus status = noErr;
 
 	// get the absolute maximum length that a file name can be
-	HFSUniStr255 const placeholderUniName;
+	HFSUniStr255 const placeholderUniName = {};
 	size_t const maxUnicodeNameLength = sizeof(placeholderUniName.unicode) / sizeof(UniChar);
 	// this is how much longer the file name will be after the AU preset file name extension is appended
 	CFIndex const presetFileNameExtensionLength = CFStringGetLength(kAUPresetFileNameExtension) + 1;  // +1 for the period before the extension
