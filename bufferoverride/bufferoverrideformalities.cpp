@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2025  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -344,6 +344,38 @@ void BufferOverride::initPresets()
 	setpresetparameter_b(i, kTempoAuto, true);
 	i++;
 
+	setpresetname(i, "echo decay");
+	setpresetparameter_f(i, kDivisor, 4.);
+	setpresetparameter_i(i, kBufferSize_Sync, mTempoRateTable.getNearestTempoRateIndex(1));
+	setpresetparameter_b(i, kBufferTempoSync, true);
+	setpresetparameter_f(i, kSmooth, 3.);
+	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
+	setpresetparameter_b(i, kTempoAuto, true);
+	setpresetparameter_f(i, kDecayDepth, getparametermax_f(kDecayDepth));
+	setpresetparameter_i(i, kDecayMode, kDecayMode_Lowpass);
+	setpresetparameter_i(i, kDecayShape, kDecayShape_Ramp);
+	i++;
+
+	setpresetname(i, "wandering violin");
+	setpresetparameter_f(i, kDivisor, 139.);
+	setpresetparameter_f(i, kBufferSize_MS, 156.);
+	setpresetparameter_b(i, kBufferTempoSync, false);
+	setpresetparameter_b(i, kBufferInterrupt, true);
+	setpresetparameter_f(i, kDivisorLFORate_Hz, 0.3);
+	setpresetparameter_f(i, kDivisorLFODepth, 34.);
+	setpresetparameter_i(i, kDivisorLFOShape, dfx::LFO::kShape_Square);
+	setpresetparameter_b(i, kDivisorLFOTempoSync, false);
+	setpresetparameter_f(i, kBufferLFORate_Hz, 1.72);
+	setpresetparameter_f(i, kBufferLFODepth, 29.);
+	setpresetparameter_i(i, kBufferLFOShape, dfx::LFO::kShape_Sine);
+	setpresetparameter_b(i, kBufferLFOTempoSync, false);
+	setpresetparameter_f(i, kSmooth, 12.);
+	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
+	setpresetparameter_f(i, kDecayDepth, getparametermax_f(kDecayDepth));
+	setpresetparameter_i(i, kDecayMode, kDecayMode_Lowpass);
+	setpresetparameter_i(i, kDecayShape, kDecayShape_Ramp);
+	i++;
+
 /*
 	setpresetname(i, "");
 	setpresetparameter_f(i, kDivisor, );
@@ -367,6 +399,11 @@ void BufferOverride::initPresets()
 	setpresetparameter_i(i, kMidiMode, kMidiMode_);
 	setpresetparameter_f(i, kTempo, );
 	setpresetparameter_b(i, kTempoAuto, );
+	setpresetparameter_f(i, kMinibufferPortion, );
+	setpresetparameter_f(i, kMinibufferPortionRandomMin, );
+	setpresetparameter_f(i, kDecayDepth, );
+	setpresetparameter_i(i, kDecayMode, kDecayMode_);
+	setpresetparameter_i(i, kDecayShape, kDecayShape_);
 	i++;
 */
 }
