@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2024  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -43,6 +43,7 @@ This is where we connect the Audio Unit API to our DfxPlugin system.
 #endif
 
 
+static constexpr AudioUnitElement kAudioUnitElement0 = 0;
 static constexpr UInt32 kBaseClumpID = kAudioUnitClumpID_System + 1;
 
 
@@ -72,7 +73,7 @@ void DfxPlugin::PostConstructor()
 	{
 		if (!hasparameterattribute(i, DfxParam::kAttribute_Unused))  // XXX should we do it like this, or override GetParameterList?
 		{
-			TARGET_API_BASE_CLASS::SetParameter(i, kAudioUnitScope_Global, AudioUnitElement(0), getparameter_f(i), 0);
+			TARGET_API_BASE_CLASS::SetParameter(i, kAudioUnitScope_Global, kAudioUnitElement0, getparameter_f(i), 0);
 		}
 	}
 
@@ -87,15 +88,15 @@ void DfxPlugin::PostConstructor()
 		if (Inputs().GetNumberOfElements() > 0)
 		{
 			auto const newInNumChannels = (channelConfig.inChannels < 0) ? defaultNumChannels : static_cast<UInt32>(channelConfig.inChannels);
-			auto const& curInStreamFormat = GetStreamFormat(kAudioUnitScope_Input, AudioUnitElement(0));
-			auto const newInStreamFormat = ausdk::ASBD::CreateCommonFloat32(curInStreamFormat.mSampleRate, newInNumChannels);
-			TARGET_API_BASE_CLASS::ChangeStreamFormat(kAudioUnitScope_Input, AudioUnitElement(0), curInStreamFormat, newInStreamFormat);
+			auto const& currentInStreamFormat = GetInput0().GetStreamFormat();
+			auto const newInStreamFormat = ausdk::ASBD::CreateCommonFloat32(currentInStreamFormat.mSampleRate, newInNumChannels);
+			TARGET_API_BASE_CLASS::ChangeStreamFormat(kAudioUnitScope_Input, kAudioUnitElement0, currentInStreamFormat, newInStreamFormat);
 		}
 		// change the output channel count to the first supported one listed
 		auto const newOutNumChannels = (channelConfig.outChannels < 0) ? defaultNumChannels : static_cast<UInt32>(channelConfig.outChannels);
-		auto const& curOutStreamFormat = GetStreamFormat(kAudioUnitScope_Output, AudioUnitElement(0));
-		auto const newOutStreamFormat = ausdk::ASBD::CreateCommonFloat32(curOutStreamFormat.mSampleRate, newOutNumChannels);
-		TARGET_API_BASE_CLASS::ChangeStreamFormat(kAudioUnitScope_Output, AudioUnitElement(0), curOutStreamFormat, newOutStreamFormat);
+		auto const& currentOutStreamFormat = GetOutput0().GetStreamFormat();
+		auto const newOutStreamFormat = ausdk::ASBD::CreateCommonFloat32(currentOutStreamFormat.mSampleRate, newOutNumChannels);
+		TARGET_API_BASE_CLASS::ChangeStreamFormat(kAudioUnitScope_Output, kAudioUnitElement0, currentOutStreamFormat, newOutStreamFormat);
 	}
 
 	UpdateInPlaceProcessingState();
@@ -321,7 +322,7 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			outDataSize = sizeof(Boolean);
 			outWritable = true;
 			break;
-	#endif
+	#endif  // TARGET_PLUGIN_USES_MIDI
 
 	#if LOGIC_AU_PROPERTIES_AVAILABLE
 		case kLogicAUProperty_NodeOperationMode:
@@ -781,7 +782,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		case dfx::kPluginProperty_MidiAssignmentsSteal:
 			dfx::MemCpyObject(static_cast<Boolean>(getMidiAssignmentsSteal()), outData);
 			break;
-	#endif
+	#endif  // TARGET_PLUGIN_USES_MIDI
 
 	#if LOGIC_AU_PROPERTIES_AVAILABLE
 		case kLogicAUProperty_NodeOperationMode:
@@ -847,7 +848,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			}
 			break;
 		}
-	#endif
+	#endif  // LOGIC_AU_PROPERTIES_AVAILABLE
 
 		default:
 			if (inPropertyID >= dfx::kPluginProperty_StartID)
@@ -1094,13 +1095,13 @@ UInt32 DfxPlugin::SupportedNumChannels(AUChannelInfo const** outInfo)
 }
 
 //-----------------------------------------------------------------------------
-Float64 DfxPlugin::GetLatency()
+Float64 DfxPlugin::GetLatency() AUSDK_RTSAFE
 {
 	return getlatency_seconds();
 }
 
 //-----------------------------------------------------------------------------
-Float64 DfxPlugin::GetTailTime()
+Float64 DfxPlugin::GetTailTime() AUSDK_RTSAFE
 {
 	return gettailsize_seconds();
 }
@@ -1373,7 +1374,7 @@ OSStatus DfxPlugin::CopyClumpName(AudioUnitScope inScope, UInt32 inClumpID,
 //-----------------------------------------------------------------------------
 OSStatus DfxPlugin::SetParameter(AudioUnitParameterID inParameterID, 
 								 AudioUnitScope inScope, AudioUnitElement inElement, 
-								 Float32 inValue, UInt32 /*inBufferOffsetInFrames*/)
+								 Float32 inValue, UInt32 /*inBufferOffsetInFrames*/) AUSDK_RTSAFE
 {
 	AUSDK_Require(inScope == kAudioUnitScope_Global, kAudioUnitErr_InvalidScope);
 	AUSDK_Require(inElement == 0, kAudioUnitErr_InvalidElement);
@@ -1618,7 +1619,7 @@ void DfxPlugin::UpdateInPlaceProcessingState()
 		SetProcessesInPlace(false);
 		if (ProcessesInPlace() != entryProcessesInPlace)
 		{
-			PropertyChanged(kAudioUnitProperty_InPlaceProcessing, kAudioUnitScope_Global, AudioUnitElement(0));
+			PropertyChanged(kAudioUnitProperty_InPlaceProcessing, kAudioUnitScope_Global, kAudioUnitElement0);
 		}
 	}
 #endif
@@ -1627,32 +1628,34 @@ void DfxPlugin::UpdateInPlaceProcessingState()
 #if TARGET_PLUGIN_IS_INSTRUMENT
 //-----------------------------------------------------------------------------
 OSStatus DfxPlugin::Render(AudioUnitRenderActionFlags& ioActionFlags, 
-						   AudioTimeStamp const& inTimeStamp, UInt32 inFramesToProcess)
+						   AudioTimeStamp const& inTimeStamp, 
+						   UInt32 inFramesToProcess) AUSDK_RTSAFE
 {
 	// do any pre-DSP prep
 	preprocessaudio(inFramesToProcess);
 
 	// get the output element
-	auto& theOutput = Output(0);  // throws if there's an error
-	auto const numOutputBuffers = theOutput.GetBufferList().mNumberBuffers;
+	auto& theOutput = GetOutput0();  // asserts if there is an error
+	auto const numOutputBuffers = (AUSDK_UnwrapOrReturnError(theOutput.GetBufferListOrError())).mNumberBuffers;
 	// set up our more convenient audio stream pointers
 	for (UInt32 i = 0; i < numOutputBuffers; i++)
 	{
-		mOutputAudioStreams_au[i] = theOutput.GetFloat32ChannelData(i);
+		mOutputAudioStreams_au[i] = theOutput.GetFloat32ChannelDataRT(i);
 	}
 
 	// do stuff to prepare the audio inputs, if we use any
 	if (getnuminputs() > 0)
 	{
 		AUSDK_Require(HasInput(0), kAudioUnitErr_NoConnection);
-		auto& theInput = Input(0);
-		AUSDK_Require_noerr(theInput.PullInput(ioActionFlags, inTimeStamp, AudioUnitElement(0), inFramesToProcess));
+		auto& theInput = GetInput0();  // asserts if there is an error
+		AUSDK_Require(theInput.IsActive(), kAudioUnitErr_NoConnection);
+		AUSDK_Require_noerr(theInput.PullInput(ioActionFlags, inTimeStamp, kAudioUnitElement0, inFramesToProcess));
 
-		auto const numInputBuffers = theInput.GetBufferList().mNumberBuffers;
+		auto const numInputBuffers = (AUSDK_UnwrapOrReturnError(theInput.GetBufferListOrError())).mNumberBuffers;
 		// set up our more convenient audio stream pointers
 		for (UInt32 i = 0; i < numInputBuffers; i++)
 		{
-			mInputAudioStreams_au[i] = theInput.GetFloat32ChannelData(i);
+			mInputAudioStreams_au[i] = theInput.GetFloat32ChannelDataRT(i);
 		}
 	}
 
@@ -1694,8 +1697,9 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags
 	// (averting any clobbering by one channel's render if processing in-place)
 	if (asymmetricalchannels())
 	{
-		mAsymmetricalInputBufferList.PrepareBuffer(GetStreamFormat(kAudioUnitScope_Output, 0), inFramesToProcess);
-		inputBufferPtr = &(mAsymmetricalInputBufferList.GetBufferList());
+		auto const inputBuffer = mAsymmetricalInputBufferList.PrepareBufferOrError(GetOutput0().GetStreamFormat(), inFramesToProcess);
+		AUSDK_RequireExpected(inputBuffer);
+		inputBufferPtr = inputBuffer.get();
 		auto const& srcAudioBuffer = inBuffer.mBuffers[0];
 		for (UInt32 ch = 0; ch < inputBufferPtr->mNumberBuffers; ch++)
 		{
@@ -1751,7 +1755,7 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags
 
 //-----------------------------------------------------------------------------
 OSStatus DfxPlugin::HandleNoteOn(UInt8 inChannel, UInt8 inNoteNumber, 
-								 UInt8 inVelocity, UInt32 inStartFrame)
+								 UInt8 inVelocity, UInt32 inStartFrame) AUSDK_RTSAFE
 {
 	handlemidi_noteon(inChannel, inNoteNumber, inVelocity, inStartFrame);
 	return noErr;
@@ -1759,14 +1763,14 @@ OSStatus DfxPlugin::HandleNoteOn(UInt8 inChannel, UInt8 inNoteNumber,
 
 //-----------------------------------------------------------------------------
 OSStatus DfxPlugin::HandleNoteOff(UInt8 inChannel, UInt8 inNoteNumber, 
-								  UInt8 inVelocity, UInt32 inStartFrame)
+								  UInt8 inVelocity, UInt32 inStartFrame) AUSDK_RTSAFE
 {
 	handlemidi_noteoff(inChannel, inNoteNumber, inVelocity, inStartFrame);
 	return noErr;
 }
 
 //-----------------------------------------------------------------------------
-OSStatus DfxPlugin::HandleAllNotesOff(UInt8 inChannel)
+OSStatus DfxPlugin::HandleAllNotesOff(UInt8 inChannel) AUSDK_RTSAFE
 {
 	handlemidi_allnotesoff(inChannel, 0);
 	return noErr;
@@ -1774,14 +1778,14 @@ OSStatus DfxPlugin::HandleAllNotesOff(UInt8 inChannel)
 
 //-----------------------------------------------------------------------------
 OSStatus DfxPlugin::HandlePitchWheel(UInt8 inChannel, UInt8 inPitchLSB, UInt8 inPitchMSB, 
-									 UInt32 inStartFrame)
+									 UInt32 inStartFrame) AUSDK_RTSAFE
 {
 	handlemidi_pitchbend(inChannel, inPitchLSB, inPitchMSB, inStartFrame);
 	return noErr;
 }
 
 //-----------------------------------------------------------------------------
-OSStatus DfxPlugin::HandleChannelPressure(UInt8 inChannel, UInt8 inValue, UInt32 inStartFrame)
+OSStatus DfxPlugin::HandleChannelPressure(UInt8 inChannel, UInt8 inValue, UInt32 inStartFrame) AUSDK_RTSAFE
 {
 	handlemidi_channelaftertouch(inChannel, inValue, inStartFrame);
 	return noErr;
@@ -1789,14 +1793,14 @@ OSStatus DfxPlugin::HandleChannelPressure(UInt8 inChannel, UInt8 inValue, UInt32
 
 //-----------------------------------------------------------------------------
 OSStatus DfxPlugin::HandleControlChange(UInt8 inChannel, UInt8 inController, 
-										UInt8 inValue, UInt32 inStartFrame)
+										UInt8 inValue, UInt32 inStartFrame) AUSDK_RTSAFE
 {
 	handlemidi_cc(inChannel, inController, inValue, inStartFrame);
 	return noErr;
 }
 
 //-----------------------------------------------------------------------------
-OSStatus DfxPlugin::HandleProgramChange(UInt8 inChannel, UInt8 inProgramNum)
+OSStatus DfxPlugin::HandleProgramChange(UInt8 inChannel, UInt8 inProgramNum) AUSDK_RTSAFE
 {
 	handlemidi_programchange(inChannel, inProgramNum, 0);
 	// XXX maybe this is really all we want to do?
@@ -1808,7 +1812,7 @@ OSStatus DfxPlugin::HandleProgramChange(UInt8 inChannel, UInt8 inProgramNum)
 //-----------------------------------------------------------------------------
 OSStatus DfxPlugin::StartNote(MusicDeviceInstrumentID inInstrument, 
 							  MusicDeviceGroupID inGroupID, NoteInstanceID* outNoteInstanceID, 
-							  UInt32 inOffsetSampleFrame, MusicDeviceNoteParams const& inParams)
+							  UInt32 inOffsetSampleFrame, MusicDeviceNoteParams const& inParams) AUSDK_RTSAFE
 {
 	handlemidi_noteon(inGroupID, static_cast<int>(inParams.mPitch), static_cast<int>(inParams.mVelocity), inOffsetSampleFrame);
 	if (outNoteInstanceID)
@@ -1820,7 +1824,7 @@ OSStatus DfxPlugin::StartNote(MusicDeviceInstrumentID inInstrument,
 
 //-----------------------------------------------------------------------------
 OSStatus DfxPlugin::StopNote(MusicDeviceGroupID inGroupID, 
-							 NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame)
+							 NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame) AUSDK_RTSAFE
 {
 	handlemidi_noteoff(inGroupID, inNoteInstanceID, 0, inOffsetSampleFrame);
 	return noErr;

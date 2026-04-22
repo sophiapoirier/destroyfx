@@ -66,6 +66,12 @@ OSStatus FreeverbAU::Initialize()
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void FreeverbAU::Cleanup()
+{
+	mModel.reset();
+}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 OSStatus FreeverbAU::Reset(AudioUnitScope inScope, AudioUnitElement inElement)
 {
 	if (mModel)
@@ -154,7 +160,7 @@ UInt32 FreeverbAU::SupportedNumChannels(const AUChannelInfo** outInfo)
 // this is where the audio processing is done
 OSStatus FreeverbAU::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 
 										const AudioBufferList& inBuffer, AudioBufferList& outBuffer, 
-										UInt32 inFramesToProcess)
+										UInt32 inFramesToProcess) AUSDK_RTSAFE
 {
 	// update internal parameter values
 	mModel->setFreezeMode(GetParameter(kParam_FreezeMode));

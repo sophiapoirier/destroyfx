@@ -378,7 +378,10 @@
 				PRODUCT_BUNDLE_IDENTIFIER = uk.co.dreampoint.Freeverb;
 				PRODUCT_NAME = Freeverb;
 				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = "-Wall";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-perf-constraint-implies-noexcept",
+				);
 				WRAPPER_EXTENSION = component;
 			};
 			name = Development;
@@ -433,7 +436,10 @@
 				PRODUCT_BUNDLE_IDENTIFIER = uk.co.dreampoint.Freeverb;
 				PRODUCT_NAME = Freeverb;
 				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = "-Wall";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wno-perf-constraint-implies-noexcept",
+				);
 				WRAPPER_EXTENSION = component;
 			};
 			name = Deployment;

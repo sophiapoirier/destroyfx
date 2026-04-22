@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2024  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -891,7 +891,8 @@ public:
 
 	#if TARGET_PLUGIN_IS_INSTRUMENT
 	OSStatus Render(AudioUnitRenderActionFlags& ioActionFlags, 
-					AudioTimeStamp const& inTimeStamp, UInt32 inFramesToProcess) final;
+					AudioTimeStamp const& inTimeStamp, 
+					UInt32 inFramesToProcess) AUSDK_RTSAFE final;
 	#else
 	OSStatus ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 
 								AudioBufferList const& inBuffer, AudioBufferList& outBuffer, 
@@ -914,9 +915,9 @@ public:
 						 AudioUnitScope inScope, AudioUnitElement inElement) final;
 
 	UInt32 SupportedNumChannels(AUChannelInfo const** outInfo) final;
-	Float64 GetLatency() final;
-	Float64 GetTailTime() final;
-	bool SupportsTail() final
+	Float64 GetLatency() AUSDK_RTSAFE final;
+	Float64 GetTailTime() AUSDK_RTSAFE final;
+	bool SupportsTail() AUSDK_RTSAFE final
 	{
 		return true;
 	}
@@ -931,7 +932,7 @@ public:
 						   UInt32 inDesiredNameLength, CFStringRef* outClumpName) override;
 	OSStatus SetParameter(AudioUnitParameterID inParameterID, 
 						  AudioUnitScope inScope, AudioUnitElement inElement, 
-						  Float32 inValue, UInt32 inBufferOffsetInFrames) final;
+						  Float32 inValue, UInt32 inBufferOffsetInFrames) AUSDK_RTSAFE final;
 
 	OSStatus ChangeStreamFormat(AudioUnitScope inScope, 
 								AudioUnitElement inElement, 
@@ -944,22 +945,22 @@ public:
 	OSStatus NewFactoryPresetSet(AUPreset const& inNewFactoryPreset) final;
 
 	#if TARGET_PLUGIN_USES_MIDI
-	OSStatus HandleNoteOn(UInt8 inChannel, UInt8 inNoteNumber, UInt8 inVelocity, UInt32 inStartFrame) final;
-	OSStatus HandleNoteOff(UInt8 inChannel, UInt8 inNoteNumber, UInt8 inVelocity, UInt32 inStartFrame) final;
-	OSStatus HandleAllNotesOff(UInt8 inChannel) final;
-	OSStatus HandleControlChange(UInt8 inChannel, UInt8 inController, UInt8 inValue, UInt32 inStartFrame) final;
-	OSStatus HandlePitchWheel(UInt8 inChannel, UInt8 inPitchLSB, UInt8 inPitchMSB, UInt32 inStartFrame) final;
-	OSStatus HandleChannelPressure(UInt8 inChannel, UInt8 inValue, UInt32 inStartFrame) final;
-	OSStatus HandleProgramChange(UInt8 inChannel, UInt8 inProgramNum) final;
-	OSStatus HandlePolyPressure(UInt8 inChannel, UInt8 inKey, UInt8 inValue, UInt32 inStartFrame) final
+	OSStatus HandleNoteOn(UInt8 inChannel, UInt8 inNoteNumber, UInt8 inVelocity, UInt32 inStartFrame) AUSDK_RTSAFE final;
+	OSStatus HandleNoteOff(UInt8 inChannel, UInt8 inNoteNumber, UInt8 inVelocity, UInt32 inStartFrame) AUSDK_RTSAFE final;
+	OSStatus HandleAllNotesOff(UInt8 inChannel) AUSDK_RTSAFE final;
+	OSStatus HandleControlChange(UInt8 inChannel, UInt8 inController, UInt8 inValue, UInt32 inStartFrame) AUSDK_RTSAFE final;
+	OSStatus HandlePitchWheel(UInt8 inChannel, UInt8 inPitchLSB, UInt8 inPitchMSB, UInt32 inStartFrame) AUSDK_RTSAFE final;
+	OSStatus HandleChannelPressure(UInt8 inChannel, UInt8 inValue, UInt32 inStartFrame) AUSDK_RTSAFE final;
+	OSStatus HandleProgramChange(UInt8 inChannel, UInt8 inProgramNum) AUSDK_RTSAFE final;
+	OSStatus HandlePolyPressure(UInt8 inChannel, UInt8 inKey, UInt8 inValue, UInt32 inStartFrame) AUSDK_RTSAFE final
 	{
 		return noErr;
 	}
-	OSStatus HandleResetAllControllers(UInt8 inChannel) final
+	OSStatus HandleResetAllControllers(UInt8 inChannel) AUSDK_RTSAFE final
 	{
 		return noErr;
 	}
-	OSStatus HandleAllSoundOff(UInt8 inChannel) final
+	OSStatus HandleAllSoundOff(UInt8 inChannel) AUSDK_RTSAFE final
 	{
 		return noErr;
 	}
@@ -967,21 +968,21 @@ public:
 	#if TARGET_PLUGIN_IS_INSTRUMENT
 	OSStatus StartNote(MusicDeviceInstrumentID inInstrument,
 					   MusicDeviceGroupID inGroupID, NoteInstanceID* outNoteInstanceID, 
-					   UInt32 inOffsetSampleFrame, MusicDeviceNoteParams const& inParams) final;
+					   UInt32 inOffsetSampleFrame, MusicDeviceNoteParams const& inParams) AUSDK_RTSAFE final;
 	OSStatus StopNote(MusicDeviceGroupID inGroupID, 
-					  NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame) final;
+					  NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame) AUSDK_RTSAFE final;
 
 	// this is a convenience function swiped from AUEffectBase, but not included in MusicDeviceBase
-	Float64 GetSampleRate()
+	Float64 GetSampleRate() AUSDK_RTSAFE
 	{
-		return Output(0).GetStreamFormat().mSampleRate;
+		return GetOutput0().GetStreamFormat().mSampleRate;
 	}
 	// this is handled by AUEffectBase, but not in MusicDeviceBase
 	bool StreamFormatWritable(AudioUnitScope inScope, AudioUnitElement inElement) final
 	{
 		return !IsInitialized();
 	}
-	[[nodiscard]] bool CanScheduleParameters() const final
+	[[nodiscard]] bool CanScheduleParameters() const AUSDK_RTSAFE final
 	{
 		return true;
 	}

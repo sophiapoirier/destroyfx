@@ -366,6 +366,8 @@
 					"-Wall",
 					"-Wno-format-pedantic",
 					"-Wno-gnu-zero-variadic-macro-arguments",
+					"-Wno-gnu-statement-expression-from-macro-expansion",
+					"-Wno-perf-constraint-implies-noexcept",
 				);
 				WRAPPER_EXTENSION = component;
 			};
@@ -416,6 +418,8 @@
 					"-Wall",
 					"-Wno-format-pedantic",
 					"-Wno-gnu-zero-variadic-macro-arguments",
+					"-Wno-gnu-statement-expression-from-macro-expansion",
+					"-Wno-perf-constraint-implies-noexcept",
 				);
 				WRAPPER_EXTENSION = component;
 			};

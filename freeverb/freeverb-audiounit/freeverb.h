@@ -6,7 +6,7 @@
 // This code is public domain
 // 
 // Audio Unit implementation written by Sophia Poirier, September 2002, May 2016
-// http://destroyfx.org/
+// http://destroyfx.org
 
 
 #pragma once
@@ -25,6 +25,7 @@ public:
 	explicit FreeverbAU(AudioComponentInstance inComponentInstance);
 
 	OSStatus Initialize() override;
+	void Cleanup() override;
 	OSStatus Reset(AudioUnitScope inScope, AudioUnitElement inElement) override;
 
 	OSStatus GetParameterInfo(AudioUnitScope inScope, 
@@ -35,7 +36,7 @@ public:
 
 	OSStatus ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 
 								const AudioBufferList& inBuffer, AudioBufferList& outBuffer, 
-								UInt32 inFramesToProcess) override;
+								UInt32 inFramesToProcess) AUSDK_RTSAFE override;
 
 private:
 	std::unique_ptr<freeverb::ReverbModel> mModel;

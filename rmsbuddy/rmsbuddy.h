@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2025  Sophia Poirier
 
 This file is part of RMS Buddy.
 
@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License 
 along with RMS Buddy.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, use the contact form at http://destroyfx.org/
+To contact the author, use the contact form at http://destroyfx.org
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -41,7 +41,7 @@ public:
 	OSStatus GetParameterInfo(AudioUnitScope inScope, AudioUnitParameterID inParameterID, 
 							  AudioUnitParameterInfo& outParameterInfo) override;
 	OSStatus SetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, AudioUnitElement inElement, 
-						  Float32 inValue, UInt32 inBufferOffsetInFrames) override;
+						  Float32 inValue, UInt32 inBufferOffsetInFrames) AUSDK_RTSAFE override;
 	OSStatus CopyClumpName(AudioUnitScope inScope, UInt32 inClumpID, UInt32 inDesiredNameLength, CFStringRef* outClumpName) override;
 
 	OSStatus GetPropertyInfo(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, AudioUnitElement inElement, 
@@ -50,26 +50,26 @@ public:
 						 void* outData) override;
 	OSStatus SetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, AudioUnitElement inElement, 
 						 void const* inData, UInt32 inDataSize) override;
-	bool SupportsTail() override { return true; }
+	bool SupportsTail() AUSDK_RTSAFE override { return true; }
 	CFURLRef CopyIconLocation() override;
 
 	OSStatus ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 
 								AudioBufferList const& inBuffer, AudioBufferList& outBuffer, 
-								UInt32 inFramesToProcess) override;
+								UInt32 inFramesToProcess) AUSDK_RTSAFE override;
 
 private:
 	using ChannelParameterDesc = std::pair<UInt32, AudioUnitParameterID>;
 
-	static AudioUnitParameterID GetParameterIDFromChannelAndID(UInt32 inChannelIndex, AudioUnitParameterID inID);
-	static std::optional<ChannelParameterDesc> GetChannelAndIDFromParameterID(AudioUnitParameterID inParameterID);
-	static float LinearToDecibels(float inLinearValue);
+	static AudioUnitParameterID GetParameterIDFromChannelAndID(UInt32 inChannelIndex, AudioUnitParameterID inID) noexcept AUSDK_RTSAFE;
+	static std::optional<ChannelParameterDesc> GetChannelAndIDFromParameterID(AudioUnitParameterID inParameterID) noexcept AUSDK_RTSAFE;
+	static float LinearToDecibels(float inLinearValue) noexcept AUSDK_RTSAFE;
 
 	void HandleChannelCount();
-	void SetMeter(UInt32 inChannelIndex, AudioUnitParameterID inID, float inLinearValue);
+	void SetMeter(UInt32 inChannelIndex, AudioUnitParameterID inID, float inLinearValue) noexcept AUSDK_RTSAFE;
 
-	void ResetRMS();
-	void ResetPeak();
-	void RestartAnalysisWindow();
+	void ResetRMS() noexcept AUSDK_RTSAFE;
+	void ResetPeak() noexcept AUSDK_RTSAFE;
+	void RestartAnalysisWindow() noexcept AUSDK_RTSAFE;
 
 	float const mMinMeterValueDb;
 	UInt32 mChannelCount = 0;

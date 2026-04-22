@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2025  Sophia Poirier
 
 This file is part of RMS Buddy.
 
@@ -298,7 +298,7 @@ OSStatus RMSBuddy::CopyClumpName(AudioUnitScope inScope, UInt32 inClumpID, UInt3
 //-----------------------------------------------------------------------------------------
 // only overridden to insert special handling of "trigger" parameters
 OSStatus RMSBuddy::SetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, AudioUnitElement inElement, 
-								Float32 inValue, UInt32 inBufferOffsetInFrames)
+								Float32 inValue, UInt32 inBufferOffsetInFrames) AUSDK_RTSAFE
 {
 	switch (inParameterID)
 	{
@@ -403,19 +403,16 @@ CFURLRef RMSBuddy::CopyIconLocation()
 // the audio input stream to output.
 OSStatus RMSBuddy::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 
 									  AudioBufferList const& inBuffer, AudioBufferList& outBuffer, 
-									  UInt32 inFramesToProcess)
+									  UInt32 inFramesToProcess) AUSDK_RTSAFE
 {
 	// bad number of input channels
-	if (inBuffer.mNumberBuffers < mChannelCount)
-	{
-		return kAudioUnitErr_FormatNotSupported;
-	}
+	AUSDK_Require(inBuffer.mNumberBuffers >= mChannelCount, kAudioUnitErr_FormatNotSupported);
 
 	// the host might have changed the InPlaceProcessing property, 
 	// in which case we'll need to copy the audio input to output
 	if (!ProcessesInPlace())
 	{
-		Input(0).CopyBufferContentsTo(outBuffer);
+		AUSDK_RequireExpected(GetInput0().CopyBufferContentsToOrError(outBuffer));
 	}
 
 	mTotalSamples += inFramesToProcess;
@@ -483,13 +480,13 @@ OSStatus RMSBuddy::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags,
 }
 
 //-----------------------------------------------------------------------------------------
-AudioUnitParameterID RMSBuddy::GetParameterIDFromChannelAndID(UInt32 inChannelIndex, AudioUnitParameterID inID)
+AudioUnitParameterID RMSBuddy::GetParameterIDFromChannelAndID(UInt32 inChannelIndex, AudioUnitParameterID inID) noexcept AUSDK_RTSAFE
 {
 	return kChannelParameter_Base + (inChannelIndex * kChannelParameter_Count) + inID;
 }
 
 //-----------------------------------------------------------------------------------------
-std::optional<RMSBuddy::ChannelParameterDesc> RMSBuddy::GetChannelAndIDFromParameterID(AudioUnitParameterID inParameterID)
+std::optional<RMSBuddy::ChannelParameterDesc> RMSBuddy::GetChannelAndIDFromParameterID(AudioUnitParameterID inParameterID) noexcept AUSDK_RTSAFE
 {
 	if (inParameterID < kChannelParameter_Base)
 	{
@@ -500,7 +497,7 @@ std::optional<RMSBuddy::ChannelParameterDesc> RMSBuddy::GetChannelAndIDFromParam
 }
 
 //-----------------------------------------------------------------------------------------
-float RMSBuddy::LinearToDecibels(float inLinearValue)
+float RMSBuddy::LinearToDecibels(float inLinearValue) noexcept AUSDK_RTSAFE
 {
 	return 20.0f * std::log10(inLinearValue);
 }
@@ -531,17 +528,17 @@ void RMSBuddy::HandleChannelCount()
 }
 
 //-----------------------------------------------------------------------------------------
-void RMSBuddy::SetMeter(UInt32 inChannelIndex, AudioUnitParameterID inID, AudioUnitParameterValue inLinearValue)
+void RMSBuddy::SetMeter(UInt32 inChannelIndex, AudioUnitParameterID inID, AudioUnitParameterValue inLinearValue) noexcept AUSDK_RTSAFE
 {
 	auto const paramID = GetParameterIDFromChannelAndID(inChannelIndex, inID);
 	auto const decibelValue = std::max(LinearToDecibels(inLinearValue), mMinMeterValueDb);
 	AudioUnitParameter const auParam = { GetComponentInstance(), paramID, kAudioUnitScope_Global, AudioUnitElement{0} };
-	AUParameterSet(nullptr, nullptr, &auParam, decibelValue, 0);
+	AUSDK_RT_UNSAFE(AUParameterSet(nullptr, nullptr, &auParam, decibelValue, 0));  // TODO: defer off render thread
 }
 
 //-----------------------------------------------------------------------------------------
 // reset the average RMS-related values and restart calculation of average RMS
-void RMSBuddy::ResetRMS()
+void RMSBuddy::ResetRMS() noexcept AUSDK_RTSAFE
 {
 	mTotalSamples = 0;
 	std::ranges::fill(mAverageRMS, 0.);
@@ -554,7 +551,7 @@ void RMSBuddy::ResetRMS()
 
 //-----------------------------------------------------------------------------------------
 // reset the absolute peak-related values and restart calculation of absolute peak
-void RMSBuddy::ResetPeak()
+void RMSBuddy::ResetPeak() noexcept AUSDK_RTSAFE
 {
 	std::ranges::fill(mAbsolutePeak, 0.f);
 	for (UInt32 ch = 0; ch < mChannelCount; ch++)
@@ -565,7 +562,7 @@ void RMSBuddy::ResetPeak()
 
 //-----------------------------------------------------------------------------------------
 // reset the GUI-related continual values
-void RMSBuddy::RestartAnalysisWindow()
+void RMSBuddy::RestartAnalysisWindow() noexcept AUSDK_RTSAFE
 {
 	mAnalysisWindowSampleCounter = 0;
 	std::ranges::fill(mContinualRMS, 0.);

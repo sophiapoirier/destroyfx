@@ -45,7 +45,7 @@ GCC_WARN_SIGN_COMPARE = YES
 GCC_WARN_MISSING_PARENTHESES = YES
 GCC_WARN_PEDANTIC = NO
 GCC_WARN_SHADOW = YES
-WARNING_CFLAGS = -Wall -Werror=vla -Wimplicit-fallthrough -Wno-deprecated-anon-enum-enum-conversion
+WARNING_CFLAGS = -Wall -Werror=vla -Wimplicit-fallthrough -Wno-deprecated-anon-enum-enum-conversion -Wno-perf-constraint-implies-noexcept
 CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES
 
 PRODUCT_NAME = dfx $(DFX_PLUGIN_FULL_NAME)

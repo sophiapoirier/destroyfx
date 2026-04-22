@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2024 Sophia Poirier
+Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2025 Sophia Poirier
 All rights reserved.
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. 
@@ -987,18 +987,19 @@ void Turntablist::processaudio(std::span<float const* const> /*inAudio*/, std::s
 						#ifdef USE_LIBSNDFILE
 							auto const output = (ch == 0) ? m_fLeft : m_fRight;
 						#else
-							AudioBufferList const& abl = m_auBufferList.GetBufferList();
+							auto const abl = m_auBufferList.GetBufferListOrError();
+							assert(abl);
 							size_t ablChannel = ch;
-							if (ch >= abl.mNumberBuffers)
+							if (ch >= abl->mNumberBuffers)
 							{
-								ablChannel = abl.mNumberBuffers - 1;
+								ablChannel = abl->mNumberBuffers - 1;
 								// XXX only do the channel remapping for mono->stereo upmixing special case (?)
 								if (ch > 1)
 								{
 									break;
 								}
 							}
-							auto const output = static_cast<float const*>(abl.mBuffers[ablChannel].mData);
+							auto const output = static_cast<float const*>(abl->mBuffers[ablChannel].mData);
 						#endif
 
 #ifdef NO_INTERPOLATION

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2025  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -65,8 +65,12 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 #endif
 
 
-constexpr char const* const kPresetDefaultName = "default";
-constexpr std::chrono::milliseconds kIdleTimerInterval(30);
+static constexpr std::string_view kPresetDefaultName("default");
+static constexpr std::chrono::milliseconds kIdleTimerInterval(30);
+
+#ifdef TARGET_API_AUDIOUNIT
+static constexpr AudioUnitElement kAudioUnitElement0 = 0;
+#endif
 
 
 namespace
@@ -333,7 +337,7 @@ void DfxPlugin::do_initialize()
 	{
 		assert(getnumoutputs() > getnuminputs());  // the only imbalance we support with DSP cores
 	#ifdef TARGET_API_AUDIOUNIT
-		mAsymmetricalInputBufferList.Allocate(GetStreamFormat(kAudioUnitScope_Output, 0), static_cast<UInt32>(getmaxframes()));
+		mAsymmetricalInputBufferList.Allocate(GetOutput0().GetStreamFormat(), static_cast<UInt32>(getmaxframes()));
 	#else
 		mAsymmetricalInputAudioBuffer.assign(getmaxframes(), 0.0f);
 	#endif
@@ -416,7 +420,7 @@ void DfxPlugin::do_reset()
 	{
 //		return;
 	}
-	TARGET_API_BASE_CLASS::Reset(kAudioUnitScope_Global, AudioUnitElement(0));
+	TARGET_API_BASE_CLASS::Reset(kAudioUnitScope_Global, kAudioUnitElement0);
 #endif
 
 	mIsFirstRenderSinceReset = true;
@@ -643,7 +647,7 @@ void DfxPlugin::update_parameter(dfx::ParameterID inParameterID)
 
 #ifdef TARGET_API_AUDIOUNIT
 	// make the global-scope element aware of the parameter's value
-	TARGET_API_BASE_CLASS::SetParameter(inParameterID, kAudioUnitScope_Global, AudioUnitElement(0), getparameter_f(inParameterID), 0);
+	TARGET_API_BASE_CLASS::SetParameter(inParameterID, kAudioUnitScope_Global, kAudioUnitElement0, getparameter_f(inParameterID), 0);
 
 #elifdef TARGET_API_VST
 	auto const vstPresetIndex = getProgram();
@@ -1028,8 +1032,8 @@ void DfxPlugin::postupdate_preset()
 	au_preset.presetNumber = static_cast<SInt32>(getcurrentpresetnum());
 	au_preset.presetName = getpresetcfname(getcurrentpresetnum());
 	SetAFactoryPresetAsCurrent(au_preset);
-	PropertyChanged(kAudioUnitProperty_PresentPreset, kAudioUnitScope_Global, AudioUnitElement(0));
-	PropertyChanged(kAudioUnitProperty_CurrentPreset, kAudioUnitScope_Global, AudioUnitElement(0));
+	PropertyChanged(kAudioUnitProperty_PresentPreset, kAudioUnitScope_Global, kAudioUnitElement0);
+	PropertyChanged(kAudioUnitProperty_CurrentPreset, kAudioUnitScope_Global, kAudioUnitElement0);
 
 #elifdef TARGET_API_VST
 	TARGET_API_BASE_CLASS::setProgram(static_cast<VstInt32>(getcurrentpresetnum()));
@@ -1402,7 +1406,7 @@ size_t DfxPlugin::getnuminputs()
 #ifdef TARGET_API_AUDIOUNIT
 	if (Inputs().GetNumberOfElements() > 0)
 	{
-		return GetStreamFormat(kAudioUnitScope_Input, AudioUnitElement(0)).mChannelsPerFrame;
+		return GetInput0().GetStreamFormat().mChannelsPerFrame;
 	}
 	return 0;
 
@@ -1410,7 +1414,7 @@ size_t DfxPlugin::getnuminputs()
 	return mNumInputs;
 
 #elifdef TARGET_API_RTAS
-	if (IsAS() && mAudioIsRendering)  // XXX checking connections is only valid while rendering
+	if (IsAS() && mAudioIsRendering)  // checking connections is only valid while rendering
 	{
 		for (SInt32 ch = 0; ch < GetNumInputs(); ch++)
 		{
@@ -1432,7 +1436,7 @@ size_t DfxPlugin::getnumoutputs()
 #ifdef TARGET_API_AUDIOUNIT
 	if (Outputs().GetNumberOfElements() > 0)
 	{
-		return GetStreamFormat(kAudioUnitScope_Output, AudioUnitElement(0)).mChannelsPerFrame;
+		return GetOutput0().GetStreamFormat().mChannelsPerFrame;
 	}
 	return 0;
 
@@ -1440,7 +1444,7 @@ size_t DfxPlugin::getnumoutputs()
 	return mNumOutputs;
 
 #elifdef TARGET_API_RTAS
-	if (IsAS() && mAudioIsRendering)  // XXX checking connections is only valid while rendering
+	if (IsAS() && mAudioIsRendering)  // checking connections is only valid while rendering
 	{
 		for (SInt32 ch = 0; ch < GetNumOutputs(); ch++)
 		{
@@ -1640,7 +1644,7 @@ double DfxPlugin::getlatency_seconds() const
 void DfxPlugin::postupdate_latency()
 {
 #ifdef TARGET_API_AUDIOUNIT
-	PropertyChanged(kAudioUnitProperty_Latency, kAudioUnitScope_Global, AudioUnitElement(0));
+	PropertyChanged(kAudioUnitProperty_Latency, kAudioUnitScope_Global, kAudioUnitElement0);
 #elifdef TARGET_API_VST
 	ioChanged();
 #endif
@@ -1734,7 +1738,7 @@ double DfxPlugin::gettailsize_seconds() const
 void DfxPlugin::postupdate_tailsize()
 {
 #ifdef TARGET_API_AUDIOUNIT
-	PropertyChanged(kAudioUnitProperty_TailTime, kAudioUnitScope_Global, AudioUnitElement(0));
+	PropertyChanged(kAudioUnitProperty_TailTime, kAudioUnitScope_Global, kAudioUnitElement0);
 #elifdef TARGET_API_VST
 	noTail(gettailsize_samples() <= 0);
 #endif
