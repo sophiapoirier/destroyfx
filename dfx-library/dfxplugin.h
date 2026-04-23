@@ -896,7 +896,7 @@ public:
 	#else
 	OSStatus ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 
 								AudioBufferList const& inBuffer, AudioBufferList& outBuffer, 
-								UInt32 inFramesToProcess) final;
+								UInt32 inFramesToProcess) AUSDK_RTSAFE final;
 	#endif
 	#if TARGET_PLUGIN_USES_DSPCORE
 	std::unique_ptr<ausdk::AUKernelBase> NewKernel() final;

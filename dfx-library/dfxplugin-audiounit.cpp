@@ -1677,7 +1677,7 @@ OSStatus DfxPlugin::Render(AudioUnitRenderActionFlags& ioActionFlags,
 // this is the audio processing routine
 OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 
 									   AudioBufferList const& inBuffer, AudioBufferList& outBuffer, 
-									   UInt32 inFramesToProcess)
+									   UInt32 inFramesToProcess) AUSDK_RTSAFE
 {
 	OSStatus status = noErr;
 
