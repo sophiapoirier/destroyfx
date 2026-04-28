@@ -1229,7 +1229,7 @@ public:
 	}
 
 #ifdef TARGET_API_AUDIOUNIT
-	void Process(Float32 const* inAudio, Float32* outAudio, UInt32 inNumFrames, bool& ioSilence) final
+	void Process(Float32 const* inAudio, Float32* outAudio, UInt32 inNumFrames, bool& ioSilence) AUSDK_RTSAFE final
 	{
 		process({inAudio, inNumFrames}, {outAudio, inNumFrames});
 		ioSilence = false;  // TODO: allow DSP cores to communicate their output silence status
