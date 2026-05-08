@@ -57,6 +57,7 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_b(kTomsound, {"TOMSOUND", "TomSnd", "Tom7"}, false);
   initparameter_b(kFreeze, {dfx::kParameterNames_Freeze}, false);
   initparameter_b(kAttenuateFeedbackByMixLevel, {"attenuate feedback by mix level", "AtnFdbk", "AtnFdb", "-fdb"}, false);
+  initparameter_list(kDistChangeMode, {"distance change mode", "DistMod", "DstMod", "DMod"}, kDistChangeMode_Reverse, kDistChangeMode_Reverse, kDistChangeMode_Count);
 
   setparameterenforcevaluelimits(kBsize, true);
   for (auto const parameterID : kDistParameters) {
@@ -67,10 +68,12 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setparametervaluestring(kQuality, kQualityMode_HiFi, "hi-fi");
   setparametervaluestring(kQuality, kQualityMode_UltraHiFi, "ultra hi-fi");
 
-  // distance parameters only have meaningful effect at zero speed which probably will never occur randomly,
-  // and otherwise all they do is glitch a lot, so omit them
-  addparameterattributes(kDist1, DfxParam::kAttribute_OmitFromRandomizeAll);
-  addparameterattributes(kDist2, DfxParam::kAttribute_OmitFromRandomizeAll);
+  setparametervaluestring(kDistChangeMode, kDistChangeMode_Reverse, "reverse");
+  setparametervaluestring(kDistChangeMode, kDistChangeMode_AdHocVarispeed, "ad hoc varispeed");
+  setparametervaluestring(kDistChangeMode, kDistChangeMode_DistanceVarispeed, "distance varispeed");
+  setparametervaluestring(kDistChangeMode, kDistChangeMode_BufferVarispeed, "buffer varispeed");
+  setparametervaluestring(kDistChangeMode, kDistChangeMode_LoopingBufferVarispeed, "looping buffer varispeed");
+
   addparameterattributes(kFreeze, DfxParam::kAttribute_OmitFromRandomizeAll);
   addparameterattributes(kAttenuateFeedbackByMixLevel, DfxParam::kAttribute_OmitFromRandomizeAll);
 
@@ -109,7 +112,10 @@ void Transverb::dfx_PostConstructor() {
 TransverbDSP::TransverbDSP(DfxPlugin& inDfxPlugin)
   : DfxPluginCore(inDfxPlugin),
     MAXBUF(static_cast<int>(getparametermax_f(kBsize) * 0.001 * getsamplerate())),
+    buftemp(dynamic_cast<Transverb&>(inDfxPlugin).getscratchbuffer()),
     firCoefficientsWindow(dfx::FIRFilter::generateKaiserWindow(kNumFIRTaps, 60.0f)) {
+
+  buftemp.assign(MAXBUF, 0.f);
 
   registerSmoothedAudioValue(drymix);
 
@@ -126,12 +132,15 @@ TransverbDSP::TransverbDSP(DfxPlugin& inDfxPlugin)
 void TransverbDSP::reset() {
 
   std::ranges::for_each(heads, [](Head& head){ head.reset(); });
+
+  firstrendersincereset = true;
 }
 
 void TransverbDSP::Head::reset() {
 
   smoothcount = 0;
   lastdelayval = 0.f;
+  targetdist.reset();
   filter.reset();
   speedHasChanged = true;
 
@@ -164,8 +173,6 @@ void TransverbDSP::processparameters() {
       heads[head].feed = *value;
     }
   }
-  quality = getparameter_i(kQuality);
-  tomsound = getparameter_b(kTomsound);
 
   if (auto const value = getparameterifchanged_f(kBsize))
   {
@@ -193,12 +200,12 @@ void TransverbDSP::processparameters() {
     std::ranges::for_each(heads, [bsize_f](Head& head){ head.read = fmod_bipolar(head.read, bsize_f); });
   }
 
+  distchangemode = getparameter_i(kDistChangeMode);
   for (size_t head = 0; head < kNumDelays; head++)
   {
     if (auto const dist = getparameterifchanged_f(kDistParameters[head]))
     {
-      auto const bsize_f = static_cast<double>(bsize);
-      heads[head].read = fmod_bipolar(static_cast<double>(writer) - (*dist * bsize_f), bsize_f);
+      processdist(*dist, heads[head]);
     }
   }
 
@@ -219,6 +226,64 @@ void TransverbDSP::processparameters() {
     else if (GetChannelNum() == 1)
     {
       heads[0].mix.setValueNow(getparametermin_f(kMix1));
+    }
+  }
+
+  firstrendersincereset = false;
+}
+
+double TransverbDSP::getdist(double read) const {
+
+  return fmod_bipolar(static_cast<double>(writer) - read, static_cast<double>(bsize));
+}
+
+void TransverbDSP::processdist(double distnormalized, Head& head) {
+
+  auto const bsize_f = static_cast<double>(bsize);
+  auto const distsamples = distnormalized * bsize_f;
+  auto const targetread = fmod_bipolar(static_cast<double>(writer) - distsamples, bsize_f);
+
+  if (firstrendersincereset)
+  {
+    head.read = targetread;
+  }
+  else
+  {
+    if (distchangemode == kDistChangeMode_Reverse)
+    {
+      head.targetdist = distsamples;
+    }
+    else if (auto const resamplerate = getdist(head.read) / std::max(distsamples, 1.); distchangemode == kDistChangeMode_AdHocVarispeed)
+    {
+      head.targetdist = distsamples;
+      head.distspeedfactor = resamplerate;
+      head.speedHasChanged = true;
+    }
+    else
+    {
+      constexpr double modulationthresholdsamples = 1.;
+      if (std::fabs(targetread - head.read) >= modulationthresholdsamples)
+      {
+        auto const bsizesteps = bsize_f / resamplerate;
+        bool const subslice = (distchangemode == kDistChangeMode_DistanceVarispeed);
+        bool const looping = (distchangemode == kDistChangeMode_LoopingBufferVarispeed);
+        auto const copylength_f = subslice ? distsamples : (looping ? bsize_f : std::min(bsize_f, bsizesteps));
+        auto const copylength = static_cast<size_t>(std::lround(copylength_f));
+        assert(copylength <= buftemp.size());
+        assert(static_cast<int>(copylength) <= bsize);
+        auto const sourcestart = subslice ? head.read : fmod_bipolar(static_cast<double>(writer) - (copylength_f * resamplerate), bsize_f);
+        for (size_t i = 0; i < copylength; i++)
+        {
+          auto const sourcepos = std::fmod(sourcestart + (resamplerate * static_cast<double>(i)), bsize_f);
+          buftemp[i] = interpolateHermite(head.buf.data(), sourcepos, bsize, writer);
+        }
+        auto const destinationstart = subslice ? std::lround(targetread) : mod_bipolar(writer - static_cast<int>(copylength), bsize);
+        auto const copylength1 = std::min(static_cast<size_t>(bsize - destinationstart), copylength);
+        auto const copylength2 = copylength - copylength1;
+        std::copy_n(buftemp.cbegin(), copylength1, std::next(head.buf.begin(), destinationstart));
+        std::copy_n(std::next(buftemp.cbegin(), copylength1), copylength2, head.buf.begin());
+      }
+      head.read = targetread;
     }
   }
 }
