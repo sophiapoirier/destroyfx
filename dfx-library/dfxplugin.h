@@ -401,7 +401,7 @@ public:
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].getcfname() : nullptr;
 	}
 #endif
-	DfxParam::Value::Type getparametervaluetype(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
+	DfxParam::ValueType getparametervaluetype(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
 	DfxParam::Unit getparameterunit(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
 	bool getparameterchanged(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;  // only reliable when called during processaudio
 	bool getparametertouched(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;  // only reliable when called during processaudio

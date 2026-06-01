@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2024  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -253,7 +253,7 @@ public:
 	float GetParameter_minValue(dfx::ParameterID inParameterID);
 	float GetParameter_maxValue(dfx::ParameterID inParameterID);
 	float GetParameter_defaultValue(dfx::ParameterID inParameterID);
-	DfxParam::Value::Type GetParameterValueType(dfx::ParameterID inParameterID);
+	DfxParam::ValueType GetParameterValueType(dfx::ParameterID inParameterID);
 	DfxParam::Unit GetParameterUnit(dfx::ParameterID inParameterID);
 	bool GetParameterUseValueStrings(dfx::ParameterID inParameterID);
 	bool HasParameterAttribute(dfx::ParameterID inParameterID, DfxParam::Attribute inFlag);

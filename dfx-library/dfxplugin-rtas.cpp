@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2024  Sophia Poirier
+Copyright (C) 2009-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -190,12 +190,12 @@ void DfxPlugin::AddParametersToList()
 			AddControl( new CPluginControl_List(paramFourCharID, paramName.c_str(), valueStringsVector, paramDefault_i - paramMin_i, paramAutomatable) );
 		}
 
-		else if (getparametervaluetype(i) == DfxParam::Value::Type::Int)
+		else if (getparametervaluetype(i) == DfxParam::ValueType::Int)
 		{
 			AddControl( new CPluginControl_Discrete(paramFourCharID, paramName.c_str(), paramMin_i, paramMax_i, paramDefault_i, paramAutomatable) );
 		}
 
-		else if (getparametervaluetype(i) == DfxParam::Value::Type::Boolean)
+		else if (getparametervaluetype(i) == DfxParam::ValueType::Boolean)
 		{
 			AddControl( new CPluginControl_OnOff(paramFourCharID, paramName.c_str(), getparameterdefault_b(i), paramAutomatable) );
 		}
@@ -335,13 +335,13 @@ void DfxPlugin::UpdateControlValueInAlgorithm(long inParameterIndex)
 
 	switch (getparametervaluetype(parameterID))
 	{
-		case DfxParam::Value::Type::Float:
+		case DfxParam::ValueType::Float:
 			parameters[parameterID].set_f(GetParameter_f_FromRTAS(parameterID));
 			break;
-		case DfxParam::Value::Type::Int:
+		case DfxParam::ValueType::Int:
 			parameters[parameterID].set_i(GetParameter_i_FromRTAS(parameterID));
 			break;
-		case DfxParam::Value::Type::Boolean:
+		case DfxParam::ValueType::Boolean:
 			parameters[parameterID].set_b(GetParameter_b_FromRTAS(parameterID));
 			break;
 		default:

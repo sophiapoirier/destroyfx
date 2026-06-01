@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2025  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -45,6 +45,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include "dfxguibutton.h"
 #include "dfxguidialog.h"
+#include "dfxguimisc.h"
 #include "dfxmath.h"
 #include "dfxmidi.h"
 #include "dfxmisc.h"
@@ -154,9 +155,8 @@ DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 	mFontFactory = dfx::FontFactory::Create();
 
 	rect.top = rect.left = rect.bottom = rect.right = 0;
-	// load the background image
-	// we don't need to load all bitmaps, this could be done when open is called
-	// XXX hack
+	// HACK: load the background image to infer view dimensions
+	// we don't need to load all bitmaps (those can be done when open is called)
 	mBackgroundImage = LoadImage(PLUGIN_BACKGROUND_IMAGE_FILENAME);
 	if (mBackgroundImage)
 	{
@@ -451,6 +451,7 @@ void DfxGuiEditor::PropertyChanged(dfx::PropertyID inPropertyID, dfx::Scope inSc
 	if (IsPropertyRegistered(inPropertyID, inScope, inItemIndex))
 	{
 		// defer handling to the main thread
+		// TODO: execute immediately if on the main thread
 		PropertyDescriptor const property{inPropertyID, inScope, inItemIndex};
 		assert(mPropertyChangesHavePosted.contains(property));
 		mPropertyChangesHavePosted[property].clear();
@@ -696,7 +697,7 @@ void DfxGuiEditor::GenerateParametersAutomationSnapshot()
 //-----------------------------------------------------------------------------
 std::optional<double> DfxGuiEditor::dfxgui_GetParameterValueFromString_f(dfx::ParameterID inParameterID, std::string const& inText)
 {
-	if (GetParameterValueType(inParameterID) == DfxParam::Value::Type::Float)
+	if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
 	{
 		double value {};
 		auto const readCount = std::sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%lf", &value);
@@ -719,7 +720,7 @@ std::optional<double> DfxGuiEditor::dfxgui_GetParameterValueFromString_f(dfx::Pa
 //-----------------------------------------------------------------------------
 std::optional<long> DfxGuiEditor::dfxgui_GetParameterValueFromString_i(dfx::ParameterID inParameterID, std::string const& inText)
 {
-	if (GetParameterValueType(inParameterID) == DfxParam::Value::Type::Float)
+	if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
 	{
 		if (auto const parsedValue_f = dfxgui_GetParameterValueFromString_f(inParameterID, inText))
 		{
@@ -745,7 +746,7 @@ bool DfxGuiEditor::dfxgui_SetParameterValueWithString(dfx::ParameterID inParamet
 	if (dfxgui_IsValidParameterID(inParameterID))
 	{
 		constexpr bool automationGesture = true;
-		if (GetParameterValueType(inParameterID) == DfxParam::Value::Type::Float)
+		if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
 		{
 			if (auto const newValue = dfxgui_GetParameterValueFromString_f(inParameterID, inText))
 			{
@@ -791,7 +792,7 @@ void DfxGuiEditor::TextEntryForParameterValue(dfx::ParameterID inParameterID)
 
 	mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>(inParameterID, getparametername(inParameterID), "enter value:");
 	std::array<char, dfx::kParameterValueStringMaxLength> textValue {};
-	if (GetParameterValueType(inParameterID) == DfxParam::Value::Type::Float)
+	if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
 	{
 		std::snprintf(textValue.data(), textValue.size(), "%.6lf", getparameter_f(inParameterID));
 	}
@@ -801,11 +802,8 @@ void DfxGuiEditor::TextEntryForParameterValue(dfx::ParameterID inParameterID)
 	}
 	mTextEntryDialog->setText(textValue.data());
 
-	auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID inParameterID)
-	{
-		return dfxgui_SetParameterValueWithString(inParameterID, inText);
-	};
-	if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
+	if (!mTextEntryDialog->runModal(getFrame(), std::bind(&DfxGuiEditor::dfxgui_SetParameterValueWithString, this,
+														  std::placeholders::_2, std::placeholders::_1)))
 	{
 		ShowMessage("could not display text entry dialog");
 	}
@@ -960,15 +958,15 @@ double DfxGuiEditor::getparameter_f(dfx::ParameterID inParameterID)
 	dfx::ParameterValueRequest request;
 	size_t dataSize = sizeof(request);
 	request.inValueItem = dfx::ParameterValueItem::Current;
-	request.inValueType = DfxParam::Value::Type::Float;
+	request.inValueType = DfxParam::ValueType::Float;
 
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, 
 										   inParameterID, &request, dataSize);
 	if (status == dfx::kStatus_NoError)
 	{
-		return request.value.get_f();
+		return DfxParam::get_f(request.value);
 	}
-	return 0.0;
+	return 0.;
 #else
 	return dfxgui_GetEffectInstance()->getparameter_f(inParameterID);
 #endif
@@ -981,13 +979,13 @@ long DfxGuiEditor::getparameter_i(dfx::ParameterID inParameterID)
 	dfx::ParameterValueRequest request;
 	size_t dataSize = sizeof(request);
 	request.inValueItem = dfx::ParameterValueItem::Current;
-	request.inValueType = DfxParam::Value::Type::Int;
+	request.inValueType = DfxParam::ValueType::Int;
 
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, 
 										   inParameterID, &request, dataSize);
 	if (status == dfx::kStatus_NoError)
 	{
-		return request.value.get_i();
+		return DfxParam::get_i(request.value);
 	}
 	return 0;
 #else
@@ -1002,13 +1000,13 @@ bool DfxGuiEditor::getparameter_b(dfx::ParameterID inParameterID)
 	dfx::ParameterValueRequest request;
 	size_t dataSize = sizeof(request);
 	request.inValueItem = dfx::ParameterValueItem::Current;
-	request.inValueType = DfxParam::Value::Type::Boolean;
+	request.inValueType = DfxParam::ValueType::Boolean;
 
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, 
 										   inParameterID, &request, dataSize);
 	if (status == dfx::kStatus_NoError)
 	{
-		return request.value.get_b();
+		return DfxParam::get_b(request.value);
 	}
 	return false;
 #else
@@ -1038,7 +1036,7 @@ void DfxGuiEditor::setparameter_f(dfx::ParameterID inParameterID, double inValue
 #ifdef TARGET_API_AUDIOUNIT
 	dfx::ParameterValueRequest request;
 	request.inValueItem = dfx::ParameterValueItem::Current;
-	request.inValueType = DfxParam::Value::Type::Float;
+	request.inValueType = DfxParam::ValueType::Float;
 	request.value = inValue;
 
 	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, inParameterID, request);
@@ -1069,7 +1067,7 @@ void DfxGuiEditor::setparameter_i(dfx::ParameterID inParameterID, long inValue, 
 #ifdef TARGET_API_AUDIOUNIT
 	dfx::ParameterValueRequest request;
 	request.inValueItem = dfx::ParameterValueItem::Current;
-	request.inValueType = DfxParam::Value::Type::Int;
+	request.inValueType = DfxParam::ValueType::Int;
 	request.value = inValue;
 
 	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, inParameterID, request);
@@ -1100,7 +1098,7 @@ void DfxGuiEditor::setparameter_b(dfx::ParameterID inParameterID, bool inValue, 
 #ifdef TARGET_API_AUDIOUNIT
 	dfx::ParameterValueRequest request;
 	request.inValueItem = dfx::ParameterValueItem::Current;
-	request.inValueType = DfxParam::Value::Type::Boolean;
+	request.inValueType = DfxParam::ValueType::Boolean;
 	request.value = inValue;
 
 	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, inParameterID, request);
@@ -1351,12 +1349,12 @@ float DfxGuiEditor::GetParameter_defaultValue(dfx::ParameterID inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value::Type DfxGuiEditor::GetParameterValueType(dfx::ParameterID inParameterID)
+DfxParam::ValueType DfxGuiEditor::GetParameterValueType(dfx::ParameterID inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	return dfxgui_GetProperty<DfxParam::Value::Type>(dfx::kPluginProperty_ParameterValueType, 
-													 dfx::kScope_Global, 
-													 inParameterID).value_or(DfxParam::Value::Type::Float);
+	return dfxgui_GetProperty<DfxParam::ValueType>(dfx::kPluginProperty_ParameterValueType, 
+												   dfx::kScope_Global, 
+												   inParameterID).value_or(DfxParam::ValueType::Float);
 #else
 	return dfxgui_GetEffectInstance()->getparametervaluetype(inParameterID);
 #endif
@@ -2201,7 +2199,7 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 		assert(valueStringsSubMenu->getNbEntries() > 0);
 		resultMenu->addEntry(valueStringsSubMenu, "Select value");
 	}
-	else if (GetParameterValueType(inParameterID) == DfxParam::Value::Type::Boolean)
+	else if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Boolean)
 	{
 		auto const parameterIsOn = getparameter_b(inParameterID);
 		constexpr bool enabled = true;
@@ -2232,7 +2230,7 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 		// append the current MIDI assignment, if there is one, to the menu item text
 		if (enableItem)
 		{
-			menuItemText += [currentParameterAssignment]() -> std::string
+			menuItemText += [currentParameterAssignment] -> std::string
 			{
 				switch (currentParameterAssignment.mEventType)
 				{

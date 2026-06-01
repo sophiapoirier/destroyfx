@@ -196,35 +196,15 @@ public:
 
 	// Value holds every supported value type
 	// all parameter values (current, min, max, default) are stored in these
-	struct Value : public std::variant<double, int64_t, bool>
+	using Value = std::variant<double, int64_t, bool>;
+
+	// these are the different representation types that a parameter can 
+	// declare as its "native" value type
+	enum class ValueType : uint32_t
 	{
-		// these are the different representation types that a parameter can 
-		// declare as its "native" value type
-		enum class Type : uint32_t
-		{
-			Float,
-			Int,
-			Boolean
-		};
-
-		using Parent = std::variant<double, int64_t, bool>;
-		using Parent::variant;
-		using Parent::operator=;
-
-		constexpr auto get_f() const noexcept DFX_RT_ATTR
-		{
-			// TODO: std::get for this type seems like it should be realtime-safe?
-			return DFX_RT_UNSAFE(std::get<double>(*this));
-		}
-		constexpr auto get_i() const noexcept DFX_RT_ATTR
-		{
-			return DFX_RT_UNSAFE(std::get<int64_t>(*this));
-		}
-		constexpr auto get_b() const noexcept DFX_RT_ATTR
-		{
-			return DFX_RT_UNSAFE(std::get<bool>(*this));
-		}
-		Type gettype() const noexcept DFX_RT_ATTR;
+		Float,
+		Int,
+		Boolean
 	};
 
 	// these are the different value unit types that a parameter can have
@@ -330,6 +310,11 @@ public:
 	void setquietly_f(double inValue) noexcept DFX_RT_ATTR;
 	void setquietly_i(int64_t inValue) noexcept DFX_RT_ATTR;
 	void setquietly_b(bool inValue) noexcept DFX_RT_ATTR;
+
+	// Value extraction convenience free functions (requires matching type be held)
+	static double get_f(Value inValue) noexcept DFX_RT_ATTR;
+	static int64_t get_i(Value inValue) noexcept DFX_RT_ATTR;
+	static bool get_b(Value inValue) noexcept DFX_RT_ATTR;
 
 	// get the parameter's current value
 	Value get() const noexcept DFX_RT_ATTR
@@ -447,10 +432,11 @@ public:
 #endif
 
 	// get the value type of the parameter values
-	Value::Type getvaluetype() const noexcept DFX_RT_ATTR
+	static ValueType getvaluetype(Value inValue) noexcept DFX_RT_ATTR;
+	ValueType getvaluetype() const noexcept DFX_RT_ATTR
 	{
 		// relying upon default value to avoid atomic overhead with current value
-		return mDefaultValue.gettype();
+		return getvaluetype(mDefaultValue);
 	}
 
 	// set/get the unit type of the parameter

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2024  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -45,7 +45,7 @@ This is where we connect the VST API to our DfxPlugin system.
 
 //-----------------------------------------------------------------------------
 // this is called right before our plugin instance is destroyed
-// XXX TODO: test and make sure that this is working in various hosts!
+// TODO: test and make sure that this is working in various hosts!
 void DfxPlugin::close()
 {
 	do_PreDestructor();
@@ -405,13 +405,13 @@ void DfxPlugin::getParameterDisplay(VstInt32 index, char* text)
 
 	switch (getparametervaluetype(parameterID))
 	{
-		case DfxParam::Value::Type::Float:
+		case DfxParam::ValueType::Float:
 			std::snprintf(text, kVstMaxParamStrLen + 1, "%.3f", getparameter_f(parameterID));
 			break;
-		case DfxParam::Value::Type::Int:
+		case DfxParam::ValueType::Int:
 			std::snprintf(text, kVstMaxParamStrLen + 1, "%" PRIi64, getparameter_i(parameterID));
 			break;
-		case DfxParam::Value::Type::Boolean:
+		case DfxParam::ValueType::Boolean:
 			vst_strncpy(text, getparameter_b(parameterID) ? "on" : "off", kVstMaxParamStrLen);
 			break;
 		default:
@@ -474,10 +474,10 @@ bool DfxPlugin::getParameterProperties(VstInt32 index, VstParameterProperties* p
 
 	switch (getparametervaluetype(parameterID))
 	{
-		case DfxParam::Value::Type::Boolean:
+		case DfxParam::ValueType::Boolean:
 			properties->flags |= kVstParameterIsSwitch;
 			break;
-		case DfxParam::Value::Type::Int:
+		case DfxParam::ValueType::Int:
 			properties->minInteger = static_cast<VstInt32>(getparametermin_i(parameterID));
 			properties->maxInteger = static_cast<VstInt32>(getparametermax_i(parameterID));
 			properties->flags |= kVstParameterUsesIntegerMinMax;

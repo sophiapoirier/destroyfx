@@ -243,7 +243,7 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 
 		// get parameter value type
 		case dfx::kPluginProperty_ParameterValueType:
-			outDataSize = sizeof(DfxParam::Value::Type);
+			outDataSize = sizeof(DfxParam::ValueType);
 			outWritable = false;
 			break;
 
@@ -509,13 +509,13 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				{
 					switch (request.inValueType)
 					{
-						case DfxParam::Value::Type::Float:
+						case DfxParam::ValueType::Float:
 							value = getparameter_f(parameterID);
 							break;
-						case DfxParam::Value::Type::Int:
+						case DfxParam::ValueType::Int:
 							value = getparameter_i(parameterID);
 							break;
-						case DfxParam::Value::Type::Boolean:
+						case DfxParam::ValueType::Boolean:
 							value = getparameter_b(parameterID);
 							break;
 						default:
@@ -529,13 +529,13 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				{
 					switch (request.inValueType)
 					{
-						case DfxParam::Value::Type::Float:
+						case DfxParam::ValueType::Float:
 							value = getparameterdefault_f(parameterID);
 							break;
-						case DfxParam::Value::Type::Int:
+						case DfxParam::ValueType::Int:
 //							value = getparameterdefault_i(parameterID);
 							break;
-						case DfxParam::Value::Type::Boolean:
+						case DfxParam::ValueType::Boolean:
 //							value = getparameterdefault_b(parameterID);
 							break;
 						default:
@@ -549,13 +549,13 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				{
 					switch (request.inValueType)
 					{
-						case DfxParam::Value::Type::Float:
+						case DfxParam::ValueType::Float:
 							value = getparametermin_f(parameterID);
 							break;
-						case DfxParam::Value::Type::Int:
+						case DfxParam::ValueType::Int:
 							value = getparametermin_i(parameterID);
 							break;
-						case DfxParam::Value::Type::Boolean:
+						case DfxParam::ValueType::Boolean:
 //							value = getparametermin_b(parameterID);
 							value = false;
 							break;
@@ -570,13 +570,13 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				{
 					switch (request.inValueType)
 					{
-						case DfxParam::Value::Type::Float:
+						case DfxParam::ValueType::Float:
 							value = getparametermax_f(parameterID);
 							break;
-						case DfxParam::Value::Type::Int:
+						case DfxParam::ValueType::Int:
 							value = getparametermax_i(parameterID);
 							break;
-						case DfxParam::Value::Type::Boolean:
+						case DfxParam::ValueType::Boolean:
 //							value = getparametermax_b(parameterID);
 							value = true;
 							break;
@@ -929,7 +929,7 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 				request.value.i = CFSwapInt64(request.value.i);
 			}
 		#endif
-			assert(request.value.gettype() == request.inValueType);  // TODO: eliminate redundancy?
+			assert(DfxParam::getvaluetype(request.value) == request.inValueType);  // TODO: eliminate redundancy?
 			auto const value = request.value;
 			dfx::ParameterID const parameterID = inElement;
 			switch (request.inValueItem)
@@ -938,16 +938,16 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 				{
 					switch (request.inValueType)
 					{
-						case DfxParam::Value::Type::Float:
-							setparameter_f(parameterID, value.get_f());
+						case DfxParam::ValueType::Float:
+							setparameter_f(parameterID, DfxParam::get_f(value));
 							postupdate_parameter(parameterID);
 							break;
-						case DfxParam::Value::Type::Int:
-							setparameter_i(parameterID, value.get_i());
+						case DfxParam::ValueType::Int:
+							setparameter_i(parameterID, DfxParam::get_i(value));
 							postupdate_parameter(parameterID);
 							break;
-						case DfxParam::Value::Type::Boolean:
-							setparameter_b(parameterID, value.get_b());
+						case DfxParam::ValueType::Boolean:
+							setparameter_b(parameterID, DfxParam::get_b(value));
 							postupdate_parameter(parameterID);
 							break;
 						default:
@@ -1214,7 +1214,7 @@ OSStatus DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 			break;
 	}
 
-	if (getparametervaluetype(inParameterID) == DfxParam::Value::Type::Float)
+	if (getparametervaluetype(inParameterID) == DfxParam::ValueType::Float)
 	{
 		outParameterInfo.flags |= kAudioUnitParameterFlag_IsHighResolution;
 	}
@@ -1298,13 +1298,13 @@ OSStatus DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 				// if we got to this point, try using the value type to determine the unit type
 				switch (getparametervaluetype(inParameterID))
 				{
-					case DfxParam::Value::Type::Float:
+					case DfxParam::ValueType::Float:
 						outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
 						break;
-					case DfxParam::Value::Type::Boolean:
+					case DfxParam::ValueType::Boolean:
 						outParameterInfo.unit = kAudioUnitParameterUnit_Boolean;
 						break;
-					case DfxParam::Value::Type::Int:
+					case DfxParam::ValueType::Int:
 						outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;
 						break;
 				}

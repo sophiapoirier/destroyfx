@@ -607,13 +607,13 @@ void DfxPlugin::randomizeparameter(dfx::ParameterID inParameterID) noexcept DFX_
 		auto& parameter = mParameters[inParameterID];
 		switch (getparametervaluetype(inParameterID))
 		{
-			case DfxParam::Value::Type::Float:
+			case DfxParam::ValueType::Float:
 				parameter.set_gen(generateParameterRandomValue<double>());
 				break;
-			case DfxParam::Value::Type::Int:
+			case DfxParam::ValueType::Int:
 				parameter.set_i(generateParameterRandomValue(parameter.getmin_i(), parameter.getmax_i()));
 				break;
-			case DfxParam::Value::Type::Boolean:
+			case DfxParam::ValueType::Boolean:
 				// we don't need to worry about a curve for boolean values
 				parameter.set_b(generateParameterRandomValue<bool>());
 				break;
@@ -821,13 +821,13 @@ std::string DfxPlugin::getparametername(dfx::ParameterID inParameterID, size_t i
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value::Type DfxPlugin::getparametervaluetype(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
+DfxParam::ValueType DfxPlugin::getparametervaluetype(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
 		return mParameters[inParameterID].getvaluetype();
 	}
-	return DfxParam::Value::Type::Float;
+	return DfxParam::ValueType::Float;
 }
 
 //-----------------------------------------------------------------------------
@@ -2164,7 +2164,7 @@ void DfxPlugin::setmidilearner(dfx::ParameterID inParameterID)
 								 assignmentData->mDataInt1, assignmentData->mDataInt2, 
 								 assignmentData->mDataFloat1, assignmentData->mDataFloat2);
 	}
-	else if (getparametervaluetype(inParameterID) == DfxParam::Value::Type::Float)
+	else if (getparametervaluetype(inParameterID) == DfxParam::ValueType::Float)
 	{
 		mDfxSettings->setLearner(inParameterID);
 	}
