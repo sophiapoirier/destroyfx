@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -29,6 +29,8 @@ This is our mutually exclusive shit.
 
 #include <atomic>
 
+#include "dfx-base.h"
+
 
 
 namespace dfx
@@ -37,8 +39,10 @@ namespace dfx
 // A typical mutex can block when unlocking if another thread is waiting to acquire the lock, 
 // because the kernel must wake up the waiting thread, making it unsafe to use in realtime contexts, 
 // even if the realtime thread avoids waiting when acquiring the lock (e.g. using try_lock).  
-// A lightweight spinlock, while having some behavioral disadvantages if waiting to lock, 
+// A lightweight spinlock, while having the behavioral disadvantages of busy waiting to lock, 
 // can meet the wait-free / try_lock performance requirements for such use cases.
+// It is best used with very brief locking periods so that the non-realtime locking context
+// does not burn cycles excessively while busy waiting.
 class SpinLock
 {
 public:
@@ -50,9 +54,9 @@ public:
 	SpinLock& operator=(SpinLock&&) = delete;
 
 	// interface matches that of std::mutex to allow usage with STL scoped lock guards
-	void lock();
-	bool try_lock();
-	void unlock();
+	void lock() noexcept;
+	bool try_lock() noexcept DFX_RT_ATTR;
+	void unlock() noexcept DFX_RT_ATTR;
 
 private:
 	std::atomic_flag mFlag = ATOMIC_FLAG_INIT;

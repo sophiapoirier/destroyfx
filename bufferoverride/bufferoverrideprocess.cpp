@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -33,33 +33,33 @@ To contact the author, use the contact form at http://destroyfx.org
 
 
 //-----------------------------------------------------------------------------
-constexpr float getStepAmount(long const inLength)
+constexpr float getStepAmount(long const inLength) noexcept DFX_RT_ATTR
 {
-	assert(inLength >= 0);
+	DFX_RT_ASSERT(inLength >= 0);
 	return 1.f / static_cast<float>(inLength + 1);
 }
 
 //-----------------------------------------------------------------------------
 template <typename T>
-static void updateViewCacheValue(dfx::LockFreeAtomic<T>& ioAtomicValue, T const inReplacementValue, bool& ioChanged)
+static void updateViewCacheValue(dfx::LockFreeAtomic<T>& ioAtomicValue, T const inReplacementValue, bool& ioChanged) noexcept DFX_RT_ATTR
 {
 	ioChanged |= ioAtomicValue.exchange(inReplacementValue, std::memory_order_relaxed) != inReplacementValue;
 };
 
 //-----------------------------------------------------------------------------
-long BufferOverride::ms2samples(double inSizeMS) const
+long BufferOverride::ms2samples(double inSizeMS) const noexcept DFX_RT_ATTR
 {
 	return std::lround(inSizeMS * getsamplerate() * 0.001);
 }
 
 //-----------------------------------------------------------------------------
-long BufferOverride::beat2samples(double inBeatScalar, double inTempoBPS) const
+long BufferOverride::beat2samples(double inBeatScalar, double inTempoBPS) const noexcept DFX_RT_ATTR
 {
 	return std::lround(getsamplerate() / (inTempoBPS * inBeatScalar));
 }
 
 //-----------------------------------------------------------------------------
-void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
+void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged) noexcept DFX_RT_ATTR
 {
 	bool doSmoothing = true;  // but in some situations, we shouldn't
 	bool barSync = false;  // true if we need to sync up with the next bar start
@@ -229,7 +229,7 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 	//-----------------------CALCULATE BUFFER DECAY-------------------------
 	mPrevMinibufferDecayGain = mMinibufferDecayGain;
 	std::swap(mCurrentDecayFilters, mPrevDecayFilters);
-	std::ranges::for_each(mCurrentDecayFilters, [](auto& filter){ filter.reset(); });
+	std::ranges::for_each(mCurrentDecayFilters, [](auto& filter) DFX_RT_LAMBDA { filter.reset(); });
 	auto& firstFilter = mCurrentDecayFilters.front();
 
 	auto const positionNormalized = static_cast<float>(mWritePos) / static_cast<float>(mCurrentForcedBufferSize);
@@ -257,7 +257,7 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 				decay = ((decayMax - decay) * 2.f) + decayMin;
 			}
 		}
-		mDecayFilterIsLowpass = [this, positionNormalized, decayReachedMidpoint]
+		mDecayFilterIsLowpass = [this, positionNormalized, decayReachedMidpoint] DFX_RT_LAMBDA
 		{
 			switch (mDecayMode)
 			{
@@ -292,16 +292,16 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 		}
 	}
 	auto const filterCoefficients = firstFilter.getCoefficients();
-	std::for_each(std::next(mCurrentDecayFilters.begin()), mCurrentDecayFilters.end(), [filterCoefficients](auto& filter)
+	std::for_each(std::next(mCurrentDecayFilters.begin()), mCurrentDecayFilters.end(), [filterCoefficients](auto& filter) DFX_RT_LAMBDA
 	{
 		filter.setCoefficients(filterCoefficients);
 	});
 
 	//-----------------------CALCULATE SMOOTHING DURATION-------------------------
-	auto const accelerateFadeToMinibufferPortion = [remainderLength = mMinibufferAudibleLength](long& length, long& countDown)
+	auto const accelerateFadeToMinibufferPortion = [remainderLength = mMinibufferAudibleLength](long& length, long& countDown) DFX_RT_LAMBDA
 	{
-		assert(length > 0);
-		assert(countDown > 0);
+		DFX_RT_ASSERT(length > 0);
+		DFX_RT_ASSERT(countDown > 0);
 		auto const countDownProgress = static_cast<float>(countDown) / static_cast<float>(length);
 		countDown = remainderLength;
 		length = std::lround(static_cast<float>(countDown) / countDownProgress);
@@ -360,7 +360,7 @@ void BufferOverride::updateBuffer(size_t samplePos, bool& ioViewDataChanged)
 
 //---------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------
-void BufferOverride::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
+void BufferOverride::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR
 {
 	auto const numChannels = outAudio.size();
 	auto const entryDivisor = mDivisor;
@@ -437,7 +437,7 @@ void BufferOverride::processaudio(std::span<float const* const> inAudio, std::sp
 			std::ranges::fill(mAudioOutputValues, 0.f);
 		}
 
-		constexpr auto normalizePosition = [](long length, long countDown, float stepAmount)
+		constexpr auto normalizePosition = [](long length, long countDown, float stepAmount) DFX_RT_LAMBDA
 		{
 			return static_cast<float>((length - countDown) + 1) * stepAmount;
 		};
@@ -452,7 +452,7 @@ void BufferOverride::processaudio(std::span<float const* const> inAudio, std::sp
 #endif
 			// crossfade in the current input
 			std::ranges::transform(mAudioOutputValues, mAudioOutputValues.begin(),
-								   [fadeInGain](auto value){ return value * fadeInGain; });
+								   [fadeInGain](auto value) DFX_RT_LAMBDA { return value * fadeInGain; });
 			mFadeInSmoothCountDown--;
 		}
 		if (mFadeOutSmoothCountDown > 0)
@@ -476,7 +476,7 @@ void BufferOverride::processaudio(std::span<float const* const> inAudio, std::sp
 			{
 				// fade-out the of end of the shortened minibuffer
 				std::ranges::transform(mAudioOutputValues, mAudioOutputValues.begin(),
-									   [fadeOutGain](auto value){ return value * fadeOutGain; });
+									   [fadeOutGain](auto value) DFX_RT_LAMBDA { return value * fadeOutGain; });
 			}
 			mFadeOutSmoothCountDown--;
 		}

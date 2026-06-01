@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -154,7 +154,7 @@ void RezSynth::cleanup()
 }
 
 //-----------------------------------------------------------------------------------------
-void RezSynth::reset()
+void RezSynth::reset() noexcept DFX_RT_ATTR
 {
 	// reset the unaffected between audio stuff
 	mUnaffectedState = UnaffectedState::FadeIn;
@@ -177,7 +177,7 @@ void RezSynth::reset()
 }
 
 //-----------------------------------------------------------------------------------------
-void RezSynth::processparameters()
+void RezSynth::processparameters() noexcept DFX_RT_ATTR
 {
 	auto const oldNumBands = mNumBands;
 
@@ -259,7 +259,7 @@ void RezSynth::processparameters()
 }
 
 //-----------------------------------------------------------------------------------------
-void RezSynth::clearChannelsOfNotesOfBands(ChannelsOfNotesOfBands& channelsOfNotesOfBands)
+void RezSynth::clearChannelsOfNotesOfBands(ChannelsOfNotesOfBands& channelsOfNotesOfBands) noexcept DFX_RT_ATTR
 {
 	for (auto& notesOfBands : channelsOfNotesOfBands)
 	{
@@ -271,7 +271,7 @@ void RezSynth::clearChannelsOfNotesOfBands(ChannelsOfNotesOfBands& channelsOfNot
 }
 
 //-----------------------------------------------------------------------------------------
-void RezSynth::clearFilterOutputForBands(int bandIndexBegin)
+void RezSynth::clearFilterOutputForBands(int bandIndexBegin) noexcept DFX_RT_ATTR
 {
 	for (size_t ch = 0; ch < mPrevOutValue.size(); ch++)
 	{
@@ -284,10 +284,10 @@ void RezSynth::clearFilterOutputForBands(int bandIndexBegin)
 }
 
 //-----------------------------------------------------------------------------------------
-void RezSynth::clearLowpassGateFilters()
+void RezSynth::clearLowpassGateFilters() noexcept DFX_RT_ATTR
 {
-	std::ranges::for_each(mLowpassGateFilters, [](auto& channelFilters)
+	std::ranges::for_each(mLowpassGateFilters, [](auto& channelFilters) DFX_RT_LAMBDA
 	{
-		std::ranges::for_each(channelFilters, [](auto& filter){ filter.reset(); });
+		std::ranges::for_each(channelFilters, [](auto& filter) DFX_RT_LAMBDA { filter.reset(); });
 	});
 }

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -58,12 +58,12 @@ public:
 
 	void initialize() override;
 	void cleanup() override;
-	void reset() override;
-	void processparameters() override;
-	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) override;
+	void reset() noexcept DFX_RT_ATTR override;
+	void processparameters() noexcept DFX_RT_ATTR override;
+	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR override;
 
 private:
-	void resetFilters();
+	void resetFilters() noexcept DFX_RT_ATTR;
 
 	// parameter values
 	float mVelocityInfluence = 0.0f;

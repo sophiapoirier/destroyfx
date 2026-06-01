@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2023  Sophia Poirier
+Copyright (C) 2000-2026  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -28,7 +28,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 
 //-----------------------------------------------------------------------------
-void Skidder::resetMidi()
+void Skidder::resetMidi() noexcept DFX_RT_ATTR
 {
 	mNoteTable.fill(0);  // zero out the whole note table
 	mWaitSamples = 0;
@@ -37,7 +37,7 @@ void Skidder::resetMidi()
 }
 
 //-----------------------------------------------------------------------------
-void Skidder::processMidiNotes()
+void Skidder::processMidiNotes() noexcept DFX_RT_ATTR
 {
 	auto noteWasOn = isAnyNoteOn();
 
@@ -87,7 +87,7 @@ void Skidder::processMidiNotes()
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::noteOn(size_t offsetFrames)
+void Skidder::noteOn(size_t offsetFrames) noexcept DFX_RT_ATTR
 {
 	switch (mMidiMode)
 	{
@@ -105,7 +105,7 @@ void Skidder::noteOn(size_t offsetFrames)
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::noteOff()
+void Skidder::noteOff() noexcept DFX_RT_ATTR
 {
 	switch (mMidiMode)
 	{
@@ -187,9 +187,9 @@ void Skidder::noteOff()
 }
 
 //-----------------------------------------------------------------------------
-bool Skidder::isAnyNoteOn() const
+bool Skidder::isAnyNoteOn() const noexcept DFX_RT_ATTR
 {
-	return std::ranges::any_of(mNoteTable, [](auto const& velocity){ return (velocity > 0); });
+	return std::ranges::any_of(mNoteTable, [](auto const& velocity) DFX_RT_LAMBDA { return (velocity > 0); });
 }
 
 
@@ -198,8 +198,10 @@ bool Skidder::isAnyNoteOn() const
 // this is where we can link parameter automation for rangeslider points.
 void Skidder::settings_doLearningAssignStuff(dfx::ParameterID parameterID, dfx::MidiEventType eventType,
 											 int eventChannel, int eventNum,
-											 size_t /*offsetFrames*/, int eventNum2, dfx::MidiEventBehaviorFlags eventBehaviourFlags,
-											 int data1, int data2, float fdata1, float fdata2)
+											 size_t /*offsetFrames*/, int eventNum2,
+											 dfx::MidiEventBehaviorFlags eventBehaviourFlags,
+											 int data1, int data2,
+											 float fdata1, float fdata2) noexcept DFX_RT_ATTR
 {
 	if (getsettings().getSteal())
 	{

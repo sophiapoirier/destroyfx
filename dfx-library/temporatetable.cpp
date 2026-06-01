@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -28,6 +28,7 @@ Welcome to our tempo rate table.
 
 #include <cassert>
 #include <cmath>
+#include <ranges>
 
 
 //-----------------------------------------------------------------------------
@@ -61,6 +62,7 @@ dfx::TempoRateTable::TempoRateTable(Rates inRates)
 	addTempoRate(2, 3);
 	addTempoRate(3, 4);
 	addTempoRate(1);
+	//addTempoRate(3, 2);
 	addTempoRate(2);
 	addTempoRate(3);
 	addTempoRate(4);
@@ -91,9 +93,9 @@ dfx::TempoRateTable::TempoRateTable(Rates inRates)
 //-----------------------------------------------------------------------------
 // given a tempo rate value, return the index of the tempo rate 
 // that is closest to that requested value
-size_t dfx::TempoRateTable::getNearestTempoRateIndex(double inTempoRateValue) const
+size_t dfx::TempoRateTable::getNearestTempoRateIndex(double inTempoRateValue) const noexcept DFX_RT_ATTR
 {
-	auto bestDiff = mScalars.back();
+	auto bestDiff = *std::ranges::max_element(mScalars);
 	size_t bestIndex = 0;
 	for (size_t i = 0; i < getNumRates(); i++)
 	{

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2025  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of RMS Buddy.
 
@@ -50,7 +50,9 @@ public:
 						 void* outData) override;
 	OSStatus SetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, AudioUnitElement inElement, 
 						 void const* inData, UInt32 inDataSize) override;
+AUSDK_BEGIN_NO_RT_NOEXCEPT_WARNINGS
 	bool SupportsTail() AUSDK_RTSAFE override { return true; }
+AUSDK_END_NO_RT_NOEXCEPT_WARNINGS
 	CFURLRef CopyIconLocation() override;
 
 	OSStatus ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 

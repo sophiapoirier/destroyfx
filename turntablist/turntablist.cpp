@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2025 Sophia Poirier
+Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2026 Sophia Poirier
 All rights reserved.
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. 
@@ -173,7 +173,7 @@ void Turntablist::idle()
 
 
 //-----------------------------------------------------------------------------------------
-void Turntablist::processparameters()
+void Turntablist::processparameters() noexcept DFX_RT_ATTR
 {
 	m_bPower = getparameter_b(kParam_Power);
 	m_bNotePowerTrack = getparameter_b(kParam_NotePowerTrack);
@@ -610,7 +610,7 @@ OSStatus Turntablist::CopyClumpName(AudioUnitScope inScope, UInt32 inClumpID,
 
 
 //-----------------------------------------------------------------------------------------
-void Turntablist::setPlay(bool inPlayState, bool inShouldSendNotification)
+void Turntablist::setPlay(bool inPlayState, bool inShouldSendNotification) noexcept DFX_RT_ATTR
 {
 	if (std::exchange(m_bPlay, inPlayState) != inPlayState)
 	{
@@ -620,7 +620,7 @@ void Turntablist::setPlay(bool inPlayState, bool inShouldSendNotification)
 		}
 		else
 		{
-			dfx_PropertyChanged(kTurntablistProperty_Play);
+			DFX_RT_UNSAFE(dfx_PropertyChanged(kTurntablistProperty_Play));
 		}
 	}
 }
@@ -807,7 +807,7 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 }
 
 //-----------------------------------------------------------------------------------------
-void Turntablist::calculateSpinSpeeds()
+void Turntablist::calculateSpinSpeeds() noexcept DFX_RT_ATTR
 {
 //	m_fUsedSpinUpSpeed = (((std::exp(10.0 * m_fSpinUpSpeed) - 1.0) / (std::exp(10.0) - 1.0)) * m_fSampleRate) / static_cast<double>(m_nPowerIntervalEnd);
 //	m_fUsedSpinDownSpeed = (((std::exp(10.0 * m_fSpinDownSpeed) - 1.0) / (std::exp(10.0) - 1.0)) * m_fSampleRate) / static_cast<double>(m_nPowerIntervalEnd);
@@ -816,7 +816,7 @@ void Turntablist::calculateSpinSpeeds()
 }
 
 //-----------------------------------------------------------------------------------------
-void Turntablist::processaudio(std::span<float const* const> /*inAudio*/, std::span<float* const> outAudio, size_t inNumFrames)
+void Turntablist::processaudio(std::span<float const* const> /*inAudio*/, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR
 {
 	std::optional<size_t> eventFrame;
 	auto const numEvents = getmidistate().getBlockEventCount();
@@ -988,7 +988,7 @@ void Turntablist::processaudio(std::span<float const* const> /*inAudio*/, std::s
 							auto const output = (ch == 0) ? m_fLeft : m_fRight;
 						#else
 							auto const abl = m_auBufferList.GetBufferListOrError();
-							assert(abl);
+							DFX_RT_ASSERT(abl);
 							size_t ablChannel = ch;
 							if (ch >= abl->mNumberBuffers)
 							{
@@ -1008,7 +1008,7 @@ void Turntablist::processaudio(std::span<float const* const> /*inAudio*/, std::s
 
 #ifdef LINEAR_INTERPOLATION
 							auto const [pos_fractional, pos_integral] = dfx::math::ModF<size_t>(m_fPosition);
-							assert(pos_integral < m_nNumSamples);
+							DFX_RT_ASSERT(pos_integral < m_nNumSamples);
 							auto const pos_integral_next = (pos_integral + 1) % m_nNumSamples;
 							float const outputValue = std::lerp(output[pos_integral], output[pos_integral_next], static_cast<float>(pos_fractional));
 #endif  // LINEAR_INTERPOLATION
@@ -1074,7 +1074,7 @@ void Turntablist::processaudio(std::span<float const* const> /*inAudio*/, std::s
 #pragma mark scratch processing
 
 //-----------------------------------------------------------------------------------------
-void Turntablist::processScratchStop()
+void Turntablist::processScratchStop() noexcept DFX_RT_ATTR
 {
 	m_nScratchDir = kScratchDirection_Forward;
 	m_fPlaySampleRate = 0.0;
@@ -1099,7 +1099,7 @@ void Turntablist::processScratchStop()
 }
 
 //-----------------------------------------------------------------------------------------
-void Turntablist::processScratch(bool inSetParameter)
+void Turntablist::processScratch(bool inSetParameter) noexcept DFX_RT_ATTR
 {
 	double fIntervalScaler = 0.0;
 
@@ -1144,7 +1144,7 @@ void Turntablist::processScratch(bool inSetParameter)
 
 		// m_fScratchSpeed_spin is the hand size
 		// set target sample rate
-		m_fDesiredScratchRate = fabs(m_fScratchAmount * m_fScratchSpeed_spin * m_fBasePitch);
+		m_fDesiredScratchRate = std::fabs(m_fScratchAmount * m_fScratchSpeed_spin * m_fBasePitch);
 
 		if (m_nScratchMode == kScratchMode_Spin)	// mode 2
 		{
@@ -1154,7 +1154,7 @@ void Turntablist::processScratch(bool inSetParameter)
 		}
 		else	// mode 1
 		{
-		//	int oldtime = timeGetTime();  //time in nanoseconds
+			//int oldtime = timeGetTime();	// time in nanoseconds
 
 			//	NEWEST MODE 2
 			// TO DO:
@@ -1178,9 +1178,9 @@ void Turntablist::processScratch(bool inSetParameter)
 					if (m_nScratchInterval == 0)
 					{
 						m_fPosition = m_fDesiredPosition;
-						assert(m_fPosition >= 0.);
-						assert(m_fPosition < m_fNumSamples);
-						m_fTinyScratchAdjust = 0.0;
+						DFX_RT_ASSERT(m_fPosition >= 0.);
+						DFX_RT_ASSERT(m_fPosition < m_fNumSamples);
+						m_fTinyScratchAdjust = 0.;
 					}
 					else
 					{
@@ -1290,21 +1290,19 @@ void Turntablist::processScratch(bool inSetParameter)
 		}
 
 		m_nScratchInterval = 0;
-
-
-		processDirection();
 	}
 	else
 	{
 		m_nWasScratchingDir = m_nScratchDir;
 		m_bScratching = false;
 		m_bWasScratching = true;
-		processDirection();
 	}
+
+	processDirection();
 }
 
 //-----------------------------------------------------------------------------------------
-void Turntablist::processPitch()
+void Turntablist::processPitch() noexcept DFX_RT_ATTR
 {
 	auto const entryDesiredPitch = m_fDesiredPitch;
 	if (m_bKeyTracking)
@@ -1327,7 +1325,7 @@ void Turntablist::processPitch()
 }
 
 //-----------------------------------------------------------------------------------------
-void Turntablist::processDirection()
+void Turntablist::processDirection() noexcept DFX_RT_ATTR
 {
 	m_bPlayForward = true;
 
@@ -1363,7 +1361,7 @@ void Turntablist::processDirection()
 #pragma mark MIDI processing
 
 //-----------------------------------------------------------------------------------------
-void Turntablist::processMidiEvent(size_t inEventIndex)
+void Turntablist::processMidiEvent(size_t inEventIndex) noexcept DFX_RT_ATTR
 {
 	auto const& event = getmidistate().getBlockEvent(inEventIndex);
 
@@ -1422,7 +1420,7 @@ void Turntablist::processMidiEvent(size_t inEventIndex)
 }
 
 //-----------------------------------------------------------------------------------------
-void Turntablist::noteOn(int inNote, int inVelocity, size_t /*inOffsetFrames*/)
+void Turntablist::noteOn(int inNote, int inVelocity, size_t /*inOffsetFrames*/) noexcept DFX_RT_ATTR
 {
 	auto const power_old = m_bPower;
 
@@ -1481,7 +1479,7 @@ void Turntablist::noteOn(int inNote, int inVelocity, size_t /*inOffsetFrames*/)
 }
 
 //-----------------------------------------------------------------------------------------
-void Turntablist::stopNote(bool inStopPlay)
+void Turntablist::stopNote(bool inStopPlay) noexcept DFX_RT_ATTR
 {
 	m_bNoteIsOn = false;
 	m_bPlayedReverse = false;
@@ -1493,7 +1491,7 @@ void Turntablist::stopNote(bool inStopPlay)
 }
 
 //-----------------------------------------------------------------------------------------
-void Turntablist::playNote(bool inValue)
+void Turntablist::playNote(bool inValue) noexcept DFX_RT_ATTR
 {
 	if (inValue)
 	{
@@ -1511,7 +1509,7 @@ void Turntablist::playNote(bool inValue)
 }
 
 //-----------------------------------------------------------------------------------------
-int Turntablist::fixMidiData(dfx::ParameterID inParameterID, int inValue) noexcept
+constexpr int Turntablist::fixMidiData(dfx::ParameterID inParameterID, int inValue) noexcept DFX_RT_ATTR
 {
 	switch (inParameterID)
 	{

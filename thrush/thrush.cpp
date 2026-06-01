@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier and Keith Fullerton Whitman
+Copyright (C) 2001-2026  Sophia Poirier and Keith Fullerton Whitman
 
 This file is part of Thrush.
 
@@ -135,7 +135,7 @@ void Thrush::cleanup()
 }
 
 //-------------------------------------------------------------------------
-void Thrush::reset()
+void Thrush::reset() noexcept DFX_RT_ATTR
 {
 	mInputPosition = 0;
 	mLFO1.reset();
@@ -179,7 +179,7 @@ void Thrush::initPresets()
 #pragma mark -
 
 //-------------------------------------------------------------------------
-void Thrush::calculateEffectiveTempo()
+void Thrush::calculateEffectiveTempo() noexcept DFX_RT_ATTR
 {
 	// figure out the current tempo if any of our LFOs are tempo synced
 	if ((mLFO1.mTempoSync || mLFO2.mTempoSync) || 
@@ -202,7 +202,7 @@ void Thrush::calculateEffectiveTempo()
 }
 
 //-------------------------------------------------------------------------
-void Thrush::calculateEffectiveRate(ThrushLFO& lfo) const
+void Thrush::calculateEffectiveRate(ThrushLFO& lfo) const noexcept DFX_RT_ATTR
 {
 	lfo.mEffectiveRateHz = lfo.mTempoSync ? (mCurrentTempoBPS * lfo.mTempoRateScalar) : lfo.mRateHz;
 	// get the increment for each step through the LFO's cycle phase at its current frequency
@@ -211,7 +211,7 @@ void Thrush::calculateEffectiveRate(ThrushLFO& lfo) const
 
 //-------------------------------------------------------------------------
 // modulate the first layer LFO's rate with the second layer LFO and then output the first layer LFO output
-double Thrush::processLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const
+double Thrush::processLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const noexcept DFX_RT_ATTR
 {
 	// do beat sync if it ought to be done
 	if (mNeedResync && lfoLayer2.mTempoSync && gettimeinfo().mSamplesToNextBar)
@@ -239,7 +239,7 @@ double Thrush::processLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const
 }
 
 //-------------------------------------------------------------------------
-void Thrush::processparameters()
+void Thrush::processparameters() noexcept DFX_RT_ATTR
 {
 	mDelay_gen = getparameter_gen(kDelay);
 	mUserTempoBPM = getparameter_f(kTempo);
@@ -318,7 +318,7 @@ void Thrush::processparameters()
 }
 
 //-------------------------------------------------------------------------
-void Thrush::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
+void Thrush::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR
 {
 	// set up the basic startup conditions of all of the LFOs if any LFOs are turned on
 	calculateEffectiveTempo();
@@ -330,7 +330,7 @@ void Thrush::processaudio(std::span<float const* const> inAudio, std::span<float
 	for (size_t sampleIndex = 0; sampleIndex < inNumFrames; sampleIndex++)
 	{
 		// evaluate the sample-by-sample output of the LFOs
-		auto const normalizedOffset = [this](dfx::ParameterID parameterID, double normalizedValue, ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2)
+		auto const normalizedOffset = [this](dfx::ParameterID parameterID, double normalizedValue, ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) DFX_RT_LAMBDA
 		{
 			auto const delayOffset = processLFOs(lfoLayer1, lfoLayer2);
 			return expandparametervalue(parameterID, normalizedValue * delayOffset);
@@ -345,7 +345,7 @@ void Thrush::processaudio(std::span<float const* const> inAudio, std::span<float
 			mDelayOffset2 = normalizedOffset(kDelay2, mDelay2_gen, mLFO1_2, mLFO2_2);
 		}
 		// update the delay position(s) (this is done every sample in case LFOs are active)
-		auto const delayedPosition = [this](auto const& delayOffset)
+		auto const delayedPosition = [this](auto const& delayOffset) DFX_RT_LAMBDA
 		{
 			auto const delayOffset_i = static_cast<long>(delayOffset.getValue() + DfxParam::kIntegerPadding);
 			return (mInputPosition - delayOffset_i + kDelayBufferSize) % kDelayBufferSize;

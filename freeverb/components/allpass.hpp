@@ -23,8 +23,8 @@ class AllPassFilter
 public:
                     AllPassFilter(double timeInSeconds, double sampleRate);
 
-    void            clear();
-    inline float    process(float inputAudioSample);
+    void            clear() noexcept [[clang::nonblocking]];
+    inline float    process(float inputAudioSample) noexcept [[clang::nonblocking]];
 
 private:
     std::vector<float> mBuffer;
@@ -32,7 +32,7 @@ private:
 };
 
 
-inline float AllPassFilter::process(float inputAudioSample)
+inline float AllPassFilter::process(float inputAudioSample) noexcept [[clang::nonblocking]]
 {
     const auto bufferedValue = mBuffer[mBufferIndex];
 

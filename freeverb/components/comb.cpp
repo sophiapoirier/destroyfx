@@ -7,6 +7,8 @@
 
 #include "comb.hpp"
 
+#include <algorithm>
+
 #include "tuning.h"
 
 
@@ -15,18 +17,15 @@ namespace freeverb
 
 
 CombFilter::CombFilter(double timeInSeconds, double sampleRate)
-:   mBuffer(detail::secondsToSamples(timeInSeconds, sampleRate), 0.0f)
+:   mBuffer(detail::secondsToSamples(timeInSeconds, sampleRate), 0.f)
 {
 }
 
 
-void CombFilter::clear()
+void CombFilter::clear() noexcept [[clang::nonblocking]]
 {
-    for (auto& value : mBuffer)
-    {
-        value = 0.0f;
-    }
-    mFilterHistory = 0.0f;
+	std::ranges::fill(mBuffer, 0.f);
+    mFilterHistory = 0.f;
 }
 
 

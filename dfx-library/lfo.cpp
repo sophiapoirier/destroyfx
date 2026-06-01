@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -43,7 +43,7 @@ dfx::LFO::LFO()
 }
 
 //------------------------------------------------------------------------
-void dfx::LFO::reset()
+void dfx::LFO::reset() noexcept DFX_RT_ATTR
 {
 	mPosition = 0.;
 	mStepSize = 1.;  // just to avoid stasis
@@ -71,7 +71,7 @@ std::string dfx::LFO::getShapeName(Shape inShape)
 
 //--------------------------------------------------------------------------------------
 // this function points the LFO generator function pointer to the correct waveform generator
-dfx::LFO::Generator dfx::LFO::getGeneratorForShape(Shape inShape) noexcept
+dfx::LFO::Generator dfx::LFO::getGeneratorForShape(Shape inShape) noexcept DFX_RT_ATTR
 {
 	switch (inShape)
 	{
@@ -93,39 +93,39 @@ dfx::LFO::Generator dfx::LFO::getGeneratorForShape(Shape inShape) noexcept
 }
 
 //--------------------------------------------------------------------------------------
-double dfx::LFO::getDepth() const noexcept
+double dfx::LFO::getDepth() const noexcept DFX_RT_ATTR
 {
 	return mDepth;
 }
 
 //--------------------------------------------------------------------------------------
-void dfx::LFO::setDepth(double inDepth) noexcept
+void dfx::LFO::setDepth(double inDepth) noexcept DFX_RT_ATTR
 {
 	mDepth = inDepth;
 }
 
 //--------------------------------------------------------------------------------------
-dfx::LFO::Shape dfx::LFO::getShape() const noexcept
+dfx::LFO::Shape dfx::LFO::getShape() const noexcept DFX_RT_ATTR
 {
 	return mShape;
 }
 
 //--------------------------------------------------------------------------------------
-void dfx::LFO::setShape(Shape inShape) noexcept
+void dfx::LFO::setShape(Shape inShape) noexcept DFX_RT_ATTR
 {
 	mShape = inShape;
 	mGenerator = getGeneratorForShape(inShape);
 }
 
 //--------------------------------------------------------------------------------------
-void dfx::LFO::setStepSize(double inStepSize) noexcept
+void dfx::LFO::setStepSize(double inStepSize) noexcept DFX_RT_ATTR
 {
 	mStepSize = inStepSize;
 }
 
 //--------------------------------------------------------------------------------------
 // calculates the position within an LFO's cycle needed to sync to the song's beat
-void dfx::LFO::syncToTheBeat(double inSamplesToBar)
+void dfx::LFO::syncToTheBeat(double inSamplesToBar) noexcept DFX_RT_ATTR
 {
 	// calculate how many samples long the LFO cycle is
 	double const cycleSize = 1. / mStepSize;
@@ -141,7 +141,7 @@ void dfx::LFO::syncToTheBeat(double inSamplesToBar)
 //-----------------------------------------------------------------------------------------
 // This function wraps around the LFO cycle position when it passes the cycle end.
 // It also sets up the smoothing counter if a discontiguous LFO waveform is being used.
-void dfx::LFO::updatePosition(size_t inNumSteps)
+void dfx::LFO::updatePosition(size_t inNumSteps) noexcept DFX_RT_ATTR
 {
 	// increment the LFO position tracker
 	mPosition += mStepSize * static_cast<double>(inNumSteps);
@@ -183,8 +183,8 @@ void dfx::LFO::updatePosition(size_t inNumSteps)
 }
 
 //-----------------------------------------------------------------------------------------
-// gets the current 0.0 - 1.0 output value of the LFO and increments its position
-double dfx::LFO::process() const
+// gets the current 0 to 1 output value of the LFO and increments its position
+double dfx::LFO::process() const noexcept DFX_RT_ATTR
 {
 	double outValue {};
 
@@ -207,14 +207,14 @@ double dfx::LFO::process() const
 
 //-----------------------------------------------------------------------------------------
 // oscillates from 0 to 1 and back to 0
-double dfx::LFO::sineGenerator(double inPosition)
+double dfx::LFO::sineGenerator(double inPosition) noexcept DFX_RT_ATTR
 {
 	return (std::sin((inPosition - 0.25) * 2. * std::numbers::pi_v<double>) + 1.) * 0.5;
 }
 
 //-----------------------------------------------------------------------------------------
 // ramp from 0 to 1 for the first half and ramp from 1 to 0 for the second half
-double dfx::LFO::triangleGenerator(double inPosition)
+double dfx::LFO::triangleGenerator(double inPosition) noexcept DFX_RT_ATTR
 {
 	if (inPosition < 0.5)
 	{
@@ -228,28 +228,28 @@ double dfx::LFO::triangleGenerator(double inPosition)
 
 //-----------------------------------------------------------------------------------------
 // stay at 1 for the first half and 0 for the second half
-double dfx::LFO::squareGenerator(double inPosition)
+double dfx::LFO::squareGenerator(double inPosition) noexcept DFX_RT_ATTR
 {
 	return (inPosition < 0.5) ? 1. : 0.;
 }
 
 //-----------------------------------------------------------------------------------------
 // ramps from 0 to 1
-double dfx::LFO::sawGenerator(double inPosition)
+double dfx::LFO::sawGenerator(double inPosition) noexcept DFX_RT_ATTR
 {
 	return inPosition;
 }
 
 //-----------------------------------------------------------------------------------------
 // ramps from 1 to 0
-double dfx::LFO::reverseSawGenerator(double inPosition)
+double dfx::LFO::reverseSawGenerator(double inPosition) noexcept DFX_RT_ATTR
 {
 	return 1. - inPosition;
 }
 
 //-----------------------------------------------------------------------------------------
 // exponentially slope up from 0 to 1 for the first half and down from 1 to 0 for the second half
-double dfx::LFO::thornGenerator(double inPosition)
+double dfx::LFO::thornGenerator(double inPosition) noexcept DFX_RT_ATTR
 {
 	return std::pow(triangleGenerator(inPosition), 2.);
 }

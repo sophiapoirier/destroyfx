@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -28,7 +28,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 //-----------------------------------------------------------------------------------------
 // this function tries to even out the wildly erratic resonant amplitudes
-double RezSynth::calculateAmpEvener(int currentNote) const
+double RezSynth::calculateAmpEvener(int currentNote) const noexcept DFX_RT_ATTR
 {
 	if (!mWiseAmp)
 	{
@@ -67,7 +67,7 @@ double RezSynth::calculateAmpEvener(int currentNote) const
 //-----------------------------------------------------------------------------------------
 // This function calculates the 3 coefficients in the resonant filter equation,
 // 1 for the current sample input and 2 for the last 2 samples.
-int RezSynth::calculateCoefficients(int currentNote)
+int RezSynth::calculateCoefficients(int currentNote) noexcept DFX_RT_ATTR
 {
 	mBaseFreq[currentNote] = getmidistate().getNoteFrequency(currentNote) * getmidistate().getPitchBend();
 	auto const baseFreq = mBaseFreq[currentNote].getValue();
@@ -75,7 +75,7 @@ int RezSynth::calculateCoefficients(int currentNote)
 	for (int bandcount = 0; bandcount < mNumBands; bandcount++)
 	{
 // GET THE CURRENT BAND'S CENTER FREQUENCY
-		mBandCenterFreq[currentNote][bandcount] = [this, baseFreq, bandcount]
+		mBandCenterFreq[currentNote][bandcount] = [this, baseFreq, bandcount] DFX_RT_LAMBDA
 		{
 			// do logarithmic band separation, octave-style
 			if (mSepMode == kSeparationMode_Octaval)
@@ -172,9 +172,9 @@ int RezSynth::calculateCoefficients(int currentNote)
 // This function writes the filtered audio output.
 void RezSynth::processFilterOuts(std::span<float const* const> inAudio, std::span<float* const> outAudio,
 								 size_t sampleFrameOffset, size_t sampleFrames,
-								 int currentNote, int numBands)
+								 int currentNote, int numBands) noexcept DFX_RT_ATTR
 {
-	assert(inAudio.size() == outAudio.size());
+	DFX_RT_ASSERT(inAudio.size() == outAudio.size());
 
 	auto const numChannels = outAudio.size();
 	float envAmp = 1.f;
@@ -192,7 +192,7 @@ void RezSynth::processFilterOuts(std::span<float const* const> inAudio, std::spa
 			{
 				dfx::IIRFilter::Coefficients lpCoeff;
 				std::tie(lpCoeff, envAmp) = getmidistate().processEnvelopeLowpassGate(currentNote);
-				std::ranges::for_each(channelFilters, [&lpCoeff](auto& filter)
+				std::ranges::for_each(channelFilters, [&lpCoeff](auto& filter) DFX_RT_LAMBDA
 				{
 					filter.setCoefficients(lpCoeff);
 				});
@@ -210,7 +210,7 @@ void RezSynth::processFilterOuts(std::span<float const* const> inAudio, std::spa
 
 		for (size_t ch = 0; ch < numChannels; ch++)
 		{
-			auto const clampInfinities = [](double value)
+			auto const clampInfinities = [](double value) DFX_RT_LAMBDA
 			{
 				if (std::isinf(value)) [[unlikely]]
 				{
@@ -262,9 +262,9 @@ void RezSynth::processFilterOuts(std::span<float const* const> inAudio, std::spa
 
 //-----------------------------------------------------------------------------------------
 // this function outputs the unprocessed audio input between notes, if desired
-void RezSynth::processUnaffected(std::span<float const> inAudio, std::span<float> outAudio)
+void RezSynth::processUnaffected(std::span<float const> inAudio, std::span<float> outAudio) noexcept DFX_RT_ATTR
 {
-	assert(inAudio.size() == outAudio.size());
+	DFX_RT_ASSERT(inAudio.size() == outAudio.size());
 
 	for (size_t sampleIndex = 0; sampleIndex < outAudio.size(); sampleIndex++)
 	{
@@ -309,7 +309,7 @@ void RezSynth::processUnaffected(std::span<float const> inAudio, std::span<float
 }
 
 //-----------------------------------------------------------------------------------------
-double RezSynth::getBandwidthForFreq(double inFreq) const
+double RezSynth::getBandwidthForFreq(double inFreq) const noexcept DFX_RT_ATTR
 {
 	return (mBandwidthMode == kBandwidthMode_Q) ? (inFreq / mBandwidthAmount_Q) : mBandwidthAmount_Hz;
 }
@@ -317,7 +317,7 @@ double RezSynth::getBandwidthForFreq(double inFreq) const
 //-----------------------------------------------------------------------------------------
 // This function checks if the latest note message is a note-on for a note that's currently off.
 // If it is, then that note's filter feedback buffers are cleared.
-void RezSynth::checkForNewNote(size_t currentEvent)
+void RezSynth::checkForNewNote(size_t currentEvent) noexcept DFX_RT_ATTR
 {
 	// store the current note MIDI number
 	auto const currentNote = getmidistate().getBlockEvent(currentEvent).mByte1;

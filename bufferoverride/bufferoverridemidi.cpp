@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -29,7 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 
 //-----------------------------------------------------------------------------
-float BufferOverride::getDivisorParameterFromNote(int currentNote)
+float BufferOverride::getDivisorParameterFromNote(int currentNote) noexcept DFX_RT_ATTR
 {
 	// tell the GUI to update the divisor parameter's slider and value display
 	mDivisorWasChangedByMIDI = true;
@@ -43,7 +43,7 @@ float BufferOverride::getDivisorParameterFromNote(int currentNote)
 }
 
 //-----------------------------------------------------------------------------
-float BufferOverride::getDivisorParameterFromPitchbend(int valueLSB, int valueMSB)
+float BufferOverride::getDivisorParameterFromPitchbend(int valueLSB, int valueMSB) noexcept DFX_RT_ATTR
 {
 	mOldPitchBend = mPitchBend;
 
@@ -77,7 +77,7 @@ float BufferOverride::getDivisorParameterFromPitchbend(int valueLSB, int valueMS
 
 //-----------------------------------------------------------------------------
 // this function implements the changes that new MIDI events demand
-void BufferOverride::heedMidiEvents(size_t samplePos)
+void BufferOverride::heedMidiEvents(size_t samplePos) noexcept DFX_RT_ATTR
 {
 	auto& midiState = getmidistate();
 	// look at the events if we have any

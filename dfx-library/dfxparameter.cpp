@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2024  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -43,7 +43,7 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 
 //-----------------------------------------------------------------------------
 // interpret fractional numbers as integral
-constexpr int64_t Float2Int(double const& inValue)
+constexpr int64_t Float2Int(double const& inValue) noexcept DFX_RT_ATTR
 {
 	constexpr auto padding = DfxParam::kIntegerPadding;
 	return static_cast<int64_t>(inValue + ((inValue < 0.) ? -padding : padding));
@@ -51,14 +51,14 @@ constexpr int64_t Float2Int(double const& inValue)
 
 //-----------------------------------------------------------------------------
 // interpret fractional numbers as booleans
-constexpr bool Float2Boolean(double const& inValue)
+constexpr bool Float2Boolean(double const& inValue) noexcept DFX_RT_ATTR
 {
 	return !dfx::math::IsZero(inValue);
 }
 
 //-----------------------------------------------------------------------------
 // interpret integral numbers as booleans
-constexpr bool Int2Boolean(int64_t const& inValue)
+constexpr bool Int2Boolean(int64_t const& inValue) noexcept DFX_RT_ATTR
 {
 	return (inValue != 0);
 }
@@ -66,7 +66,7 @@ constexpr bool Int2Boolean(int64_t const& inValue)
 //-----------------------------------------------------------------------------
 // TODO C++26: constexpr
 template <std::floating_point T>
-auto sqrt_safe(T inValue)
+auto sqrt_safe(T inValue) noexcept DFX_RT_ATTR
 {
 	return std::sqrt(std::max(inValue, T(0)));
 }
@@ -74,7 +74,7 @@ auto sqrt_safe(T inValue)
 //-----------------------------------------------------------------------------
 // TODO C++26: constexpr
 template <std::floating_point T>
-auto pow_safe(T inBase, T inExponent)
+auto pow_safe(T inBase, T inExponent) noexcept DFX_RT_ATTR
 {
 	return std::pow(std::max(inBase, T(0)), inExponent);
 }
@@ -82,7 +82,7 @@ auto pow_safe(T inBase, T inExponent)
 //-----------------------------------------------------------------------------
 // TODO C++26: constexpr
 template <std::floating_point T>
-auto log_safe(T inValue)
+auto log_safe(T inValue) noexcept DFX_RT_ATTR
 {
 	return std::log(std::max(inValue, std::numeric_limits<T>::min()));
 }
@@ -205,7 +205,7 @@ void DfxParam::init_b(std::vector<std::string_view> const& inNames,
 //-----------------------------------------------------------------------------
 void DfxParam::initNames(std::vector<std::string_view> const& inNames)
 {
-	auto const stringLength = [](auto const& string)
+	constexpr auto stringLength = [](auto const& string)
 	{
 		return string.length();
 	};
@@ -262,13 +262,14 @@ void DfxParam::setusevaluestrings(bool inMode)
 
 //-----------------------------------------------------------------------------
 // set a value string's text contents
-bool DfxParam::setvaluestring(int64_t inIndex, std::string_view inText)
+void DfxParam::setvaluestring(int64_t inIndex, std::string_view inText)
 {
 	assert(!inText.empty());
 
 	if (!ValueStringIndexIsValid(inIndex))
 	{
-		return false;
+		assert(false);
+		return;
 	}
 
 	// the actual index of the array is the incoming index 
@@ -279,8 +280,6 @@ bool DfxParam::setvaluestring(int64_t inIndex, std::string_view inText)
 #ifdef TARGET_API_AUDIOUNIT
 	mValueCFStrings.at(arrayIndex) = CreateCFStringWithStringView(inText);
 #endif
-
-	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -296,17 +295,13 @@ std::optional<std::string> DfxParam::getvaluestring(int64_t inIndex) const
 
 //-----------------------------------------------------------------------------
 // safety check for an index into the value strings array
-bool DfxParam::ValueStringIndexIsValid(int64_t inIndex) const
+bool DfxParam::ValueStringIndexIsValid(int64_t inIndex) const noexcept
 {
 	if (!getusevaluestrings())
 	{
 		return false;
 	}
-	if ((inIndex < getmin_i()) || (inIndex > getmax_i()))
-	{
-		return false;
-	}
-	return true;
+	return ((inIndex >= getmin_i()) && (inIndex <= getmax_i()));
 }
 
 
@@ -318,13 +313,13 @@ bool DfxParam::ValueStringIndexIsValid(int64_t inIndex) const
 //-----------------------------------------------------------------------------
 // extract the value of a Value as float type
 // (perform type conversion if float is not contained in the Value)
-double DfxParam::derive_f(Value inValue) noexcept
+double DfxParam::derive_f(Value inValue) noexcept DFX_RT_ATTR
 {
 	switch (inValue.gettype())
 	{
 		case Value::Type::Float:
-			assert(!std::isnan(inValue.get_f()));
-			assert(!std::isinf(inValue.get_f()));
+			DFX_RT_ASSERT(!std::isnan(inValue.get_f()));
+			DFX_RT_ASSERT(!std::isinf(inValue.get_f()));
 			return inValue.get_f();
 		case Value::Type::Int:
 			return static_cast<double>(inValue.get_i());
@@ -337,13 +332,13 @@ double DfxParam::derive_f(Value inValue) noexcept
 //-----------------------------------------------------------------------------
 // extract the value of a Value as int type
 // (perform type conversion if int is not contained in the Value)
-int64_t DfxParam::derive_i(Value inValue)
+int64_t DfxParam::derive_i(Value inValue) noexcept DFX_RT_ATTR
 {
 	switch (inValue.gettype())
 	{
 		case Value::Type::Float:
-			assert(!std::isnan(inValue.get_f()));
-			assert(!std::isinf(inValue.get_f()));
+			DFX_RT_ASSERT(!std::isnan(inValue.get_f()));
+			DFX_RT_ASSERT(!std::isinf(inValue.get_f()));
 			return Float2Int(inValue.get_f());
 		case Value::Type::Int:
 			return inValue.get_i();
@@ -356,13 +351,13 @@ int64_t DfxParam::derive_i(Value inValue)
 //-----------------------------------------------------------------------------
 // extract the value of a Value as boolean type
 // (perform type conversion if boolean is not contained in the Value)
-bool DfxParam::derive_b(Value inValue) noexcept
+bool DfxParam::derive_b(Value inValue) noexcept DFX_RT_ATTR
 {
 	switch (inValue.gettype())
 	{
 		case Value::Type::Float:
-			assert(!std::isnan(inValue.get_f()));
-			assert(!std::isinf(inValue.get_f()));
+			DFX_RT_ASSERT(!std::isnan(inValue.get_f()));
+			DFX_RT_ASSERT(!std::isinf(inValue.get_f()));
 			return Float2Boolean(inValue.get_f());
 		case Value::Type::Int:
 			return Int2Boolean(inValue.get_i());
@@ -375,7 +370,7 @@ bool DfxParam::derive_b(Value inValue) noexcept
 //-----------------------------------------------------------------------------
 // take a real parameter value and contract it to a generic 0 to 1 float value
 // this takes into account the parameter curve
-double DfxParam::contract(double inLiteralValue) const
+double DfxParam::contract(double inLiteralValue) const noexcept DFX_RT_ATTR
 {
 	return contract(inLiteralValue, getmin_f(), getmax_f(), mCurve, mCurveSpec);
 }
@@ -383,7 +378,7 @@ double DfxParam::contract(double inLiteralValue) const
 //-----------------------------------------------------------------------------
 // take a real parameter value and contract it to a generic 0 to 1 float value
 // this takes into account the parameter curve
-double DfxParam::contract(double inLiteralValue, double inMinValue, double inMaxValue, Curve inCurveType, double inCurveSpec)
+double DfxParam::contract(double inLiteralValue, double inMinValue, double inMaxValue, Curve inCurveType, double inCurveSpec) noexcept DFX_RT_ATTR
 {
 	auto const valueRange = inMaxValue - inMinValue;
 	constexpr double oneDivThree = 1. / 3.;
@@ -414,7 +409,7 @@ double DfxParam::contract(double inLiteralValue, double inMinValue, double inMax
 
 //-----------------------------------------------------------------------------
 // get the parameter's current value scaled into a generic 0...1 float value
-double DfxParam::get_gen() const
+double DfxParam::get_gen() const noexcept DFX_RT_ATTR
 {
 	return contract(get_f());
 }
@@ -428,32 +423,33 @@ double DfxParam::get_gen() const
 //-----------------------------------------------------------------------------
 // apply a value of float type to the current value
 // (perform type conversion if float is not the parameter's "native" type)
-bool DfxParam::accept_f(double inValue)
+bool DfxParam::accept_f(double inValue) noexcept DFX_RT_ATTR
 {
 	auto const coercedValue = coerce_f(inValue);
-	return (mValue.exchange(coercedValue) != coercedValue);
+	// TODO: not feeling motivated override the != operator to be explicitly realtime-safe
+	return DFX_RT_UNSAFE(mValue.exchange(coercedValue) != coercedValue);
 }
 
 //-----------------------------------------------------------------------------
 // apply a value of int type to the current value
 // (perform type conversion if int is not the parameter's "native" type)
-bool DfxParam::accept_i(int64_t inValue) noexcept
+bool DfxParam::accept_i(int64_t inValue) noexcept DFX_RT_ATTR
 {
 	auto const coercedValue = coerce_i(inValue);
-	return (mValue.exchange(coercedValue) != coercedValue);
+	return DFX_RT_UNSAFE(mValue.exchange(coercedValue) != coercedValue);
 }
 
 //-----------------------------------------------------------------------------
 // apply a value of boolean type to the current value
 // (perform type conversion if boolean is not the parameter's "native" type)
-bool DfxParam::accept_b(bool inValue) noexcept
+bool DfxParam::accept_b(bool inValue) noexcept DFX_RT_ATTR
 {
 	auto const coercedValue = coerce_b(inValue);
-	return (mValue.exchange(coercedValue) != coercedValue);
+	return DFX_RT_UNSAFE(mValue.exchange(coercedValue) != coercedValue);
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value DfxParam::coerce_f(double inValue) const
+DfxParam::Value DfxParam::coerce_f(double inValue) const noexcept DFX_RT_ATTR
 {
 	switch (getvaluetype())
 	{
@@ -468,7 +464,7 @@ DfxParam::Value DfxParam::coerce_f(double inValue) const
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value DfxParam::coerce_i(int64_t inValue) const noexcept
+DfxParam::Value DfxParam::coerce_i(int64_t inValue) const noexcept DFX_RT_ATTR
 {
 	switch (getvaluetype())
 	{
@@ -483,7 +479,7 @@ DfxParam::Value DfxParam::coerce_i(int64_t inValue) const noexcept
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value DfxParam::coerce_b(bool inValue) const noexcept
+DfxParam::Value DfxParam::coerce_b(bool inValue) const noexcept DFX_RT_ATTR
 {
 	switch (getvaluetype())
 	{
@@ -500,7 +496,7 @@ DfxParam::Value DfxParam::coerce_b(bool inValue) const noexcept
 //-----------------------------------------------------------------------------
 // take a generic 0 to 1 float value and expand it to a real parameter value
 // this takes into account the parameter curve
-double DfxParam::expand(double inGenValue) const
+double DfxParam::expand(double inGenValue) const noexcept DFX_RT_ATTR
 {
 	return expand(inGenValue, getmin_f(), getmax_f(), mCurve, mCurveSpec);
 }
@@ -508,7 +504,7 @@ double DfxParam::expand(double inGenValue) const
 //-----------------------------------------------------------------------------
 // take a generic 0 to 1 float value and expand it to a real parameter value
 // this takes into account the parameter curve
-double DfxParam::expand(double inGenValue, double inMinValue, double inMaxValue, Curve inCurveType, double inCurveSpec)
+double DfxParam::expand(double inGenValue, double inMinValue, double inMaxValue, Curve inCurveType, double inCurveSpec) noexcept DFX_RT_ATTR
 {
 	auto const valueRange = inMaxValue - inMinValue;
 	constexpr auto logTwoInv = 1. / std::numbers::ln2_v<double>;
@@ -538,15 +534,15 @@ double DfxParam::expand(double inGenValue, double inMinValue, double inMaxValue,
 
 //-----------------------------------------------------------------------------
 // set the parameter's current value using a Value
-void DfxParam::set(Value inValue)
+void DfxParam::set(Value inValue) noexcept DFX_RT_ATTR
 {
-	assert(inValue.gettype() == getvaluetype());
+	DFX_RT_ASSERT(inValue.gettype() == getvaluetype());
 
 	switch (inValue.gettype())
 	{
 		case Value::Type::Float:
-			assert(!std::isnan(inValue.get_f()));
-			assert(!std::isinf(inValue.get_f()));
+			DFX_RT_ASSERT(!std::isnan(inValue.get_f()));
+			DFX_RT_ASSERT(!std::isinf(inValue.get_f()));
 			inValue = limit_f(inValue.get_f());
 			break;
 		case Value::Type::Int:
@@ -558,7 +554,7 @@ void DfxParam::set(Value inValue)
 			std::unreachable();
 	}
 
-	if (mValue.exchange(inValue) != inValue)
+	if (DFX_RT_UNSAFE(mValue.exchange(inValue) != inValue))
 	{
 		setchanged(true);
 	}
@@ -567,7 +563,7 @@ void DfxParam::set(Value inValue)
 
 //-----------------------------------------------------------------------------
 // set the current parameter value using a float type value
-void DfxParam::set_f(double inValue)
+void DfxParam::set_f(double inValue) noexcept DFX_RT_ATTR
 {
 	auto const changed = accept_f(limit_f(inValue));
 	if (changed)
@@ -579,7 +575,7 @@ void DfxParam::set_f(double inValue)
 
 //-----------------------------------------------------------------------------
 // set the current parameter value using an int type value
-void DfxParam::set_i(int64_t inValue)
+void DfxParam::set_i(int64_t inValue) noexcept DFX_RT_ATTR
 {
 	auto const changed = accept_i(limit_i(inValue));
 	if (changed)
@@ -591,7 +587,7 @@ void DfxParam::set_i(int64_t inValue)
 
 //-----------------------------------------------------------------------------
 // set the current parameter value using a boolean type value
-void DfxParam::set_b(bool inValue)
+void DfxParam::set_b(bool inValue) noexcept DFX_RT_ATTR
 {
 	auto const changed = accept_b(inValue);
 	if (changed)
@@ -603,25 +599,25 @@ void DfxParam::set_b(bool inValue)
 
 //-----------------------------------------------------------------------------
 // set the parameter's current value with a generic 0...1 float value
-void DfxParam::set_gen(double inGenValue)
+void DfxParam::set_gen(double inGenValue) noexcept DFX_RT_ATTR
 {
 	set_f(expand(inGenValue));
 }
 
 //-----------------------------------------------------------------------------
-void DfxParam::setquietly_f(double inValue)
+void DfxParam::setquietly_f(double inValue) noexcept DFX_RT_ATTR
 {
 	accept_f(inValue);
 }
 
 //-----------------------------------------------------------------------------
-void DfxParam::setquietly_i(int64_t inValue)
+void DfxParam::setquietly_i(int64_t inValue) noexcept DFX_RT_ATTR
 {
 	accept_i(inValue);
 }
 
 //-----------------------------------------------------------------------------
-void DfxParam::setquietly_b(bool inValue)
+void DfxParam::setquietly_b(bool inValue) noexcept DFX_RT_ATTR
 {
 	accept_b(inValue);
 }
@@ -633,7 +629,7 @@ void DfxParam::setquietly_b(bool inValue)
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-void DfxParam::SetEnforceValueLimits(bool inMode)
+void DfxParam::SetEnforceValueLimits(bool inMode) noexcept
 {
 	assert(!(!inMode && (getvaluetype() == Value::Type::Boolean)));
 
@@ -645,7 +641,7 @@ void DfxParam::SetEnforceValueLimits(bool inMode)
 }
 
 //-----------------------------------------------------------------------------
-double DfxParam::limit_f(double inValue) const
+double DfxParam::limit_f(double inValue) const noexcept DFX_RT_ATTR
 {
 	if (!mEnforceValueLimits)
 	{
@@ -655,26 +651,13 @@ double DfxParam::limit_f(double inValue) const
 }
 
 //-----------------------------------------------------------------------------
-int64_t DfxParam::limit_i(int64_t inValue) const noexcept
+int64_t DfxParam::limit_i(int64_t inValue) const noexcept DFX_RT_ATTR
 {
 	if (!mEnforceValueLimits)
 	{
 		return inValue;
 	}
 	return std::clamp(inValue, getmin_i(), getmax_i());
-}
-
-
-
-#pragma mark -
-#pragma mark state
-#pragma mark -
-
-//-----------------------------------------------------------------------------
-// set the property indicating whether the parameter value has changed
-bool DfxParam::setchanged(bool inChanged) noexcept
-{
-	return mChanged.exchange(inChanged);
 }
 
 
@@ -779,7 +762,7 @@ void DfxParam::setcustomunitstring(std::string_view inText)
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value::Type DfxParam::Value::gettype() const noexcept
+DfxParam::Value::Type DfxParam::Value::gettype() const noexcept DFX_RT_ATTR
 {
 	if (std::holds_alternative<double>(*this))
 	{
@@ -812,7 +795,7 @@ DfxPreset::DfxPreset(size_t inNumParameters)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPreset::setvalue(dfx::ParameterID inParameterIndex, DfxParam::Value inValue)
+void DfxPreset::setvalue(dfx::ParameterID inParameterIndex, DfxParam::Value inValue) noexcept DFX_RT_ATTR
 {
 	if (inParameterIndex < mValues.size())
 	{
@@ -821,7 +804,7 @@ void DfxPreset::setvalue(dfx::ParameterID inParameterIndex, DfxParam::Value inVa
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value DfxPreset::getvalue(dfx::ParameterID inParameterIndex) const
+DfxParam::Value DfxPreset::getvalue(dfx::ParameterID inParameterIndex) const noexcept DFX_RT_ATTR
 {
 	if (inParameterIndex < mValues.size())
 	{

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2024  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -60,10 +60,10 @@ and derive is used when getting a parameter value.
 
 Going even further than that, you can also set and get values "generically."  
 By this I mean you can get and set using float values constrained within 
-a 0.0 to 1.0 range.  Some plugin APIs only support handling parameters in 
-this generic 0 to 1 fashion, so the generic set and get routines are 
-available in order to interface with those APIs.  They also provide a 
-convenient way to handle value distribution curves (more on that below).
+a 0 to 1 range.  Some plugin APIs only support handling parameters in this 
+generic 0 to 1 fashion, so the generic set and get routines are available 
+in order to interface with those APIs.  They also provide a convenient way 
+to handle value distribution curves (more on that below).
 
 There are certain suffixes that are appended to function names to 
 indicate how they operate.  You will see multiple variations of the 
@@ -115,11 +115,11 @@ scalar.
 Parameters don't handle their value distribution curves for you, 
 for the most part.  The exceptions are when setting or getting 
 values "generically" and when randomizing values.  When handling 
-"generic" (0.0 to 1.0 float) parameter values, the values are 
-weighted according to the distribution curve before being expanded 
-and de-weighted after being contracted.  When randomizing a 
-parameter, the probability is weighted according to the parameter's 
-value distribution curve.  If a graphical interface control (or 
+"generic" (0 to 1 float) parameter values, the values are weighted 
+according to the distribution curve before being expanded and 
+de-weighted after being contracted.  When randomizing a parameter, 
+the probability is weighted according to the parameter's value 
+distribution curve.  If a graphical interface control (or 
 something else) wants to respect a parameter's value distribution 
 curve, the easiest way is probably to set and get the parameter 
 value generically, and that way the weighting will be handled 
@@ -132,11 +132,11 @@ value which has been weighted according to the curve and expanded
 into the parameter's value range.  contract takes a double value 
 on input which is somewhere in the parameter's value range, 
 de-weights it according to the curve, and outputs a generic 
-(0.0 to 1.0) float value.  0.0 to 1.0 value ranges work very 
-nicely for most value distribution curves (pow, sqrt, etc. 
-operations all will give output that is still within the 0 to 1 
-range when fed input within the 0 to 1 range), so that's why 
-generic values are used in the expand and contract routines.
+(0 to 1) float value.  0 to 1 value ranges work very nicely for 
+most value distribution curves (pow, sqrt, etc. operations all 
+will give output that is still within the 0 to 1 range when fed 
+input within the 0 to 1 range), so that's why generic values are 
+used in the expand and contract routines.
 
 For certain curve types, it might be necessary to provide extra 
 curve specification information, and that's what the member variable 
@@ -211,19 +211,20 @@ public:
 		using Parent::variant;
 		using Parent::operator=;
 
-		constexpr auto get_f() const
+		constexpr auto get_f() const noexcept DFX_RT_ATTR
 		{
-			return std::get<double>(*this);
+			// TODO: std::get for this type seems like it should be realtime-safe?
+			return DFX_RT_UNSAFE(std::get<double>(*this));
 		}
-		constexpr auto get_i() const
+		constexpr auto get_i() const noexcept DFX_RT_ATTR
 		{
-			return std::get<int64_t>(*this);
+			return DFX_RT_UNSAFE(std::get<int64_t>(*this));
 		}
-		constexpr auto get_b() const
+		constexpr auto get_b() const noexcept DFX_RT_ATTR
 		{
-			return std::get<bool>(*this);
+			return DFX_RT_UNSAFE(std::get<bool>(*this));
 		}
-		Type gettype() const noexcept;
+		Type gettype() const noexcept DFX_RT_ATTR;
 	};
 
 	// these are the different value unit types that a parameter can have
@@ -306,7 +307,7 @@ public:
 		return !mValueStrings.empty();
 	}
 	// set a value string's text contents
-	bool setvaluestring(int64_t inIndex, std::string_view inText);
+	void setvaluestring(int64_t inIndex, std::string_view inText);
 	// get a copy of the contents of a specific value string
 	std::optional<std::string> getvaluestring(int64_t inIndex) const;
 #ifdef TARGET_API_AUDIOUNIT
@@ -318,113 +319,113 @@ public:
 #endif
 
 	// set the parameter's current value
-	void set(Value inValue);
-	void set_f(double inValue);
-	void set_i(int64_t inValue);
-	void set_b(bool inValue);
+	void set(Value inValue) noexcept DFX_RT_ATTR;
+	void set_f(double inValue) noexcept DFX_RT_ATTR;
+	void set_i(int64_t inValue) noexcept DFX_RT_ATTR;
+	void set_b(bool inValue) noexcept DFX_RT_ATTR;
 	// set the current value with a generic 0...1 float value
-	void set_gen(double inGenValue);
+	void set_gen(double inGenValue) noexcept DFX_RT_ATTR;
 	// set the current value without flagging change or touch or range check
 	// (intended for when a plugin generates the change itself)
-	void setquietly_f(double inValue);
-	void setquietly_i(int64_t inValue);
-	void setquietly_b(bool inValue);
+	void setquietly_f(double inValue) noexcept DFX_RT_ATTR;
+	void setquietly_i(int64_t inValue) noexcept DFX_RT_ATTR;
+	void setquietly_b(bool inValue) noexcept DFX_RT_ATTR;
 
 	// get the parameter's current value
-	Value get() const noexcept
+	Value get() const noexcept DFX_RT_ATTR
 	{
 		return mValue;
 	}
-	double get_f() const noexcept
+	double get_f() const noexcept DFX_RT_ATTR
 	{
 		return derive_f(mValue);
 	}
-	int64_t get_i() const
+	int64_t get_i() const noexcept DFX_RT_ATTR
 	{
 		return derive_i(mValue);
 	}
-	bool get_b() const noexcept
+	bool get_b() const noexcept DFX_RT_ATTR
 	{
 		return derive_b(mValue);
 	}
 	// get the current value scaled into a generic 0...1 float value
-	double get_gen() const;
+	double get_gen() const noexcept DFX_RT_ATTR;
 
 	// get the parameter's minimum value
-	Value getmin() const noexcept
+	Value getmin() const noexcept DFX_RT_ATTR
 	{
 		return mMinValue;
 	}
-	double getmin_f() const noexcept
+	double getmin_f() const noexcept DFX_RT_ATTR
 	{
 		return derive_f(mMinValue);
 	}
-	int64_t getmin_i() const
+	int64_t getmin_i() const noexcept DFX_RT_ATTR
 	{
 		return derive_i(mMinValue);
 	}
-	bool getmin_b() const noexcept
+	bool getmin_b() const noexcept DFX_RT_ATTR
 	{
 		return derive_b(mMinValue);
 	}
 
 	// get the parameter's maximum value
-	Value getmax() const noexcept
+	Value getmax() const noexcept DFX_RT_ATTR
 	{
 		return mMaxValue;
 	}
-	double getmax_f() const noexcept
+	double getmax_f() const noexcept DFX_RT_ATTR
 	{
 		return derive_f(mMaxValue);
 	}
-	int64_t getmax_i() const
+	int64_t getmax_i() const noexcept DFX_RT_ATTR
 	{
 		return derive_i(mMaxValue);
 	}
-	bool getmax_b() const noexcept
+	bool getmax_b() const noexcept DFX_RT_ATTR
 	{
 		return derive_b(mMaxValue);
 	}
 
 	// get the parameter's default value
-	Value getdefault() const noexcept
+	Value getdefault() const noexcept DFX_RT_ATTR
 	{
 		return mDefaultValue;
 	}
-	double getdefault_f() const noexcept
+	double getdefault_f() const noexcept DFX_RT_ATTR
 	{
 		return derive_f(mDefaultValue);
 	}
-	int64_t getdefault_i() const
+	int64_t getdefault_i() const noexcept DFX_RT_ATTR
 	{
 		return derive_i(mDefaultValue);
 	}
-	bool getdefault_b() const noexcept
+	bool getdefault_b() const noexcept DFX_RT_ATTR
 	{
 		return derive_b(mDefaultValue);
 	}
 
 	// extract the active value of a Value as a scalar type
 	// (perform type conversion if the desired output type is not the contained type)
-	static double derive_f(Value inValue) noexcept;
-	static int64_t derive_i(Value inValue);
-	static bool derive_b(Value inValue) noexcept;
+	static double derive_f(Value inValue) noexcept DFX_RT_ATTR;
+	static int64_t derive_i(Value inValue) noexcept DFX_RT_ATTR;
+	static bool derive_b(Value inValue) noexcept DFX_RT_ATTR;
 
 	// produce a Value holding the "native" type coerced from a value of a scalar type
 	// (perform type conversion if the incoming value type is not "native")
-	Value coerce_f(double inValue) const;
-	Value coerce_i(int64_t inValue) const noexcept;
-	Value coerce_b(bool inValue) const noexcept;
+	Value coerce_f(double inValue) const noexcept DFX_RT_ATTR;
+	Value coerce_i(int64_t inValue) const noexcept DFX_RT_ATTR;
+	Value coerce_b(bool inValue) const noexcept DFX_RT_ATTR;
 
 	// expand and contract routines for setting and getting values generically
 	// these take into account the parameter curve
-	double expand(double inGenValue) const;
-	static double expand(double inGenValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec = 1.0);
-	double contract(double inLiteralValue) const;
-	static double contract(double inLiteralValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec = 1.0);
+	double expand(double inGenValue) const noexcept DFX_RT_ATTR;
+	static double expand(double inGenValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec = 1.) noexcept DFX_RT_ATTR;
+	double contract(double inLiteralValue) const noexcept DFX_RT_ATTR;
+	static double contract(double inLiteralValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec = 1.) noexcept DFX_RT_ATTR;
 
 	// set/get the property stating whether or not to automatically clip values into range
-	void SetEnforceValueLimits(bool inMode);
+	void SetEnforceValueLimits(bool inMode) noexcept;
 	bool GetEnforceValueLimits() const noexcept
 	{
 		return mEnforceValueLimits;
@@ -446,7 +447,7 @@ public:
 #endif
 
 	// get the value type of the parameter values
-	Value::Type getvaluetype() const noexcept
+	Value::Type getvaluetype() const noexcept DFX_RT_ATTR
 	{
 		// relying upon default value to avoid atomic overhead with current value
 		return mDefaultValue.gettype();
@@ -466,7 +467,7 @@ public:
 	{
 		mCurve = inNewCurve;
 	}
-	Curve getcurve() const noexcept
+	Curve getcurve() const noexcept DFX_RT_ATTR
 	{
 		return mCurve;
 	}
@@ -475,7 +476,7 @@ public:
 	{
 		mCurveSpec = inNewCurveSpec;
 	}
-	double getcurvespec() const noexcept
+	double getcurvespec() const noexcept DFX_RT_ATTR
 	{
 		return mCurveSpec;
 	}
@@ -485,7 +486,7 @@ public:
 	{
 		mAttributes = inFlags;
 	}
-	Attribute getattributes() const noexcept
+	Attribute getattributes() const noexcept DFX_RT_ATTR
 	{
 		return mAttributes;
 	}
@@ -500,18 +501,21 @@ public:
 
 	// set/get the property indicating whether the parameter value has changed
 	// returns preceding state
-	bool setchanged(bool inChanged) noexcept;
-	bool getchanged() const noexcept
+	bool setchanged(bool inChanged) noexcept DFX_RT_ATTR
+	{
+		return mChanged.exchange(inChanged);
+	}
+	bool getchanged() const noexcept DFX_RT_ATTR
 	{
 		return mChanged;
 	}
 	// set/get the property indicating whether the parameter value has been set for any reason (regardless of whether the new value differed)
 	// returns preceding state
-	bool settouched(bool inTouched) noexcept
+	bool settouched(bool inTouched) noexcept DFX_RT_ATTR
 	{
 		return mTouched.exchange(inTouched);
 	}
-	bool gettouched() const noexcept
+	bool gettouched() const noexcept DFX_RT_ATTR
 	{
 		return mTouched;
 	}
@@ -529,16 +533,16 @@ private:
 	// apply a value of a scalar type to the current value
 	// (perform type conversion if the incoming value type is not "native")
 	// returns whether the provided Value changed upon storing the scalar value
-	bool accept_f(double inValue);
-	bool accept_i(int64_t inValue) noexcept;
-	bool accept_b(bool inValue) noexcept;
+	bool accept_f(double inValue) noexcept DFX_RT_ATTR;
+	bool accept_i(int64_t inValue) noexcept DFX_RT_ATTR;
+	bool accept_b(bool inValue) noexcept DFX_RT_ATTR;
 
 	// clip the current parameter value within the min/max range
-	[[nodiscard]] double limit_f(double inValue) const;
-	[[nodiscard]] int64_t limit_i(int64_t inValue) const noexcept;
+	[[nodiscard]] double limit_f(double inValue) const noexcept DFX_RT_ATTR;
+	[[nodiscard]] int64_t limit_i(int64_t inValue) const noexcept DFX_RT_ATTR;
 
 	// safety check for an index into the value strings array
-	bool ValueStringIndexIsValid(int64_t inIndex) const;
+	bool ValueStringIndexIsValid(int64_t inIndex) const noexcept;
 
 	// when this is enabled, out of range values are "bounced" into range
 	bool mEnforceValueLimits = false;  // default to allowing values outside of the min/max range
@@ -577,8 +581,8 @@ class DfxPreset
 public:
 	explicit DfxPreset(size_t inNumParameters);
 
-	void setvalue(dfx::ParameterID inParameterIndex, DfxParam::Value inValue);
-	DfxParam::Value getvalue(dfx::ParameterID inParameterIndex) const;
+	void setvalue(dfx::ParameterID inParameterIndex, DfxParam::Value inValue) noexcept DFX_RT_ATTR;
+	DfxParam::Value getvalue(dfx::ParameterID inParameterIndex) const noexcept DFX_RT_ATTR;
 	void setname(std::string_view inText);
 	std::string getname() const
 	{

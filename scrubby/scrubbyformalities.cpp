@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2024  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -182,7 +182,7 @@ void Scrubby::cleanup()
 }
 
 //-------------------------------------------------------------------------
-void Scrubby::reset()
+void Scrubby::reset() noexcept DFX_RT_ATTR
 {
 	// clear out the buffers
 	for (auto& buffer : mAudioBuffers)
@@ -201,7 +201,7 @@ void Scrubby::reset()
 	// some hosts may call reset when restarting playback
 	std::ranges::fill(mNeedResync, true);
 
-	std::ranges::for_each(mHighpassFilters, [](auto& filter){ filter.reset(); });
+	std::ranges::for_each(mHighpassFilters, [](auto& filter) DFX_RT_LAMBDA { filter.reset(); });
 
 	// reset the position tracker
 	mWritePos = 0;
@@ -360,7 +360,7 @@ void Scrubby::initPresets()
 #pragma mark parameters
 
 //-------------------------------------------------------------------------
-void Scrubby::randomizeparameters()
+void Scrubby::randomizeparameters() noexcept DFX_RT_ATTR
 {
 	// store the current total mix gain sum
 	auto const entryDryLevel = getparameter_f(kDryLevel);
@@ -396,7 +396,7 @@ void Scrubby::randomizeparameters()
 }
 
 //-------------------------------------------------------------------------
-void Scrubby::processparameters()
+void Scrubby::processparameters() noexcept DFX_RT_ATTR
 {
 	mSeekRangeSeconds = getparameter_f(kSeekRange) * 0.001;
 	mFreeze = getparameter_b(kFreeze);

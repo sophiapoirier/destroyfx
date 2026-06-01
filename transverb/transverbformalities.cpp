@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2025  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2026  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -123,12 +123,12 @@ TransverbDSP::TransverbDSP(DfxPlugin& inDfxPlugin)
 }
 
 
-void TransverbDSP::reset() {
+void TransverbDSP::reset() noexcept DFX_RT_ATTR {
 
-  std::ranges::for_each(heads, [](Head& head){ head.reset(); });
+  std::ranges::for_each(heads, [](Head& head) DFX_RT_LAMBDA { head.reset(); });
 }
 
-void TransverbDSP::Head::reset() {
+void TransverbDSP::Head::reset() noexcept DFX_RT_ATTR {
 
   smoothcount = 0;
   lastdelayval = 0.f;
@@ -139,7 +139,7 @@ void TransverbDSP::Head::reset() {
 }
 
 
-void TransverbDSP::processparameters() {
+void TransverbDSP::processparameters() noexcept DFX_RT_ATTR {
 
   if (auto const value = getparameterifchanged_f(kDrymix))
   {
@@ -164,8 +164,6 @@ void TransverbDSP::processparameters() {
       heads[head].feed = *value;
     }
   }
-  quality = getparameter_i(kQuality);
-  tomsound = getparameter_b(kTomsound);
 
   if (auto const value = getparameterifchanged_f(kBsize))
   {
@@ -190,7 +188,7 @@ void TransverbDSP::processparameters() {
       }
     }
     auto const bsize_f = static_cast<double>(bsize);
-    std::ranges::for_each(heads, [bsize_f](Head& head){ head.read = fmod_bipolar(head.read, bsize_f); });
+    std::ranges::for_each(heads, [bsize_f](Head& head) DFX_RT_LAMBDA { head.read = fmod_bipolar(head.read, bsize_f); });
   }
 
   for (size_t head = 0; head < kNumDelays; head++)
@@ -204,14 +202,14 @@ void TransverbDSP::processparameters() {
 
   if (getparameterchanged(kQuality) || getparameterchanged(kTomsound))
   {
-    std::ranges::for_each(heads, [](Head& head){ head.speedHasChanged = true; });
+    std::ranges::for_each(heads, [](Head& head) DFX_RT_LAMBDA { head.speedHasChanged = true; });
   }
 
   // stereo-split-heads mode (head 1 goes to left output and 2 to right)
   if (getplugin().asymmetricalchannels())
   {
     static_assert(kNumDelays >= 2);
-    assert(getplugin().getnumoutputs() == 2);
+    DFX_RT_ASSERT(getplugin().getnumoutputs() == 2);
     if (GetChannelNum() == 0)
     {
       heads[1].mix.setValueNow(getparametermin_f(kMix2));
@@ -398,7 +396,7 @@ void Transverb::initPresets() {
 }
 
 //-----------------------------------------------------------------------------
-bool Transverb::loadpreset(size_t index)
+bool Transverb::loadpreset(size_t index) noexcept DFX_RT_ATTR
 {
 	if (!presetisvalid(index))
 	{
@@ -419,7 +417,7 @@ bool Transverb::loadpreset(size_t index)
 
 
 /* this randomizes the values of all of Transverb's parameters, sometimes in smart ways */
-void Transverb::randomizeparameters()
+void Transverb::randomizeparameters() noexcept DFX_RT_ATTR
 {
 	// randomize the non-mix-level parameters
 
@@ -467,11 +465,11 @@ void Transverb::randomizeparameters()
 
 	// apply the scalar to the new mix parameter values
 	newDrymix *= mixDiffScalar;
-	std::ranges::transform(newMix, newMix.begin(), [mixDiffScalar](double value){ return value * mixDiffScalar; });
+	std::ranges::transform(newMix, newMix.begin(), [mixDiffScalar](double value) DFX_RT_LAMBDA { return value * mixDiffScalar; });
 
 	// clip the the delay head mix values at unity gain so that we don't get mega-feedback blasts
 	newDrymix = std::clamp(newDrymix, 0., getparametermax_f(kDrymix));
-	std::ranges::transform(newMix, newMix.begin(), [](double value){ return std::clamp(value, 0., 1.); });
+	std::ranges::transform(newMix, newMix.begin(), [](double value) DFX_RT_LAMBDA { return std::clamp(value, 0., 1.); });
 
 	// set the new randomized mix parameter values as the new values
 	setparameter_f(kDrymix, newDrymix);

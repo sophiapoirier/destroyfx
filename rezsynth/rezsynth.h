@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -127,10 +127,10 @@ public:
 
 	void initialize() override;
 	void cleanup() override;
-	void reset() override;
+	void reset() noexcept DFX_RT_ATTR override;
 
-	void processparameters() override;
-	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) override;
+	void processparameters() noexcept DFX_RT_ATTR override;
+	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR override;
 
 private:
 	static constexpr int64_t kMaxBands = 30;  // the maximum number of resonant bands
@@ -145,18 +145,18 @@ private:
 	};
 
 	using ChannelsOfNotesOfBands = std::vector<std::array<std::array<double, kMaxBands>, DfxMidi::kNumNotesWithLegatoVoice>>;
-	static void clearChannelsOfNotesOfBands(ChannelsOfNotesOfBands& channelsOfNotesOfBands);
-	void clearFilterOutputForBands(int bandIndexBegin);
-	void clearLowpassGateFilters();
+	static void clearChannelsOfNotesOfBands(ChannelsOfNotesOfBands& channelsOfNotesOfBands) noexcept DFX_RT_ATTR;
+	void clearFilterOutputForBands(int bandIndexBegin) noexcept DFX_RT_ATTR;
+	void clearLowpassGateFilters() noexcept DFX_RT_ATTR;
 
-	double calculateAmpEvener(int currentNote) const;
-	[[nodiscard]] int calculateCoefficients(int currentNote);
+	double calculateAmpEvener(int currentNote) const noexcept DFX_RT_ATTR;
+	[[nodiscard]] int calculateCoefficients(int currentNote) noexcept DFX_RT_ATTR;
 	void processFilterOuts(std::span<float const* const> inAudio, std::span<float* const> outAudio,
 						   size_t sampleFrameOffset, size_t sampleFrames,
-						   int currentNote, int numBands);
-	void processUnaffected(std::span<float const> inAudio, std::span<float> outAudio);
-	double getBandwidthForFreq(double inFreq) const;
-	void checkForNewNote(size_t currentEvent);
+						   int currentNote, int numBands) noexcept DFX_RT_ATTR;
+	void processUnaffected(std::span<float const> inAudio, std::span<float> outAudio) noexcept DFX_RT_ATTR;
+	double getBandwidthForFreq(double inFreq) const noexcept DFX_RT_ATTR;
+	void checkForNewNote(size_t currentEvent) noexcept DFX_RT_ATTR;
 
 	// parameters
 	double mBandwidthAmount_Hz = 1.0, mBandwidthAmount_Q = 1.0, mSepAmount_Octaval = 0.0, mSepAmount_Linear = 0.0;

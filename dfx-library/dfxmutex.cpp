@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2021  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -30,17 +30,17 @@ This is our mutually exclusive shit.
 
 //------------------------------------------------------------------------
 
-void dfx::SpinLock::lock()
+void dfx::SpinLock::lock() noexcept
 {
 	while (!try_lock());
 }
 
-bool dfx::SpinLock::try_lock()
+bool dfx::SpinLock::try_lock() noexcept DFX_RT_ATTR
 {
 	return !mFlag.test_and_set(std::memory_order_acquire);
 }
 
-void dfx::SpinLock::unlock()
+void dfx::SpinLock::unlock() noexcept DFX_RT_ATTR
 {
 	mFlag.clear(std::memory_order_release);
 }

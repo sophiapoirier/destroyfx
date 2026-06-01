@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2024  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2026  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -229,7 +229,7 @@ dfx::StatusCode PLUGIN::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope
   }
 }
 
-void PLUGIN::randomizeparameter(dfx::ParameterID inParameterID)
+void PLUGIN::randomizeparameter(dfx::ParameterID inParameterID) noexcept DFX_RT_ATTR
 {
   // we need to constrain the range of values of the parameters that have extra (currently unused) room for future expansion
   int64_t maxValue = 0;
@@ -254,13 +254,14 @@ void PLUGIN::randomizeparameter(dfx::ParameterID inParameterID)
       return;
   }
 
+  DFX_RT_ASSERT(maxValue > 0);
   auto const newValue = generateParameterRandomValue<int64_t>(0, maxValue - 1);
   setparameter_i(inParameterID, newValue);
 
   postupdate_parameter(inParameterID);	// inform any parameter listeners of the changes
 }
 
-void PLUGIN::clearwindowcache()
+void PLUGIN::clearwindowcache() noexcept DFX_RT_ATTR
 {
   windowcache_writer->clear();
   {
@@ -272,7 +273,7 @@ void PLUGIN::clearwindowcache()
   lastwindowtimestamp.fetch_add(1, std::memory_order_relaxed);
 }
 
-void PLUGIN::updatewindowcache(PLUGINCORE * geometercore)
+void PLUGIN::updatewindowcache(PLUGINCORE * geometercore) noexcept DFX_RT_ATTR
 {
 #if 1
   std::copy_n(geometercore->getinput(), GeometerViewData::samples, windowcache_writer->inputs.data());
@@ -303,14 +304,14 @@ void PLUGIN::updatewindowcache(PLUGINCORE * geometercore)
   }
 }
 
-void PLUGINCORE::clearwindowcache()
+void PLUGINCORE::clearwindowcache() noexcept DFX_RT_ATTR
 {
   if (iswaveformsource()) {
     geometer.clearwindowcache();
   }
 }
 
-void PLUGINCORE::updatewindowcache()
+void PLUGINCORE::updatewindowcache() noexcept DFX_RT_ATTR
 {
   if (iswaveformsource()) {
     geometer.updatewindowcache(this);
@@ -379,7 +380,7 @@ PLUGINCORE::PLUGINCORE(DfxPlugin& inDfxPlugin)
   }
 }
 
-void PLUGINCORE::reset() {
+void PLUGINCORE::reset() noexcept DFX_RT_ATTR {
 
   updatewindowsize();
   updatewindowshape();
@@ -388,7 +389,7 @@ void PLUGINCORE::reset() {
 }
 
 
-void PLUGINCORE::processparameters() {
+void PLUGINCORE::processparameters() noexcept DFX_RT_ATTR {
 
   pointstyle = getparameter_i(P_POINTSTYLE);
   pointparam = getparameter_f(P_POINTPARAMS + static_cast<dfx::ParameterID>(pointstyle));
@@ -413,11 +414,11 @@ void PLUGINCORE::processparameters() {
 
 /* operations on points. this is a separate function
    because it is called once for each operation slot.
-   It's static to enforce thread-safety.
+   It is static to benefit thread-safety reasoning.
 */
 int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
                          int * px, float * py, int maxpts,
-                         int * tempx, float * tempy) {
+                         int * tempx, float * tempy) noexcept DFX_RT_ATTR {
   /* pointops. */
 
   switch(pop) {
@@ -611,7 +612,7 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
 */
 int PLUGINCORE::processw(float const * in, float * out, int samples,
                          int * px, float * py, int maxpts,
-                         int * tempx, float * tempy) {
+                         int * tempx, float * tempy) noexcept DFX_RT_ATTR {
 
   /* collect points. */
 
@@ -734,7 +735,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
 
     enum { ABOVE, BETWEEN, BELOW };
 
-    int state = BETWEEN;
+    auto state = BETWEEN;
     float const level = (pointparam * .9999f) + .00005f;
     numpts = 1;
 
@@ -1190,7 +1191,8 @@ XXX Sophia's ideas:
    - it would also be nice to make this windowing stuff into a reusable class so that we don't find ourselves maintaining the same code accross so many different plugins
 */
 
-void PLUGINCORE::process(std::span<float const> tin, std::span<float> tout) {
+void PLUGINCORE::process(std::span<float const> tin,
+                         std::span<float> tout) noexcept DFX_RT_ATTR {
   for (size_t ii = 0; ii < tout.size(); ii++) {
 
     /* copy sample in */
@@ -1207,7 +1209,10 @@ void PLUGINCORE::process(std::span<float const> tin, std::span<float> tout) {
       updatewindowcache();
 
 #if TARGET_OS_MAC
-      vDSP_vmul(out0.data()+outstart+outsize, 1, windowenvelope.data(), 1, out0.data()+outstart+outsize, 1, static_cast<vDSP_Length>(framesize));
+      DFX_RT_UNSAFE(vDSP_vmul(out0.data()+outstart+outsize, 1,
+                              windowenvelope.data(), 1,
+                              out0.data()+outstart+outsize, 1,
+                              static_cast<vDSP_Length>(framesize)));
 #else
       // TODO: vector-optimize?
       for (int z=0; z < framesize; z++) {
@@ -1220,7 +1225,8 @@ void PLUGINCORE::process(std::span<float const> tin, std::span<float> tout) {
         out0[u+outstart+outsize] += prevmix[u];
 
       /* prevmix becomes out1 */
-      std::copy_n(std::next(out0.cbegin(), outstart + outsize + third), third, prevmix.begin());
+      std::copy_n(std::next(out0.cbegin(), outstart + outsize + third),
+                  third, prevmix.begin());
 
       /* copy 2nd third of input over in0 (need to re-use it for next frame),
          now insize = third */
@@ -1246,7 +1252,7 @@ void PLUGINCORE::process(std::span<float const> tin, std::span<float> tout) {
 }
 
 
-void PLUGINCORE::updatewindowsize()
+void PLUGINCORE::updatewindowsize() noexcept DFX_RT_ATTR
 {
   framesize = PLUGIN::buffersizes.at(getparameter_i(P_BUFSIZE));
   third = framesize / 2;
@@ -1270,7 +1276,7 @@ void PLUGINCORE::updatewindowsize()
 }
 
 
-void PLUGINCORE::updatewindowshape()
+void PLUGINCORE::updatewindowshape() noexcept DFX_RT_ATTR
 {
   shape = getparameter_i(P_SHAPE);
 

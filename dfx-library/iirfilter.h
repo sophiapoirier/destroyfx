@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -34,6 +34,7 @@ Welcome to our Infinite Impulse Response filter.
 #include <utility>
 #include <vector>
 
+#include "dfx-base.h"
 #include "dfxmath.h"
 
 
@@ -69,43 +70,43 @@ public:
 		float mPrevPrevOut = 0.0f;
 	};
 
-	static constexpr Coefficients kZeroCoeff = { 0.0, 0.0, 0.0, 0.0, 0.0 };
-	static constexpr Coefficients kUnityCoeff = { 1.0, 0.0, 0.0, 0.0, 0.0 };
-	static_assert(kUnityCoeff.mIn == 1.0);  // protect against possible future member reordering
+	static constexpr Coefficients kZeroCoeff = { 0., 0., 0., 0., 0. };
+	static constexpr Coefficients kUnityCoeff = { 1., 0., 0., 0., 0. };
+	static_assert(kUnityCoeff.mIn == 1.);  // minimal test of member ordering
 	static constexpr double kShelfStartLowpass = 0.333;
 
-	IIRFilter() = default;
-	explicit IIRFilter(double inSampleRate);
+	IIRFilter() noexcept = default;
+	explicit IIRFilter(double inSampleRate) noexcept DFX_RT_ATTR;
 
-	void setCoefficients(Coefficients const& inCoefficients);
-	Coefficients const& setCoefficients(FilterType inFilterType, double inFrequency, double inQ, double inGain);
-	Coefficients const& setCoefficients(FilterType inFilterType, double inFrequency, double inQ);
-	Coefficients const& setLowpassCoefficients(double inCutoffFrequency);
-	Coefficients const& setLowpassGateCoefficients(double inLevel);
-	Coefficients const& setHighpassCoefficients(double inCutoffFrequency);
-	Coefficients const& setHighpassGateCoefficients(double inLevel);
-	Coefficients const& setBandpassCoefficients(double inCenterFrequency, double inQ);
-	void copyCoefficients(IIRFilter const& inSourceFilter) noexcept;
-	auto getCoefficients() const noexcept { return mCoeff; }
-	void setSampleRate(double inSampleRate);
+	void setCoefficients(Coefficients const& inCoefficients) noexcept DFX_RT_ATTR;
+	Coefficients const& setCoefficients(FilterType inFilterType, double inFrequency, double inQ, double inGain) noexcept DFX_RT_ATTR;
+	Coefficients const& setCoefficients(FilterType inFilterType, double inFrequency, double inQ) noexcept DFX_RT_ATTR;
+	Coefficients const& setLowpassCoefficients(double inCutoffFrequency) noexcept DFX_RT_ATTR;
+	Coefficients const& setLowpassGateCoefficients(double inLevel) noexcept DFX_RT_ATTR;
+	Coefficients const& setHighpassCoefficients(double inCutoffFrequency) noexcept DFX_RT_ATTR;
+	Coefficients const& setHighpassGateCoefficients(double inLevel) noexcept DFX_RT_ATTR;
+	Coefficients const& setBandpassCoefficients(double inCenterFrequency, double inQ) noexcept DFX_RT_ATTR;
+	void copyCoefficients(IIRFilter const& inSourceFilter) noexcept DFX_RT_ATTR;
+	auto getCoefficients() const noexcept DFX_RT_ATTR { return mCoeff; }
+	void setSampleRate(double inSampleRate) noexcept DFX_RT_ATTR;
 
-	void reset() noexcept;
+	void reset() noexcept DFX_RT_ATTR;
 
 
-	[[nodiscard]] float process(float inSample);
-	void processToCache(float inSample);
+	[[nodiscard]] float process(float inSample) noexcept DFX_RT_ATTR;
+	void processToCache(float inSample) noexcept DFX_RT_ATTR;
 
 #ifdef DFX_IIRFILTER_USE_OPTIMIZATION_FOR_EXCLUSIVELY_LP_HP_NOTCH
 	// pre-Hermite-specific functions
 	// there are four versions, three of which unroll for loops of two, three, and four iterations
-	void processToCacheH1(float inSample);
-	void processToCacheH2(std::span<float const> inAudio, size_t inPos);
-	void processToCacheH3(std::span<float const> inAudio, size_t inPos);
-	void processToCacheH4(std::span<float const> inAudio, size_t inPos);
+	void processToCacheH1(float inSample) noexcept DFX_RT_ATTR;
+	void processToCacheH2(std::span<float const> inAudio, size_t inPos) noexcept DFX_RT_ATTR;
+	void processToCacheH3(std::span<float const> inAudio, size_t inPos) noexcept DFX_RT_ATTR;
+	void processToCacheH4(std::span<float const> inAudio, size_t inPos) noexcept DFX_RT_ATTR;
 #endif
 
 	// 4-point Hermite spline interpolation for use with IIR filter output histories
-	float interpolateHermitePostFilter(double inPos) const;
+	float interpolateHermitePostFilter(double inPos) const noexcept DFX_RT_ATTR;
 
 
 private:
@@ -130,10 +131,10 @@ public:
 
 	// the Linkwitz–Riley 4th-order filters are not stable with quickly changing cutoff frequency, 
 	// so if changes can be modulated, smooth the changes per-sample (no striding)
-	void setFrequency(double inFrequency);
-	void reset();
+	void setFrequency(double inFrequency) noexcept DFX_RT_ATTR;
+	void reset() noexcept DFX_RT_ATTR;
 	// result contains the low audio portion followed by the high
-	std::pair<float, float> process(size_t inChannel, float inSample);
+	std::pair<float, float> process(size_t inChannel, float inSample) noexcept DFX_RT_ATTR;
 
 private:
 	double const mSampleRate;
@@ -148,7 +149,7 @@ private:
 	struct History
 	{
 		double mX1 {}, mX2 {}, mX3 {}, mX4 {}, mY1 {}, mY2 {}, mY3 {}, mY4 {};
-		void reset() noexcept { mX1 = mX2 = mX3 = mX4 = mY1 = mY2 = mY3 = mY4 = 0.f; }
+		constexpr void reset() noexcept DFX_RT_ATTR { mX1 = mX2 = mX3 = mX4 = mY1 = mY2 = mY3 = mY4 = 0.f; }
 	};
 	std::vector<History> mLowpassHistories, mHighpassHistories;
 #else
@@ -164,7 +165,7 @@ private:
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-[[nodiscard]] inline float IIRFilter::process(float inSample)
+[[nodiscard]] inline float IIRFilter::process(float inSample) noexcept DFX_RT_ATTR
 {
 	mPrevPrevOut = mPrevOut;
 	mPrevOut = mCurrentOut;
@@ -185,7 +186,7 @@ private:
 }
 
 //-----------------------------------------------------------------------------
-inline void IIRFilter::processToCache(float inSample)
+inline void IIRFilter::processToCache(float inSample) noexcept DFX_RT_ATTR
 {
 	// store four samples of history if we're preprocessing for Hermite interpolation
 	mPrevPrevPrevOut = mPrevPrevOut;
@@ -195,7 +196,7 @@ inline void IIRFilter::processToCache(float inSample)
 #ifdef DFX_IIRFILTER_USE_OPTIMIZATION_FOR_EXCLUSIVELY_LP_HP_NOTCH
 
 //-----------------------------------------------------------------------------
-inline void IIRFilter::processToCacheH1(float inSample)
+inline void IIRFilter::processToCacheH1(float inSample) noexcept DFX_RT_ATTR
 {
 	mPrevPrevPrevOut = mPrevPrevOut;
 	mPrevPrevOut = mPrevOut;
@@ -211,10 +212,10 @@ inline void IIRFilter::processToCacheH1(float inSample)
 }
 
 //-----------------------------------------------------------------------------
-inline void IIRFilter::processToCacheH2(std::span<float const> inAudio, size_t inPos)
+inline void IIRFilter::processToCacheH2(std::span<float const> inAudio, size_t inPos) noexcept DFX_RT_ATTR
 {
-	assert(!inAudio.empty());
-	assert(inPos < inAudio.size());
+	DFX_RT_ASSERT(!inAudio.empty());
+	DFX_RT_ASSERT(inPos < inAudio.size());
 
 	auto const in0 = inAudio[inPos];
 	auto const in1 = inAudio[(inPos + 1) % inAudio.size()];
@@ -238,10 +239,10 @@ inline void IIRFilter::processToCacheH2(std::span<float const> inAudio, size_t i
 }
 
 //-----------------------------------------------------------------------------
-inline void IIRFilter::processToCacheH3(std::span<float const> inAudio, size_t inPos)
+inline void IIRFilter::processToCacheH3(std::span<float const> inAudio, size_t inPos) noexcept DFX_RT_ATTR
 {
-	assert(!inAudio.empty());
-	assert(inPos < inAudio.size());
+	DFX_RT_ASSERT(!inAudio.empty());
+	DFX_RT_ASSERT(inPos < inAudio.size());
 
 	auto const in0 = inAudio[inPos];
 	auto const in1 = inAudio[(inPos + 1) % inAudio.size()];
@@ -266,10 +267,10 @@ inline void IIRFilter::processToCacheH3(std::span<float const> inAudio, size_t i
 }
 
 //-----------------------------------------------------------------------------
-inline void IIRFilter::processToCacheH4(std::span<float const> inAudio, size_t inPos)
+inline void IIRFilter::processToCacheH4(std::span<float const> inAudio, size_t inPos) noexcept DFX_RT_ATTR
 {
-	assert(!inAudio.empty());
-	assert(inPos < inAudio.size());
+	DFX_RT_ASSERT(!inAudio.empty());
+	DFX_RT_ASSERT(inPos < inAudio.size());
 
 	auto const in0 = inAudio[inPos];
 	auto const in1 = inAudio[(inPos + 1) % inAudio.size()];
@@ -294,7 +295,7 @@ inline void IIRFilter::processToCacheH4(std::span<float const> inAudio, size_t i
 #endif  // DFX_IIRFILTER_USE_OPTIMIZATION_FOR_EXCLUSIVELY_LP_HP_NOTCH
 
 //-----------------------------------------------------------------------------
-inline float IIRFilter::interpolateHermitePostFilter(double inPos) const
+inline float IIRFilter::interpolateHermitePostFilter(double inPos) const noexcept DFX_RT_ATTR
 {
 	auto const posFract = static_cast<float>(dfx::math::ModF(inPos));
 	return dfx::math::InterpolateHermite(mPrevPrevPrevOut, mPrevPrevOut, mPrevOut, mCurrentOut, posFract);

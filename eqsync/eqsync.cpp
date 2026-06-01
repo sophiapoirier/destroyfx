@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -85,7 +85,7 @@ void EQSync::cleanup()
 }
 
 //-----------------------------------------------------------------------------------------
-void EQSync::reset()
+void EQSync::reset() noexcept DFX_RT_ATTR
 {
 	mCycleSamples = 1;
 	mSmoothSamples = 1;
@@ -103,7 +103,7 @@ void EQSync::reset()
 }
 
 //-----------------------------------------------------------------------------
-void EQSync::processparameters()
+void EQSync::processparameters() noexcept DFX_RT_ATTR
 {
 	mRate = mTempoRateTable.getScalar(getparameter_index(kRate_Sync));
 	mSmooth = getparameter_scalar(kSmooth);
@@ -123,7 +123,7 @@ void EQSync::processparameters()
 
 
 //-----------------------------------------------------------------------------
-void EQSync::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
+void EQSync::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR
 {
 	auto const numChannels = outAudio.size();
 	bool eqChanged = false;
@@ -224,7 +224,7 @@ void EQSync::processaudio(std::span<float const* const> inAudio, std::span<float
 
 	if (eqChanged)
 	{
-		auto const setAndNotify = [this](auto parameterID, auto parameterValue)
+		auto const setAndNotify = [this](auto parameterID, auto parameterValue) DFX_RT_LAMBDA
 		{
 			setparameterquietly_f(parameterID, parameterValue);
 			postupdate_parameter(parameterID);  // inform listeners of change

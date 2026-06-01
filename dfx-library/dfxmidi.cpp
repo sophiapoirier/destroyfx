@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2025  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -46,7 +46,7 @@ DfxMidi::DfxMidi()
 }
 
 //------------------------------------------------------------------------
-void DfxMidi::reset()
+void DfxMidi::reset() noexcept DFX_RT_ATTR
 {
 	// zero out the note table, or what's important at least
 	for (int noteIndex = 0; noteIndex < kNumNotesWithLegatoVoice; noteIndex++)
@@ -58,7 +58,7 @@ void DfxMidi::reset()
 	{
 		std::ranges::fill(noteAudio.mLastOutValue, 0.f);
 		noteAudio.mSmoothSamples = 0;
-		std::ranges::for_each(noteAudio.mTails, [](auto& tail){ std::ranges::fill(tail, 0.f); });
+		std::ranges::for_each(noteAudio.mTails, [](auto& tail) DFX_RT_LAMBDA { std::ranges::fill(tail, 0.f); });
 	}
 	mSustainedNotes.fill(false);
 
@@ -103,7 +103,7 @@ void DfxMidi::setChannelCount(size_t inChannelCount)
 }
 
 //------------------------------------------------------------------------
-void DfxMidi::setEnvParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur)
+void DfxMidi::setEnvParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur) noexcept DFX_RT_ATTR
 {
 	for (int noteIndex = 0; noteIndex < kNumNotesWithLegatoVoice; noteIndex++)
 	{
@@ -113,7 +113,7 @@ void DfxMidi::setEnvParameters(double inAttackDur, double inDecayDur, double inS
 }
 
 //------------------------------------------------------------------------
-void DfxMidi::setEnvParameters(double inAttackDur, double inReleaseDur)
+void DfxMidi::setEnvParameters(double inAttackDur, double inReleaseDur) noexcept DFX_RT_ATTR
 {
 	constexpr double noDecay = 0.0;
 	constexpr double fullSustain = 1.0;
@@ -121,7 +121,7 @@ void DfxMidi::setEnvParameters(double inAttackDur, double inReleaseDur)
 }
 
 //------------------------------------------------------------------------
-void DfxMidi::setEnvCurveType(DfxEnvelope::CurveType inCurveType)
+void DfxMidi::setEnvCurveType(DfxEnvelope::CurveType inCurveType) noexcept DFX_RT_ATTR
 {
 	for (int noteIndex = 0; noteIndex < kNumNotesWithLegatoVoice; noteIndex++)
 	{
@@ -130,7 +130,7 @@ void DfxMidi::setEnvCurveType(DfxEnvelope::CurveType inCurveType)
 }
 
 //------------------------------------------------------------------------
-void DfxMidi::setResumedAttackMode(bool inNewMode)
+void DfxMidi::setResumedAttackMode(bool inNewMode) noexcept DFX_RT_ATTR
 {
 	for (auto& note : mNoteTable)
 	{
@@ -139,9 +139,9 @@ void DfxMidi::setResumedAttackMode(bool inNewMode)
 }
 
 //------------------------------------------------------------------------
-void DfxMidi::preprocessEvents(size_t inNumFrames)
+void DfxMidi::preprocessEvents(size_t inNumFrames) noexcept DFX_RT_ATTR
 {
-	assert(inNumFrames > 0);
+	DFX_RT_ASSERT(inNumFrames > 0);
 
 	// Sort the events in our queue so that they are in chronological order.
 	// The host is supposed to send them in order, but just in case...
@@ -151,15 +151,15 @@ void DfxMidi::preprocessEvents(size_t inNumFrames)
 	{
 		activeBlockEvents[i].mOrderOfArrival = i;
 	}
-	std::ranges::sort(activeBlockEvents, [](auto const& a, auto const& b)
+	std::ranges::sort(activeBlockEvents, [](auto const& a, auto const& b) DFX_RT_LAMBDA
 	{
 		// std::stable_sort can allocate memory and therefore is not realtime-safe,
 		// but we achieve the same result by comparing this monotonic arrival index at matching frame offsets
 		return std::tie(a.mOffsetFrames, a.mOrderOfArrival) < std::tie(b.mOffsetFrames, b.mOrderOfArrival);
 	});
-	std::ranges::for_each(activeBlockEvents, [inNumFrames](auto& event)
+	std::ranges::for_each(activeBlockEvents, [inNumFrames](auto& event) DFX_RT_LAMBDA
 	{
-		assert(event.mOffsetFrames < inNumFrames);
+		DFX_RT_ASSERT(event.mOffsetFrames < inNumFrames);
 		event.mOffsetFrames = std::min(event.mOffsetFrames, inNumFrames - 1);
 	});
 }
@@ -167,13 +167,13 @@ void DfxMidi::preprocessEvents(size_t inNumFrames)
 //------------------------------------------------------------------------
 // zeroing mNumBlockEvents must be done at the end of each audio processing block 
 // so that events are not reused in the next block(s) if no new events arrive
-void DfxMidi::postprocessEvents()
+void DfxMidi::postprocessEvents() noexcept DFX_RT_ATTR
 {
 	mNumBlockEvents = 0;
 }
 
 //-----------------------------------------------------------------------------
-bool DfxMidi::isNoteActive(int inMidiNote) const
+bool DfxMidi::isNoteActive(int inMidiNote) const noexcept DFX_RT_ATTR
 {
 	return (getNoteState(inMidiNote).mVelocity != 0);
 }
@@ -200,9 +200,9 @@ DfxMidi::MusicNote& DfxMidi::getNoteStateMutable(int inMidiNote)
 
 //-----------------------------------------------------------------------------
 // this function inserts a new note into the beginning of the active notes queue
-void DfxMidi::insertNote(int inMidiNote)
+void DfxMidi::insertNote(int inMidiNote) noexcept DFX_RT_ATTR
 {
-	assert(noteIsValid(inMidiNote));
+	DFX_RT_ASSERT(noteIsValid(inMidiNote));
 
 	// there is only something to do if the current note is already the first active note
 	if (auto const existingNote = std::ranges::find(mNoteQueue, inMidiNote); existingNote != mNoteQueue.begin())
@@ -214,14 +214,14 @@ void DfxMidi::insertNote(int inMidiNote)
 		mActiveLegatoMidiNote = inMidiNote;
 	}
 
-	assert(std::ranges::count(mNoteQueue, inMidiNote) == 1);
+	DFX_RT_ASSERT(std::ranges::count(mNoteQueue, inMidiNote) == 1);
 }
 
 //-----------------------------------------------------------------------------
 // this function removes a note from the active notes queue
-void DfxMidi::removeNote(int inMidiNote)
+void DfxMidi::removeNote(int inMidiNote) noexcept DFX_RT_ATTR
 {
-	assert(noteIsValid(inMidiNote));
+	DFX_RT_ASSERT(noteIsValid(inMidiNote));
 
 	// std::stable_partition is simpler but can allocate memory and therefore is not realtime-safe
 	if (auto const existingNote = std::ranges::find(mNoteQueue, inMidiNote); existingNote != mNoteQueue.end())
@@ -232,18 +232,18 @@ void DfxMidi::removeNote(int inMidiNote)
 
 	mActiveLegatoMidiNote = getLatestNote().value_or(mActiveLegatoMidiNote);
 
-	assert(!std::ranges::contains(mNoteQueue, inMidiNote));
+	DFX_RT_ASSERT(!std::ranges::contains(mNoteQueue, inMidiNote));
 }
 
 //-----------------------------------------------------------------------------
 // this function cancels all of the notes in the active notes queue
-void DfxMidi::removeAllNotes()
+void DfxMidi::removeAllNotes() noexcept DFX_RT_ATTR
 {
 	mNoteQueue.fill(kInvalidValue);
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames)
+void DfxMidi::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_NoteOn;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
@@ -254,7 +254,7 @@ void DfxMidi::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, 
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames)
+void DfxMidi::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_NoteOff;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
@@ -265,7 +265,7 @@ void DfxMidi::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity,
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleAllNotesOff(int inMidiChannel, size_t inOffsetFrames)
+void DfxMidi::handleAllNotesOff(int inMidiChannel, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_CC;
 	mBlockEvents[mNumBlockEvents].mByte1 = kCC_AllNotesOff;
@@ -275,7 +275,7 @@ void DfxMidi::handleAllNotesOff(int inMidiChannel, size_t inOffsetFrames)
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleChannelAftertouch(int inMidiChannel, int inValue, size_t inOffsetFrames)
+void DfxMidi::handleChannelAftertouch(int inMidiChannel, int inValue, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_ChannelAftertouch;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
@@ -286,7 +286,7 @@ void DfxMidi::handleChannelAftertouch(int inMidiChannel, int inValue, size_t inO
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames)
+void DfxMidi::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_PitchBend;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
@@ -297,7 +297,7 @@ void DfxMidi::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB,
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleCC(int inMidiChannel, int inControllerNumber, int inValue, size_t inOffsetFrames)
+void DfxMidi::handleCC(int inMidiChannel, int inControllerNumber, int inValue, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 	// only handling sustain pedal for now...
 	if (inControllerNumber == kCC_SustainPedalOnOff)
@@ -312,7 +312,7 @@ void DfxMidi::handleCC(int inMidiChannel, int inControllerNumber, int inValue, s
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleProgramChange(int inMidiChannel, int inProgramNumber, size_t inOffsetFrames)
+void DfxMidi::handleProgramChange(int inMidiChannel, int inProgramNumber, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_ProgramChange;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
@@ -324,9 +324,9 @@ void DfxMidi::handleProgramChange(int inMidiChannel, int inProgramNumber, size_t
 
 //-----------------------------------------------------------------------------------------
 // this function is called during process() when MIDI events need to be attended to
-void DfxMidi::heedEvents(size_t inEventIndex, float inVelocityCurve, float inVelocityInfluence)
+void DfxMidi::heedEvents(size_t inEventIndex, float inVelocityCurve, float inVelocityInfluence) noexcept DFX_RT_ATTR
 {
-	assert(inEventIndex < getBlockEventCount());
+	DFX_RT_ASSERT(inEventIndex < getBlockEventCount());
 	auto const& event = mBlockEvents[inEventIndex];
 
 	switch (event.mStatus)
@@ -337,7 +337,7 @@ void DfxMidi::heedEvents(size_t inEventIndex, float inVelocityCurve, float inVel
 			auto const currentNote = event.mByte1;
 			insertNote(currentNote);
 
-			auto const setNoteAmp = [inVelocityCurve, inVelocityInfluence, velocity = event.mByte2](MusicNote& note)
+			auto const setNoteAmp = [inVelocityCurve, inVelocityInfluence, velocity = event.mByte2](MusicNote& note) DFX_RT_LAMBDA
 			{
 				note.mVelocity = velocity;
 				auto const curvedAmp = std::pow(kValueScalar * static_cast<float>(velocity), inVelocityCurve);
@@ -351,7 +351,7 @@ void DfxMidi::heedEvents(size_t inEventIndex, float inVelocityCurve, float inVel
 			if (isLegatoMode())  // legato is on, fade out the last note and fade in the new one, supershort
 			{
 				setNoteAmp(mLegatoVoice);
-				if (!mLegatoVoice.mEnvelope.isActive() || (mLegatoVoice.mEnvelope.getState() == DfxEnvelope::State::Release))
+				if (!mLegatoVoice.mEnvelope.isActive() || mLegatoVoice.mEnvelope.isReleasePhase())
 				{
 					mLegatoVoice.mEnvelope.beginAttack();
 				}
@@ -362,7 +362,7 @@ void DfxMidi::heedEvents(size_t inEventIndex, float inVelocityCurve, float inVel
 				setNoteAmp(mNoteTable[currentNote]);
 				mNoteTable[currentNote].mEnvelope.beginAttack();
 				// if the note is still sounding and in release, then smooth the end of that last note
-				if (!(mNoteTable[currentNote].mEnvelope.isResumedAttackMode()) && (mNoteTable[currentNote].mEnvelope.getState() == DfxEnvelope::State::Release))
+				if (!(mNoteTable[currentNote].mEnvelope.isResumedAttackMode()) && mNoteTable[currentNote].mEnvelope.isReleasePhase())
 				{
 					mNoteAudioTable[currentNote].mSmoothSamples = mStolenNoteFadeDur;
 				}
@@ -452,7 +452,7 @@ void DfxMidi::heedEvents(size_t inEventIndex, float inVelocityCurve, float inVel
 }
 
 //-----------------------------------------------------------------------------
-double DfxMidi::getNoteFrequency(int inMidiNote) const
+double DfxMidi::getNoteFrequency(int inMidiNote) const noexcept DFX_RT_ATTR
 {
 	if (inMidiNote == kLegatoVoiceNoteIndex)
 	{
@@ -460,26 +460,27 @@ double DfxMidi::getNoteFrequency(int inMidiNote) const
 	}
 	if (noteIsValid(inMidiNote))
 	{
+		DFX_RT_ASSERT(dfx::math::ToIndex(inMidiNote) < mNoteFrequencyTable.size());
 		return mNoteFrequencyTable.at(dfx::math::ToIndex(inMidiNote));
 	}
 	return 0.0;
 }
 
 //-----------------------------------------------------------------------------
-float DfxMidi::getNoteAmplitude(int inMidiNote) const
+float DfxMidi::getNoteAmplitude(int inMidiNote) const noexcept DFX_RT_ATTR
 {
 	return getNoteState(inMidiNote).mNoteAmp.getValue();
 }
 
 //-------------------------------------------------------------------------
-void DfxMidi::setPitchBendRange(double inSemitoneRange)
+void DfxMidi::setPitchBendRange(double inSemitoneRange) noexcept DFX_RT_ATTR
 {
 	mPitchBendRange = inSemitoneRange;
 	mPitchBend = dfx::math::FrequencyScalarBySemitones(mPitchBendNormalized * mPitchBendRange);
 }
 
 //-------------------------------------------------------------------------
-double DfxMidi::calculatePitchBendScalar(int inValueLSB, int inValueMSB) noexcept
+double DfxMidi::calculatePitchBendScalar(int inValueLSB, int inValueMSB) noexcept DFX_RT_ATTR
 {
 	constexpr auto upperRange = static_cast<double>(kPitchBendMaxValue - kPitchBendMidpointValue);
 	constexpr auto lowerRange = static_cast<double>(kPitchBendMidpointValue);
@@ -487,19 +488,19 @@ double DfxMidi::calculatePitchBendScalar(int inValueLSB, int inValueMSB) noexcep
 	// bend pitch up
 	if (pitchbend14bit >= kPitchBendMidpointValue)
 	{
-		// scale the MIDI value from 0.0 to 1.0
+		// scale the MIDI value from 0 to 1
 		return static_cast<double>(pitchbend14bit - kPitchBendMidpointValue) / upperRange;
 	}
 	// bend pitch down
 	else
 	{
-		// scale the MIDI value from -1.0 nearly to 0.0
+		// scale the MIDI value from -1 nearly to 0
 		return static_cast<double>(pitchbend14bit - kPitchBendMidpointValue) / lowerRange;
 	}
 }
 
 //-------------------------------------------------------------------------
-void DfxMidi::setLegatoMode(bool inEnable)
+void DfxMidi::setLegatoMode(bool inEnable) noexcept DFX_RT_ATTR
 {
 	if (std::exchange(mLegatoMode, inEnable) != inEnable)
 	{
@@ -522,7 +523,7 @@ void DfxMidi::setLegatoMode(bool inEnable)
 }
 
 //-------------------------------------------------------------------------
-float DfxMidi::processEnvelope(int inMidiNote)
+float DfxMidi::processEnvelope(int inMidiNote) noexcept DFX_RT_ATTR
 {
 	auto& note = getNoteStateMutable(inMidiNote);
 	auto const outputAmp = note.mEnvelope.process();
@@ -533,7 +534,7 @@ float DfxMidi::processEnvelope(int inMidiNote)
 }
 
 //-------------------------------------------------------------------------
-std::pair<dfx::IIRFilter::Coefficients, float> DfxMidi::processEnvelopeLowpassGate(int inMidiNote)
+std::pair<dfx::IIRFilter::Coefficients, float> DfxMidi::processEnvelopeLowpassGate(int inMidiNote) noexcept DFX_RT_ATTR
 {
 	auto& note = getNoteStateMutable(inMidiNote);
 	auto const result = note.mEnvelope.processLowpassGate();
@@ -544,7 +545,7 @@ std::pair<dfx::IIRFilter::Coefficients, float> DfxMidi::processEnvelopeLowpassGa
 }
 
 //-------------------------------------------------------------------------
-void DfxMidi::postprocessEnvelope(MusicNote& inNote)
+void DfxMidi::postprocessEnvelope(MusicNote& inNote) noexcept DFX_RT_ATTR
 {
 	if (!inNote.mEnvelope.isActive())
 	{
@@ -558,10 +559,10 @@ void DfxMidi::postprocessEnvelope(MusicNote& inNote)
 // this function writes the audio output for smoothing the tips of cut-off notes
 // by sloping down from the last sample outputted by the note
 // TODO: should this accommodate the legato voice?
-void DfxMidi::processSmoothingOutputSample(std::span<float* const> outAudio, size_t inNumFrames, int inMidiNote)
+void DfxMidi::processSmoothingOutputSample(std::span<float* const> outAudio, size_t inNumFrames, int inMidiNote) noexcept DFX_RT_ATTR
 {
 	auto& noteAudio = mNoteAudioTable[inMidiNote];
-	assert(outAudio.size() == noteAudio.mLastOutValue.size());
+	DFX_RT_ASSERT(outAudio.size() == noteAudio.mLastOutValue.size());
 	auto& smoothSamples = noteAudio.mSmoothSamples;
 	auto const entrySmoothSamples = smoothSamples;
 	for (size_t channelIndex = 0; channelIndex < outAudio.size(); channelIndex++)
@@ -583,10 +584,10 @@ void DfxMidi::processSmoothingOutputSample(std::span<float* const> outAudio, siz
 // this function writes the audio output for smoothing the tips of cut-off notes
 // by fading out the samples stored in the tail buffers
 // TODO: should this accommodate the legato voice?
-void DfxMidi::processSmoothingOutputBuffer(std::span<float* const> outAudio, size_t inNumFrames, int inMidiNote)
+void DfxMidi::processSmoothingOutputBuffer(std::span<float* const> outAudio, size_t inNumFrames, int inMidiNote) noexcept DFX_RT_ATTR
 {
 	auto& noteAudio = mNoteAudioTable[inMidiNote];
-	assert(outAudio.size() == noteAudio.mTails.size());
+	DFX_RT_ASSERT(outAudio.size() == noteAudio.mTails.size());
 	auto& smoothSamples = noteAudio.mSmoothSamples;
 	auto const entrySmoothSamples = smoothSamples;
 	for (size_t channelIndex = 0; channelIndex < outAudio.size(); channelIndex++)
@@ -603,7 +604,7 @@ void DfxMidi::processSmoothingOutputBuffer(std::span<float* const> outAudio, siz
 
 //-----------------------------------------------------------------------------------------
 // this function fills a table with the correct frequency for every MIDI note
-void DfxMidi::fillFrequencyTable()
+void DfxMidi::fillFrequencyTable() noexcept
 {
 	constexpr double standardConcertA = 440.0;
 	int semitonesFromA = -69;
@@ -615,7 +616,7 @@ void DfxMidi::fillFrequencyTable()
 }
 
 //-----------------------------------------------------------------------------
-bool DfxMidi::incNumEvents()
+bool DfxMidi::incNumEvents() noexcept DFX_RT_ATTR
 {
 	mNumBlockEvents++;
 	// don't go past the allocated space for the events queue
@@ -630,7 +631,7 @@ bool DfxMidi::incNumEvents()
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxMidi::turnOffNote(int inMidiNote)
+void DfxMidi::turnOffNote(int inMidiNote) noexcept DFX_RT_ATTR
 {
 	auto& note = getNoteStateMutable(inMidiNote);
 	// go into the note release if the note isn't already off

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier and Keith Fullerton Whitman
+Copyright (C) 2001-2026  Sophia Poirier and Keith Fullerton Whitman
 
 This file is part of Thrush.
 
@@ -82,10 +82,10 @@ public:
 
 	void initialize() override;
 	void cleanup() override;
-	void reset() override;
+	void reset() noexcept DFX_RT_ATTR override;
 
-	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) override;
-	void processparameters() override;
+	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR override;
+	void processparameters() noexcept DFX_RT_ATTR override;
 
 private:
 	static constexpr size_t kPresetCount = 16;
@@ -100,12 +100,12 @@ private:
 	class ThrushLFO final : public dfx::LFO
 	{
 	public:
-		bool isActive() const noexcept
+		bool isActive() const noexcept DFX_RT_ATTR
 		{
 			return !dfx::math::IsZero(getDepth());
 		}
 	private:
-		friend class Thrush;
+		friend class Thrush;	// TODO: remove
 		double mRateHz {};
 		double mTempoRateScalar {};
 		bool mTempoSync {};
@@ -114,9 +114,9 @@ private:
 
 	void initPresets();
 
-	void calculateEffectiveTempo();
-	void calculateEffectiveRate(ThrushLFO& lfo) const;
-	double processLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const;
+	void calculateEffectiveTempo() noexcept DFX_RT_ATTR;
+	void calculateEffectiveRate(ThrushLFO& lfo) const noexcept DFX_RT_ATTR;
+	double processLFOs(ThrushLFO& lfoLayer1, ThrushLFO& lfoLayer2) const noexcept DFX_RT_ATTR;
 
 	// parameter values
 	double mDelay_gen {}, mDelay2_gen {};

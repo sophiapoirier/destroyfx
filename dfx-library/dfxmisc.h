@@ -141,15 +141,15 @@ T Enliven(void const* inData) noexcept
 }
 
 //-----------------------------------------------------------------------------
-void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount);
+void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount) noexcept;
 
 //-----------------------------------------------------------------------------
 template <TriviallySerializable T>
-void ReverseBytes(std::span<T> ioData)
+void ReverseBytes(std::span<T> ioData) noexcept
 {
 	if constexpr (std::is_integral_v<T>)
 	{
-		std::ranges::transform(ioData, ioData.begin(), [](T value){ return std::byteswap(value); });
+		std::ranges::transform(ioData, ioData.begin(), [](T value) noexcept { return std::byteswap(value); });
 	}
 	else
 	{
@@ -158,7 +158,7 @@ void ReverseBytes(std::span<T> ioData)
 }
 
 //-----------------------------------------------------------------------------
-void ReverseBytes(TriviallySerializable auto& ioData)
+void ReverseBytes(TriviallySerializable auto& ioData) noexcept
 {
 	ReverseBytes(std::span(&ioData, 1));
 }

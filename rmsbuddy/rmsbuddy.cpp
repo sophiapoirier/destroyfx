@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2025  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of RMS Buddy.
 
@@ -297,8 +297,10 @@ OSStatus RMSBuddy::CopyClumpName(AudioUnitScope inScope, UInt32 inClumpID, UInt3
 
 //-----------------------------------------------------------------------------------------
 // only overridden to insert special handling of "trigger" parameters
+AUSDK_BEGIN_NO_RT_NOEXCEPT_WARNINGS
 OSStatus RMSBuddy::SetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, AudioUnitElement inElement, 
 								Float32 inValue, UInt32 inBufferOffsetInFrames) AUSDK_RTSAFE
+AUSDK_END_NO_RT_NOEXCEPT_WARNINGS
 {
 	switch (inParameterID)
 	{
@@ -351,7 +353,7 @@ OSStatus RMSBuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope 
 				return AUEffectBase::GetProperty(inPropertyID, inScope, inElement, outData);
 			}
 			auto const parameterValue = parameterStringFromValue.inValue ? *parameterStringFromValue.inValue : GetParameter(parameterID);
-			parameterStringFromValue.outString = [parameterValue, this]() -> CFStringRef
+			parameterStringFromValue.outString = [parameterValue, this] -> CFStringRef
 			{
 				if (parameterValue <= mMinMeterValueDb)
 				{
@@ -401,9 +403,11 @@ CFURLRef RMSBuddy::CopyIconLocation()
 // The nice thing is about doing "in-place processing" is that it means that 
 // the input and output buffers are the same, so we don't even need to copy 
 // the audio input stream to output.
+AUSDK_BEGIN_NO_RT_NOEXCEPT_WARNINGS
 OSStatus RMSBuddy::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 
 									  AudioBufferList const& inBuffer, AudioBufferList& outBuffer, 
 									  UInt32 inFramesToProcess) AUSDK_RTSAFE
+AUSDK_END_NO_RT_NOEXCEPT_WARNINGS
 {
 	// bad number of input channels
 	AUSDK_Require(inBuffer.mNumberBuffers >= mChannelCount, kAudioUnitErr_FormatNotSupported);
@@ -533,7 +537,7 @@ void RMSBuddy::SetMeter(UInt32 inChannelIndex, AudioUnitParameterID inID, AudioU
 	auto const paramID = GetParameterIDFromChannelAndID(inChannelIndex, inID);
 	auto const decibelValue = std::max(LinearToDecibels(inLinearValue), mMinMeterValueDb);
 	AudioUnitParameter const auParam = { GetComponentInstance(), paramID, kAudioUnitScope_Global, AudioUnitElement{0} };
-	AUSDK_RT_UNSAFE(AUParameterSet(nullptr, nullptr, &auParam, decibelValue, 0));  // TODO: defer off render thread
+	AUParameterSet(nullptr, nullptr, &auParam, decibelValue, 0);  // TODO: defer off render thread
 }
 
 //-----------------------------------------------------------------------------------------

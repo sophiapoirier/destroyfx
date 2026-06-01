@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of Monomaker.
 
@@ -109,7 +109,7 @@ void Monomaker::cleanup()
 }
 
 //-----------------------------------------------------------------------------------------
-void Monomaker::processparameters()
+void Monomaker::processparameters() noexcept DFX_RT_ATTR
 {
 	if (getparameterchanged(kInputSelection)
 		|| getparameterchanged(kPhaseInvert_LeftChannel)
@@ -144,7 +144,7 @@ void Monomaker::processparameters()
 				mInputSelection_right2right = 0.0f;
 				break;
 			default:
-				assert(false);
+				DFX_RT_ASSERT(false);
 				break;
 		}
 	}
@@ -152,12 +152,14 @@ void Monomaker::processparameters()
 	if (getparameterchanged(kMonomerge) || getparameterchanged(kMonomergeMode))
 	{
 		auto const monomerge = static_cast<float>(getparameter_scalar(kMonomerge));
-		auto const monomergeMode = getparameter_i(kMonomergeMode);
+		bool const useEqualPower = (getparameter_i(kMonomergeMode) == kMonomergeMode_EqualPower) && (getnuminputs() > 1);
 
 		// calculate monomerge gain scalars
-		bool const useEqualPower = (monomergeMode == kMonomergeMode_EqualPower) && (getnuminputs() > 1);
-		auto const mapMonomergeMode = useEqualPower ? sqrtf : +[](float a){ return a; };
-		mMonomerge_main = mapMonomergeMode(1.0f - (monomerge * 0.5f));
+		auto const mapMonomergeMode = [useEqualPower](float value) DFX_RT_LAMBDA
+		{
+			return useEqualPower ? std::sqrt(value) : value;
+		};
+		mMonomerge_main = mapMonomergeMode(1.f - (monomerge * 0.5f));
 		mMonomerge_other = mapMonomergeMode(monomerge * 0.5f);
 	}
 
@@ -200,7 +202,7 @@ void Monomaker::processparameters()
 }
 
 //-----------------------------------------------------------------------------------------
-void Monomaker::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
+void Monomaker::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR
 {
 	// point the input signal pointers to the correct input streams,
 	// according to the input selection (or dual-left if we only have one input)
@@ -212,7 +214,7 @@ void Monomaker::processaudio(std::span<float const* const> inAudio, std::span<fl
 	}
 	else
 	{
-		assert(mAsymmetricalInputAudioBuffer.size() >= inNumFrames);
+		DFX_RT_ASSERT(mAsymmetricalInputAudioBuffer.size() >= inNumFrames);
 		// copy to an intermediate input buffer in case processing in-place
 		std::copy_n(inAudio.front(), inNumFrames, mAsymmetricalInputAudioBuffer.data());
 		inAudioL = inAudioR = mAsymmetricalInputAudioBuffer.data();

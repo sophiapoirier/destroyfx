@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of Polarizer.
 
@@ -41,9 +41,9 @@ class PolarizerDSP final : public DfxPluginCore
 {
 public:
 	explicit PolarizerDSP(DfxPlugin& inDfxPlugin);
-	void process(std::span<float const> inAudio, std::span<float> outAudio) override;
-	void reset() override;
-	void processparameters() override;
+	void process(std::span<float const> inAudio, std::span<float> outAudio) noexcept DFX_RT_ATTR override;
+	void reset() noexcept DFX_RT_ATTR override;
+	void processparameters() noexcept DFX_RT_ATTR override;
 
 private:
 	long mUnaffectedSamples = 0;  // sample counter

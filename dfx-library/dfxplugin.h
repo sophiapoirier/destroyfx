@@ -215,9 +215,9 @@ public:
 		bool mPlaybackChanged = false;  // whether the playback state or position changed since the last audio render cycle
 		bool mPlaybackIsOccurring = false;
 
-		static double samplesPerBeat(double inTempoBPS, double inSampleRate);
-		std::optional<double> timeSignatureNumerator() const noexcept;
-		std::optional<double> timeSignatureDenominator() const noexcept;
+		static double samplesPerBeat(double inTempoBPS, double inSampleRate) noexcept DFX_RT_ATTR;
+		std::optional<double> timeSignatureNumerator() const noexcept DFX_RT_ATTR;
+		std::optional<double> timeSignatureDenominator() const noexcept DFX_RT_ATTR;
 	};
 
 	// ***
@@ -231,40 +231,39 @@ public:
 	virtual void dfx_PreDestructor() {}
 
 	void do_initialize();
-	// ***
 	virtual void initialize() {}
 	void do_cleanup();
-	// ***
 	virtual void cleanup() {}
-	void do_reset();
-	// ***
-	virtual void reset() {}
+	void do_reset() noexcept DFX_RT_ATTR;
+	virtual void reset() noexcept DFX_RT_ATTR {}
 
 	// insures that processparameters (and perhaps other related stuff) 
 	// is called at the correct moments
-	void do_processparameters();
+	void do_processparameters() noexcept DFX_RT_ATTR;
 	// ***
 	// override this to handle/accept parameter values immediately before 
 	// processing audio and to react to parameter changes
-	virtual void processparameters() {}
+	virtual void processparameters() noexcept DFX_RT_ATTR {}
 	// attend to things immediately before processing a block of audio
-	void preprocessaudio(size_t inNumFrames);
+	void preprocessaudio(size_t inNumFrames) noexcept DFX_RT_ATTR;
 	// attend to things immediately after processing a block of audio
-	void postprocessaudio();
+	void postprocessaudio() noexcept DFX_RT_ATTR;
 	// ***
-	// do the audio processing (override with real stuff)
+#if !TARGET_PLUGIN_USES_DSPCORE
+	// do the audio processing
 	// pass in arrays of float buffers for input and output ([channel][sample]), 
-	virtual void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) {}
+	virtual void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR = 0;
+#endif
 
-	auto getnumparameters() const noexcept
+	auto getnumparameters() const noexcept DFX_RT_ATTR
 	{
 		return mParameters.size();
 	}
-	auto getnumpresets() const noexcept
+	auto getnumpresets() const noexcept DFX_RT_ATTR
 	{
 		return mPresets.size();
 	}
-	bool parameterisvalid(dfx::ParameterID inParameterID) const noexcept
+	bool parameterisvalid(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return (inParameterID != dfx::kParameterID_Invalid) && (inParameterID < getnumparameters());
 	}
@@ -303,7 +302,7 @@ public:
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].getusevaluestrings() : false;
 	}
-	bool setparametervaluestring(dfx::ParameterID inParameterID, int64_t inStringIndex, std::string_view inText);
+	void setparametervaluestring(dfx::ParameterID inParameterID, int64_t inStringIndex, std::string_view inText);
 	std::optional<std::string> getparametervaluestring(dfx::ParameterID inParameterID, int64_t inStringIndex) const;
 	std::string getparameterunitstring(dfx::ParameterID inParameterID) const
 	{
@@ -319,77 +318,77 @@ public:
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].getvaluecfstring(inStringIndex) : nullptr;
 	}
 #endif
-	void addparametergroup(std::string const& inName, std::vector<dfx::ParameterID> const& inParameterIndices);  // TODO C++23: use std::span?
+	void addparametergroup(std::string_view inName, std::vector<dfx::ParameterID> const& inParameterIndices);  // TODO C++23: use std::span?
 	std::optional<size_t> getparametergroup(dfx::ParameterID inParameterID) const;
 	std::string getparametergroupname(size_t inGroupIndex) const;
 
-	void setparameter_f(dfx::ParameterID inParameterID, double inValue);
-	void setparameter_i(dfx::ParameterID inParameterID, int64_t inValue);
-	void setparameter_b(dfx::ParameterID inParameterID, bool inValue);
-	void setparameter_gen(dfx::ParameterID inParameterID, double inValue);
-	void setparameterquietly_f(dfx::ParameterID inParameterID, double inValue);
-	void setparameterquietly_i(dfx::ParameterID inParameterID, int64_t inValue);
-	void setparameterquietly_b(dfx::ParameterID inParameterID, bool inValue);
-	virtual void parameterChanged(dfx::ParameterID inParameterID) {}
+	void setparameter_f(dfx::ParameterID inParameterID, double inValue) noexcept DFX_RT_ATTR;
+	void setparameter_i(dfx::ParameterID inParameterID, int64_t inValue) noexcept DFX_RT_ATTR;
+	void setparameter_b(dfx::ParameterID inParameterID, bool inValue) noexcept DFX_RT_ATTR;
+	void setparameter_gen(dfx::ParameterID inParameterID, double inValue) noexcept DFX_RT_ATTR;
+	void setparameterquietly_f(dfx::ParameterID inParameterID, double inValue) noexcept DFX_RT_ATTR;
+	void setparameterquietly_i(dfx::ParameterID inParameterID, int64_t inValue) noexcept DFX_RT_ATTR;
+	void setparameterquietly_b(dfx::ParameterID inParameterID, bool inValue) noexcept DFX_RT_ATTR;
+	virtual void parameterChanged(dfx::ParameterID inParameterID) noexcept DFX_RT_ATTR {}
 	// ***
-	virtual void randomizeparameter(dfx::ParameterID inParameterID);
+	virtual void randomizeparameter(dfx::ParameterID inParameterID) noexcept DFX_RT_ATTR;
 	// Randomize all parameters at once. Default implementation just loops over the
 	// eligible parameters and calls randomizeparameter(), but this could also be
 	// smarter (e.g. keeping the total output volume the same).
-	virtual void randomizeparameters();
+	virtual void randomizeparameters() noexcept DFX_RT_ATTR;
 	// broadcast changes to listeners (like GUI)
-	void postupdate_parameter(dfx::ParameterID inParameterID);
+	void postupdate_parameter(dfx::ParameterID inParameterID) noexcept DFX_RT_ATTR;
 
-	double getparameter_f(dfx::ParameterID inParameterID) const
+	double getparameter_f(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].get_f() : 0.0;
 	}
-	int64_t getparameter_i(dfx::ParameterID inParameterID) const
+	int64_t getparameter_i(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].get_i() : 0;
 	}
-	bool getparameter_b(dfx::ParameterID inParameterID) const
+	bool getparameter_b(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].get_b() : false;
 	}
-	double getparameter_gen(dfx::ParameterID inParameterID) const
+	double getparameter_gen(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].get_gen() : 0.0;
 	}
-	size_t getparameter_index(dfx::ParameterID inParameterID) const;
+	size_t getparameter_index(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
 	// return a (hopefully) 0 to 1 scalar version of the parameter's current value
-	double getparameter_scalar(dfx::ParameterID inParameterID) const;
-	std::optional<double> getparameterifchanged_f(dfx::ParameterID inParameterID) const;
-	std::optional<int64_t> getparameterifchanged_i(dfx::ParameterID inParameterID) const;
-	std::optional<bool> getparameterifchanged_b(dfx::ParameterID inParameterID) const;
-	std::optional<double> getparameterifchanged_scalar(dfx::ParameterID inParameterID) const;
-	std::optional<double> getparameterifchanged_gen(dfx::ParameterID inParameterID) const;
+	double getparameter_scalar(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
+	std::optional<double> getparameterifchanged_f(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
+	std::optional<int64_t> getparameterifchanged_i(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
+	std::optional<bool> getparameterifchanged_b(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
+	std::optional<double> getparameterifchanged_scalar(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
+	std::optional<double> getparameterifchanged_gen(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
 
-	double getparametermin_f(dfx::ParameterID inParameterID) const
+	double getparametermin_f(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].getmin_f() : 0.0;
 	}
-	int64_t getparametermin_i(dfx::ParameterID inParameterID) const
+	int64_t getparametermin_i(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].getmin_i() : 0;
 	}
-	double getparametermax_f(dfx::ParameterID inParameterID) const
+	double getparametermax_f(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].getmax_f() : 0.0;
 	}
-	int64_t getparametermax_i(dfx::ParameterID inParameterID) const
+	int64_t getparametermax_i(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].getmax_i() : 0;
 	}
-	double getparameterdefault_f(dfx::ParameterID inParameterID) const
+	double getparameterdefault_f(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].getdefault_f() : 0.0;
 	}
-	int64_t getparameterdefault_i(dfx::ParameterID inParameterID) const
+	int64_t getparameterdefault_i(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].getdefault_i() : 0;
 	}
-	bool getparameterdefault_b(dfx::ParameterID inParameterID) const
+	bool getparameterdefault_b(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].getdefault_b() : false;
 	}
@@ -402,11 +401,11 @@ public:
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].getcfname() : nullptr;
 	}
 #endif
-	DfxParam::Value::Type getparametervaluetype(dfx::ParameterID inParameterID) const;
-	DfxParam::Unit getparameterunit(dfx::ParameterID inParameterID) const;
-	bool getparameterchanged(dfx::ParameterID inParameterID) const;  // only reliable when called during processaudio
-	bool getparametertouched(dfx::ParameterID inParameterID) const;  // only reliable when called during processaudio
-	DfxParam::Curve getparametercurve(dfx::ParameterID inParameterID) const
+	DfxParam::Value::Type getparametervaluetype(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
+	DfxParam::Unit getparameterunit(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
+	bool getparameterchanged(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;  // only reliable when called during processaudio
+	bool getparametertouched(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;  // only reliable when called during processaudio
+	DfxParam::Curve getparametercurve(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].getcurve() : DfxParam::Curve::Linear;
 	}
@@ -414,7 +413,7 @@ public:
 	{
 		getparameterobject(inParameterID).setcurve(inCurve);
 	}
-	double getparametercurvespec(dfx::ParameterID inParameterID) const
+	double getparametercurvespec(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].getcurvespec() : 0.0;
 	}
@@ -422,7 +421,7 @@ public:
 	{
 		getparameterobject(inParameterID).setcurvespec(inCurveSpec);
 	}
-	bool getparameterenforcevaluelimits(dfx::ParameterID inParameterID) const
+	bool getparameterenforcevaluelimits(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].GetEnforceValueLimits() : false;
 	}
@@ -430,11 +429,11 @@ public:
 	{
 		getparameterobject(inParameterID).SetEnforceValueLimits(inMode);
 	}
-	DfxParam::Attribute getparameterattributes(dfx::ParameterID inParameterID) const
+	DfxParam::Attribute getparameterattributes(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? mParameters[inParameterID].getattributes() : 0;
 	}
-	bool hasparameterattribute(dfx::ParameterID inParameterID, DfxParam::Attribute inFlag) const;
+	bool hasparameterattribute(dfx::ParameterID inParameterID, DfxParam::Attribute inFlag) const noexcept DFX_RT_ATTR;
 	void setparameterattributes(dfx::ParameterID inParameterID, DfxParam::Attribute inFlags)
 	{
 		getparameterobject(inParameterID).setattributes(inFlags);
@@ -443,15 +442,15 @@ public:
 
 	// convenience methods for expanding and contracting parameter values 
 	// using the min/max/curvetype/curvespec/etc. settings of a given parameter
-	double expandparametervalue(dfx::ParameterID inParameterID, double genValue) const;
-	double contractparametervalue(dfx::ParameterID inParameterID, double realValue) const;
+	double expandparametervalue(dfx::ParameterID inParameterID, double genValue) const noexcept DFX_RT_ATTR;
+	double contractparametervalue(dfx::ParameterID inParameterID, double realValue) const noexcept DFX_RT_ATTR;
 
 	// whether or not the index is a valid preset
-	bool presetisvalid(size_t inPresetIndex) const noexcept;
+	bool presetisvalid(size_t inPresetIndex) const noexcept DFX_RT_ATTR;
 	// whether or not the index is a valid preset with a valid name
 	bool presetnameisvalid(size_t inPresetIndex) const;
 	// load the settings of a preset
-	virtual bool loadpreset(size_t inPresetIndex);
+	virtual bool loadpreset(size_t inPresetIndex) noexcept DFX_RT_ATTR;
 	// set a parameter value in all of the empty (no name) presets 
 	// to the current value of that parameter
 	void initpresetsparameter(dfx::ParameterID inParameterID);
@@ -460,20 +459,20 @@ public:
 	// get a copy of the text of a preset name
 	std::string getpresetname(size_t inPresetIndex) const;
 #ifdef TARGET_API_AUDIOUNIT
-	CFStringRef getpresetcfname(size_t inPresetIndex) const;
+	CFStringRef getpresetcfname(size_t inPresetIndex) const noexcept;
 #endif
-	auto getcurrentpresetnum() const noexcept
+	auto getcurrentpresetnum() const noexcept DFX_RT_ATTR
 	{
 		return mCurrentPresetNum;
 	}
-	void setpresetparameter_f(size_t inPresetIndex, dfx::ParameterID inParameterID, double inValue);
-	void setpresetparameter_i(size_t inPresetIndex, dfx::ParameterID inParameterID, int64_t inValue);
-	void setpresetparameter_b(size_t inPresetIndex, dfx::ParameterID inParameterID, bool inValue);
-	void setpresetparameter_gen(size_t inPresetIndex, dfx::ParameterID inParameterID, double inValue);
-	void postupdate_preset();
-	double getpresetparameter_f(size_t inPresetIndex, dfx::ParameterID inParameterID) const;
-	int64_t getpresetparameter_i(size_t inPresetIndex, dfx::ParameterID inParameterID) const;
-	bool getpresetparameter_b(size_t inPresetIndex, dfx::ParameterID inParameterID) const;
+	void setpresetparameter_f(size_t inPresetIndex, dfx::ParameterID inParameterID, double inValue) noexcept DFX_RT_ATTR;
+	void setpresetparameter_i(size_t inPresetIndex, dfx::ParameterID inParameterID, int64_t inValue) noexcept DFX_RT_ATTR;
+	void setpresetparameter_b(size_t inPresetIndex, dfx::ParameterID inParameterID, bool inValue) noexcept DFX_RT_ATTR;
+	void setpresetparameter_gen(size_t inPresetIndex, dfx::ParameterID inParameterID, double inValue) noexcept DFX_RT_ATTR;
+	void postupdate_preset() noexcept DFX_RT_ATTR;
+	double getpresetparameter_f(size_t inPresetIndex, dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
+	int64_t getpresetparameter_i(size_t inPresetIndex, dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
+	bool getpresetparameter_b(size_t inPresetIndex, dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
 
 	bool settingsMinimalValidate(void const* inData, size_t inBufferSize) const noexcept;
 
@@ -505,12 +504,12 @@ public:
 	}
 
 	// get the current audio sampling rate
-	double getsamplerate() const noexcept
+	double getsamplerate() const noexcept DFX_RT_ATTR
 	{
 		return DfxPlugin::mSampleRate;
 	}
 	// convenience wrapper of getsamplerate to get float type value
-	float getsamplerate_f() const
+	float getsamplerate_f() const noexcept DFX_RT_ATTR
 	{
 		return static_cast<float>(DfxPlugin::mSampleRate);
 	}
@@ -522,32 +521,32 @@ public:
 	// react to a change in the number of audio channels
 	void updatenumchannels();
 	// return the number of audio inputs
-	size_t getnuminputs();
+	size_t getnuminputs() noexcept DFX_RT_ATTR;
 	// return the number of audio outputs
-	size_t getnumoutputs();
+	size_t getnumoutputs() noexcept DFX_RT_ATTR;
 	// whether the input and output channel counts do not match
-	bool asymmetricalchannels();
+	bool asymmetricalchannels() noexcept DFX_RT_ATTR;
 
 	// the maximum number of audio frames to render each cycle
 	size_t getmaxframes();
 
 	// get the TimeInfo struct with the latest time info values
-	TimeInfo const& gettimeinfo() const noexcept
+	TimeInfo const& gettimeinfo() const noexcept DFX_RT_ATTR
 	{
-		assert(isrenderthread());  // only valid during audio rendering
+		DFX_RT_ASSERT(isrenderthread());  // only valid during audio rendering
 		return mTimeInfo;
 	}
 
-	void setlatency_samples(size_t inSampleFrames);
-	void setlatency_seconds(double inSeconds);
-	size_t getlatency_samples() const;
-	double getlatency_seconds() const;
+	void setlatency_samples(size_t inSampleFrames) noexcept DFX_RT_ATTR;
+	void setlatency_seconds(double inSeconds) noexcept DFX_RT_ATTR;
+	size_t getlatency_samples() const noexcept DFX_RT_ATTR;
+	double getlatency_seconds() const noexcept DFX_RT_ATTR;
 	void postupdate_latency();
 
-	void settailsize_samples(size_t inSampleFrames);
-	void settailsize_seconds(double inSeconds);
-	size_t gettailsize_samples() const;
-	double gettailsize_seconds() const;
+	void settailsize_samples(size_t inSampleFrames) noexcept DFX_RT_ATTR;
+	void settailsize_seconds(double inSeconds) noexcept DFX_RT_ATTR;
+	size_t gettailsize_samples() const noexcept DFX_RT_ATTR;
+	double gettailsize_seconds() const noexcept DFX_RT_ATTR;
 	void postupdate_tailsize();
 
 	// It is expected that most effects will support audio processing in-place 
@@ -567,7 +566,7 @@ public:
 	void registerSmoothedAudioValue(dfx::ISmoothedValue& smoothedValue, DfxPluginCore* owner = nullptr);
 	void unregisterAllSmoothedAudioValues(DfxPluginCore& owner);
 	// nullptr means "all of them"; specifying an owner means only its values
-	void incrementSmoothedAudioValues(DfxPluginCore* owner = nullptr);
+	void incrementSmoothedAudioValues(DfxPluginCore* owner = nullptr) noexcept DFX_RT_ATTR;
 	std::optional<double> getSmoothedAudioValueTime() const;
 	void setSmoothedAudioValueTime(double inSmoothingTimeInSeconds);
 
@@ -576,13 +575,13 @@ public:
 
 #if TARGET_PLUGIN_USES_MIDI
 	// handlers for the types of MIDI events that we support
-	virtual void handlemidi_noteon(int inChannel, int inNote, int inVelocity, size_t inOffsetFrames);
-	virtual void handlemidi_noteoff(int inChannel, int inNote, int inVelocity, size_t inOffsetFrames);
-	virtual void handlemidi_allnotesoff(int inChannel, size_t inOffsetFrames);
-	virtual void handlemidi_channelaftertouch(int inChannel, int inValue, size_t inOffsetFrames);
-	virtual void handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames);
-	virtual void handlemidi_cc(int inChannel, int inControllerNum, int inValue, size_t inOffsetFrames);
-	virtual void handlemidi_programchange(int inChannel, int inProgramNum, size_t inOffsetFrames);
+	virtual void handlemidi_noteon(int inChannel, int inNote, int inVelocity, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	virtual void handlemidi_noteoff(int inChannel, int inNote, int inVelocity, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	virtual void handlemidi_allnotesoff(int inChannel, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	virtual void handlemidi_channelaftertouch(int inChannel, int inValue, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	virtual void handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	virtual void handlemidi_cc(int inChannel, int inControllerNum, int inValue, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	virtual void handlemidi_programchange(int inChannel, int inProgramNum, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
 
 	void setmidilearner(dfx::ParameterID inParameterID);
 	dfx::ParameterID getmidilearner() const;
@@ -595,8 +594,8 @@ public:
 	bool getMidiAssignmentsUseChannel() const;
 	void setMidiAssignmentsSteal(bool inEnable);
 	bool getMidiAssignmentsSteal() const;
-	void postupdate_midilearn();
-	void postupdate_midilearner();
+	void postupdate_midilearn() noexcept DFX_RT_ATTR;
+	void postupdate_midilearner() noexcept DFX_RT_ATTR;
 
 	/* - - - - - - - - - hooks for DfxSettings - - - - - - - - - */
 	//
@@ -630,8 +629,8 @@ public:
 												int eventNum, size_t offsetFrames, int eventNum2 = 0, 
 												dfx::MidiEventBehaviorFlags eventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
 												int data1 = 0, int data2 = 0, 
-												float fdata1 = 0.0f, float fdata2 = 0.0f) {}
-	virtual void settings_doMidiAutomatedSetParameterStuff(dfx::ParameterID parameterID, float value, size_t offsetFrames) {}
+												float fdata1 = 0.f, float fdata2 = 0.f) noexcept DFX_RT_ATTR {}
+	virtual void settings_doMidiAutomatedSetParameterStuff(dfx::ParameterID parameterID, float value, size_t offsetFrames) noexcept DFX_RT_ATTR {}
 	// HACK: the return type is overloaded for this purpose, contains more data than used in this context
 	virtual std::optional<dfx::ParameterAssignment> settings_getLearningAssignData(dfx::ParameterID inParameterID) const
 	{
@@ -644,20 +643,20 @@ public:
 #endif
 
 #if TARGET_PLUGIN_USES_DSPCORE
-	double getdspcoreparameter_f(dfx::ParameterID inParameterID) const
+	double getdspcoreparameter_f(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? DfxParam::derive_f(mDSPCoreParameterValuesCache[inParameterID]) : 0.;
 	}
-	int64_t getdspcoreparameter_i(dfx::ParameterID inParameterID) const
+	int64_t getdspcoreparameter_i(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? DfxParam::derive_i(mDSPCoreParameterValuesCache[inParameterID]) : 0;
 	}
-	bool getdspcoreparameter_b(dfx::ParameterID inParameterID) const
+	bool getdspcoreparameter_b(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return parameterisvalid(inParameterID) ? DfxParam::derive_b(mDSPCoreParameterValuesCache[inParameterID]) : false;
 	}
-	double getdspcoreparameter_gen(dfx::ParameterID inParameterID) const;
-	double getdspcoreparameter_scalar(dfx::ParameterID inParameterID) const;
+	double getdspcoreparameter_gen(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
+	double getdspcoreparameter_scalar(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
 #endif
 
 	// handling of AU properties specific to Logic
@@ -716,11 +715,11 @@ protected:
 	void addchannelconfig(short inNumInputs, short inNumOutputs);
 	void addchannelconfig(ChannelConfig inChannelConfig);
 
-	auto sampleRateChanged() const noexcept
+	auto sampleRateChanged() const noexcept DFX_RT_ATTR
 	{
 		return mSampleRateChanged;
 	}
-	auto hostCanDoTempo() const noexcept
+	auto hostCanDoTempo() const noexcept DFX_RT_ATTR
 	{
 		return mHostCanDoTempo;
 	}
@@ -730,26 +729,26 @@ protected:
 	template <dfx::math::Randomizable T>
 	T generateParameterRandomValue(T const& inRangeMinimum, T const& inRangeMaximum);
 
-	bool isrenderthread() const noexcept;
+	bool isrenderthread() const noexcept DFX_RT_ATTR;
 
 #if TARGET_PLUGIN_USES_DSPCORE
-	DfxPluginCore* getplugincore(size_t inChannel) const;
+	DfxPluginCore* getplugincore(size_t inChannel) const noexcept DFX_RT_ATTR;
 #endif
 
 #if TARGET_PLUGIN_USES_MIDI
-	DfxMidi& getmidistate() noexcept
+	DfxMidi& getmidistate() noexcept DFX_RT_ATTR
 	{
 		return mMidiState;
 	}
-	DfxMidi const& getmidistate() const noexcept
+	DfxMidi const& getmidistate() const noexcept DFX_RT_ATTR
 	{
 		return mMidiState;
 	}
-	DfxSettings& getsettings()
+	DfxSettings& getsettings() noexcept DFX_RT_ATTR
 	{
 		return *mDfxSettings;
 	}
-	DfxSettings const& getsettings() const
+	DfxSettings const& getsettings() const noexcept DFX_RT_ATTR
 	{
 		return *mDfxSettings;
 	}
@@ -759,14 +758,14 @@ protected:
 private:
 	DfxParam& getparameterobject(dfx::ParameterID inParameterID);
 
-	void setparameter(dfx::ParameterID inParameterID, DfxParam::Value inValue);
-	DfxParam::Value getparameter(dfx::ParameterID inParameterID) const;
-	double getparameter_scalar(dfx::ParameterID inParameterID, double inValue) const;
+	void setparameter(dfx::ParameterID inParameterID, DfxParam::Value inValue) noexcept DFX_RT_ATTR;
+	DfxParam::Value getparameter(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
+	double getparameter_scalar(dfx::ParameterID inParameterID, double inValue) const noexcept DFX_RT_ATTR;
 	// synchronize the underlying API/preset/etc. parameter value representation to the current value in DfxPlugin
-	void update_parameter(dfx::ParameterID inParameterID);
+	void update_parameter(dfx::ParameterID inParameterID) noexcept DFX_RT_ATTR;
 
-	void setpresetparameter(size_t inPresetIndex, dfx::ParameterID inParameterID, DfxParam::Value inValue);
-	DfxParam::Value getpresetparameter(size_t inPresetIndex, dfx::ParameterID inParameterID) const;
+	void setpresetparameter(size_t inPresetIndex, dfx::ParameterID inParameterID, DfxParam::Value inValue) noexcept DFX_RT_ATTR;
+	DfxParam::Value getpresetparameter(size_t inPresetIndex, dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR;
 
 	bool ischannelcountsupported(size_t inNumInputs, size_t inNumOutputs) const;
 
@@ -806,7 +805,7 @@ private:
 	// updates the parameter value cache used by DSP cores
 	// this prevents potential later parameter value updates being visible to higher channel number DSP cores
 	// (must call this immediately before any call path that leads to DSP core operations)
-	void cacheDSPCoreParameterValues();
+	void cacheDSPCoreParameterValues() noexcept DFX_RT_ATTR;
 
 	std::vector<DfxParam::Value> mDSPCoreParameterValuesCache;
 
@@ -850,7 +849,7 @@ private:
 #endif
 
 	// try to get musical tempo/time/location information from the host
-	void processtimeinfo();
+	void processtimeinfo() noexcept DFX_RT_ATTR;
 
 	std::variant<size_t, double> mLatency {0uz};
 	std::atomic_flag mLatencyChangeHasPosted;
@@ -860,7 +859,9 @@ private:
 	bool mAudioIsRendering = false;
 	std::vector<std::pair<dfx::ISmoothedValue&, DfxPluginCore*>> mSmoothedAudioValues;
 	bool mIsFirstRenderSinceReset = false;
+#ifndef TARGET_API_AUDIOUNIT
 	std::thread::id mAudioRenderThreadID {};
+#endif
 
 #ifdef TARGET_API_RTAS
 	void AddParametersToList();
@@ -917,7 +918,9 @@ public:
 	UInt32 SupportedNumChannels(AUChannelInfo const** outInfo) final;
 	Float64 GetLatency() AUSDK_RTSAFE final;
 	Float64 GetTailTime() AUSDK_RTSAFE final;
+	AUSDK_BEGIN_NO_RT_NOEXCEPT_WARNINGS
 	bool SupportsTail() AUSDK_RTSAFE final
+	AUSDK_END_NO_RT_NOEXCEPT_WARNINGS
 	{
 		return true;
 	}
@@ -952,6 +955,7 @@ public:
 	OSStatus HandlePitchWheel(UInt8 inChannel, UInt8 inPitchLSB, UInt8 inPitchMSB, UInt32 inStartFrame) AUSDK_RTSAFE final;
 	OSStatus HandleChannelPressure(UInt8 inChannel, UInt8 inValue, UInt32 inStartFrame) AUSDK_RTSAFE final;
 	OSStatus HandleProgramChange(UInt8 inChannel, UInt8 inProgramNum) AUSDK_RTSAFE final;
+	AUSDK_BEGIN_NO_RT_NOEXCEPT_WARNINGS
 	OSStatus HandlePolyPressure(UInt8 inChannel, UInt8 inKey, UInt8 inValue, UInt32 inStartFrame) AUSDK_RTSAFE final
 	{
 		return noErr;
@@ -964,6 +968,7 @@ public:
 	{
 		return noErr;
 	}
+	AUSDK_END_NO_RT_NOEXCEPT_WARNINGS
 	#endif
 	#if TARGET_PLUGIN_IS_INSTRUMENT
 	OSStatus StartNote(MusicDeviceInstrumentID inInstrument,
@@ -973,7 +978,7 @@ public:
 					  NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame) AUSDK_RTSAFE final;
 
 	// this is a convenience function swiped from AUEffectBase, but not included in MusicDeviceBase
-	Float64 GetSampleRate() AUSDK_RTSAFE
+	Float64 GetSampleRate() noexcept AUSDK_RTSAFE
 	{
 		return GetOutput0().GetStreamFormat().mSampleRate;
 	}
@@ -982,7 +987,9 @@ public:
 	{
 		return !IsInitialized();
 	}
+	AUSDK_BEGIN_NO_RT_NOEXCEPT_WARNINGS
 	[[nodiscard]] bool CanScheduleParameters() const AUSDK_RTSAFE final
+	AUSDK_END_NO_RT_NOEXCEPT_WARNINGS
 	{
 		return true;
 	}
@@ -1140,82 +1147,82 @@ public:
 		reset();
 	}
 
-	virtual void process(std::span<float const> inAudio, std::span<float> outAudio) = 0;
-	virtual void reset() {}
+	virtual void process(std::span<float const> inAudio, std::span<float> outAudio) noexcept DFX_RT_ATTR = 0;
+	virtual void reset() noexcept DFX_RT_ATTR {}
 	// NOTE: a weakness of the processparameters design, and then subsequent snapping of 
 	// all smoothed values if it is the first audio render since audio reset, is that you 
 	// initially miss that snap if you getValue a smoothed value within processparameters
-	virtual void processparameters() {}
+	virtual void processparameters() noexcept DFX_RT_ATTR {}
 
-	DfxPlugin& getplugin() const noexcept
+	DfxPlugin& getplugin() const noexcept DFX_RT_ATTR
 	{
 		return mDfxPlugin;
 	}
-	double getsamplerate() const noexcept
+	double getsamplerate() const noexcept DFX_RT_ATTR
 	{
 		return mSampleRate;
 	}
-	float getsamplerate_f() const
+	float getsamplerate_f() const noexcept DFX_RT_ATTR
 	{
 		return static_cast<float>(mSampleRate);
 	}
-	double getparameter_f(dfx::ParameterID inParameterID) const
+	double getparameter_f(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return mDfxPlugin.getdspcoreparameter_f(inParameterID);
 	}
-	int64_t getparameter_i(dfx::ParameterID inParameterID) const
+	int64_t getparameter_i(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return mDfxPlugin.getdspcoreparameter_i(inParameterID);
 	}
-	bool getparameter_b(dfx::ParameterID inParameterID) const
+	bool getparameter_b(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return mDfxPlugin.getdspcoreparameter_b(inParameterID);
 	}
-	double getparameter_scalar(dfx::ParameterID inParameterID) const
+	double getparameter_scalar(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return mDfxPlugin.getdspcoreparameter_scalar(inParameterID);
 	}
-	double getparameter_gen(dfx::ParameterID inParameterID) const
+	double getparameter_gen(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return mDfxPlugin.getdspcoreparameter_gen(inParameterID);
 	}
-	std::optional<double> getparameterifchanged_f(dfx::ParameterID inParameterID) const
+	std::optional<double> getparameterifchanged_f(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return getparameterchanged(inParameterID) ? std::make_optional(getparameter_f(inParameterID)) : std::nullopt;
 	}
-	std::optional<int64_t> getparameterifchanged_i(dfx::ParameterID inParameterID) const
+	std::optional<int64_t> getparameterifchanged_i(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return getparameterchanged(inParameterID) ? std::make_optional(getparameter_i(inParameterID)) : std::nullopt;
 	}
-	std::optional<bool> getparameterifchanged_b(dfx::ParameterID inParameterID) const
+	std::optional<bool> getparameterifchanged_b(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return getparameterchanged(inParameterID) ? std::make_optional(getparameter_b(inParameterID)) : std::nullopt;
 	}
-	std::optional<double> getparameterifchanged_gen(dfx::ParameterID inParameterID) const
+	std::optional<double> getparameterifchanged_gen(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return getparameterchanged(inParameterID) ? std::make_optional(getparameter_gen(inParameterID)) : std::nullopt;
 	}
-	std::optional<double> getparameterifchanged_scalar(dfx::ParameterID inParameterID) const
+	std::optional<double> getparameterifchanged_scalar(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return getparameterchanged(inParameterID) ? std::make_optional(getparameter_scalar(inParameterID)) : std::nullopt;
 	}
-	double getparametermin_f(dfx::ParameterID inParameterID) const
+	double getparametermin_f(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return mDfxPlugin.getparametermin_f(inParameterID);
 	}
-	int64_t getparametermin_i(dfx::ParameterID inParameterID) const
+	int64_t getparametermin_i(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return mDfxPlugin.getparametermin_i(inParameterID);
 	}
-	double getparametermax_f(dfx::ParameterID inParameterID) const
+	double getparametermax_f(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return mDfxPlugin.getparametermax_f(inParameterID);
 	}
-	int64_t getparametermax_i(dfx::ParameterID inParameterID) const
+	int64_t getparametermax_i(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return mDfxPlugin.getparametermax_i(inParameterID);
 	}
-	bool getparameterchanged(dfx::ParameterID inParameterID) const
+	bool getparameterchanged(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return mDfxPlugin.getparameterchanged(inParameterID);
 	}
@@ -1223,13 +1230,15 @@ public:
 	{
 		mDfxPlugin.registerSmoothedAudioValue(smoothedValue, this);
 	}
-	void incrementSmoothedAudioValues()
+	void incrementSmoothedAudioValues() noexcept DFX_RT_ATTR
 	{
 		mDfxPlugin.incrementSmoothedAudioValues(this);
 	}
 
 #ifdef TARGET_API_AUDIOUNIT
+	AUSDK_BEGIN_NO_RT_NOEXCEPT_WARNINGS
 	void Process(Float32 const* inAudio, Float32* outAudio, UInt32 inNumFrames, bool& ioSilence) AUSDK_RTSAFE final
+	AUSDK_END_NO_RT_NOEXCEPT_WARNINGS
 	{
 		process({inAudio, inNumFrames}, {outAudio, inNumFrames});
 		ioSilence = false;  // TODO: allow DSP cores to communicate their output silence status
@@ -1242,7 +1251,7 @@ public:
 	// Mimic what AUKernelBase does here. The channel is just the index
 	// in the DfxPlugin::mDSPCores vector.
 	void SetChannelNum(size_t inChannel) noexcept { mChannelNumber = inChannel; }
-	[[nodiscard]] size_t GetChannelNum() const noexcept { return mChannelNumber; }
+	[[nodiscard]] size_t GetChannelNum() const noexcept DFX_RT_ATTR { return mChannelNumber; }
 #endif
 
 
@@ -1414,6 +1423,7 @@ public:
 // and therefore locking would be detrimental, the likelihood of contention on this lock is extremely low, 
 // and the critical section extremely brief, and the lock lightweight and out of the scheduler's management, 
 // that this shouldn't actually in practice present any issues
+// TODO: disagreeing with my past self, especially the scheduler statement, this should be fixed
 template <dfx::math::Randomizable T>
 T DfxPlugin::generateParameterRandomValue()
 {

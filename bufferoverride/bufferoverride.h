@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -44,11 +44,11 @@ public:
 
 	void initialize() override;
 	void cleanup() override;
-	void reset() override;
+	void reset() noexcept DFX_RT_ATTR override;
 
-	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) override;
-	void processparameters() override;
-	void parameterChanged(dfx::ParameterID inParameterID) override;
+	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR override;
+	void processparameters() noexcept DFX_RT_ATTR override;
+	void parameterChanged(dfx::ParameterID inParameterID) noexcept DFX_RT_ATTR override;
 
 	dfx::StatusCode dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex, size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
 	dfx::StatusCode dfx_GetProperty(dfx::PropertyID, dfx::Scope inScope, unsigned int inItemIndex, void* outData) override;
@@ -62,17 +62,17 @@ private:
 	static constexpr double kMinAllowableBPS = 0.7;
 	static constexpr float kLFOValueDefault = 1.f;
 
-	long ms2samples(double inSizeMS) const;
-	long beat2samples(double inBeatScalar, double inTempoBPS) const;
-	void updateBuffer(size_t samplePos, bool& ioViewDataChanged);
+	long ms2samples(double inSizeMS) const noexcept DFX_RT_ATTR;
+	long beat2samples(double inBeatScalar, double inTempoBPS) const noexcept DFX_RT_ATTR;
+	void updateBuffer(size_t samplePos, bool& ioViewDataChanged) noexcept DFX_RT_ATTR;
 
-	void heedMidiEvents(size_t samplePos);
-	float getDivisorParameterFromNote(int currentNote);
-	float getDivisorParameterFromPitchbend(int valueLSB, int valueMSB);
+	void heedMidiEvents(size_t samplePos) noexcept DFX_RT_ATTR;
+	float getDivisorParameterFromNote(int currentNote) noexcept DFX_RT_ATTR;
+	float getDivisorParameterFromPitchbend(int valueLSB, int valueMSB) noexcept DFX_RT_ATTR;
 
 	void initPresets();
 
-	void updateViewDataCache();
+	void updateViewDataCache() noexcept DFX_RT_ATTR;
 
 	// the parameters
 	float mDivisor = 1.f;

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -55,24 +55,24 @@ public:
 
 	LFO();
 
-	void reset();
+	void reset() noexcept DFX_RT_ATTR;
 
 	static std::string getShapeName(Shape inShape);
 
-	double getDepth() const noexcept;
-	void setDepth(double inDepth) noexcept;
-	Shape getShape() const noexcept;
-	void setShape(Shape inShape) noexcept;
+	double getDepth() const noexcept DFX_RT_ATTR;
+	void setDepth(double inDepth) noexcept DFX_RT_ATTR;
+	Shape getShape() const noexcept DFX_RT_ATTR;
+	void setShape(Shape inShape) noexcept DFX_RT_ATTR;
 
-	void setStepSize(double inStepSize) noexcept;
-	void syncToTheBeat(double inSamplesToBar);
+	void setStepSize(double inStepSize) noexcept DFX_RT_ATTR;
+	void syncToTheBeat(double inSamplesToBar) noexcept DFX_RT_ATTR;
 
-	void updatePosition(size_t inNumSteps = 1);
-	double process() const;
+	void updatePosition(size_t inNumSteps = 1) noexcept DFX_RT_ATTR;
+	double process() const noexcept DFX_RT_ATTR;
 
 	//--------------------------------------------------------------------------------------
-	// scales the output of process from 0.0 - 1.0 output to 0.0 - 2.0 (oscillating around 1.0)
-	double processZeroToTwo() const
+	// scales the output of process from 0 to 1 output to 0 to 2 (oscillating around 1)
+	double processZeroToTwo() const noexcept DFX_RT_ATTR
 	{
 		return (process() * 2.) - mDepth + 1.;
 	}
@@ -84,15 +84,15 @@ protected:
 	size_t mSmoothSamples = 0;  // TODO: a counter for the position during a smoothing fade
 
 private:
-	using Generator = double(*)(double);
+	using Generator = double(*)(double) noexcept DFX_RT_ATTR;
 
-	static Generator getGeneratorForShape(Shape inShape) noexcept;
-	static double sineGenerator(double inPosition);
-	static double triangleGenerator(double inPosition);
-	static double squareGenerator(double inPosition);
-	static double sawGenerator(double inPosition);
-	static double reverseSawGenerator(double inPosition);
-	static double thornGenerator(double inPosition);
+	static Generator getGeneratorForShape(Shape inShape) noexcept DFX_RT_ATTR;
+	static double sineGenerator(double inPosition) noexcept DFX_RT_ATTR;
+	static double triangleGenerator(double inPosition) noexcept DFX_RT_ATTR;
+	static double squareGenerator(double inPosition) noexcept DFX_RT_ATTR;
+	static double sawGenerator(double inPosition) noexcept DFX_RT_ATTR;
+	static double reverseSawGenerator(double inPosition) noexcept DFX_RT_ATTR;
+	static double thornGenerator(double inPosition) noexcept DFX_RT_ATTR;
 
 
 	double mDepth = 0.;

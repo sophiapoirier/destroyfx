@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -35,6 +35,8 @@ Welcome to our Finite Impulse Response filter.
 #include <span>
 #include <vector>
 
+#include "dfx-base.h"
+
 
 namespace dfx::FIRFilter
 {
@@ -44,17 +46,17 @@ static constexpr double kShelfStartLowpass = 0.333;
 
 //-----------------------------------------------------------------------------
 void calculateIdealLowpassCoefficients(double inCutoff, double inSampleRate, 
-									   std::span<float> outCoefficients);
+									   std::span<float> outCoefficients) noexcept DFX_RT_ATTR;
 void calculateIdealLowpassCoefficients(double inCutoff, double inSampleRate, 
 									   std::span<float> outCoefficients, 
-									   std::span<float const> inCoefficientsWindow);
-void applyKaiserWindow(std::span<float> ioCoefficients, float inAttenuation);
+									   std::span<float const> inCoefficientsWindow) noexcept DFX_RT_ATTR;
+void applyKaiserWindow(std::span<float> ioCoefficients, float inAttenuation) noexcept DFX_RT_ATTR;
 std::vector<float> generateKaiserWindow(size_t inNumTaps, float inAttenuation);
 
 //-----------------------------------------------------------------------------
-inline float process(std::span<float const> inAudio, std::span<float const> inCoefficients, size_t inPos)
+inline float process(std::span<float const> inAudio, std::span<float const> inCoefficients, size_t inPos) noexcept DFX_RT_ATTR
 {
-	assert(inPos < inAudio.size());
+	DFX_RT_ASSERT(inPos < inAudio.size());
 
 	auto audioPos = inPos;
 	float result = 0.f;

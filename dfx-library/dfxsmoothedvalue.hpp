@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2022  Sophia Poirier
+Copyright (C) 2009-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -35,14 +35,14 @@ This is our class for doing interpolation of values over time.
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-dfx::SmoothedValue<T>::SmoothedValue(double inSmoothingTimeInSeconds)
+constexpr dfx::SmoothedValue<T>::SmoothedValue(double inSmoothingTimeInSeconds) noexcept DFX_RT_ATTR
 {
 	setSmoothingTime(inSmoothingTimeInSeconds);
 }
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-void dfx::SmoothedValue<T>::setValue(T inTargetValue) noexcept
+constexpr void dfx::SmoothedValue<T>::setValue(T inTargetValue) noexcept DFX_RT_ATTR
 {
 	if (std::exchange(mReinitialize, false))
 	{
@@ -71,7 +71,7 @@ void dfx::SmoothedValue<T>::setValue(T inTargetValue) noexcept
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-void dfx::SmoothedValue<T>::setValueNow(T inValue) noexcept
+constexpr void dfx::SmoothedValue<T>::setValueNow(T inValue) noexcept DFX_RT_ATTR
 {
 	mCurrentValue = mTargetValue = inValue;
 	mSmoothCount = mSmoothDur_samples;
@@ -80,28 +80,28 @@ void dfx::SmoothedValue<T>::setValueNow(T inValue) noexcept
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-void dfx::SmoothedValue<T>::snap() noexcept
+constexpr void dfx::SmoothedValue<T>::snap() noexcept DFX_RT_ATTR
 {
 	setValueNow(mTargetValue);
 }
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-bool dfx::SmoothedValue<T>::isSmoothing() const noexcept
+constexpr bool dfx::SmoothedValue<T>::isSmoothing() const noexcept DFX_RT_ATTR
 {
 	return mSmoothCount < mSmoothDur_samples;
 }
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-void dfx::SmoothedValue<T>::inc() noexcept
+constexpr void dfx::SmoothedValue<T>::inc() noexcept DFX_RT_ATTR
 {
 	inc(1);
 }
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-void dfx::SmoothedValue<T>::inc(size_t inCount) noexcept
+constexpr void dfx::SmoothedValue<T>::inc(size_t inCount) noexcept DFX_RT_ATTR
 {
 	if (isSmoothing())
 	{
@@ -109,9 +109,10 @@ void dfx::SmoothedValue<T>::inc(size_t inCount) noexcept
 	}
 	if (isSmoothing())
 	{
-		// XXX For long smoothing times this could be accumulating significant
-		// error (and then jumping once we hit mSmoothDur_samples. Would be
+		// TODO: For long smoothing times this could be accumulating significant
+		// error (and then jumping once we hit mSmoothDur_samples. It would be
 		// better (but slower) to compute this as like ((1 - f) * old) + (f * new).
+		// aka std::lerp
 		mCurrentValue += mValueStep * static_cast<T>(inCount);
 	}
 	else
@@ -122,9 +123,9 @@ void dfx::SmoothedValue<T>::inc(size_t inCount) noexcept
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-void dfx::SmoothedValue<T>::setSmoothingTime(double inSmoothingTimeInSeconds)
+constexpr void dfx::SmoothedValue<T>::setSmoothingTime(double inSmoothingTimeInSeconds) noexcept DFX_RT_ATTR
 {
-	assert(inSmoothingTimeInSeconds >= 0.0);
+	DFX_RT_ASSERT(inSmoothingTimeInSeconds >= 0.);
 
 	mSmoothDur_seconds = inSmoothingTimeInSeconds;
 	mSmoothDur_samples = static_cast<size_t>(std::max(mSmoothDur_seconds * mSampleRate, 0.0));
@@ -134,9 +135,9 @@ void dfx::SmoothedValue<T>::setSmoothingTime(double inSmoothingTimeInSeconds)
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-void dfx::SmoothedValue<T>::setSampleRate(double inSampleRate)
+constexpr void dfx::SmoothedValue<T>::setSampleRate(double inSampleRate) noexcept DFX_RT_ATTR
 {
-	assert(inSampleRate > 0.0);
+	DFX_RT_ASSERT(inSampleRate > 0.);
 
 	mSampleRate = inSampleRate;
 	setSmoothingTime(mSmoothDur_seconds);
@@ -146,7 +147,7 @@ void dfx::SmoothedValue<T>::setSampleRate(double inSampleRate)
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-dfx::SmoothedValue<T>& dfx::SmoothedValue<T>::operator=(T inValue) noexcept
+constexpr dfx::SmoothedValue<T>& dfx::SmoothedValue<T>::operator=(T inValue) noexcept DFX_RT_ATTR
 {
 	setValue(inValue);
 	return *this;

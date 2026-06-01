@@ -57,7 +57,7 @@ namespace dfx
 
 //------------------------------------------------------
 // this reverses the bytes in a stream of data, for correcting endian difference
-void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount)
+void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount) noexcept
 {
 	size_t const halfItemSize = inItemSize / 2;
 	std::span dataBytes(static_cast<std::byte*>(ioData), inItemSize * inItemCount);

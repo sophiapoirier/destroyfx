@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2026  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -41,9 +41,9 @@ class TransverbDSP final : public DfxPluginCore {
 public:
   explicit TransverbDSP(DfxPlugin& inDfxPlugin);
 
-  void process(std::span<float const> inAudio, std::span<float> outAudio) override;
-  void reset() override;
-  void processparameters() override;
+  void process(std::span<float const> inAudio, std::span<float> outAudio) noexcept DFX_RT_ATTR override;
+  void reset() noexcept DFX_RT_ATTR override;
+  void processparameters() noexcept DFX_RT_ATTR override;
 
 private:
   static constexpr int kAudioSmoothingDur_samples = 42;
@@ -69,27 +69,25 @@ private:
     float smoothstep = 0.f;
     float lastdelayval = 0.f;
 
-    void reset();
+    void reset() noexcept DFX_RT_ATTR;
   };
 
-  static constexpr float interpolateHermite(std::span<float const> data, double readaddress, int writeaddress);
+  static constexpr float interpolateHermite(std::span<float const> data, double readaddress, int writeaddress) noexcept DFX_RT_ATTR;
   // uses only the fractional portion of the address
-  static constexpr float interpolateLinear(float value1, float value2, double address)
+  static constexpr float interpolateLinear(float value1, float value2, double address) noexcept DFX_RT_ATTR
   {
     auto const posFract = static_cast<float>(dfx::math::ModF(address));
     return std::lerp(value1, value2, posFract);
   }
-  static constexpr float interpolateLinear(std::span<float const> data, double readaddress/*, int writeaddress*/);
+  static constexpr float interpolateLinear(std::span<float const> data, double readaddress/*, int writeaddress*/) noexcept DFX_RT_ATTR;
 
   // negative input values are bumped into non-negative range by incremements of modulo
-  static constexpr int mod_bipolar(int value, int modulo);
-  static inline double fmod_bipolar(double value, double modulo);
+  static constexpr int mod_bipolar(int value, int modulo) noexcept DFX_RT_ATTR;
+  static inline double fmod_bipolar(double value, double modulo) noexcept DFX_RT_ATTR;
 
   // these store the parameter values
   int bsize = 0;
   dfx::SmoothedValue<float> drymix;
-  long quality = 0;
-  bool tomsound = false;
 
   int writer = 0;
   std::array<Head, dfx::TV::kNumDelays> heads;
@@ -108,8 +106,8 @@ public:
 
   void dfx_PostConstructor() override;
 
-  bool loadpreset(size_t index) override;  // overridden to support the random preset
-  void randomizeparameters() override;
+  bool loadpreset(size_t index) noexcept DFX_RT_ATTR override;  // overridden to support the random preset
+  void randomizeparameters() noexcept DFX_RT_ATTR override;
 
   dfx::StatusCode dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
                                       size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
@@ -137,16 +135,16 @@ private:
 };
 
 
-constexpr int TransverbDSP::mod_bipolar(int value, int modulo) {
-  assert(modulo > 0);
+constexpr int TransverbDSP::mod_bipolar(int value, int modulo) noexcept DFX_RT_ATTR {
+  DFX_RT_ASSERT(modulo > 0);
   while (value < 0) {
     value += modulo;
   }
   return value % modulo;
 }
 
-inline double TransverbDSP::fmod_bipolar(double value, double modulo) {
-  assert(modulo > 0.);
+inline double TransverbDSP::fmod_bipolar(double value, double modulo) noexcept DFX_RT_ATTR {
+  DFX_RT_ASSERT(modulo > 0.);
   while (value < 0.) {
     value += modulo;
   }
@@ -154,13 +152,13 @@ inline double TransverbDSP::fmod_bipolar(double value, double modulo) {
 }
 
 constexpr float TransverbDSP::interpolateHermite(std::span<float const> data, double readaddress,
-                                                 int writeaddress) {
-  assert(readaddress >= 0.);
-  assert(writeaddress >= 0);
-  assert(!data.empty());
+                                                 int writeaddress) noexcept DFX_RT_ATTR {
+  DFX_RT_ASSERT(readaddress >= 0.);
+  DFX_RT_ASSERT(writeaddress >= 0);
+  DFX_RT_ASSERT(!data.empty());
 
   auto const [posFract, pos] = dfx::math::ModF<size_t>(readaddress);
-  assert(pos < data.size());
+  DFX_RT_ASSERT(pos < data.size());
   size_t posMinus1 = 0, posPlus1 = 0, posPlus2 = 0;
 
   // because the readers and writer are not necessarily aligned,
@@ -191,22 +189,22 @@ constexpr float TransverbDSP::interpolateHermite(std::span<float const> data, do
 }
 
 /*
-constexpr float TransverbDSP::interpolateHermitePostLowpass(std::span<float const> data, float address) {
-  assert(address >= 0.f);
-  assert(!data.empty());
+constexpr float TransverbDSP::interpolateHermitePostLowpass(std::span<float const> data, float address) noexcept DFX_RT_ATTR {
+  DFX_RT_ASSERT(address >= 0.f);
+  DFX_RT_ASSERT(!data.empty());
 
   auto const posFract = dfx::math::ModF(pos);
   return dfx::math::InterpolateHermite(data[0], data[1], data[2], data[3], posFract);
 }
 */
 
-constexpr float TransverbDSP::interpolateLinear(std::span<float const> data, double readaddress/*, int writeaddress*/) {
-  assert(readaddress >= 0.);
-  //assert(writeaddress >= 0);
-  assert(!data.empty());
+constexpr float TransverbDSP::interpolateLinear(std::span<float const> data, double readaddress/*, int writeaddress*/) noexcept DFX_RT_ATTR {
+  DFX_RT_ASSERT(readaddress >= 0.);
+  //DFX_RT_ASSERT(writeaddress >= 0);
+  DFX_RT_ASSERT(!data.empty());
 
   auto const pos = static_cast<size_t>(readaddress);
-  assert(pos < data.size());
+  DFX_RT_ASSERT(pos < data.size());
 #if 0
   if (mod_bipolar(writeaddress - static_cast<int>(pos), std::ssize(data)) == 1) {
     // the upcoming sample is not contiguous because

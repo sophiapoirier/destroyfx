@@ -1095,13 +1095,17 @@ UInt32 DfxPlugin::SupportedNumChannels(AUChannelInfo const** outInfo)
 }
 
 //-----------------------------------------------------------------------------
+AUSDK_BEGIN_NO_RT_NOEXCEPT_WARNINGS
 Float64 DfxPlugin::GetLatency() AUSDK_RTSAFE
+AUSDK_END_NO_RT_NOEXCEPT_WARNINGS
 {
 	return getlatency_seconds();
 }
 
 //-----------------------------------------------------------------------------
+AUSDK_BEGIN_NO_RT_NOEXCEPT_WARNINGS
 Float64 DfxPlugin::GetTailTime() AUSDK_RTSAFE
+AUSDK_END_NO_RT_NOEXCEPT_WARNINGS
 {
 	return gettailsize_seconds();
 }
@@ -1372,9 +1376,11 @@ OSStatus DfxPlugin::CopyClumpName(AudioUnitScope inScope, UInt32 inClumpID,
 }
 
 //-----------------------------------------------------------------------------
+AUSDK_BEGIN_NO_RT_NOEXCEPT_WARNINGS
 OSStatus DfxPlugin::SetParameter(AudioUnitParameterID inParameterID, 
 								 AudioUnitScope inScope, AudioUnitElement inElement, 
 								 Float32 inValue, UInt32 /*inBufferOffsetInFrames*/) AUSDK_RTSAFE
+AUSDK_END_NO_RT_NOEXCEPT_WARNINGS
 {
 	AUSDK_Require(inScope == kAudioUnitScope_Global, kAudioUnitErr_InvalidScope);
 	AUSDK_Require(inElement == 0, kAudioUnitErr_InvalidElement);
@@ -1627,9 +1633,11 @@ void DfxPlugin::UpdateInPlaceProcessingState()
 
 #if TARGET_PLUGIN_IS_INSTRUMENT
 //-----------------------------------------------------------------------------
+AUSDK_BEGIN_NO_RT_NOEXCEPT_WARNINGS
 OSStatus DfxPlugin::Render(AudioUnitRenderActionFlags& ioActionFlags, 
 						   AudioTimeStamp const& inTimeStamp, 
 						   UInt32 inFramesToProcess) AUSDK_RTSAFE
+AUSDK_END_NO_RT_NOEXCEPT_WARNINGS
 {
 	// do any pre-DSP prep
 	preprocessaudio(inFramesToProcess);
@@ -1675,9 +1683,11 @@ OSStatus DfxPlugin::Render(AudioUnitRenderActionFlags& ioActionFlags,
 
 //-----------------------------------------------------------------------------
 // this is the audio processing routine
+AUSDK_BEGIN_NO_RT_NOEXCEPT_WARNINGS
 OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 
 									   AudioBufferList const& inBuffer, AudioBufferList& outBuffer, 
 									   UInt32 inFramesToProcess) AUSDK_RTSAFE
+AUSDK_END_NO_RT_NOEXCEPT_WARNINGS
 {
 	OSStatus status = noErr;
 
@@ -1703,7 +1713,7 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags
 		auto const& srcAudioBuffer = inBuffer.mBuffers[0];
 		for (UInt32 ch = 0; ch < inputBufferPtr->mNumberBuffers; ch++)
 		{
-			assert(srcAudioBuffer.mDataByteSize == inputBufferPtr->mBuffers[ch].mDataByteSize);
+			DFX_RT_ASSERT(srcAudioBuffer.mDataByteSize == inputBufferPtr->mBuffers[ch].mDataByteSize);
 			auto const numBytes = std::min(srcAudioBuffer.mDataByteSize, inputBufferPtr->mBuffers[ch].mDataByteSize);
 			std::memcpy(inputBufferPtr->mBuffers[ch].mData, srcAudioBuffer.mData, numBytes);
 		}
@@ -1752,6 +1762,8 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags
 #pragma mark -
 
 #if TARGET_PLUGIN_USES_MIDI
+
+AUSDK_BEGIN_NO_RT_NOEXCEPT_WARNINGS
 
 //-----------------------------------------------------------------------------
 OSStatus DfxPlugin::HandleNoteOn(UInt8 inChannel, UInt8 inNoteNumber, 
@@ -1830,5 +1842,7 @@ OSStatus DfxPlugin::StopNote(MusicDeviceGroupID inGroupID,
 	return noErr;
 }
 #endif  // TARGET_PLUGIN_IS_INSTRUMENT
+
+AUSDK_END_NO_RT_NOEXCEPT_WARNINGS
 
 #endif  // TARGET_PLUGIN_USES_MIDI

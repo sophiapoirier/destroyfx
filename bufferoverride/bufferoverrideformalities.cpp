@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2025  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -157,7 +157,7 @@ void BufferOverride::cleanup()
 }
 
 //-------------------------------------------------------------------------
-void BufferOverride::reset()
+void BufferOverride::reset() noexcept DFX_RT_ATTR
 {
 	// setting the values like this will restart the forced buffer in the next process()
 	mCurrentForcedBufferSize = 1;
@@ -172,9 +172,9 @@ void BufferOverride::reset()
 	mDivisorLFO.reset();
 	mBufferLFO.reset();
 
-	std::ranges::for_each(mDecayFilters, [](auto& filters)
+	std::ranges::for_each(mDecayFilters, [](auto& filters) DFX_RT_LAMBDA
 	{
-		std::ranges::for_each(filters, [](auto& filter)
+		std::ranges::for_each(filters, [](auto& filter) DFX_RT_LAMBDA
 		{
 			filter.reset();
 			filter.setCoefficients(dfx::IIRFilter::kUnityCoeff);
@@ -412,7 +412,7 @@ void BufferOverride::initPresets()
 #pragma mark _________parameters_________
 
 //-------------------------------------------------------------------------
-void BufferOverride::processparameters()
+void BufferOverride::processparameters() noexcept DFX_RT_ATTR
 {
 	mDivisor = getparameter_f(kDivisor);
 	mBufferSizeMS = getparameter_f(kBufferSize_MS);
@@ -479,7 +479,7 @@ void BufferOverride::processparameters()
 }
 
 //-------------------------------------------------------------------------
-void BufferOverride::parameterChanged(dfx::ParameterID inParameterID)
+void BufferOverride::parameterChanged(dfx::ParameterID inParameterID) noexcept DFX_RT_ATTR
 {
 	switch (inParameterID)
 	{
@@ -498,7 +498,7 @@ void BufferOverride::parameterChanged(dfx::ParameterID inParameterID)
 #pragma mark _________properties_________
 
 //-------------------------------------------------------------------------
-void BufferOverride::updateViewDataCache()
+void BufferOverride::updateViewDataCache() noexcept DFX_RT_ATTR
 {
 	BufferOverrideViewData viewData;
 	auto const hostTempoBPS = mHostTempoBPS_viewCache.load(std::memory_order_relaxed);
@@ -526,8 +526,8 @@ void BufferOverride::updateViewDataCache()
 		viewData.mPreLFO.mMinibufferSeconds = viewData.mPreLFO.mForcedBufferSeconds;
 		viewData.mPostLFO.mMinibufferSeconds = viewData.mPostLFO.mForcedBufferSeconds;
 	}
-	assert(viewData.mPreLFO.mMinibufferSeconds <= viewData.mPreLFO.mForcedBufferSeconds);
-	assert(viewData.mPostLFO.mMinibufferSeconds <= viewData.mPostLFO.mForcedBufferSeconds);
+	DFX_RT_ASSERT(viewData.mPreLFO.mMinibufferSeconds <= viewData.mPreLFO.mForcedBufferSeconds);
+	DFX_RT_ASSERT(viewData.mPostLFO.mMinibufferSeconds <= viewData.mPostLFO.mForcedBufferSeconds);
 
 	mViewDataCache.store(viewData, std::memory_order_relaxed);
 	mViewDataCacheTimestamp.fetch_add(1, std::memory_order_relaxed);

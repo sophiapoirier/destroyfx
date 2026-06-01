@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier and Tom Murphy VII
+Copyright (C) 2001-2026  Sophia Poirier and Tom Murphy VII
 
 This file is part of Buffer Override.
 
@@ -144,11 +144,11 @@ struct CompositeT
 using AtomicBufferOverrideViewData = std::conditional_t<detail::UnifiedT::is_always_lock_free, detail::UnifiedT, detail::CompositeT>;
 
 template <std::floating_point T>
-T GetBufferDecay(T normalizedPosition, T depth, DecayShape shape, dfx::math::RandomEngine& randomEngine)
+T GetBufferDecay(T normalizedPosition, T depth, DecayShape shape, dfx::math::RandomEngine& randomEngine) noexcept DFX_RT_ATTR
 {
 	constexpr T maxValue = 1;
-	assert(normalizedPosition >= T(0));
-	assert(normalizedPosition <= maxValue);
+	DFX_RT_ASSERT(normalizedPosition >= T(0));
+	DFX_RT_ASSERT(normalizedPosition <= maxValue);
 	auto const invertedDepth = std::signbit(depth);
 	switch (shape)
 	{

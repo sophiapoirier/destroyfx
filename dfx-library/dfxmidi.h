@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -32,6 +32,7 @@ This is our MIDI stuff.
 #include <utility>
 #include <vector>
 
+#include "dfx-base.h"
 #include "dfxenvelope.h"
 #include "dfxsmoothedvalue.h"
 
@@ -140,30 +141,30 @@ public:
 
 	DfxMidi();
 
-	void reset();  // resets the variables
+	void reset() noexcept DFX_RT_ATTR;  // resets the variables
 	void setSampleRate(double inSampleRate);
 	void setChannelCount(size_t inChannelCount);
-	void setEnvParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur);  // ADSR
-	void setEnvParameters(double inAttackDur, double inReleaseDur);  // AR
-	void setEnvCurveType(DfxEnvelope::CurveType inCurveType);
-	void setResumedAttackMode(bool inNewMode);
+	void setEnvParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur) noexcept DFX_RT_ATTR;  // ADSR
+	void setEnvParameters(double inAttackDur, double inReleaseDur) noexcept DFX_RT_ATTR;  // AR
+	void setEnvCurveType(DfxEnvelope::CurveType inCurveType) noexcept DFX_RT_ATTR;
+	void setResumedAttackMode(bool inNewMode) noexcept DFX_RT_ATTR;
 
 	// handlers for the types of MIDI events that we support
-	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames);
-	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames);
-	void handleAllNotesOff(int inMidiChannel, size_t inOffsetFrames);
-	void handleChannelAftertouch(int inMidiChannel, int inValue, size_t inOffsetFrames);
-	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames);
-	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, size_t inOffsetFrames);
-	void handleProgramChange(int inMidiChannel, int inProgramNumber, size_t inOffsetFrames);
+	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	void handleAllNotesOff(int inMidiChannel, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	void handleChannelAftertouch(int inMidiChannel, int inValue, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	void handleProgramChange(int inMidiChannel, int inProgramNumber, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
 
-	void preprocessEvents(size_t inNumFrames);
-	void postprocessEvents();
+	void preprocessEvents(size_t inNumFrames) noexcept DFX_RT_ATTR;
+	void postprocessEvents() noexcept DFX_RT_ATTR;
 
 	// this is where new MIDI events are reckoned with during audio processing
-	void heedEvents(size_t inEventIndex, float inVelocityCurve, float inVelocityInfluence);
+	void heedEvents(size_t inEventIndex, float inVelocityCurve, float inVelocityInfluence) noexcept DFX_RT_ATTR;
 
-	auto getBlockEventCount() const noexcept
+	auto getBlockEventCount() const noexcept DFX_RT_ATTR
 	{
 		return mNumBlockEvents;
 	}
@@ -171,65 +172,66 @@ public:
 	{
 		return mBlockEvents.at(inIndex);
 	}
-	// XXX TODO: this is a hack just for Buffer Override, maybe should rethink
+	// TODO: this is a hack just for Buffer Override, maybe should rethink?
 	void invalidateBlockEvent(size_t inIndex)
 	{
 		mBlockEvents.at(inIndex).mStatus = kInvalidValue;
 	}
 
-	bool isNoteActive(int inMidiNote) const;
+	bool isNoteActive(int inMidiNote) const noexcept DFX_RT_ATTR;
 
 	// manage the ordered queue of active MIDI notes
-	void insertNote(int inMidiNote);
-	void removeNote(int inMidiNote);
-	void removeAllNotes();
+	// TODO: these should be private but are public as a hack for Buffer Override
+	void insertNote(int inMidiNote) noexcept DFX_RT_ATTR;
+	void removeNote(int inMidiNote) noexcept DFX_RT_ATTR;
+	void removeAllNotes() noexcept DFX_RT_ATTR;
 	// query the ordered queue of active MIDI notes
-	bool isAnyNoteActive() const noexcept
+	bool isAnyNoteActive() const noexcept DFX_RT_ATTR
 	{
 		return noteIsValid(mNoteQueue.front());
 	}
-	auto getLatestNote() const noexcept
+	auto getLatestNote() const noexcept DFX_RT_ATTR
 	{
 		auto const note = mNoteQueue.front();
 		return noteIsValid(note) ? std::make_optional(note) : std::nullopt;
 	}
 
-	static constexpr bool isNote(int inMidiStatus) noexcept
+	static constexpr bool isNote(int inMidiStatus) noexcept DFX_RT_ATTR
 	{
 		return (inMidiStatus == kStatus_NoteOn) || (inMidiStatus == kStatus_NoteOff);
 	}
 
-	double getNoteFrequency(int inMidiNote) const;
+	double getNoteFrequency(int inMidiNote) const noexcept DFX_RT_ATTR;
 	// the gain for the note, scaled with velocity, curve, and influence
-	float getNoteAmplitude(int inMidiNote) const;
+	float getNoteAmplitude(int inMidiNote) const noexcept DFX_RT_ATTR;
 
-	auto getPitchBend() const noexcept
+	auto getPitchBend() const noexcept DFX_RT_ATTR
 	{
 		return mPitchBend;
 	}
-	void setPitchBendRange(double inSemitoneRange);
+	void setPitchBendRange(double inSemitoneRange) noexcept DFX_RT_ATTR;
 
-	// returns -1.0 to 1.0 normalized value 
-	static double calculatePitchBendScalar(int inValueLSB, int inValueMSB) noexcept;
+	// returns -1 to 1 normalized value 
+	static double calculatePitchBendScalar(int inValueLSB, int inValueMSB) noexcept DFX_RT_ATTR;
 
-	bool isLegatoMode() const noexcept
+	bool isLegatoMode() const noexcept DFX_RT_ATTR
 	{
 		return mLegatoMode;
 	}
-	void setLegatoMode(bool inEnable);
+	void setLegatoMode(bool inEnable) noexcept DFX_RT_ATTR;
 
 	// this calculates fade scalars if attack, decay, or release are happening
-	float processEnvelope(int inMidiNote);
+	float processEnvelope(int inMidiNote) noexcept DFX_RT_ATTR;
 	// ...or lowpass gate coefficients and a post-filter gain
-	std::pair<dfx::IIRFilter::Coefficients, float> processEnvelopeLowpassGate(int inMidiNote);
+	std::pair<dfx::IIRFilter::Coefficients, float> processEnvelopeLowpassGate(int inMidiNote) noexcept DFX_RT_ATTR;
 
 	// this writes the audio output for smoothing the tips of cut-off notes
 	// by sloping down from the last sample outputted by the note
-	void processSmoothingOutputSample(std::span<float* const> outAudio, size_t inNumFrames, int inMidiNote);
+	void processSmoothingOutputSample(std::span<float* const> outAudio, size_t inNumFrames, int inMidiNote) noexcept DFX_RT_ATTR;
 
 	// this writes the audio output for smoothing the tips of cut-off notes
 	// by fading out the samples stored in the tail buffers
-	void processSmoothingOutputBuffer(std::span<float* const> outAudio, size_t inNumFrames, int inMidiNote);
+	void processSmoothingOutputBuffer(std::span<float* const> outAudio, size_t inNumFrames, int inMidiNote) noexcept DFX_RT_ATTR;
 
 
 private:
@@ -273,17 +275,17 @@ private:
 		std::vector<std::vector<float>> mTails;  // per-channel little buffer of output samples for smoothing a cut-off note
 	};
 
-	void fillFrequencyTable();
+	void fillFrequencyTable() noexcept;
 
-	bool incNumEvents();  // increment the block events counter, safely
+	bool incNumEvents() noexcept DFX_RT_ATTR;  // increment the block events counter, safely
 
 	MusicNote const& getNoteState(int inMidiNote) const;
 	MusicNote& getNoteStateMutable(int inMidiNote);
-	void turnOffNote(int inMidiNote);
+	void turnOffNote(int inMidiNote) noexcept DFX_RT_ATTR;
 
-	void postprocessEnvelope(MusicNote& inNote);
+	void postprocessEnvelope(MusicNote& inNote) noexcept DFX_RT_ATTR;
 
-	static constexpr bool noteIsValid(int inMidiNote) noexcept
+	static constexpr bool noteIsValid(int inMidiNote) noexcept DFX_RT_ATTR
 	{
 		return ((inMidiNote >= 0) && (inMidiNote <= kMaxValue));
 	}

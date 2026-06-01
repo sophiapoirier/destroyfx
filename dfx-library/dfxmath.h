@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -39,6 +39,7 @@ This is our math and numerics shit.
 #include <type_traits>
 #include <utility>
 
+#include "dfx-base.h"
 #include "dfxmisc.h"
 
 
@@ -66,48 +67,48 @@ true;
 
 //-----------------------------------------------------------------------------
 template <std::unsigned_integral OutputT = size_t, std::signed_integral InputT>
-constexpr OutputT ToIndex(InputT inValue) noexcept
+constexpr OutputT ToIndex(InputT inValue) noexcept DFX_RT_ATTR
 {
 	return static_cast<OutputT>(std::max(inValue, InputT(0)));
 }
 
 //-----------------------------------------------------------------------------
 template <std::unsigned_integral OutputT = size_t>
-constexpr OutputT RoundToIndex(std::floating_point auto inValue)
+constexpr OutputT RoundToIndex(std::floating_point auto inValue) noexcept DFX_RT_ATTR
 {
 	return ToIndex<OutputT>(std::llround(inValue));
 }
 
 //-----------------------------------------------------------------------------
 // fills the gap of a 32-bit int-returning flavor of std::lround or llround
-constexpr int IRound(std::floating_point auto inValue)
+constexpr int IRound(std::floating_point auto inValue) noexcept DFX_RT_ATTR
 {
 	auto const result = std::llround(inValue);
 	using ResultT = int;
-	assert(result >= static_cast<decltype(result)>(std::numeric_limits<ResultT>::min()));
-	assert(result <= static_cast<decltype(result)>(std::numeric_limits<ResultT>::max()));
+	DFX_RT_ASSERT(result >= static_cast<decltype(result)>(std::numeric_limits<ResultT>::min()));
+	DFX_RT_ASSERT(result <= static_cast<decltype(result)>(std::numeric_limits<ResultT>::max()));
 	return static_cast<ResultT>(result);
 }
 
 //-----------------------------------------------------------------------------
 template <std::unsigned_integral T>
-constexpr auto ToSigned(T inValue) noexcept
+constexpr auto ToSigned(T inValue) noexcept DFX_RT_ATTR
 {
 	using SignedT = std::make_signed_t<std::decay_t<T>>;
-	assert(inValue <= static_cast<T>(std::numeric_limits<SignedT>::max()));
+	DFX_RT_ASSERT(inValue <= static_cast<T>(std::numeric_limits<SignedT>::max()));
 	return static_cast<SignedT>(inValue);
 }
 
 //-----------------------------------------------------------------------------
 template <std::signed_integral T>
-constexpr auto ToUnsigned(T inValue) noexcept
+constexpr auto ToUnsigned(T inValue) noexcept DFX_RT_ATTR
 {
-	assert(inValue >= T(0));
+	DFX_RT_ASSERT(inValue >= T(0));
 	return static_cast<std::make_unsigned_t<std::decay_t<T>>>(inValue);
 }
 
 //-----------------------------------------------------------------------------
-constexpr bool IsZero(std::floating_point auto inValue) noexcept
+constexpr bool IsZero(std::floating_point auto inValue) noexcept DFX_RT_ATTR
 {
 	return (std::fpclassify(inValue) == FP_ZERO);
 }
@@ -115,7 +116,7 @@ constexpr bool IsZero(std::floating_point auto inValue) noexcept
 //-----------------------------------------------------------------------------
 // return the parameter with larger magnitude
 template <std::floating_point T>
-constexpr T MagnitudeMax(T inValue1, T inValue2)
+constexpr T MagnitudeMax(T inValue1, T inValue2) noexcept DFX_RT_ATTR
 {
 	return (std::fabs(inValue1) > std::fabs(inValue2)) ? inValue1 : inValue2;
 }
@@ -126,7 +127,7 @@ constexpr T MagnitudeMax(T inValue1, T inValue2)
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-constexpr T ClampDenormal(T inValue)
+constexpr T ClampDenormal(T inValue) noexcept DFX_RT_ATTR
 {
 	if constexpr (kDenormalProblem)
 	{
@@ -142,21 +143,21 @@ constexpr T ClampDenormal(T inValue)
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-constexpr T Linear2dB(T inLinearValue)
+constexpr T Linear2dB(T inLinearValue) noexcept DFX_RT_ATTR
 {
 	return T(20) * std::log10(inLinearValue);
 }
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-constexpr T Db2Linear(T inDecibalValue)
+constexpr T Db2Linear(T inDecibalValue) noexcept DFX_RT_ATTR
 {
 	return std::pow(T(10), inDecibalValue / T(20));
 }
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-constexpr T FrequencyScalarBySemitones(T inSemitones)
+constexpr T FrequencyScalarBySemitones(T inSemitones) noexcept DFX_RT_ATTR
 {
 	return std::exp2(inSemitones / T(12));
 }
@@ -166,13 +167,13 @@ constexpr T FrequencyScalarBySemitones(T inSemitones)
 // leaving the integral template argument unspecified means that you only wish to retrieve the fractional component
 template <typename OptionalIntegralT = void, std::floating_point FloatingT>
 requires std::is_integral_v<OptionalIntegralT> || std::is_void_v<OptionalIntegralT>
-constexpr auto ModF(FloatingT inValue)
+constexpr auto ModF(FloatingT inValue) noexcept DFX_RT_ATTR
 {
 	constexpr bool integralTypeSpecified = !std::is_void_v<OptionalIntegralT>;
 	using IntegralT = std::conditional_t<integralTypeSpecified, OptionalIntegralT, long>;
 	if constexpr (std::is_unsigned_v<IntegralT>)
 	{
-		assert(inValue >= FloatingT(0));
+		DFX_RT_ASSERT(inValue >= FloatingT(0));
 	}
 	auto const integralValue = static_cast<IntegralT>(inValue);
 	auto const fractionalValue = inValue - static_cast<FloatingT>(integralValue);
@@ -187,7 +188,7 @@ constexpr auto ModF(FloatingT inValue)
 }
 
 //-----------------------------------------------------------------------------
-constexpr float InterpolateHermite(float inPrecedingValue, float inCurrentValue, float inNextValue, float inNextNextValue, float inPosition)
+constexpr float InterpolateHermite(float inPrecedingValue, float inCurrentValue, float inNextValue, float inNextNextValue, float inPosition) noexcept DFX_RT_ATTR
 {
 #if 0
 	float const precedingMinusCurrent = inPrecedingValue - inCurrentValue;
@@ -209,13 +210,13 @@ constexpr float InterpolateHermite(float inPrecedingValue, float inCurrentValue,
 }
 
 //-----------------------------------------------------------------------------
-constexpr float InterpolateHermite(std::span<float const> inData, double inAddress)
+constexpr float InterpolateHermite(std::span<float const> inData, double inAddress) noexcept DFX_RT_ATTR
 {
-	assert(inAddress >= 0.);
-	assert(!inData.empty());
+	DFX_RT_ASSERT(inAddress >= 0.);
+	DFX_RT_ASSERT(!inData.empty());
 
 	auto const [posFract, pos] = ModF<size_t>(inAddress);
-	assert(pos < inData.size());
+	DFX_RT_ASSERT(pos < inData.size());
 
 	size_t const posMinus1 = (pos == 0) ? (inData.size() - 1) : (pos - 1);
 	size_t const posPlus1 = (pos + 1) % inData.size();
@@ -225,13 +226,13 @@ constexpr float InterpolateHermite(std::span<float const> inData, double inAddre
 }
 
 //-----------------------------------------------------------------------------
-constexpr float InterpolateHermite_NoWrap(std::span<float const> inData, double inAddress)
+constexpr float InterpolateHermite_NoWrap(std::span<float const> inData, double inAddress) noexcept DFX_RT_ATTR
 {
-	assert(inAddress >= 0.);
-	assert(!inData.empty());
+	DFX_RT_ASSERT(inAddress >= 0.);
+	DFX_RT_ASSERT(!inData.empty());
 
 	auto const [posFract, pos] = ModF<size_t>(inAddress);
-	assert(pos < inData.size());
+	DFX_RT_ASSERT(pos < inData.size());
 
 	float const dataPosMinus1 = (pos == 0) ? 0.f : inData[pos - 1];
 	float const dataPosPlus1 = ((pos + 1) == inData.size()) ? 0.f : inData[pos + 1];
@@ -243,7 +244,7 @@ constexpr float InterpolateHermite_NoWrap(std::span<float const> inData, double 
 //-----------------------------------------------------------------------------
 // computes the principle branch of the Lambert W function
 // { LambertW(x) = W(x), where W(x) * exp(W(x)) = x }
-constexpr double LambertW(double inValue)
+constexpr double LambertW(double inValue) noexcept DFX_RT_ATTR
 {
 	auto const x = std::fabs(inValue);
 	if (x <= 500.0)
@@ -259,9 +260,9 @@ constexpr double LambertW(double inValue)
 //-----------------------------------------------------------------------------
 // provides a good enough parameter smoothing update sample interval for frequency-based parameters;
 // this is targeting an update granularity of every 4 sample frames at a 44.1 kHz sample rate
-constexpr size_t GetFrequencyBasedSmoothingStride(double inSamplerate)
+constexpr size_t GetFrequencyBasedSmoothingStride(double inSamplerate) noexcept DFX_RT_ATTR
 {
-	assert(inSamplerate > 0.);
+	DFX_RT_ASSERT(inSamplerate > 0.);
 	return std::max(static_cast<size_t>(inSamplerate) / 11025uz, 1uz);
 }
 
@@ -284,7 +285,7 @@ concept Randomizable = std::is_arithmetic_v<T>;
 namespace detail
 {
 template <Randomizable T>
-constexpr T getRandomDefaultMaximum()
+constexpr T getRandomDefaultMaximum() noexcept DFX_RT_ATTR
 {
 	if constexpr (std::is_floating_point_v<T>)
 	{
@@ -299,25 +300,33 @@ constexpr T getRandomDefaultMaximum()
 //-----------------------------------------------------------------------------
 // allows to select between types at compile-time
 template <Randomizable T>
-constexpr auto getRandomDistribution(T inRangeMinimum = T(0), T inRangeMaximum = getRandomDefaultMaximum<T>())
+constexpr auto getRandomDistribution(T inRangeMinimum, T inRangeMaximum) noexcept DFX_RT_ATTR
 {
-	assert(inRangeMinimum <= inRangeMaximum);
+	DFX_RT_ASSERT(inRangeMinimum <= inRangeMaximum);
+	// std::uniform_*_distribution seems to be very much realtime-safe, both conceptually and in clang's implementation
 	if constexpr (std::is_floating_point_v<T>)
 	{
-		return std::uniform_real_distribution<T>(inRangeMinimum, inRangeMaximum);
+		return DFX_RT_UNSAFE(std::uniform_real_distribution<T>(inRangeMinimum, inRangeMaximum));
 	}
 	else if constexpr (std::is_same_v<std::decay_t<T>, bool>)
 	{
-		return std::uniform_int_distribution<uint8_t>(inRangeMinimum ? 1 : 0, inRangeMaximum ? 1 : 0);
+		return DFX_RT_UNSAFE(std::uniform_int_distribution<uint8_t>(inRangeMinimum ? 1 : 0, inRangeMaximum ? 1 : 0));
 	}
 	else if constexpr (std::is_integral_v<T>)
 	{
-		return std::uniform_int_distribution<T>(inRangeMinimum, inRangeMaximum);
+		return DFX_RT_UNSAFE(std::uniform_int_distribution<T>(inRangeMinimum, inRangeMaximum));
 	}
 	else
 	{
 		static_assert(dfx::AlwaysFalse<T>, "unhandled condition");
 	}
+}
+
+//-----------------------------------------------------------------------------
+template <Randomizable T>
+constexpr auto getRandomDistribution() noexcept DFX_RT_ATTR
+{
+	return getRandomDistribution(T(0), getRandomDefaultMaximum<T>());
 }
 
 //-----------------------------------------------------------------------------
@@ -328,11 +337,11 @@ struct PCGRandomEngine
 {
 	using result_type = uint32_t;
 
-	static constexpr result_type min() { return 0U; }
-	static constexpr result_type max() { return std::numeric_limits<result_type>::max(); }
-	explicit PCGRandomEngine(result_type s = 0x333777) : state(s + INCREMENT) {}
-	void seed(result_type s) { state = s + INCREMENT; }
-	result_type operator() ()
+	static constexpr result_type min() noexcept DFX_RT_ATTR { return 0u; }
+	static constexpr result_type max() noexcept DFX_RT_ATTR { return std::numeric_limits<result_type>::max(); }
+	explicit PCGRandomEngine(result_type s = 0x333777) noexcept DFX_RT_ATTR : state(s + INCREMENT) {}
+	void seed(result_type s) noexcept DFX_RT_ATTR { state = s + INCREMENT; }
+	result_type operator()() noexcept DFX_RT_ATTR
 	{
 		uint64_t x = state;
 		const unsigned count = static_cast<unsigned>(x >> 59);
@@ -340,14 +349,14 @@ struct PCGRandomEngine
 		x ^= x >> 18;
 		return rotr32(static_cast<result_type>(x >> 27), count);
 	}
-	void discard(unsigned long long z)
+	void discard(unsigned long long z) noexcept DFX_RT_ATTR
 	{
 		// Just run operator() z times.
 		while (z--) { std::ignore = (*this)(); }
 	}
 
 private:
-	static constexpr result_type rotr32(result_type x, unsigned r)
+	static constexpr result_type rotr32(result_type x, unsigned r) noexcept DFX_RT_ATTR
 	{
 		return x >> r | x << (-r & 31);
 	}
@@ -386,27 +395,27 @@ public:
 	// inclusive range (closed interval)
 	// allow dynamically using a new distribution range (creation is cheap)
 	template <Randomizable T>
-	T next(T const& inRangeMinimum, T const& inRangeMaximum)
+	T next(T const& inRangeMinimum, T const& inRangeMaximum) noexcept DFX_RT_ATTR
 	{
 		return detail::getRandomDistribution<T>(inRangeMinimum, inRangeMaximum)(mEngine);
 	}
 
 	template <Randomizable T>
-	T next()
+	T next() noexcept DFX_RT_ATTR
 	{
 		return detail::getRandomDistribution<T>()(mEngine);
 	}
 
 	// minimum STL-required random engine interface
-	auto operator()()
+	auto operator()() noexcept DFX_RT_ATTR
 	{
 		return mEngine();
 	}
-	static constexpr auto min()
+	static constexpr auto min() noexcept DFX_RT_ATTR
 	{
 		return EngineType::min();
 	}
-	static constexpr auto max()
+	static constexpr auto max() noexcept DFX_RT_ATTR
 	{
 		return EngineType::max();
 	}
@@ -435,13 +444,17 @@ class RandomGenerator
 {
 public:
 	// inclusive range (closed interval)
-	explicit RandomGenerator(RandomSeed inSeedType, T inRangeMinimum = T(0), T inRangeMaximum = detail::getRandomDefaultMaximum<T>())
+	RandomGenerator(RandomSeed inSeedType, T inRangeMinimum, T inRangeMaximum)
 	:	mEngine(inSeedType),
 		mDistribution(inRangeMinimum, inRangeMaximum)
 	{
 	}
+	explicit RandomGenerator(RandomSeed inSeedType)
+	:	RandomGenerator(inSeedType, T(0), detail::getRandomDefaultMaximum<T>())
+	{
+	}
 
-	T next()
+	T next() noexcept DFX_RT_ATTR
 	{
 		return mDistribution(mEngine);
 	}

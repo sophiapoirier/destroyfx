@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of Monomaker.
 
@@ -85,8 +85,8 @@ public:
 	void initialize() override;
 	void cleanup() override;
 
-	void processparameters() override;
-	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) override;
+	void processparameters() noexcept DFX_RT_ATTR override;
+	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR override;
 
 private:
 	dfx::SmoothedValue<float> mInputSelection_left2left, mInputSelection_left2right, mInputSelection_right2left, mInputSelection_right2right;

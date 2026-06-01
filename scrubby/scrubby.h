@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2024  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -106,12 +106,12 @@ public:
 
 	void initialize() override;
 	void cleanup() override;
-	void reset() override;
+	void reset() noexcept DFX_RT_ATTR override;
 
-	void randomizeparameters() override;
+	void randomizeparameters() noexcept DFX_RT_ATTR override;
 
-	void processparameters() override;
-	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) override;
+	void processparameters() noexcept DFX_RT_ATTR override;
+	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR override;
 
 
 private:
@@ -121,10 +121,10 @@ private:
 
 	void initPresets();
 
-	void generateNewTarget(size_t channel);
-	double processPitchConstraint(double readStep) const;
-	void checkTempoSyncStuff();
-	void processMidiNotes();
+	void generateNewTarget(size_t channel) noexcept DFX_RT_ATTR;
+	double processPitchConstraint(double readStep) const noexcept DFX_RT_ATTR;
+	void checkTempoSync() noexcept DFX_RT_ATTR;
+	void processMidiNotes() noexcept DFX_RT_ATTR;
 
 	// the parameters
 	double mSeekRangeSeconds = 0.0, mSeekDur = 0.0, mSeekDurRandMin = 0.0;

@@ -7,23 +7,22 @@
 
 #include "allpass.hpp"
 
+#include <algorithm>
+
 
 namespace freeverb
 {
 
 
 AllPassFilter::AllPassFilter(double timeInSeconds, double sampleRate)
-:   mBuffer(detail::secondsToSamples(timeInSeconds, sampleRate), 0.0f)
+:   mBuffer(detail::secondsToSamples(timeInSeconds, sampleRate), 0.f)
 {
 }
 
 
-void AllPassFilter::clear()
+void AllPassFilter::clear() noexcept [[clang::nonblocking]]
 {
-    for (auto& value : mBuffer)
-    {
-        value = 0.0f;
-    }
+	std::ranges::fill(mBuffer, 0.f);
 }
 
 

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2024  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2026  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -53,10 +53,10 @@ public:
   dfx::StatusCode dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
                                   void* outData) override;
 
-  void randomizeparameter(dfx::ParameterID inParameterID) override;
+  void randomizeparameter(dfx::ParameterID inParameterID) noexcept DFX_RT_ATTR override;
 
-  void clearwindowcache();
-  void updatewindowcache(class PLUGINCORE * geometercore);
+  void clearwindowcache() noexcept DFX_RT_ATTR;
+  void updatewindowcache(class PLUGINCORE * geometercore) noexcept DFX_RT_ATTR;
 
 protected:
   std::optional<dfx::ParameterAssignment> settings_getLearningAssignData(dfx::ParameterID inParameterID) const override;
@@ -82,26 +82,27 @@ class PLUGINCORE final : public DfxPluginCore {
 public:
   explicit PLUGINCORE(DfxPlugin& inDfxPlugin);
 
-  void reset() override;
-  void processparameters() override;
-  void process(std::span<float const> inAudio, std::span<float> outAudio) override;
+  void reset() noexcept DFX_RT_ATTR override;
+  void processparameters() noexcept DFX_RT_ATTR override;
+  void process(std::span<float const> inAudio,
+               std::span<float> outAudio) noexcept DFX_RT_ATTR override;
 
   /* several of these are needed by geometerview. */
   int processw(float const * in, float * out, int samples,
                int * px, float * py, int maxpts,
-               int * tx, float * ty);
+               int * tx, float * ty) noexcept DFX_RT_ATTR;
 
-  int getframesize() const noexcept { return framesize; }
-  float const* getinput() const noexcept { return in0.data(); }
+  int getframesize() const noexcept DFX_RT_ATTR { return framesize; }
+  float const* getinput() const noexcept DFX_RT_ATTR { return in0.data(); }
 
 private:
 
-  void updatewindowsize();
-  void updatewindowshape();
+  void updatewindowsize() noexcept DFX_RT_ATTR;
+  void updatewindowshape() noexcept DFX_RT_ATTR;
 
-  bool iswaveformsource() { return (GetChannelNum() == 0); }
-  void clearwindowcache();
-  void updatewindowcache();
+  bool iswaveformsource() noexcept DFX_RT_ATTR { return (GetChannelNum() == 0); }
+  void clearwindowcache() noexcept DFX_RT_ATTR;
+  void updatewindowcache() noexcept DFX_RT_ATTR;
 
   PLUGIN& geometer;
 
@@ -131,7 +132,7 @@ private:
 
   static int pointops(long pop, int npts, float op_param, int samps,
                       int * px, float * py, int maxpts,
-                      int * tempx, float * tempy);
+                      int * tempx, float * tempy) noexcept DFX_RT_ATTR;
 
   /* shape of envelope */
   long shape {};

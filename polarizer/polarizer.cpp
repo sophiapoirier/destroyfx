@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of Polarizer.
 
@@ -49,13 +49,13 @@ PolarizerDSP::PolarizerDSP(DfxPlugin& inDfxPlugin)
 }
 
 //-----------------------------------------------------------------------------------------
-void PolarizerDSP::reset()
+void PolarizerDSP::reset() noexcept DFX_RT_ATTR
 {
 	mUnaffectedSamples = 0;  // the first sample is polarized
 }
 
 //-----------------------------------------------------------------------------------------
-void PolarizerDSP::processparameters()
+void PolarizerDSP::processparameters() noexcept DFX_RT_ATTR
 {
 	if (auto const value = getparameterifchanged_scalar(kAmount))
 	{
@@ -64,7 +64,7 @@ void PolarizerDSP::processparameters()
 }
 
 //-----------------------------------------------------------------------------------------
-void PolarizerDSP::process(std::span<float const> inAudio, std::span<float> outAudio)
+void PolarizerDSP::process(std::span<float const> inAudio, std::span<float> outAudio) noexcept DFX_RT_ATTR
 {
 	// fetch the current parameter values
 	auto const leapSize = static_cast<decltype(mUnaffectedSamples)>(getparameter_i(kSkip));
@@ -73,7 +73,7 @@ void PolarizerDSP::process(std::span<float const> inAudio, std::span<float> outA
 	// catch up if leap size decreased
 	mUnaffectedSamples = std::min(mUnaffectedSamples, leapSize);
 
-	std::ranges::transform(inAudio, outAudio.begin(), [this, leapSize, implode](auto const inputValue)
+	std::ranges::transform(inAudio, outAudio.begin(), [this, leapSize, implode](auto const inputValue) DFX_RT_LAMBDA
 	{
 		auto outputValue = inputValue;
 		mUnaffectedSamples--;

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2024  Sophia Poirier
+Copyright (C) 2000-2026  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -30,7 +30,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 
 //-----------------------------------------------------------------------------------------
-void Skidder::processSlopeIn()
+void Skidder::processSlopeIn() noexcept DFX_RT_ATTR
 {
 	float baseSlopeAmp = static_cast<float>(mSlopeDur - mSlopeSamples) * mSlopeStep;
 	baseSlopeAmp *= baseSlopeAmp;  // square-scale the gain scalar
@@ -40,7 +40,7 @@ void Skidder::processSlopeIn()
 	{
 		if (mMidiMode == kMidiMode_Trigger)
 		{
-			// start from a 0.0 floor if we are coming in from silence
+			// start from a 0 floor if we are coming in from silence
 			mSampleAmp = baseSlopeAmp;
 		}
 		else if (mMidiMode == kMidiMode_Apply)
@@ -68,7 +68,7 @@ void Skidder::processSlopeIn()
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::processPlateau()
+void Skidder::processPlateau() noexcept DFX_RT_ATTR
 {
 	mMidiIn = false;  // in case there was no slope-in
 
@@ -114,7 +114,7 @@ void Skidder::processPlateau()
 
 
 //-----------------------------------------------------------------------------------------
-void Skidder::processSlopeOut()
+void Skidder::processSlopeOut() noexcept DFX_RT_ATTR
 {
 	float baseSlopeAmp = static_cast<float>(mSlopeSamples) * mSlopeStep;
 	baseSlopeAmp *= baseSlopeAmp;  // square-scale the gain scalar
@@ -144,7 +144,7 @@ void Skidder::processSlopeOut()
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::processValley()
+void Skidder::processValley() noexcept DFX_RT_ATTR
 {
 	if (mMidiIn)
 	{
@@ -258,7 +258,7 @@ void Skidder::processValley()
 }
 
 //-----------------------------------------------------------------------------------------
-float Skidder::processOutput(float in1, float in2, float panGain)
+float Skidder::processOutput(float in1, float in2, float panGain) noexcept DFX_RT_ATTR
 {
 	// output noise
 	if ((mState == SkidState::Valley) && !dfx::math::IsZero(mNoise.getValue()))
@@ -283,13 +283,13 @@ float Skidder::processOutput(float in1, float in2, float panGain)
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
+void Skidder::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR
 {
 	auto const numInputs = inAudio.size();
 	auto const numOutputs = outAudio.size();
 	float const channelScalar = 1.f / static_cast<float>(numOutputs);
 	auto const filterSmoothingStride = dfx::math::GetFrequencyBasedSmoothingStride(getsamplerate());
-	assert(std::ranges::all_of(mEffectualInputAudioBuffers, [inNumFrames](auto const& buffer){ return buffer.size() >= inNumFrames; }));
+	DFX_RT_ASSERT(std::ranges::all_of(mEffectualInputAudioBuffers, [inNumFrames](auto const& buffer) DFX_RT_LAMBDA { return buffer.size() >= inNumFrames; }));
 
 	auto const entryCrossoverFrequency = mCrossoverFrequency_gen;
 	mCrossover->setFrequency(getCrossoverFrequency());
@@ -303,7 +303,7 @@ void Skidder::processaudio(std::span<float const* const> inAudio, std::span<floa
 			mCrossoverFrequency_gen = entryCrossoverFrequency;
 			for (size_t samp = 0; samp < inNumFrames; samp++)
 			{
-				auto const [persistent, effectual] = [this, inAudio, ch, samp]() -> std::pair<float, float>
+				auto const [persistent, effectual] = [this, inAudio, ch, samp] DFX_RT_LAMBDA -> std::pair<float, float>
 				{
 					if (mCrossoverMode == kCrossoverMode_All)
 					{
@@ -336,7 +336,7 @@ void Skidder::processaudio(std::span<float const* const> inAudio, std::span<floa
 		}
 		else if (ch == 0)
 		{
-			assert(mAsymmetricalInputAudioBuffer.size() >= inNumFrames);
+			DFX_RT_ASSERT(mAsymmetricalInputAudioBuffer.size() >= inNumFrames);
 			// handle the special case of mismatched input/output channel counts that we allow
 			// by repeating the mono-input to multiple (faked) input channels
 			// (copying to an intermediate input buffer in case processing in-place)
@@ -405,7 +405,7 @@ void Skidder::processaudio(std::span<float const* const> inAudio, std::span<floa
 
 		case kMidiMode_Apply:
 		{
-			auto const sumInPlace = [](float const* input, float* output, size_t count)
+			constexpr auto sumInPlace = [](float const* input, float* output, size_t count) DFX_RT_LAMBDA
 			{
 				std::transform(input, std::next(input, count), output, output, std::plus<>{});
 			};

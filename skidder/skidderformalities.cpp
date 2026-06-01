@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2024  Sophia Poirier
+Copyright (C) 2000-2026  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -127,7 +127,7 @@ void Skidder::cleanup()
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::reset()
+void Skidder::reset() noexcept DFX_RT_ATTR
 {
 	if (mCrossover)
 	{
@@ -149,7 +149,7 @@ void Skidder::reset()
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::processparameters()
+void Skidder::processparameters() noexcept DFX_RT_ATTR
 {
 	mRate_Hz = getparameter_f(kRate_Hz);
 	mRateIndex = getparameter_index(kRate_Sync);
@@ -226,7 +226,7 @@ void Skidder::processparameters()
 	mUseRandomPulsewidth = (mPulsewidthRandMin < mPulsewidth);
 }
 
-double Skidder::getCrossoverFrequency() const
+double Skidder::getCrossoverFrequency() const noexcept DFX_RT_ATTR
 {
 	return expandparametervalue(kCrossoverFrequency, mCrossoverFrequency_gen.getValue());
 }

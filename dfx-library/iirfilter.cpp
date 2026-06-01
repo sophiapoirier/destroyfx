@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2023  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -53,7 +53,7 @@ struct PreCoeff
 	double mA {};  // peak shelf
 	double mBeta {};  // shelf
 
-	PreCoeff(double inFrequency, double inQ, double inSampleRate)
+	PreCoeff(double inFrequency, double inQ, double inSampleRate) noexcept DFX_RT_ATTR
 	:	mOmega(2. * std::numbers::pi_v<double> * inFrequency / inSampleRate),
 		mSinOmega(std::sin(mOmega)),
 		mCosOmega(std::cos(mOmega)),
@@ -62,7 +62,7 @@ struct PreCoeff
 	{
 	}
 
-	PreCoeff(double inFrequency, double inQ, double inGain, double inSampleRate)
+	PreCoeff(double inFrequency, double inQ, double inGain, double inSampleRate) noexcept DFX_RT_ATTR
 	:	PreCoeff(inFrequency, inQ, inSampleRate)
 	{
 		mA = std::sqrt(inGain);
@@ -71,12 +71,12 @@ struct PreCoeff
 };
 
 //------------------------------------------------------------------------
-static dfx::IIRFilter::Coefficients CalculateCoefficients(dfx::IIRFilter::FilterType inFilterType, PreCoeff const& inPreCoeff)
+static dfx::IIRFilter::Coefficients CalculateCoefficients(dfx::IIRFilter::FilterType inFilterType, PreCoeff const& inPreCoeff) noexcept DFX_RT_ATTR
 {
 #ifdef DFX_IIRFILTER_USE_OPTIMIZATION_FOR_EXCLUSIVELY_LP_HP_NOTCH
-	assert((inFilterType == dfx::IIRFilter::FilterType::Lowpass) ||
-		   (inFilterType == dfx::IIRFilter::FilterType::Highpass) ||
-		   (inFilterType == dfx::IIRFilter::FilterType::Notch));
+	DFX_RT_ASSERT((inFilterType == dfx::IIRFilter::FilterType::Lowpass) ||
+				  (inFilterType == dfx::IIRFilter::FilterType::Highpass) ||
+				  (inFilterType == dfx::IIRFilter::FilterType::Notch));
 #endif
 
 	dfx::IIRFilter::Coefficients coeff;
@@ -111,7 +111,7 @@ static dfx::IIRFilter::Coefficients CalculateCoefficients(dfx::IIRFilter::Filter
 			break;
 
 		case dfx::IIRFilter::FilterType::Peak:
-			assert(!dfx::math::IsZero(inPreCoeff.mA));
+			DFX_RT_ASSERT(!dfx::math::IsZero(inPreCoeff.mA));
 			b0 = 1. + (inPreCoeff.mAlpha / inPreCoeff.mA);
 			coeff.mIn = 1. + (inPreCoeff.mAlpha * inPreCoeff.mA);
 			coeff.mPrevIn = coeff.mPrevOut = -2. * inPreCoeff.mCosOmega;
@@ -158,7 +158,7 @@ static dfx::IIRFilter::Coefficients CalculateCoefficients(dfx::IIRFilter::Filter
 	}
 	else
 	{
-		assert(false);
+		DFX_RT_ASSERT(false);
 	}
 
 	return coeff;
@@ -168,35 +168,35 @@ static dfx::IIRFilter::Coefficients CalculateCoefficients(dfx::IIRFilter::Filter
 #pragma mark -
 
 //------------------------------------------------------------------------
-dfx::IIRFilter::IIRFilter(double inSampleRate)
+dfx::IIRFilter::IIRFilter(double inSampleRate) noexcept DFX_RT_ATTR
 :	mSampleRate(inSampleRate)
 {
-	assert(inSampleRate > 0.);
+	DFX_RT_ASSERT(inSampleRate > 0.);
 }
 
 //------------------------------------------------------------------------
-void dfx::IIRFilter::reset() noexcept
+void dfx::IIRFilter::reset() noexcept DFX_RT_ATTR
 {
 	mPrevIn = mPrevPrevIn = mPrevOut = mPrevPrevOut = mPrevPrevPrevOut = mCurrentOut = 0.0f;
 }
 
 //------------------------------------------------------------------------
-void dfx::IIRFilter::setCoefficients(Coefficients const& inCoefficients)
+void dfx::IIRFilter::setCoefficients(Coefficients const& inCoefficients) noexcept DFX_RT_ATTR
 {
 	mCoeff = inCoefficients;
 }
 
 //------------------------------------------------------------------------
-dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setCoefficients(FilterType inFilterType, double inFrequency, double inQ, double inGain)
+dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setCoefficients(FilterType inFilterType, double inFrequency, double inQ, double inGain) noexcept DFX_RT_ATTR
 {
-	assert(inFrequency > 0.);
-	assert(!std::isinf(inFrequency));
-	assert(!std::isnan(inFrequency));
-	assert(inQ > 0.);
-	assert(!std::isinf(inQ));
-	assert(!std::isnan(inQ));
-	assert(!std::isinf(inGain));
-	assert(!std::isnan(inGain));
+	DFX_RT_ASSERT(inFrequency > 0.);
+	DFX_RT_ASSERT(!std::isinf(inFrequency));
+	DFX_RT_ASSERT(!std::isnan(inFrequency));
+	DFX_RT_ASSERT(inQ > 0.);
+	DFX_RT_ASSERT(!std::isinf(inQ));
+	DFX_RT_ASSERT(!std::isnan(inQ));
+	DFX_RT_ASSERT(!std::isinf(inGain));
+	DFX_RT_ASSERT(!std::isnan(inGain));
 
 	mFilterType = inFilterType;
 	mFilterFrequency = inFrequency;
@@ -208,17 +208,17 @@ dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setCoefficients(FilterType i
 }
 
 //------------------------------------------------------------------------
-dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setCoefficients(FilterType inFilterType, double inFrequency, double inQ)
+dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setCoefficients(FilterType inFilterType, double inFrequency, double inQ) noexcept DFX_RT_ATTR
 {
-	assert((inFilterType != FilterType::Peak) && 
-		   (inFilterType != FilterType::LowShelf) && 
-		   (inFilterType != FilterType::HighShelf));
-	assert(inFrequency > 0.);
-	assert(!std::isinf(inFrequency));
-	assert(!std::isnan(inFrequency));
-	assert(inQ > 0.);
-	assert(!std::isinf(inQ));
-	assert(!std::isnan(inQ));
+	DFX_RT_ASSERT((inFilterType != FilterType::Peak) && 
+				  (inFilterType != FilterType::LowShelf) && 
+				  (inFilterType != FilterType::HighShelf));
+	DFX_RT_ASSERT(inFrequency > 0.);
+	DFX_RT_ASSERT(!std::isinf(inFrequency));
+	DFX_RT_ASSERT(!std::isnan(inFrequency));
+	DFX_RT_ASSERT(inQ > 0.);
+	DFX_RT_ASSERT(!std::isinf(inQ));
+	DFX_RT_ASSERT(!std::isnan(inQ));
 
 	mFilterType = inFilterType;
 	mFilterFrequency = inFrequency;
@@ -230,7 +230,7 @@ dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setCoefficients(FilterType i
 }
 
 //------------------------------------------------------------------------
-void dfx::IIRFilter::setSampleRate(double inSampleRate)
+void dfx::IIRFilter::setSampleRate(double inSampleRate) noexcept DFX_RT_ATTR
 {
 	mSampleRate = inSampleRate;
 	// update after a change in sample rate
@@ -238,13 +238,13 @@ void dfx::IIRFilter::setSampleRate(double inSampleRate)
 }
 
 //------------------------------------------------------------------------
-dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setLowpassCoefficients(double inCutoffFrequency)
+dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setLowpassCoefficients(double inCutoffFrequency) noexcept DFX_RT_ATTR
 {
 	return setCoefficients(FilterType::Lowpass, inCutoffFrequency, kDefaultQ_LP_HP);
 }
 
 //------------------------------------------------------------------------
-static void ApplyGateFadeOut(dfx::IIRFilter::Coefficients& ioCoefficients, double inLevel)
+static void ApplyGateFadeOut(dfx::IIRFilter::Coefficients& ioCoefficients, double inLevel) noexcept DFX_RT_ATTR
 {
 	// level below which the low-pass or high-pass gate begins gain-fading filter coefficients
 	constexpr double levelFadeOutThreshold = 0.1;
@@ -260,10 +260,10 @@ static void ApplyGateFadeOut(dfx::IIRFilter::Coefficients& ioCoefficients, doubl
 }
 
 //------------------------------------------------------------------------
-dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setLowpassGateCoefficients(double inLevel)
+dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setLowpassGateCoefficients(double inLevel) noexcept DFX_RT_ATTR
 {
-	assert(inLevel >= 0.);
-	assert(inLevel <= 1.);
+	DFX_RT_ASSERT(inLevel >= 0.);
+	DFX_RT_ASSERT(inLevel <= 1.);
 
 	auto const cutoffFrequency = DfxParam::expand(inLevel, kGateFrequencyMin, kGateFrequencyMax, DfxParam::Curve::Log);
 	auto const nyquist = mSampleRate * 0.5;
@@ -279,17 +279,17 @@ dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setLowpassGateCoefficients(d
 }
 
 //------------------------------------------------------------------------
-dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setHighpassCoefficients(double inCutoffFrequency)
+dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setHighpassCoefficients(double inCutoffFrequency) noexcept DFX_RT_ATTR
 {
-	assert(inCutoffFrequency <= mSampleRate);
+	DFX_RT_ASSERT(inCutoffFrequency <= mSampleRate);
 	return setCoefficients(FilterType::Highpass, inCutoffFrequency, kDefaultQ_LP_HP);
 }
 
 //------------------------------------------------------------------------
-dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setHighpassGateCoefficients(double inLevel)
+dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setHighpassGateCoefficients(double inLevel) noexcept DFX_RT_ATTR
 {
-	assert(inLevel >= 0.);
-	assert(inLevel <= 1.);
+	DFX_RT_ASSERT(inLevel >= 0.);
+	DFX_RT_ASSERT(inLevel <= 1.);
 
 	if (inLevel >= 1.)
 	{
@@ -305,13 +305,13 @@ dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setHighpassGateCoefficients(
 }
 
 //------------------------------------------------------------------------
-dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setBandpassCoefficients(double inCenterFrequency, double inQ)
+dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setBandpassCoefficients(double inCenterFrequency, double inQ) noexcept DFX_RT_ATTR
 {
 	return setCoefficients(FilterType::Bandpass, inCenterFrequency, inQ);
 }
 
 //------------------------------------------------------------------------
-void dfx::IIRFilter::copyCoefficients(IIRFilter const& inSourceFilter) noexcept
+void dfx::IIRFilter::copyCoefficients(IIRFilter const& inSourceFilter) noexcept DFX_RT_ATTR
 {
 	mCoeff.mIn = inSourceFilter.mCoeff.mIn;
 	mCoeff.mPrevIn = inSourceFilter.mCoeff.mPrevIn;
@@ -359,7 +359,7 @@ dfx::Crossover::Crossover(size_t inChannelCount, double inSampleRate, double inF
 }
 
 //------------------------------------------------------------------------
-void dfx::Crossover::setFrequency(double inFrequency)
+void dfx::Crossover::setFrequency(double inFrequency) noexcept DFX_RT_ATTR
 {
 #if DFX_CROSSOVER_LINKWITZ_RILEY_MUSICDSP
 	// https://www.musicdsp.org/en/latest/Filters/266-4th-order-linkwitz-riley-filters.html
@@ -390,11 +390,11 @@ void dfx::Crossover::setFrequency(double inFrequency)
 	mHighpassCoeff.mA2 = 6. * k4 * a_tmp_inv;
 
 #else
-	auto const setCoefficients = [](auto& channelFilters, auto const& coeff)
+	auto const setCoefficients = [](auto& channelFilters, auto const& coeff) DFX_RT_LAMBDA
 	{
-		std::ranges::for_each(channelFilters, [&coeff](auto& chainedFilters)
+		std::ranges::for_each(channelFilters, [&coeff](auto& chainedFilters) DFX_RT_LAMBDA
 		{
-			std::ranges::for_each(chainedFilters, [&coeff](auto& filter)
+			std::ranges::for_each(chainedFilters, [&coeff](auto& filter) DFX_RT_LAMBDA
 			{
 				filter.setCoefficients(coeff);
 			});
@@ -407,21 +407,21 @@ void dfx::Crossover::setFrequency(double inFrequency)
 }
 
 //------------------------------------------------------------------------
-void dfx::Crossover::reset()
+void dfx::Crossover::reset() noexcept DFX_RT_ATTR
 {
 #if DFX_CROSSOVER_LINKWITZ_RILEY_MUSICDSP
-	auto const clearHistory = [](History& history)
+	constexpr auto clearHistory = [](History& history) DFX_RT_LAMBDA
 	{
 		history.reset();
 	};
 	std::ranges::for_each(mLowpassHistories, clearHistory);
 	std::ranges::for_each(mHighpassHistories, clearHistory);
 #else
-	auto const resetFilters = [](auto& channelFilters)
+	auto const resetFilters = [](auto& channelFilters) DFX_RT_LAMBDA
 	{
-		std::ranges::for_each(channelFilters, [](auto& chainedFilters)
+		std::ranges::for_each(channelFilters, [](auto& chainedFilters) DFX_RT_LAMBDA
 		{
-			std::ranges::for_each(chainedFilters, [](auto& filter)
+			std::ranges::for_each(chainedFilters, [](auto& filter) DFX_RT_LAMBDA
 			{
 				filter.reset();
 			});
@@ -433,10 +433,10 @@ void dfx::Crossover::reset()
 }
 
 //------------------------------------------------------------------------
-std::pair<float, float> dfx::Crossover::process(size_t inChannel, float inSample)
+std::pair<float, float> dfx::Crossover::process(size_t inChannel, float inSample) noexcept DFX_RT_ATTR
 {
 #if DFX_CROSSOVER_LINKWITZ_RILEY_MUSICDSP
-	auto const process = [input = inSample, this](InputCoeff const& coeff, History& history)
+	auto const process = [input = inSample, this](InputCoeff const& coeff, History& history) DFX_RT_LAMBDA
 	{
 		double const output = dfx::math::ClampDenormal((coeff.mA0 * (input + history.mX4)) + (coeff.mA1 * (history.mX1 + history.mX3)) + (coeff.mA2 * history.mX2) - (mB1 * history.mY1) - (mB2 * history.mY2) - (mB3 * history.mY3) - (mB4 * history.mY4));
 		history.mX4 = history.mX3;
@@ -451,9 +451,9 @@ std::pair<float, float> dfx::Crossover::process(size_t inChannel, float inSample
 	};
 	return { process(mLowpassCoeff, mLowpassHistories[inChannel]), process(mHighpassCoeff, mHighpassHistories[inChannel]) };
 #else
-	auto const accumulateFilters = [inSample](auto& filters)
+	auto const accumulateFilters = [inSample](auto& filters) DFX_RT_LAMBDA
 	{
-		return std::accumulate(filters.begin(), filters.end(), inSample, [](auto const value, auto& filter)
+		return std::accumulate(filters.begin(), filters.end(), inSample, [](auto const value, auto& filter) DFX_RT_LAMBDA
 		{
 			return filter.process(value);
 		});

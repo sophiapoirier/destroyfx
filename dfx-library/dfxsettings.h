@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2024  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -147,12 +147,12 @@ public:
 #endif
 
 	// handlers for the types of MIDI events that we support
-	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames);
-	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames);
-	void handleAllNotesOff(int inMidiChannel, size_t inOffsetFrames);
-	void handleChannelAftertouch(int inMidiChannel, int inValue, size_t inOffsetFrames);
-	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames);
-	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, size_t inOffsetFrames);
+	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	void handleAllNotesOff(int inMidiChannel, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	void handleChannelAftertouch(int inMidiChannel, int inValue, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
 
 
 	// - - - - - - - - - MIDI learn - - - - - - - - -
@@ -164,23 +164,24 @@ public:
 						 int inEventNum, int inEventNum2 = 0, 
 						 dfx::MidiEventBehaviorFlags inEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
 						 int inDataInt1 = 0, int inDataInt2 = 0, 
-						 float inDataFloat1 = 0.0f, float inDataFloat2 = 0.0f);
+						 float inDataFloat1 = 0.f, float inDataFloat2 = 0.f) noexcept DFX_RT_ATTR;
 	// remove a parameter's MIDI event assignment
-	void unassignParameter(dfx::ParameterID inParameterID);
+	void unassignParameter(dfx::ParameterID inParameterID) noexcept DFX_RT_ATTR;
 
 	// define or report the actively learning parameter during MIDI learn mode
-	void setLearner(dfx::ParameterID inParameterID, dfx::MidiEventBehaviorFlags inEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
+	void setLearner(dfx::ParameterID inParameterID, 
+					dfx::MidiEventBehaviorFlags inEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
 					int inDataInt1 = 0, int inDataInt2 = 0, 
-					float inDataFloat1 = 0.0f, float inDataFloat2 = 0.0f);
-	auto getLearner() const noexcept
+					float inDataFloat1 = 0.f, float inDataFloat2 = 0.f) noexcept DFX_RT_ATTR;
+	auto getLearner() const noexcept DFX_RT_ATTR
 	{
 		return mLearner.load();
 	}
 
 	// turn MIDI learning on or off
-	void setLearning(bool inLearnMode);
+	void setLearning(bool inLearnMode) noexcept DFX_RT_ATTR;
 	// report whether or not MIDI learn mode is active
-	auto isLearning() const noexcept
+	auto isLearning() const noexcept DFX_RT_ATTR
 	{
 		return mMidiLearn.load();
 	}
@@ -242,27 +243,19 @@ public:
 	// true means allowing a given MIDI event to be assigned to only one parameter; 
 	// false means that a single event can be assigned to more than one parameter
 	void setSteal(bool inMode) noexcept;
-	auto getSteal() const noexcept
+	auto getSteal() const noexcept DFX_RT_ATTR
 	{
 		return mStealAssignments.load();
 	}
 
-	void setDeactivateLearningUponLearnt(bool inMode) noexcept
+	void setDeactivateLearningUponLearnt(bool inMode) noexcept DFX_RT_ATTR
 	{
 		mDeactivateLearningUponLearnt = inMode;
-	}
-	auto getDeactivateLearningUponLearnt() const noexcept
-	{
-		return mDeactivateLearningUponLearnt.load();
 	}
 
 	void setAllowChannelAftertouchEvents(bool inMode = true) noexcept
 	{
 		mAllowChannelAftertouchEvents = inMode;
-	}
-	auto getAllowChannelAftertouchEvents() const noexcept
-	{
-		return mAllowChannelAftertouchEvents;
 	}
 
 	// true means that pitchbend events can be assigned to parameters and 
@@ -271,10 +264,6 @@ public:
 	{
 		mAllowPitchbendEvents = inMode;
 	}
-	auto getAllowPitchbendEvents() const noexcept
-	{
-		return mAllowPitchbendEvents;
-	}
 
 	// true means that MIDI note events can be assigned to parameters and 
 	// used to control those parameters; false means don't use notes like that
@@ -282,15 +271,11 @@ public:
 	{
 		mAllowNoteEvents = inMode;
 	}
-	auto getAllowNoteEvents() const noexcept
-	{
-		return mAllowNoteEvents;
-	}
 
 	// true means that MIDI channel in events and assignments matters; 
 	// false means operate in MIDI omni mode
 	void setUseChannel(bool inMode) noexcept;
-	auto getUseChannel() const noexcept
+	auto getUseChannel() const noexcept DFX_RT_ATTR
 	{
 		return mUseChannel.load();
 	}
@@ -394,7 +379,7 @@ private:
 	void debugAlertCorruptData(char const* inDataItemName, size_t inDataItemSize, size_t inDataTotalSize) const;
 
 	// a simple but handy check to see if a parameter tag is valid
-	bool isValidParameterID(dfx::ParameterID inParameterID) const noexcept
+	bool isValidParameterID(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 	{
 		return (inParameterID < mNumParameters);
 	}
@@ -405,8 +390,8 @@ private:
 	static size_t sizeOfGenPreset(size_t inParameterCount) noexcept;
 
 #if TARGET_PLUGIN_USES_MIDI
-	void handleMidi_assignParameter(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, size_t inOffsetFrames);
-	void handleMidi_automateParameters(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, int inByte2, size_t inOffsetFrames, bool inIsNoteOn = false);
+	void handleMidi_assignParameter(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	void handleMidi_automateParameters(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, int inByte2, size_t inOffsetFrames, bool inIsNoteOn = false) noexcept DFX_RT_ATTR;
 #endif // TARGET_PLUGIN_USES_MIDI
 
 

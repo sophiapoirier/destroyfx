@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2024 Sophia Poirier
+Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2026 Sophia Poirier
 All rights reserved.
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. 
@@ -139,8 +139,8 @@ public:
 
 	void idle() override;
 
-	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) override;
-	void processparameters() override;
+	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR override;
+	void processparameters() noexcept DFX_RT_ATTR override;
 
 	dfx::StatusCode dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex,
 										size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
@@ -175,18 +175,18 @@ private:
 	std::expected<UniqueAliasHandle, OSStatus> createAudioFileAlias() const;
 	OSStatus resolveAudioFileAlias(AliasHandle inAlias);
 
-	void processMidiEvent(size_t inEventIndex);
-	void processScratch(bool inSetParameter = false);
-	void processScratchStop();
-	void processPitch();
-	void processDirection();
-	void calculateSpinSpeeds();
-	void setPlay(bool inPlayState, bool inShouldSendNotification = true);
+	void processMidiEvent(size_t inEventIndex) noexcept DFX_RT_ATTR;
+	void processScratch(bool inSetParameter = false) noexcept DFX_RT_ATTR;
+	void processScratchStop() noexcept DFX_RT_ATTR;
+	void processPitch() noexcept DFX_RT_ATTR;
+	void processDirection() noexcept DFX_RT_ATTR;
+	void calculateSpinSpeeds() noexcept DFX_RT_ATTR;
+	void setPlay(bool inPlayState, bool inShouldSendNotification = true) noexcept DFX_RT_ATTR;
 
-	void noteOn(int inNote, int inVelocity, size_t inOffsetFrames);
-	void stopNote(bool inStopPlay = false);
-	void playNote(bool inValue);
-	static int fixMidiData(dfx::ParameterID inParameterID, int inValue) noexcept;
+	void noteOn(int inNote, int inVelocity, size_t inOffsetFrames) noexcept DFX_RT_ATTR;
+	void stopNote(bool inStopPlay = false) noexcept DFX_RT_ATTR;
+	void playNote(bool inValue) noexcept DFX_RT_ATTR;
+	static constexpr int fixMidiData(dfx::ParameterID inParameterID, int inValue) noexcept DFX_RT_ATTR;
 
 	OSStatus PostNotification_AudioFileNotFound(CFStringRef inFileName);
 

@@ -36,9 +36,9 @@ ReverbModel::ReverbModel(double sampleRate)
 }
 
 
-void ReverbModel::clear()
+void ReverbModel::clear() noexcept [[clang::nonblocking]]
 {
-    const auto clearItem = [](auto& item)
+    const auto clearItem = [](auto& item) noexcept [[clang::nonblocking]]
     {
         item.clear();
     };
@@ -49,7 +49,7 @@ void ReverbModel::clear()
 }
 
 
-void ReverbModel::process(const float* inAudioL, const float* inAudioR, float* outAudioL, float* outAudioR, size_t frameCount)
+void ReverbModel::process(const float* inAudioL, const float* inAudioR, float* outAudioL, float* outAudioR, size_t frameCount) noexcept [[clang::nonblocking]]
 {
     mRoomSizeSmoothed.setValue(mFreezeMode ? 1.0f : mRoomSize);
     mDampingSmoothed.setValue(mFreezeMode ? 0.0f : (mDampingNormalized * kDampingScale));
@@ -98,7 +98,7 @@ void ReverbModel::process(const float* inAudioL, const float* inAudioR, float* o
 }
 
 
-void ReverbModel::process(const float* inAudio, float* outAudio, size_t frameCount)
+void ReverbModel::process(const float* inAudio, float* outAudio, size_t frameCount) noexcept [[clang::nonblocking]]
 {
     mRoomSizeSmoothed.setValue(mFreezeMode ? 1.0f : mRoomSize);
     mDampingSmoothed.setValue(mFreezeMode ? 0.0f : (mDampingNormalized * kDampingScale));
@@ -131,73 +131,73 @@ void ReverbModel::process(const float* inAudio, float* outAudio, size_t frameCou
 }
 
 
-void ReverbModel::setRoomSize(float amount)
+void ReverbModel::setRoomSize(float amount) noexcept [[clang::nonblocking]]
 {
     mRoomSize = amount;
 }
 
 
-float ReverbModel::getRoomSize() const
+float ReverbModel::getRoomSize() const noexcept [[clang::nonblocking]]
 {
     return mRoomSize;
 }
 
 
-void ReverbModel::setDamping(float amount)
+void ReverbModel::setDamping(float amount) noexcept [[clang::nonblocking]]
 {
     mDampingNormalized = amount;
 }
 
 
-float ReverbModel::getDamping() const
+float ReverbModel::getDamping() const noexcept [[clang::nonblocking]]
 {
     return mDampingNormalized;
 }
 
 
-void ReverbModel::setDryLevel(float amount)
+void ReverbModel::setDryLevel(float amount) noexcept [[clang::nonblocking]]
 {
     mDryLevel = amount;
 }
 
 
-float ReverbModel::getDryLevel() const
+float ReverbModel::getDryLevel() const noexcept [[clang::nonblocking]]
 {
     return mDryLevel;
 }
 
 
-void ReverbModel::setWetLevel(float amount)
+void ReverbModel::setWetLevel(float amount) noexcept [[clang::nonblocking]]
 {
     mWetLevel = amount;
 }
 
 
-float ReverbModel::getWetLevel() const
+float ReverbModel::getWetLevel() const noexcept [[clang::nonblocking]]
 {
     return mWetLevel;
 }
 
 
-void ReverbModel::setWidth(float amount)
+void ReverbModel::setWidth(float amount) noexcept [[clang::nonblocking]]
 {
     mWidth = amount;
 }
 
 
-float ReverbModel::getWidth() const
+float ReverbModel::getWidth() const noexcept [[clang::nonblocking]]
 {
     return mWidth;
 }
 
 
-void ReverbModel::setFreezeMode(bool enabled)
+void ReverbModel::setFreezeMode(bool enabled) noexcept [[clang::nonblocking]]
 {
     mFreezeMode = enabled;
 }
 
 
-bool ReverbModel::getFreezeMode() const
+bool ReverbModel::getFreezeMode() const noexcept [[clang::nonblocking]]
 {
     return mFreezeMode;
 }

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2024  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -34,7 +34,7 @@ To contact the author, use the contact form at http://destroyfx.org
 //-----------------------------------------------------------------------------
 // computes the principle branch of the Lambert W function
 // { LambertW(x) = W(x), where W(x) * exp(W(x)) = x }
-inline double LambertW(double inValue)
+inline double LambertW(double inValue) noexcept DFX_RT_ATTR
 {
 	auto const x = std::fabs(inValue);
 	if (x <= 500.)
@@ -48,7 +48,7 @@ inline double LambertW(double inValue)
 }
 
 //-----------------------------------------------------------------------------------------
-inline double calculateTargetSpeed(double a, double n, double k)
+inline double calculateTargetSpeed(double a, double n, double k) noexcept DFX_RT_ATTR
 {
 	a = std::fabs(a);
 	n = std::fabs(n);
@@ -108,7 +108,7 @@ inline double calculateTargetSpeed(double a, double n, double k)
 
 
 //-----------------------------------------------------------------------------------------
-void Scrubby::checkTempoSyncStuff()
+void Scrubby::checkTempoSync() noexcept DFX_RT_ATTR
 {
 	// figure out the current tempo if we're doing tempo sync
 	if (mTempoSync)
@@ -146,7 +146,7 @@ void Scrubby::checkTempoSyncStuff()
 }
 
 //-----------------------------------------------------------------------------------------
-void Scrubby::generateNewTarget(size_t channel)
+void Scrubby::generateNewTarget(size_t channel) noexcept DFX_RT_ATTR
 {
 	double currentSeekRate {};
 
@@ -337,7 +337,7 @@ static double const kLn2ToTheOneTwelfthPower = std::log(std::pow(2., 1. / 12.));
 //constexpr double kLn2ToTheOneTwelfthPower = 0.05776226504666215;
 
 //-----------------------------------------------------------------------------------------
-double Scrubby::processPitchConstraint(double readStep) const
+double Scrubby::processPitchConstraint(double readStep) const noexcept DFX_RT_ATTR
 {
 	bool const backwards = (readStep < 0.0);  // traveling backwards through the buffer?
 	double const direction_f = backwards ? -1.0 : 1.0;  // direction scalar
@@ -353,7 +353,8 @@ double Scrubby::processPitchConstraint(double readStep) const
 	auto semitone = static_cast<long>(semitone_f + 0.1);  // add a little bit to prevent any float truncation errors
 
 	// . . . search for a possible active note to constrain to . . .
-	auto octave = std::div(semitone, 12L);  // the octave and semitone transposition
+	// std::div seems to be realtime-safe, both conceptually and in some implementations
+	auto octave = DFX_RT_UNSAFE(std::div(semitone, 12L));  // the octave and semitone transposition
 	// remainder will be used as the index to the mPitchSteps array,
 	// so it must be positive, and we compensate for adding 12 to it
 	// by subtracting an octave, so it all evens out
@@ -412,12 +413,12 @@ double Scrubby::processPitchConstraint(double readStep) const
 
 
 //-----------------------------------------------------------------------------------------
-void Scrubby::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
+void Scrubby::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR
 {
 	auto const numChannels = outAudio.size();
 
 	processMidiNotes();
-	checkTempoSyncStuff();
+	checkTempoSync();
 
 	auto const notesActive = std::ranges::any_of(mPitchSteps, std::identity{});
 	// if we're using pitch constraint and the previous block had no notes active,
@@ -484,7 +485,7 @@ void Scrubby::processaudio(std::span<float const* const> inAudio, std::span<floa
 			// copy the left channel's new values if we're in unified channels mode
 			if (!mSplitChannels)
 			{
-				auto const fillWithFirst = [](auto& container)
+				constexpr auto fillWithFirst = [](auto& container) DFX_RT_LAMBDA
 				{
 					std::fill(std::next(container.begin()), container.end(), container.front());
 				};
@@ -531,8 +532,8 @@ void Scrubby::processaudio(std::span<float const* const> inAudio, std::span<floa
 				{
 					mReadPos[ch] += mMaxAudioBufferSize_f;
 				}
-				assert(static_cast<long>(mReadPos[ch]) >= 0);
-				assert(static_cast<long>(mReadPos[ch]) < mMaxAudioBufferSize);
+				DFX_RT_ASSERT(static_cast<long>(mReadPos[ch]) >= 0);
+				DFX_RT_ASSERT(static_cast<long>(mReadPos[ch]) < mMaxAudioBufferSize);
 			}
 		}
 
@@ -541,7 +542,7 @@ void Scrubby::processaudio(std::span<float const* const> inAudio, std::span<floa
 }
 
 //-----------------------------------------------------------------------------------------
-void Scrubby::processMidiNotes()
+void Scrubby::processMidiNotes() noexcept DFX_RT_ATTR
 {
 	std::array<bool, kNumPitchSteps> oldNotes {};
 	for (size_t i = 0; i < oldNotes.size(); i++)

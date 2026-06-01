@@ -158,9 +158,11 @@ UInt32 FreeverbAU::SupportedNumChannels(const AUChannelInfo** outInfo)
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // this is where the audio processing is done
+AUSDK_BEGIN_NO_RT_NOEXCEPT_WARNINGS
 OSStatus FreeverbAU::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 
 										const AudioBufferList& inBuffer, AudioBufferList& outBuffer, 
 										UInt32 inFramesToProcess) AUSDK_RTSAFE
+AUSDK_END_NO_RT_NOEXCEPT_WARNINGS
 {
 	// update internal parameter values
 	mModel->setFreezeMode(GetParameter(kParam_FreezeMode));

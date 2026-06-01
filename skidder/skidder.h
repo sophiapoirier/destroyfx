@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2024  Sophia Poirier
+Copyright (C) 2000-2026  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -90,16 +90,17 @@ public:
 
 	void initialize() override;
 	void cleanup() override;
-	void reset() override;
+	void reset() noexcept DFX_RT_ATTR override;
 
-	void processparameters() override;
-	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) override;
+	void processparameters() noexcept DFX_RT_ATTR override;
+	void processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR override;
 
 	// stuff for extending DfxSettings
 	void settings_doLearningAssignStuff(dfx::ParameterID parameterID, dfx::MidiEventType eventType, int eventChannel,
 										int eventNum, size_t offsetFrames, int eventNum2 = 0,
 										dfx::MidiEventBehaviorFlags eventBehaviourFlags = dfx::kMidiEventBehaviorFlag_None,
-										int data1 = 0, int data2 = 0, float fdata1 = 0.0f, float fdata2 = 0.0f) override;
+										int data1 = 0, int data2 = 0,
+										float fdata1 = 0.0f, float fdata2 = 0.0f) noexcept DFX_RT_ATTR override;
 //	void settings_unassignParam(long tag) override;
 
 	// true for unified single-point automation of both parameter range values
@@ -118,19 +119,19 @@ private:
 		Valley
 	};
 
-	void processSlopeIn();
-	void processPlateau();
-	void processSlopeOut();
-	void processValley();
-	float processOutput(float in1, float in2, float panGain);
-	void processMidiNotes();
+	void processSlopeIn() noexcept DFX_RT_ATTR;
+	void processPlateau() noexcept DFX_RT_ATTR;
+	void processSlopeOut() noexcept DFX_RT_ATTR;
+	void processValley() noexcept DFX_RT_ATTR;
+	float processOutput(float in1, float in2, float panGain) noexcept DFX_RT_ATTR;
+	void processMidiNotes() noexcept DFX_RT_ATTR;
 
-	void noteOn(size_t offsetFrames);
-	void noteOff();
-	bool isAnyNoteOn() const;
-	void resetMidi();
+	void noteOn(size_t offsetFrames) noexcept DFX_RT_ATTR;
+	void noteOff() noexcept DFX_RT_ATTR;
+	bool isAnyNoteOn() const noexcept DFX_RT_ATTR;
+	void resetMidi() noexcept DFX_RT_ATTR;
 
-	double getCrossoverFrequency() const;
+	double getCrossoverFrequency() const noexcept DFX_RT_ATTR;
 
 	// the parameters
 	double mRate_Hz = 1., mRate_Sync = 1.;

@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2010-2023  Sophia Poirier
+Copyright (C) 2010-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -33,7 +33,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 
 //-----------------------------------------------------------------------------
-void DfxEnvelope::setParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur)
+void DfxEnvelope::setParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur) noexcept DFX_RT_ATTR
 {
 	mAttackDur = std::max(inAttackDur, 0.0);
 	mDecayDur = std::max(inDecayDur, 0.0);
@@ -51,7 +51,7 @@ void DfxEnvelope::setParameters(double inAttackDur, double inDecayDur, double in
 }
 
 //-----------------------------------------------------------------------------
-void DfxEnvelope::setSampleRate(double inSampleRate)
+void DfxEnvelope::setSampleRate(double inSampleRate) noexcept DFX_RT_ATTR
 {
 	auto const prevSampleRate = mSampleRate;
 	mSampleRate = inSampleRate;
@@ -65,22 +65,22 @@ void DfxEnvelope::setSampleRate(double inSampleRate)
 }
 
 //-----------------------------------------------------------------------------
-void DfxEnvelope::setInactive() noexcept
+void DfxEnvelope::setInactive() noexcept DFX_RT_ATTR
 {
-	mState = State::Dormant;
+	mPhase = Phase::Dormant;
 }
 
 //-----------------------------------------------------------------------------
-bool DfxEnvelope::isActive() const noexcept
+bool DfxEnvelope::isActive() const noexcept DFX_RT_ATTR
 {
-	return (getState() != State::Dormant);
+	return (getPhase() != Phase::Dormant);
 }
 
 //-----------------------------------------------------------------------------
-void DfxEnvelope::beginAttack()
+void DfxEnvelope::beginAttack() noexcept DFX_RT_ATTR
 {
-	auto const prevState = mState;
-	mState = State::Attack;
+	auto const prevPhase = mPhase;
+	mPhase = Phase::Attack;
 	mSectionPos = 0;
 	mSectionLength = dfx::math::RoundToIndex(mAttackDur * mSampleRate);
 	if (mSectionLength > 0)
@@ -88,7 +88,7 @@ void DfxEnvelope::beginAttack()
 		mSectionLength_inv = 1.0 / static_cast<double>(mSectionLength);
 		mStartValue = 0.0;
 		mTargetValue = 1.0;
-		if (mResumedAttackMode && (prevState == State::Release))
+		if (mResumedAttackMode && (prevPhase == Phase::Release))
 		{
 			mSectionPos = dfx::math::RoundToIndex(deriveAttackPosFromEnvValue(mLastValue) * static_cast<double>(mSectionLength));
 		}
@@ -101,9 +101,9 @@ void DfxEnvelope::beginAttack()
 }
 
 //-----------------------------------------------------------------------------
-void DfxEnvelope::beginRelease()
+void DfxEnvelope::beginRelease() noexcept DFX_RT_ATTR
 {
-	mState = State::Release;
+	mPhase = Phase::Release;
 	mSectionPos = 0;
 	mSectionLength = dfx::math::RoundToIndex(mReleaseDur * mSampleRate);
 	if (mSectionLength > 0)
@@ -114,24 +114,24 @@ void DfxEnvelope::beginRelease()
 	}
 	else
 	{
-		mState = State::Dormant;
+		mPhase = Phase::Dormant;
 	}
 }
 
 //-----------------------------------------------------------------------------
-[[nodiscard]] double DfxEnvelope::process()
+[[nodiscard]] double DfxEnvelope::process() noexcept DFX_RT_ATTR
 {
 	double outputValue = 0.0;
 
-	switch (mState)
+	switch (mPhase)
 	{
-		case State::Attack:
+		case Phase::Attack:
 			outputValue = calculateRise(static_cast<double>(mSectionPos + 1) * mSectionLength_inv);
 			mSectionPos++;
 			if (mSectionPos >= mSectionLength)
 			{
 				mSectionPos = 0;
-				mState = State::Decay;
+				mPhase = Phase::Decay;
 				mSectionLength = dfx::math::RoundToIndex(mDecayDur * mSampleRate);
 				if (mSectionLength > 0)
 				{
@@ -141,41 +141,41 @@ void DfxEnvelope::beginRelease()
 				}
 				else
 				{
-					mState = State::Sustain;
+					mPhase = Phase::Sustain;
 				}
 			}
 			break;
 
-		case State::Decay:
+		case Phase::Decay:
 			outputValue = calculateFall(static_cast<double>(mSectionPos + 1) * mSectionLength_inv);
 			mSectionPos++;
 			if (mSectionPos >= mSectionLength)
 			{
 				mSectionPos = 0;
-				mState = State::Sustain;
+				mPhase = Phase::Sustain;
 			}
 			break;
 
-		case State::Sustain:
+		case Phase::Sustain:
 			outputValue = mSustainLevel;
 			if (mSustainLevel <= 0.0)
 			{
-				mState = State::Dormant;
+				mPhase = Phase::Dormant;
 			}
 			break;
 
-		case State::Release:
+		case Phase::Release:
 			outputValue = calculateFall(static_cast<double>(mSectionPos + 1) * mSectionLength_inv);
 			mSectionPos++;
 			if (mSectionPos >= mSectionLength)
 			{
 				mSectionPos = 0;
-				mState = State::Dormant;
+				mPhase = Phase::Dormant;
 			}
 			break;
 
-		case State::Dormant:
-			outputValue = 0.0;
+		case Phase::Dormant:
+			outputValue = 0.;
 			break;
 
 		default:
@@ -187,15 +187,15 @@ void DfxEnvelope::beginRelease()
 }
 
 //-----------------------------------------------------------------------------
-std::pair<dfx::IIRFilter::Coefficients, float> DfxEnvelope::processLowpassGate()
+std::pair<dfx::IIRFilter::Coefficients, float> DfxEnvelope::processLowpassGate() noexcept DFX_RT_ATTR
 {
-	float const postFilterGain = [this]
+	float const postFilterGain = [this] DFX_RT_LAMBDA
 	{
-		if (mState == State::Dormant)
+		if (isDormantPhase())
 		{
 			return 0.f;
 		}
-		if ((mState == State::Release) && (mReleaseDur > 0.))
+		if (isReleasePhase() && (mReleaseDur > 0.))
 		{
 			// calculate a minimum-duration post-filter fade-out gain for the release tail
 			// to prevent audible filter ring-out truncation glitches at the end of release
@@ -216,13 +216,13 @@ std::pair<dfx::IIRFilter::Coefficients, float> DfxEnvelope::processLowpassGate()
 }
 
 //-----------------------------------------------------------------------------
-dfx::IIRFilter::Coefficients DfxEnvelope::getLowpassGateCoefficients(double inLevel) const
+dfx::IIRFilter::Coefficients DfxEnvelope::getLowpassGateCoefficients(double inLevel) const noexcept DFX_RT_ATTR
 {
 	return dfx::IIRFilter(mSampleRate).setLowpassGateCoefficients(inLevel);
 }
 
 //-----------------------------------------------------------------------------
-double DfxEnvelope::calculateRise(size_t inPos, size_t inLength) const
+double DfxEnvelope::calculateRise(size_t inPos, size_t inLength) const noexcept DFX_RT_ATTR
 {
 	if (inLength == 0)
 	{
@@ -232,7 +232,7 @@ double DfxEnvelope::calculateRise(size_t inPos, size_t inLength) const
 }
 
 //-----------------------------------------------------------------------------
-double DfxEnvelope::calculateRise(double inPosNormalized) const
+double DfxEnvelope::calculateRise(double inPosNormalized) const noexcept DFX_RT_ATTR
 {
 	if (mCurveType == kCurveType_Cubed)
 	{
@@ -246,7 +246,7 @@ double DfxEnvelope::calculateRise(double inPosNormalized) const
 }
 
 //-----------------------------------------------------------------------------
-double DfxEnvelope::calculateFall(size_t inPos, size_t inLength) const
+double DfxEnvelope::calculateFall(size_t inPos, size_t inLength) const noexcept DFX_RT_ATTR
 {
 	if (inLength == 0)
 	{
@@ -256,7 +256,7 @@ double DfxEnvelope::calculateFall(size_t inPos, size_t inLength) const
 }
 
 //-----------------------------------------------------------------------------
-double DfxEnvelope::calculateFall(double inPosNormalized) const
+double DfxEnvelope::calculateFall(double inPosNormalized) const noexcept DFX_RT_ATTR
 {
 	double outputValue = 1.0 - inPosNormalized;
 
@@ -265,13 +265,11 @@ double DfxEnvelope::calculateFall(double inPosNormalized) const
 		outputValue = outputValue * outputValue * outputValue;
 	}
 
-	outputValue = (outputValue * (mStartValue - mTargetValue)) + mTargetValue;
-
-	return outputValue;
+	return (outputValue * (mStartValue - mTargetValue)) + mTargetValue;
 }
 
 //-----------------------------------------------------------------------------
-double DfxEnvelope::deriveAttackPosFromEnvValue(double inValue) const
+double DfxEnvelope::deriveAttackPosFromEnvValue(double inValue) const noexcept DFX_RT_ATTR
 {
 	if (mCurveType == kCurveType_Cubed)
 	{

@@ -205,8 +205,11 @@ DfxPlugin::DfxPlugin(TARGET_API_BASE_INSTANCE_TYPE inInstance,
 	mMidiLearnerChangedInProcessHasPosted.test_and_set();
 #endif
 
-#if defined(TARGET_API_AUDIOUNIT) && !TARGET_PLUGIN_IS_INSTRUMENT
+#ifdef TARGET_API_AUDIOUNIT
+	SetWantsRenderThreadID(true);
+#if !TARGET_PLUGIN_IS_INSTRUMENT
 	SetProcessesInPlace(true);  // XXX why the default AUEffectBase constructor argument is not applied?
+#endif
 #endif
 
 #ifdef TARGET_API_VST
@@ -393,11 +396,11 @@ void DfxPlugin::do_cleanup()
 #ifdef TARGET_API_AUDIOUNIT
 	mInputAudioStreams_au = {};
 	mOutputAudioStreams_au = {};
+#else
+	mAudioRenderThreadID = {};
 #endif
 
 	cleanup();
-
-	mAudioRenderThreadID = {};
 
 #ifdef TARGET_API_VST
 	mIsInitialized = false;
@@ -406,7 +409,7 @@ void DfxPlugin::do_cleanup()
 
 //-----------------------------------------------------------------------------
 // non-virtual function that calls reset() and insures that some stuff happens
-void DfxPlugin::do_reset()
+void DfxPlugin::do_reset() noexcept DFX_RT_ATTR
 {
 #if TARGET_PLUGIN_USES_DSPCORE
 	cacheDSPCoreParameterValues();
@@ -420,11 +423,11 @@ void DfxPlugin::do_reset()
 	{
 //		return;
 	}
-	TARGET_API_BASE_CLASS::Reset(kAudioUnitScope_Global, kAudioUnitElement0);
+	DFX_RT_UNSAFE(TARGET_API_BASE_CLASS::Reset(kAudioUnitScope_Global, kAudioUnitElement0));
 #endif
 
 	mIsFirstRenderSinceReset = true;
-	std::ranges::for_each(mSmoothedAudioValues, [](auto& value){ value.first.snap(); });
+	std::ranges::for_each(mSmoothedAudioValues, [](auto& value) DFX_RT_LAMBDA { value.first.snap(); });
 
 #if TARGET_PLUGIN_USES_MIDI
 	mMidiState.reset();
@@ -515,7 +518,7 @@ void DfxPlugin::initparameter_list(dfx::ParameterID inParameterID, std::vector<s
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameter(dfx::ParameterID inParameterID, DfxParam::Value inValue)
+void DfxPlugin::setparameter(dfx::ParameterID inParameterID, DfxParam::Value inValue) noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -525,7 +528,7 @@ void DfxPlugin::setparameter(dfx::ParameterID inParameterID, DfxParam::Value inV
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameter_f(dfx::ParameterID inParameterID, double inValue)
+void DfxPlugin::setparameter_f(dfx::ParameterID inParameterID, double inValue) noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -535,7 +538,7 @@ void DfxPlugin::setparameter_f(dfx::ParameterID inParameterID, double inValue)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameter_i(dfx::ParameterID inParameterID, int64_t inValue)
+void DfxPlugin::setparameter_i(dfx::ParameterID inParameterID, int64_t inValue) noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -545,7 +548,7 @@ void DfxPlugin::setparameter_i(dfx::ParameterID inParameterID, int64_t inValue)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameter_b(dfx::ParameterID inParameterID, bool inValue)
+void DfxPlugin::setparameter_b(dfx::ParameterID inParameterID, bool inValue) noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -555,7 +558,7 @@ void DfxPlugin::setparameter_b(dfx::ParameterID inParameterID, bool inValue)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameter_gen(dfx::ParameterID inParameterID, double inValue)
+void DfxPlugin::setparameter_gen(dfx::ParameterID inParameterID, double inValue) noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -565,7 +568,7 @@ void DfxPlugin::setparameter_gen(dfx::ParameterID inParameterID, double inValue)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameterquietly_f(dfx::ParameterID inParameterID, double inValue)
+void DfxPlugin::setparameterquietly_f(dfx::ParameterID inParameterID, double inValue) noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -575,7 +578,7 @@ void DfxPlugin::setparameterquietly_f(dfx::ParameterID inParameterID, double inV
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameterquietly_i(dfx::ParameterID inParameterID, int64_t inValue)
+void DfxPlugin::setparameterquietly_i(dfx::ParameterID inParameterID, int64_t inValue) noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -585,7 +588,7 @@ void DfxPlugin::setparameterquietly_i(dfx::ParameterID inParameterID, int64_t in
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameterquietly_b(dfx::ParameterID inParameterID, bool inValue)
+void DfxPlugin::setparameterquietly_b(dfx::ParameterID inParameterID, bool inValue) noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -597,7 +600,7 @@ void DfxPlugin::setparameterquietly_b(dfx::ParameterID inParameterID, bool inVal
 //-----------------------------------------------------------------------------
 // randomize the current parameter value
 // this takes into account the parameter curve
-void DfxPlugin::randomizeparameter(dfx::ParameterID inParameterID)
+void DfxPlugin::randomizeparameter(dfx::ParameterID inParameterID) noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -625,7 +628,7 @@ void DfxPlugin::randomizeparameter(dfx::ParameterID inParameterID)
 
 //-----------------------------------------------------------------------------
 // randomize all of the parameters at once
-void DfxPlugin::randomizeparameters()
+void DfxPlugin::randomizeparameters() noexcept DFX_RT_ATTR
 {
 	for (dfx::ParameterID i = 0; i < getnumparameters(); i++)
 	{
@@ -638,7 +641,7 @@ void DfxPlugin::randomizeparameters()
 
 //-----------------------------------------------------------------------------
 // do stuff necessary to inform the host of changes, etc.
-void DfxPlugin::update_parameter(dfx::ParameterID inParameterID)
+void DfxPlugin::update_parameter(dfx::ParameterID inParameterID) noexcept DFX_RT_ATTR
 {
 	if (!parameterisvalid(inParameterID) || hasparameterattribute(inParameterID, DfxParam::kAttribute_Unused))
 	{
@@ -650,7 +653,7 @@ void DfxPlugin::update_parameter(dfx::ParameterID inParameterID)
 	TARGET_API_BASE_CLASS::SetParameter(inParameterID, kAudioUnitScope_Global, kAudioUnitElement0, getparameter_f(inParameterID), 0);
 
 #elifdef TARGET_API_VST
-	auto const vstPresetIndex = getProgram();
+	auto const vstPresetIndex = DFX_RT_UNSAFE(getProgram());
 	if ((vstPresetIndex >= 0) && presetisvalid(dfx::math::ToIndex(vstPresetIndex)))
 	{
 		setpresetparameter(dfx::math::ToIndex(vstPresetIndex), inParameterID, getparameter(inParameterID));
@@ -671,7 +674,7 @@ void DfxPlugin::update_parameter(dfx::ParameterID inParameterID)
 //-----------------------------------------------------------------------------
 // this will broadcast a notification to anyone interested (host, GUI, etc.) 
 // about a parameter change
-void DfxPlugin::postupdate_parameter(dfx::ParameterID inParameterID)
+void DfxPlugin::postupdate_parameter(dfx::ParameterID inParameterID) noexcept DFX_RT_ATTR
 {
 	if (!parameterisvalid(inParameterID) || hasparameterattribute(inParameterID, DfxParam::kAttribute_Unused))
 	{
@@ -682,18 +685,19 @@ void DfxPlugin::postupdate_parameter(dfx::ParameterID inParameterID)
 	if (isrenderthread())
 	{
 		// defer listener notification to later, off the realtime thread
-		mParametersChangedInProcessHavePosted[inParameterID].clear(std::memory_order_relaxed);
-		return;
+		return mParametersChangedInProcessHavePosted[inParameterID].clear(std::memory_order_relaxed);
 	}
 
+	// realtime-unsafe calls after this point are fine because realtime execution returns early above
+
 #ifdef TARGET_API_AUDIOUNIT
-	AUParameterChange_TellListeners(GetComponentInstance(), inParameterID);
+	DFX_RT_UNSAFE(AUParameterChange_TellListeners(GetComponentInstance(), inParameterID));
 
 #elifdef TARGET_API_VST
 	#if TARGET_PLUGIN_HAS_GUI
-	if (auto const guiEditor = dynamic_cast<VSTGUI::AEffGUIEditor*>(getEditor()))
+	if (auto const guiEditor = dynamic_cast<VSTGUI::AEffGUIEditor*>(DFX_RT_UNSAFE(getEditor())))
 	{
-		guiEditor->setParameter(dfx::ParameterID_ToVST(inParameterID), getparameter_gen(inParameterID));
+		DFX_RT_UNSAFE(guiEditor->setParameter(dfx::ParameterID_ToVST(inParameterID), getparameter_gen(inParameterID)));
 	}
 	#endif
 
@@ -703,7 +707,7 @@ void DfxPlugin::postupdate_parameter(dfx::ParameterID inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value DfxPlugin::getparameter(dfx::ParameterID inParameterID) const
+DfxParam::Value DfxPlugin::getparameter(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -712,22 +716,22 @@ DfxParam::Value DfxPlugin::getparameter(dfx::ParameterID inParameterID) const
 	return {};
 }
 
-size_t DfxPlugin::getparameter_index(dfx::ParameterID inParameterID) const
+size_t DfxPlugin::getparameter_index(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	auto const value = getparameter_i(inParameterID);
-	assert(value >= 0);
+	DFX_RT_ASSERT(value >= 0);
 	return dfx::math::ToIndex(value);
 }
 
 //-----------------------------------------------------------------------------
 // return a (hopefully) 0 to 1 scalar version of the parameter's current value
-double DfxPlugin::getparameter_scalar(dfx::ParameterID inParameterID) const
+double DfxPlugin::getparameter_scalar(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	return getparameter_scalar(inParameterID, getparameter_f(inParameterID));
 }
 
 //-----------------------------------------------------------------------------
-double DfxPlugin::getparameter_scalar(dfx::ParameterID inParameterID, double inValue) const
+double DfxPlugin::getparameter_scalar(dfx::ParameterID inParameterID, double inValue) const noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -747,7 +751,7 @@ double DfxPlugin::getparameter_scalar(dfx::ParameterID inParameterID, double inV
 }
 
 //-----------------------------------------------------------------------------
-std::optional<double> DfxPlugin::getparameterifchanged_f(dfx::ParameterID inParameterID) const
+std::optional<double> DfxPlugin::getparameterifchanged_f(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	if (getparameterchanged(inParameterID))
 	{
@@ -757,7 +761,7 @@ std::optional<double> DfxPlugin::getparameterifchanged_f(dfx::ParameterID inPara
 }
 
 //-----------------------------------------------------------------------------
-std::optional<int64_t> DfxPlugin::getparameterifchanged_i(dfx::ParameterID inParameterID) const
+std::optional<int64_t> DfxPlugin::getparameterifchanged_i(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	if (getparameterchanged(inParameterID))
 	{
@@ -767,7 +771,7 @@ std::optional<int64_t> DfxPlugin::getparameterifchanged_i(dfx::ParameterID inPar
 }
 
 //-----------------------------------------------------------------------------
-std::optional<bool> DfxPlugin::getparameterifchanged_b(dfx::ParameterID inParameterID) const
+std::optional<bool> DfxPlugin::getparameterifchanged_b(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	if (getparameterchanged(inParameterID))
 	{
@@ -777,7 +781,7 @@ std::optional<bool> DfxPlugin::getparameterifchanged_b(dfx::ParameterID inParame
 }
 
 //-----------------------------------------------------------------------------
-std::optional<double> DfxPlugin::getparameterifchanged_scalar(dfx::ParameterID inParameterID) const
+std::optional<double> DfxPlugin::getparameterifchanged_scalar(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	if (getparameterchanged(inParameterID))
 	{
@@ -787,7 +791,7 @@ std::optional<double> DfxPlugin::getparameterifchanged_scalar(dfx::ParameterID i
 }
 
 //-----------------------------------------------------------------------------
-std::optional<double> DfxPlugin::getparameterifchanged_gen(dfx::ParameterID inParameterID) const
+std::optional<double> DfxPlugin::getparameterifchanged_gen(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	if (getparameterchanged(inParameterID))
 	{
@@ -817,7 +821,7 @@ std::string DfxPlugin::getparametername(dfx::ParameterID inParameterID, size_t i
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value::Type DfxPlugin::getparametervaluetype(dfx::ParameterID inParameterID) const
+DfxParam::Value::Type DfxPlugin::getparametervaluetype(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -827,7 +831,7 @@ DfxParam::Value::Type DfxPlugin::getparametervaluetype(dfx::ParameterID inParame
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Unit DfxPlugin::getparameterunit(dfx::ParameterID inParameterID) const
+DfxParam::Unit DfxPlugin::getparameterunit(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -837,9 +841,9 @@ DfxParam::Unit DfxPlugin::getparameterunit(dfx::ParameterID inParameterID) const
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::setparametervaluestring(dfx::ParameterID inParameterID, int64_t inStringIndex, std::string_view inText)
+void DfxPlugin::setparametervaluestring(dfx::ParameterID inParameterID, int64_t inStringIndex, std::string_view inText)
 {
-	return getparameterobject(inParameterID).setvaluestring(inStringIndex, inText);
+	getparameterobject(inParameterID).setvaluestring(inStringIndex, inText);
 }
 
 //-----------------------------------------------------------------------------
@@ -853,11 +857,11 @@ std::optional<std::string> DfxPlugin::getparametervaluestring(dfx::ParameterID i
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::addparametergroup(std::string const& inName, std::vector<dfx::ParameterID> const& inParameterIndices)
+void DfxPlugin::addparametergroup(std::string_view inName, std::vector<dfx::ParameterID> const& inParameterIndices)
 {
 	assert(!inName.empty());
 	assert(!inParameterIndices.empty());
-	assert(std::ranges::none_of(mParameterGroups, [&inName](auto const& item){ return (item.first == inName); }));
+	assert(std::ranges::none_of(mParameterGroups, [inName](auto const& item){ return (item.first == inName); }));
 	assert(std::ranges::none_of(inParameterIndices, [this](auto index){ return getparametergroup(index).has_value(); }));
 	assert(std::ranges::all_of(inParameterIndices, std::bind_front(&DfxPlugin::parameterisvalid, this)));
 	assert(std::unordered_set(inParameterIndices.cbegin(), inParameterIndices.cend()).size() == inParameterIndices.size());
@@ -891,9 +895,9 @@ std::string DfxPlugin::getparametergroupname(size_t inGroupIndex) const
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::getparameterchanged(dfx::ParameterID inParameterID) const
+bool DfxPlugin::getparameterchanged(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
-	assert(isrenderthread());  // only valid during audio rendering
+	DFX_RT_ASSERT(isrenderthread());  // only valid during audio rendering
 	if (parameterisvalid(inParameterID))
 	{
 		return mParametersChangedAsOfPreProcess[inParameterID];
@@ -902,9 +906,9 @@ bool DfxPlugin::getparameterchanged(dfx::ParameterID inParameterID) const
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::getparametertouched(dfx::ParameterID inParameterID) const
+bool DfxPlugin::getparametertouched(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
-	assert(isrenderthread());  // only valid during audio rendering
+	DFX_RT_ASSERT(isrenderthread());  // only valid during audio rendering
 	if (parameterisvalid(inParameterID))
 	{
 		return mParametersTouchedAsOfPreProcess[inParameterID];
@@ -913,9 +917,9 @@ bool DfxPlugin::getparametertouched(dfx::ParameterID inParameterID) const
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::hasparameterattribute(dfx::ParameterID inParameterID, DfxParam::Attribute inFlag) const
+bool DfxPlugin::hasparameterattribute(dfx::ParameterID inParameterID, DfxParam::Attribute inFlag) const noexcept DFX_RT_ATTR
 {
-	assert(std::bitset<sizeof(inFlag) * CHAR_BIT>(inFlag).count() == 1);
+	DFX_RT_ASSERT(std::bitset<sizeof(inFlag) * CHAR_BIT>(inFlag).count() == 1);
 	return getparameterattributes(inParameterID) & inFlag;
 }
 
@@ -929,7 +933,7 @@ void DfxPlugin::addparameterattributes(dfx::ParameterID inParameterID, DfxParam:
 //-----------------------------------------------------------------------------
 // convenience methods for expanding and contracting parameter values 
 // using the min/max/curvetype/curvespec/etc. settings of a given parameter
-double DfxPlugin::expandparametervalue(dfx::ParameterID inParameterID, double genValue) const
+double DfxPlugin::expandparametervalue(dfx::ParameterID inParameterID, double genValue) const noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -938,7 +942,7 @@ double DfxPlugin::expandparametervalue(dfx::ParameterID inParameterID, double ge
 	return 0.0;
 }
 //-----------------------------------------------------------------------------
-double DfxPlugin::contractparametervalue(dfx::ParameterID inParameterID, double realValue) const
+double DfxPlugin::contractparametervalue(dfx::ParameterID inParameterID, double realValue) const noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -961,7 +965,7 @@ DfxParam& DfxPlugin::getparameterobject(dfx::ParameterID inParameterID)
 
 //-----------------------------------------------------------------------------
 // whether or not the index is a valid preset
-bool DfxPlugin::presetisvalid(size_t inPresetIndex) const noexcept
+bool DfxPlugin::presetisvalid(size_t inPresetIndex) const noexcept DFX_RT_ATTR
 {
 	return (inPresetIndex < getnumpresets());
 }
@@ -985,7 +989,7 @@ bool DfxPlugin::presetnameisvalid(size_t inPresetIndex) const
 
 //-----------------------------------------------------------------------------
 // load the settings of a preset
-bool DfxPlugin::loadpreset(size_t inPresetIndex)
+bool DfxPlugin::loadpreset(size_t inPresetIndex) noexcept DFX_RT_ATTR
 {
 	if (!presetisvalid(inPresetIndex))
 	{
@@ -998,7 +1002,7 @@ bool DfxPlugin::loadpreset(size_t inPresetIndex)
 	// for the program index to set parameter values, which means that the currently 
 	// selected program will have its parameter values overwritten by those of the 
 	// program currently being loaded, unless we do this first
-	TARGET_API_BASE_CLASS::setProgram(static_cast<VstInt32>(inPresetIndex));
+	DFX_RT_UNSAFE(TARGET_API_BASE_CLASS::setProgram(static_cast<VstInt32>(inPresetIndex)));
 #endif
 
 	for (dfx::ParameterID i = 0; i < getnumparameters(); i++)
@@ -1017,26 +1021,27 @@ bool DfxPlugin::loadpreset(size_t inPresetIndex)
 
 //-----------------------------------------------------------------------------
 // do stuff necessary to inform the host of changes, etc.
-void DfxPlugin::postupdate_preset()
+void DfxPlugin::postupdate_preset() noexcept DFX_RT_ATTR
 {
-	assert(presetisvalid(getcurrentpresetnum()));
+	DFX_RT_ASSERT(presetisvalid(getcurrentpresetnum()));
 
 	if (isrenderthread())
 	{
-		mPresetChangedInProcessHasPosted.clear(std::memory_order_relaxed);
-		return;
+		return mPresetChangedInProcessHasPosted.clear(std::memory_order_relaxed);
 	}
+
+	// realtime-unsafe calls after this point are fine because realtime execution returns early above
 
 #ifdef TARGET_API_AUDIOUNIT
 	AUPreset au_preset {};
 	au_preset.presetNumber = static_cast<SInt32>(getcurrentpresetnum());
-	au_preset.presetName = getpresetcfname(getcurrentpresetnum());
-	SetAFactoryPresetAsCurrent(au_preset);
-	PropertyChanged(kAudioUnitProperty_PresentPreset, kAudioUnitScope_Global, kAudioUnitElement0);
-	PropertyChanged(kAudioUnitProperty_CurrentPreset, kAudioUnitScope_Global, kAudioUnitElement0);
+	au_preset.presetName = DFX_RT_UNSAFE(getpresetcfname(getcurrentpresetnum()));
+	DFX_RT_UNSAFE(SetAFactoryPresetAsCurrent(au_preset));
+	DFX_RT_UNSAFE(PropertyChanged(kAudioUnitProperty_PresentPreset, kAudioUnitScope_Global, kAudioUnitElement0));
+	DFX_RT_UNSAFE(PropertyChanged(kAudioUnitProperty_CurrentPreset, kAudioUnitScope_Global, kAudioUnitElement0));
 
 #elifdef TARGET_API_VST
-	TARGET_API_BASE_CLASS::setProgram(static_cast<VstInt32>(getcurrentpresetnum()));
+	DFX_RT_UNSAFE(TARGET_API_BASE_CLASS::setProgram(static_cast<VstInt32>(getcurrentpresetnum())));
 	// XXX Cubase SX will crash if custom-GUI plugs call updateDisplay 
 	// while the editor is closed, so as a workaround, only do it 
 	// if the plugin has no custom GUI
@@ -1044,7 +1049,7 @@ void DfxPlugin::postupdate_preset()
 	// since a generic UI might still be provided in some hosts
 	#if !TARGET_PLUGIN_HAS_GUI
 	// tell the host to update the generic editor display with the new settings
-	AudioEffectX::updateDisplay();
+	DFX_RT_UNSAFE(AudioEffectX::updateDisplay());
 	#endif
 #endif
 }
@@ -1065,7 +1070,7 @@ void DfxPlugin::initpresetsparameter(dfx::ParameterID inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-DfxParam::Value DfxPlugin::getpresetparameter(size_t inPresetIndex, dfx::ParameterID inParameterID) const
+DfxParam::Value DfxPlugin::getpresetparameter(size_t inPresetIndex, dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
@@ -1075,7 +1080,7 @@ DfxParam::Value DfxPlugin::getpresetparameter(size_t inPresetIndex, dfx::Paramet
 }
 
 //-----------------------------------------------------------------------------
-double DfxPlugin::getpresetparameter_f(size_t inPresetIndex, dfx::ParameterID inParameterID) const
+double DfxPlugin::getpresetparameter_f(size_t inPresetIndex, dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
@@ -1085,7 +1090,7 @@ double DfxPlugin::getpresetparameter_f(size_t inPresetIndex, dfx::ParameterID in
 }
 
 //-----------------------------------------------------------------------------
-int64_t DfxPlugin::getpresetparameter_i(size_t inPresetIndex, dfx::ParameterID inParameterID) const
+int64_t DfxPlugin::getpresetparameter_i(size_t inPresetIndex, dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
@@ -1095,7 +1100,7 @@ int64_t DfxPlugin::getpresetparameter_i(size_t inPresetIndex, dfx::ParameterID i
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::getpresetparameter_b(size_t inPresetIndex, dfx::ParameterID inParameterID) const
+bool DfxPlugin::getpresetparameter_b(size_t inPresetIndex, dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
@@ -1105,7 +1110,7 @@ bool DfxPlugin::getpresetparameter_b(size_t inPresetIndex, dfx::ParameterID inPa
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter(size_t inPresetIndex, dfx::ParameterID inParameterID, DfxParam::Value inValue)
+void DfxPlugin::setpresetparameter(size_t inPresetIndex, dfx::ParameterID inParameterID, DfxParam::Value inValue) noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
@@ -1114,7 +1119,7 @@ void DfxPlugin::setpresetparameter(size_t inPresetIndex, dfx::ParameterID inPara
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_f(size_t inPresetIndex, dfx::ParameterID inParameterID, double inValue)
+void DfxPlugin::setpresetparameter_f(size_t inPresetIndex, dfx::ParameterID inParameterID, double inValue) noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
@@ -1124,7 +1129,7 @@ void DfxPlugin::setpresetparameter_f(size_t inPresetIndex, dfx::ParameterID inPa
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_i(size_t inPresetIndex, dfx::ParameterID inParameterID, int64_t inValue)
+void DfxPlugin::setpresetparameter_i(size_t inPresetIndex, dfx::ParameterID inParameterID, int64_t inValue) noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
@@ -1134,7 +1139,7 @@ void DfxPlugin::setpresetparameter_i(size_t inPresetIndex, dfx::ParameterID inPa
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_b(size_t inPresetIndex, dfx::ParameterID inParameterID, bool inValue)
+void DfxPlugin::setpresetparameter_b(size_t inPresetIndex, dfx::ParameterID inParameterID, bool inValue) noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
@@ -1144,7 +1149,7 @@ void DfxPlugin::setpresetparameter_b(size_t inPresetIndex, dfx::ParameterID inPa
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_gen(size_t inPresetIndex, dfx::ParameterID inParameterID, double inValue)
+void DfxPlugin::setpresetparameter_gen(size_t inPresetIndex, dfx::ParameterID inParameterID, double inValue) noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID) && presetisvalid(inPresetIndex))
 	{
@@ -1179,7 +1184,7 @@ std::string DfxPlugin::getpresetname(size_t inPresetIndex) const
 #ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
 // get the CFString version of a preset name
-CFStringRef DfxPlugin::getpresetcfname(size_t inPresetIndex) const
+CFStringRef DfxPlugin::getpresetcfname(size_t inPresetIndex) const noexcept
 {
 	if (presetisvalid(inPresetIndex))
 	{
@@ -1296,6 +1301,9 @@ void DfxPlugin::dfx_PropertyChanged(dfx::PropertyID inPropertyID, dfx::Scope inS
 		guiEditor->PropertyChanged(inPropertyID, inScope, inItemIndex);
 	}
 	#endif
+
+#else
+	#error "implementation needed"
 #endif
 }
 
@@ -1331,9 +1339,9 @@ void DfxPlugin::unregisterAllSmoothedAudioValues(DfxPluginCore& owner)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::incrementSmoothedAudioValues(DfxPluginCore* owner)
+void DfxPlugin::incrementSmoothedAudioValues(DfxPluginCore* owner) noexcept DFX_RT_ATTR
 {
-	std::ranges::for_each(mSmoothedAudioValues, [owner](auto& value)
+	std::ranges::for_each(mSmoothedAudioValues, [owner](auto& value) DFX_RT_LAMBDA
 	{
 		// TODO: is the !owner test vestigial? and now confusing, per the comment in the header declaration?
 		// (very careful testing required if changed because incorrect managed smoothing stuff has insidious consequences)
@@ -1401,7 +1409,7 @@ void DfxPlugin::do_idle()
 
 //-----------------------------------------------------------------------------
 // return the number of audio inputs
-size_t DfxPlugin::getnuminputs()
+size_t DfxPlugin::getnuminputs() noexcept DFX_RT_ATTR
 {
 #ifdef TARGET_API_AUDIOUNIT
 	if (Inputs().GetNumberOfElements() > 0)
@@ -1431,7 +1439,7 @@ size_t DfxPlugin::getnuminputs()
 
 //-----------------------------------------------------------------------------
 // return the number of audio outputs
-size_t DfxPlugin::getnumoutputs()
+size_t DfxPlugin::getnumoutputs() noexcept DFX_RT_ATTR
 {
 #ifdef TARGET_API_AUDIOUNIT
 	if (Outputs().GetNumberOfElements() > 0)
@@ -1460,7 +1468,7 @@ size_t DfxPlugin::getnumoutputs()
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::asymmetricalchannels()
+bool DfxPlugin::asymmetricalchannels() noexcept DFX_RT_ATTR
 {
 	return getnuminputs() != getnumoutputs();
 }
@@ -1557,7 +1565,7 @@ bool DfxPlugin::ischannelcountsupported(size_t inNumInputs, size_t inNumOutputs)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setlatency_samples(size_t inSampleFrames)
+void DfxPlugin::setlatency_samples(size_t inSampleFrames) noexcept DFX_RT_ATTR
 {
 	bool changed = false;
 	if (std::holds_alternative<double>(mLatency))
@@ -1580,13 +1588,13 @@ void DfxPlugin::setlatency_samples(size_t inSampleFrames)
 		}
 		else
 		{
-			postupdate_latency();
+			DFX_RT_UNSAFE(postupdate_latency());
 		}
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setlatency_seconds(double inSeconds)
+void DfxPlugin::setlatency_seconds(double inSeconds) noexcept DFX_RT_ATTR
 {
 	bool changed = false;
 	if (std::holds_alternative<size_t>(mLatency))
@@ -1609,13 +1617,13 @@ void DfxPlugin::setlatency_seconds(double inSeconds)
 		}
 		else
 		{
-			postupdate_latency();
+			DFX_RT_UNSAFE(postupdate_latency());
 		}
 	}
 }
 
 //-----------------------------------------------------------------------------
-size_t DfxPlugin::getlatency_samples() const
+size_t DfxPlugin::getlatency_samples() const noexcept DFX_RT_ATTR
 {
 	if (auto const latencySamples = std::get_if<size_t>(&mLatency))
 	{
@@ -1628,7 +1636,7 @@ size_t DfxPlugin::getlatency_samples() const
 }
 
 //-----------------------------------------------------------------------------
-double DfxPlugin::getlatency_seconds() const
+double DfxPlugin::getlatency_seconds() const noexcept DFX_RT_ATTR
 {
 	if (auto const latencySeconds = std::get_if<double>(&mLatency))
 	{
@@ -1651,7 +1659,7 @@ void DfxPlugin::postupdate_latency()
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::settailsize_samples(size_t inSampleFrames)
+void DfxPlugin::settailsize_samples(size_t inSampleFrames) noexcept DFX_RT_ATTR
 {
 	bool changed = false;
 	if (std::holds_alternative<double>(mTailSize))
@@ -1674,13 +1682,13 @@ void DfxPlugin::settailsize_samples(size_t inSampleFrames)
 		}
 		else
 		{
-			postupdate_tailsize();
+			DFX_RT_UNSAFE(postupdate_tailsize());
 		}
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::settailsize_seconds(double inSeconds)
+void DfxPlugin::settailsize_seconds(double inSeconds) noexcept DFX_RT_ATTR
 {
 	bool changed = false;
 	if (std::holds_alternative<size_t>(mTailSize))
@@ -1703,13 +1711,13 @@ void DfxPlugin::settailsize_seconds(double inSeconds)
 		}
 		else
 		{
-			postupdate_tailsize();
+			DFX_RT_UNSAFE(postupdate_tailsize());
 		}
 	}
 }
 
 //-----------------------------------------------------------------------------
-size_t DfxPlugin::gettailsize_samples() const
+size_t DfxPlugin::gettailsize_samples() const noexcept DFX_RT_ATTR
 {
 	if (auto const tailSizeSamples = std::get_if<size_t>(&mTailSize))
 	{
@@ -1722,7 +1730,7 @@ size_t DfxPlugin::gettailsize_samples() const
 }
 
 //-----------------------------------------------------------------------------
-double DfxPlugin::gettailsize_seconds() const
+double DfxPlugin::gettailsize_seconds() const noexcept DFX_RT_ATTR
 {
 	if (auto const tailSizeSeconds = std::get_if<double>(&mTailSize))
 	{
@@ -1766,21 +1774,21 @@ void DfxPlugin::setInPlaceAudioProcessingAllowed(bool inEnable)
 #pragma mark processing
 
 //-----------------------------------------------------------------------------
-double DfxPlugin::TimeInfo::samplesPerBeat(double inTempoBPS, double inSampleRate)
+double DfxPlugin::TimeInfo::samplesPerBeat(double inTempoBPS, double inSampleRate) noexcept DFX_RT_ATTR
 {
-	assert(inTempoBPS > 0.);
-	assert(inSampleRate > 0.);
+	DFX_RT_ASSERT(inTempoBPS > 0.);
+	DFX_RT_ASSERT(inSampleRate > 0.);
 	return inSampleRate / inTempoBPS;
 }
 
 //-----------------------------------------------------------------------------
-std::optional<double> DfxPlugin::TimeInfo::timeSignatureNumerator() const noexcept
+std::optional<double> DfxPlugin::TimeInfo::timeSignatureNumerator() const noexcept DFX_RT_ATTR
 {
 	return mTimeSignature ? std::make_optional(mTimeSignature->mNumerator) : std::nullopt;
 }
 
 //-----------------------------------------------------------------------------
-std::optional<double> DfxPlugin::TimeInfo::timeSignatureDenominator() const noexcept
+std::optional<double> DfxPlugin::TimeInfo::timeSignatureDenominator() const noexcept DFX_RT_ATTR
 {
 	return mTimeSignature ? std::make_optional(mTimeSignature->mDenominator) : std::nullopt;
 }
@@ -1788,11 +1796,11 @@ std::optional<double> DfxPlugin::TimeInfo::timeSignatureDenominator() const noex
 //-----------------------------------------------------------------------------
 // this is called once per audio processing block (before doing the processing) 
 // in order to try to get musical tempo/time/location information from the host
-void DfxPlugin::processtimeinfo()
+void DfxPlugin::processtimeinfo() noexcept DFX_RT_ATTR
 {
 	mTimeInfo = {};
 
-	constexpr auto bpmToBPS = [](double tempoBPM)
+	constexpr auto bpmToBPS = [](double tempoBPM) DFX_RT_LAMBDA
 	{
 		return tempoBPM / 60.;
 	};
@@ -1864,11 +1872,11 @@ else std::fprintf(stderr, "CallHostTransportState() error %ld\n", status);
 
 
 #elifdef TARGET_API_VST
-	VstTimeInfo* vstTimeInfo = getTimeInfo(kVstTempoValid 
-										   | kVstTransportChanged 
-										   | kVstBarsValid 
-										   | kVstPpqPosValid 
-										   | kVstTimeSigValid);
+	auto* const vstTimeInfo = DFX_RT_UNSAFE(getTimeInfo(kVstTempoValid
+														| kVstTransportChanged
+														| kVstBarsValid
+														| kVstPpqPosValid
+														| kVstTimeSigValid));
 
  	// there's nothing we can do in that case
 	if (vstTimeInfo)
@@ -1956,13 +1964,15 @@ else std::fprintf(stderr, "CallHostTransportState() error %ld\n", status);
 
 //-----------------------------------------------------------------------------
 // this is called immediately before processing a block of audio
-void DfxPlugin::preprocessaudio(size_t inNumFrames)
+void DfxPlugin::preprocessaudio(size_t inNumFrames) noexcept DFX_RT_ATTR
 {
-	assert(inNumFrames <= getmaxframes());
-	assert(inNumFrames > 0);
+	DFX_RT_ASSERT(inNumFrames <= getmaxframes());
+	DFX_RT_ASSERT(inNumFrames > 0);
 
 	mAudioIsRendering = true;
-	mAudioRenderThreadID = std::this_thread::get_id();
+#ifndef TARGET_API_AUDIOUNIT
+	mAudioRenderThreadID = DFX_RT_UNSAFE(std::this_thread::get_id());
+#endif
 
 #if TARGET_PLUGIN_USES_MIDI
 	mMidiState.preprocessEvents(inNumFrames);
@@ -1986,7 +1996,7 @@ void DfxPlugin::preprocessaudio(size_t inNumFrames)
 
 //-----------------------------------------------------------------------------
 // this is called immediately after processing a block of audio
-void DfxPlugin::postprocessaudio()
+void DfxPlugin::postprocessaudio() noexcept DFX_RT_ATTR
 {
 #if TARGET_PLUGIN_USES_MIDI
 	mMidiState.postprocessEvents();
@@ -1997,7 +2007,7 @@ void DfxPlugin::postprocessaudio()
 
 //-----------------------------------------------------------------------------
 // non-virtual function called to insure that processparameters happens
-void DfxPlugin::do_processparameters()
+void DfxPlugin::do_processparameters() noexcept DFX_RT_ATTR
 {
 	processparameters();
 
@@ -2010,19 +2020,23 @@ void DfxPlugin::do_processparameters()
 
 	if (std::exchange(mIsFirstRenderSinceReset, false))
 	{
-		std::ranges::for_each(mSmoothedAudioValues, [](auto& value){ value.first.snap(); });
+		std::ranges::for_each(mSmoothedAudioValues, [](auto& value) DFX_RT_LAMBDA { value.first.snap(); });
 	}
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::isrenderthread() const noexcept
+bool DfxPlugin::isrenderthread() const noexcept DFX_RT_ATTR
 {
-	return (std::this_thread::get_id() == mAudioRenderThreadID);
+#ifdef TARGET_API_AUDIOUNIT
+	return InRenderThread();
+#else
+	return (DFX_RT_UNSAFE(std::this_thread::get_id()) == mAudioRenderThreadID);
+#endif
 }
 
 #if TARGET_PLUGIN_USES_DSPCORE
 //-----------------------------------------------------------------------------
-double DfxPlugin::getdspcoreparameter_gen(dfx::ParameterID inParameterID) const
+double DfxPlugin::getdspcoreparameter_gen(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -2032,7 +2046,7 @@ double DfxPlugin::getdspcoreparameter_gen(dfx::ParameterID inParameterID) const
 }
 
 //-----------------------------------------------------------------------------
-double DfxPlugin::getdspcoreparameter_scalar(dfx::ParameterID inParameterID) const
+double DfxPlugin::getdspcoreparameter_scalar(dfx::ParameterID inParameterID) const noexcept DFX_RT_ATTR
 {
 	if (parameterisvalid(inParameterID))
 	{
@@ -2042,7 +2056,7 @@ double DfxPlugin::getdspcoreparameter_scalar(dfx::ParameterID inParameterID) con
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::cacheDSPCoreParameterValues()
+void DfxPlugin::cacheDSPCoreParameterValues() noexcept DFX_RT_ATTR
 {
 	for (dfx::ParameterID i = 0; i < getnumparameters(); i++)
 	{
@@ -2051,7 +2065,7 @@ void DfxPlugin::cacheDSPCoreParameterValues()
 }
 
 //-----------------------------------------------------------------------------
-DfxPluginCore* DfxPlugin::getplugincore(size_t inChannel) const
+DfxPluginCore* DfxPlugin::getplugincore(size_t inChannel) const noexcept DFX_RT_ATTR
 {
 	if (inChannel < mDSPCores.size())
 	{
@@ -2073,7 +2087,7 @@ DfxPluginCore* DfxPlugin::getplugincore(size_t inChannel) const
 #if TARGET_PLUGIN_USES_MIDI
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_noteon(int inChannel, int inNote, int inVelocity, size_t inOffsetFrames)
+void DfxPlugin::handlemidi_noteon(int inChannel, int inNote, int inVelocity, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
 std::fprintf(stderr, "note on:  note = %d, velocity = %d, channel = %d, sample offset = %zu\n", inNote, inVelocity, inChannel, inOffsetFrames);
@@ -2083,7 +2097,7 @@ std::fprintf(stderr, "note on:  note = %d, velocity = %d, channel = %d, sample o
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_noteoff(int inChannel, int inNote, int inVelocity, size_t inOffsetFrames)
+void DfxPlugin::handlemidi_noteoff(int inChannel, int inNote, int inVelocity, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
 std::fprintf(stderr, "note off:  note = %d, velocity = %d, channel = %d, sample offset = %zu\n", inNote, inVelocity, inChannel, inOffsetFrames);
@@ -2093,7 +2107,7 @@ std::fprintf(stderr, "note off:  note = %d, velocity = %d, channel = %d, sample 
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_allnotesoff(int inChannel, size_t inOffsetFrames)
+void DfxPlugin::handlemidi_allnotesoff(int inChannel, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
 std::fprintf(stderr, "all notes off:  channel = %d, sample offset = %zu\n", inChannel, inOffsetFrames);
@@ -2103,7 +2117,7 @@ std::fprintf(stderr, "all notes off:  channel = %d, sample offset = %zu\n", inCh
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_channelaftertouch(int inChannel, int inValue, size_t inOffsetFrames)
+void DfxPlugin::handlemidi_channelaftertouch(int inChannel, int inValue, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
 std::fprintf(stderr, "channel aftertouch:  value = %d, channel = %d, sample offset = %zu\n", inValue, inChannel, inOffsetFrames);
@@ -2113,7 +2127,7 @@ std::fprintf(stderr, "channel aftertouch:  value = %d, channel = %d, sample offs
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames)
+void DfxPlugin::handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
 std::fprintf(stderr, "pitchbend:  LSB = %d, MSB = %d, channel = %d, sample offset = %zu\n", inValueLSB, inValueMSB, inChannel, inOffsetFrames);
@@ -2123,7 +2137,7 @@ std::fprintf(stderr, "pitchbend:  LSB = %d, MSB = %d, channel = %d, sample offse
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_cc(int inChannel, int inControllerNum, int inValue, size_t inOffsetFrames)
+void DfxPlugin::handlemidi_cc(int inChannel, int inControllerNum, int inValue, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
 std::fprintf(stderr, "MIDI CC:  controller = 0x%02X, value = %d, channel = %d, sample offset = %zu\n", inControllerNum, inValue, inChannel, inOffsetFrames);
@@ -2133,7 +2147,7 @@ std::fprintf(stderr, "MIDI CC:  controller = 0x%02X, value = %d, channel = %d, s
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_programchange(int inChannel, int inProgramNum, size_t inOffsetFrames)
+void DfxPlugin::handlemidi_programchange(int inChannel, int inProgramNum, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
 std::fprintf(stderr, "program change:  program num = %d, channel = %d, sample offset = %zu\n", inProgramNum, inChannel, inOffsetFrames);
@@ -2233,13 +2247,13 @@ bool DfxPlugin::getMidiAssignmentsSteal() const
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::postupdate_midilearn()
+void DfxPlugin::postupdate_midilearn() noexcept DFX_RT_ATTR
 {
 	dfx_PropertyChanged(dfx::kPluginProperty_MidiLearn);
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::postupdate_midilearner()
+void DfxPlugin::postupdate_midilearner() noexcept DFX_RT_ATTR
 {
 	dfx_PropertyChanged(dfx::kPluginProperty_MidiLearner);
 }

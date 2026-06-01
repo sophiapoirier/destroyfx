@@ -25,23 +25,23 @@ class ReverbModel
 public:
     explicit ReverbModel(double sampleRate);
 
-    void    clear();
+    void    clear() noexcept [[clang::nonblocking]];
 
-    void    process(const float* inAudioL, const float* inAudioR, float* outAudioL, float* outAudioR, size_t frameCount);
-    void    process(const float* inAudio, float* outAudio, size_t frameCount);
+    void    process(const float* inAudioL, const float* inAudioR, float* outAudioL, float* outAudioR, size_t frameCount) noexcept [[clang::nonblocking]];
+    void    process(const float* inAudio, float* outAudio, size_t frameCount) noexcept [[clang::nonblocking]];
 
-    void    setRoomSize(float amount);
-    float   getRoomSize() const;
-    void    setDamping(float amount);
-    float   getDamping() const;
-    void    setDryLevel(float amount);
-    float   getDryLevel() const;
-    void    setWetLevel(float amount);
-    float   getWetLevel() const;
-    void    setWidth(float amount);
-    float   getWidth() const;
-    void    setFreezeMode(bool enabled);
-    bool    getFreezeMode() const;
+    void    setRoomSize(float amount) noexcept [[clang::nonblocking]];
+    float   getRoomSize() const noexcept [[clang::nonblocking]];
+    void    setDamping(float amount) noexcept [[clang::nonblocking]];
+    float   getDamping() const noexcept [[clang::nonblocking]];
+    void    setDryLevel(float amount) noexcept [[clang::nonblocking]];
+    float   getDryLevel() const noexcept [[clang::nonblocking]];
+    void    setWetLevel(float amount) noexcept [[clang::nonblocking]];
+    float   getWetLevel() const noexcept [[clang::nonblocking]];
+    void    setWidth(float amount) noexcept [[clang::nonblocking]];
+    float   getWidth() const noexcept [[clang::nonblocking]];
+    void    setFreezeMode(bool enabled) noexcept [[clang::nonblocking]];
+    bool    getFreezeMode() const noexcept [[clang::nonblocking]];
 
 private:
     float   mRoomSize = kRoomSizeDefault;

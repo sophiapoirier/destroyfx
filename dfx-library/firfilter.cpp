@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2022  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -35,16 +35,16 @@ Welcome to our Finite Impulse Response filter.
 
 
 //-----------------------------------------------------------------------------
-float besselIZero(float input);
+float besselIZero(float input) noexcept DFX_RT_ATTR;
 
 
 //-----------------------------------------------------------------------------
 // you're supposed to use use an odd number of taps
 void dfx::FIRFilter::calculateIdealLowpassCoefficients(double inCutoff, double inSampleRate, 
-													   std::span<float> outCoefficients)
+													   std::span<float> outCoefficients) noexcept DFX_RT_ATTR
 {
-	assert(!outCoefficients.empty());
-	assert(outCoefficients.size() % 2);
+	DFX_RT_ASSERT(!outCoefficients.empty());
+	DFX_RT_ASSERT(outCoefficients.size() % 2);
 
 	// get the cutoff as a ratio of cutoff to Nyquist, scaled from 0 to Pi
 	double const corner = (inCutoff / (inSampleRate * 0.5)) * std::numbers::pi_v<double>;
@@ -70,17 +70,17 @@ void dfx::FIRFilter::calculateIdealLowpassCoefficients(double inCutoff, double i
 //-----------------------------------------------------------------------------
 void dfx::FIRFilter::calculateIdealLowpassCoefficients(double inCutoff, double inSampleRate, 
 													   std::span<float> outCoefficients, 
-													   std::span<float const> inCoefficientsWindow)
+													   std::span<float const> inCoefficientsWindow) noexcept DFX_RT_ATTR
 {
-	assert(outCoefficients.size() == inCoefficientsWindow.size());
+	DFX_RT_ASSERT(outCoefficients.size() == inCoefficientsWindow.size());
 	calculateIdealLowpassCoefficients(inCutoff, inSampleRate, outCoefficients);
 	std::transform(outCoefficients.begin(), outCoefficients.end(), inCoefficientsWindow.begin(), outCoefficients.begin(), std::multiplies<>{});
 }
 
 //-----------------------------------------------------------------------------
-void dfx::FIRFilter::applyKaiserWindow(std::span<float> ioCoefficients, float inAttenuation)
+void dfx::FIRFilter::applyKaiserWindow(std::span<float> ioCoefficients, float inAttenuation) noexcept DFX_RT_ATTR
 {
-	assert(!ioCoefficients.empty());
+	DFX_RT_ASSERT(!ioCoefficients.empty());
 
 	// beta is 0 if the attenuation is less than 21 dB
 	float beta = 0.0f;
@@ -112,8 +112,8 @@ std::vector<float> dfx::FIRFilter::generateKaiserWindow(size_t inNumTaps, float 
 }
 
 //-----------------------------------------------------------------------------
-// TODO: use std::cyl_bessel_if or std::cyl_bessel_jf if they ever become implemented in clang
-float besselIZero(float input)
+// TODO: use std::cyl_bessel_if or std::cyl_bessel_jf if they ever become implemented in Clang and GCC
+float besselIZero(float input) noexcept DFX_RT_ATTR
 {
 	float sum = 1.0f;
 #if 1

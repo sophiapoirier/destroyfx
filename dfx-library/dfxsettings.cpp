@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -980,7 +980,7 @@ bool DfxSettings::restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDiction
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleCC(int inMidiChannel, int inControllerNumber, int inValue, size_t inOffsetFrames)
+void DfxSettings::handleCC(int inMidiChannel, int inControllerNumber, int inValue, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 	// don't allow the "all notes off" CC because almost every sequencer uses that when playback stops
 	if (inControllerNumber == DfxMidi::kCC_AllNotesOff)
@@ -993,7 +993,7 @@ void DfxSettings::handleCC(int inMidiChannel, int inControllerNumber, int inValu
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleChannelAftertouch(int inMidiChannel, int inValue, size_t inOffsetFrames)
+void DfxSettings::handleChannelAftertouch(int inMidiChannel, int inValue, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 	if (!mAllowChannelAftertouchEvents)
 	{
@@ -1007,7 +1007,7 @@ void DfxSettings::handleChannelAftertouch(int inMidiChannel, int inValue, size_t
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames)
+void DfxSettings::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 	if (!mAllowPitchbendEvents)
 	{
@@ -1023,7 +1023,7 @@ void DfxSettings::handlePitchBend(int inMidiChannel, int inValueLSB, int inValue
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames)
+void DfxSettings::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 	if (!mAllowNoteEvents)
 	{
@@ -1035,7 +1035,7 @@ void DfxSettings::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVeloci
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames)
+void DfxSettings::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 	if (!mAllowNoteEvents)
 	{
@@ -1063,7 +1063,7 @@ void DfxSettings::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVeloc
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleAllNotesOff(int inMidiChannel, size_t inOffsetFrames)
+void DfxSettings::handleAllNotesOff(int inMidiChannel, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 	if (!mAllowNoteEvents)
 	{
@@ -1078,7 +1078,7 @@ void DfxSettings::handleAllNotesOff(int inMidiChannel, size_t inOffsetFrames)
 
 //-----------------------------------------------------------------------------------------
 // assign an incoming MIDI event to the learner parameter
-void DfxSettings::handleMidi_assignParameter(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, size_t inOffsetFrames)
+void DfxSettings::handleMidi_assignParameter(dfx::MidiEventType inEventType, int inMidiChannel, int inByte1, size_t inOffsetFrames) noexcept DFX_RT_ATTR
 {
 	// we don't need to make an assignment to a parameter if MIDI learning is off
 	if (!mMidiLearn || !isValidParameterID(mLearner))
@@ -1086,7 +1086,7 @@ void DfxSettings::handleMidi_assignParameter(dfx::MidiEventType inEventType, int
 		return;
 	}
 
-	auto const handleAssignment = [this, inEventType, inMidiChannel, inOffsetFrames](int eventNum, int eventNum2)
+	auto const handleAssignment = [this, inEventType, inMidiChannel, inOffsetFrames](int eventNum, int eventNum2) DFX_RT_LAMBDA
 	{
 		// assign the learner parameter to the event that sent the message
 		assignParameter(mLearner, inEventType, inMidiChannel, eventNum, eventNum2, 
@@ -1098,7 +1098,7 @@ void DfxSettings::handleMidi_assignParameter(dfx::MidiEventType inEventType, int
 											   mLearnerDataInt1, mLearnerDataInt2, mLearnerDataFloat1, mLearnerDataFloat2);
 		// and then deactivate the current learner, the learning is complete
 		setLearner(dfx::kParameterID_Invalid);
-		if (getDeactivateLearningUponLearnt())
+		if (mDeactivateLearningUponLearnt)
 		{
 			setLearning(false);
 		}
@@ -1143,7 +1143,8 @@ void DfxSettings::handleMidi_assignParameter(dfx::MidiEventType inEventType, int
 //-----------------------------------------------------------------------------------------
 // automate assigned parameters in response to a MIDI event
 void DfxSettings::handleMidi_automateParameters(dfx::MidiEventType inEventType, int inMidiChannel, 
-												int inByte1, int inByte2, size_t inOffsetFrames, bool inIsNoteOn)
+												int inByte1, int inByte2, size_t inOffsetFrames, 
+												bool inIsNoteOn) noexcept DFX_RT_ATTR
 {
 	float valueNormalized = static_cast<float>(inByte2) * DfxMidi::kValueScalar;
 	if (inEventType == dfx::MidiEventType::ChannelAftertouch)
@@ -1293,7 +1294,8 @@ void DfxSettings::clearAssignments()
 // assign a CC to a parameter
 void DfxSettings::assignParameter(dfx::ParameterID inParameterID, dfx::MidiEventType inEventType, int inEventChannel, 
 								  int inEventNum, int inEventNum2, dfx::MidiEventBehaviorFlags inEventBehaviorFlags, 
-								  int inDataInt1, int inDataInt2, float inDataFloat1, float inDataFloat2)
+								  int inDataInt1, int inDataInt2, 
+								  float inDataFloat1, float inDataFloat2) noexcept DFX_RT_ATTR
 {
 	// bail if the parameter index is not valid
 	if (!isValidParameterID(inParameterID))
@@ -1382,7 +1384,7 @@ void DfxSettings::assignParameter(dfx::ParameterID inParameterID, dfx::MidiEvent
 
 //-----------------------------------------------------------------------------
 // remove any MIDI event assignment that a parameter might have
-void DfxSettings::unassignParameter(dfx::ParameterID inParameterID)
+void DfxSettings::unassignParameter(dfx::ParameterID inParameterID) noexcept DFX_RT_ATTR
 {
 	// return if what we got is not a valid parameter index
 	if (!isValidParameterID(inParameterID))
@@ -1404,7 +1406,7 @@ void DfxSettings::unassignParameter(dfx::ParameterID inParameterID)
 
 //-----------------------------------------------------------------------------
 // turn MIDI learn mode on or off
-void DfxSettings::setLearning(bool inLearnMode)
+void DfxSettings::setLearning(bool inLearnMode) noexcept DFX_RT_ATTR
 {
 	// erase the current learner if the state of MIDI learn is being toggled
 	if (inLearnMode != mMidiLearn)
@@ -1425,7 +1427,8 @@ void DfxSettings::setLearning(bool inLearnMode)
 //-----------------------------------------------------------------------------
 // define the actively learning parameter during MIDI learn mode
 void DfxSettings::setLearner(dfx::ParameterID inParameterID, dfx::MidiEventBehaviorFlags inEventBehaviorFlags, 
-							 int inDataInt1, int inDataInt2, float inDataFloat1, float inDataFloat2)
+							 int inDataInt1, int inDataInt2, 
+							 float inDataFloat1, float inDataFloat2) noexcept DFX_RT_ATTR
 {
 	// allow this invalid parameter tag, and then exit
 	if (inParameterID == dfx::kParameterID_Invalid)
@@ -1475,7 +1478,7 @@ void DfxSettings::setParameterMidiLearn(bool inValue)
 // to clear MIDI event assignments
 void DfxSettings::setParameterMidiReset()
 {
-	// if we're in MIDI learn mode and a parameter has been selected, 
+	// if we are in MIDI learn mode and a parameter has been selected, 
 	// then erase its MIDI event assigment (if it has one)
 	if (mMidiLearn && (mLearner != dfx::kParameterID_Invalid))
 	{

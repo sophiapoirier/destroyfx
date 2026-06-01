@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2023  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -31,7 +31,7 @@ somewhere in the include tree for every file for a DfxPlugin.
 
 
 /*-----------------------------------------------------------------------------*/
-/* XXX Microsoft's crummy C compiler doesn't define __STDC__ when its own C extensions are enabled */
+/* HACK: Microsoft's C compiler doesn't define __STDC__ when its own C extensions are enabled */
 #ifdef _MSC_EXTENSIONS
 	#ifndef __STDC__
 		#define __STDC__	1
@@ -53,10 +53,10 @@ somewhere in the include tree for every file for a DfxPlugin.
 #endif
 
 #ifndef PLUGIN_COLLECTION_NAME
-	#define PLUGIN_COLLECTION_NAME	"Super Destroy FX upsetting+delightful plugin pack"
+	#define PLUGIN_COLLECTION_NAME	"Super Destroy FX upsetting + delightful plugin pack"
 #endif
 
-/* XXX needs workaround for plugin names with white spaces */
+/* TODO: needs workaround for plugin names with white spaces */
 #ifndef PLUGIN_BUNDLE_IDENTIFIER
 	#define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX PLUGIN_NAME_STRING DFX_BUNDLE_ID_SUFFIX
 #endif
@@ -65,7 +65,7 @@ somewhere in the include tree for every file for a DfxPlugin.
 	#define PLUGIN_ICON_FILE_NAME	"destroyfx.icns"
 #endif
 
-#define DESTROYFX_URL	"http://destroyfx.org"
+#define DESTROYFX_URL	"https://destroyfx.org"
 
 #ifndef PLUGIN_HOMEPAGE_URL
 	#define PLUGIN_HOMEPAGE_URL	DESTROYFX_URL
@@ -101,6 +101,24 @@ somewhere in the include tree for every file for a DfxPlugin.
 
 #include <cstddef>
 #include <limits>
+
+#if defined(__has_attribute) && __has_attribute(nonblocking)
+	#define DFX_RT_ATTR [[clang::nonblocking]]
+	#define DFX_RT_UNSAFE(...)                                           \
+		_Pragma("clang diagnostic push")                                 \
+		_Pragma("clang diagnostic ignored \"-Wunknown-warning-option\"") \
+		_Pragma("clang diagnostic ignored \"-Wfunction-effects\"")       \
+		__VA_ARGS__                                                      \
+		_Pragma("clang diagnostic pop")
+	#define DFX_RT_ASSERT(...) DFX_RT_UNSAFE(assert(__VA_ARGS__))
+#else
+	#define DFX_RT_ATTR
+	#define DFX_RT_UNSAFE(...)
+	#define DFX_RT_ASSERT(...) assert(__VA_ARGS__)
+#endif
+
+// shortcut for less text in a line of lambda code in a realtime context
+#define DFX_RT_LAMBDA noexcept DFX_RT_ATTR
 
 namespace dfx
 {

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2022  Sophia Poirier
+Copyright (C) 2009-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -46,31 +46,31 @@ template <std::floating_point T>
 class SmoothedValue final : public ISmoothedValue
 {
 public:
-	explicit SmoothedValue(double inSmoothingTimeInSeconds = 0.030);
+	constexpr explicit SmoothedValue(double inSmoothingTimeInSeconds = 0.030) noexcept DFX_RT_ATTR;
 
-	void setValue(T inTargetValue) noexcept;
-	void setValueNow(T inValue) noexcept;
+	constexpr void setValue(T inTargetValue) noexcept DFX_RT_ATTR;
+	constexpr void setValueNow(T inValue) noexcept DFX_RT_ATTR;
 	// Immediately snap to the target value.
-	void snap() noexcept override;
-	T getValue() const noexcept
+	constexpr void snap() noexcept DFX_RT_ATTR override;
+	constexpr T getValue() const noexcept DFX_RT_ATTR
 	{
 		return mCurrentValue;
 	}
 
-	bool isSmoothing() const noexcept override;
+	constexpr bool isSmoothing() const noexcept DFX_RT_ATTR override;
 	// Advance one sample.
-	void inc() noexcept override;
+	constexpr void inc() noexcept DFX_RT_ATTR override;
 	// advance N samples
-	void inc(size_t inCount) noexcept override;
+	constexpr void inc(size_t inCount) noexcept DFX_RT_ATTR override;
 
-	double getSmoothingTime() const noexcept override
+	constexpr double getSmoothingTime() const noexcept DFX_RT_ATTR override
 	{
 		return mSmoothDur_seconds;
 	}
-	void setSmoothingTime(double inSmoothingTimeInSeconds) override;
-	void setSampleRate(double inSampleRate) override;
+	constexpr void setSmoothingTime(double inSmoothingTimeInSeconds) noexcept DFX_RT_ATTR override;
+	constexpr void setSampleRate(double inSampleRate) noexcept DFX_RT_ATTR override;
 
-	SmoothedValue<T>& operator=(T inValue) noexcept;
+	constexpr SmoothedValue<T>& operator=(T inValue) noexcept DFX_RT_ATTR;
 
 private:
 	T mCurrentValue {}, mTargetValue {};

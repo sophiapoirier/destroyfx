@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -26,7 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "dfxmath.h"
 
 
-void RezSynth::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
+void RezSynth::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR
 {
 	auto const numChannels = outAudio.size();
 	auto numFramesToProcess = inNumFrames;  // for dividing up the block according to events
@@ -105,13 +105,13 @@ void RezSynth::processaudio(std::span<float const* const> inAudio, std::span<flo
 					{
 						mAmpEvener[noteIndex].snap();
 						mBaseFreq[noteIndex].snap();
-						std::ranges::for_each(mBandCenterFreq[noteIndex], [](auto& value){ value.snap(); });
-						std::ranges::for_each(mBandBandwidth[noteIndex], [](auto& value){ value.snap(); });
+						std::ranges::for_each(mBandCenterFreq[noteIndex], [](auto& value) DFX_RT_LAMBDA { value.snap(); });
+						std::ranges::for_each(mBandBandwidth[noteIndex], [](auto& value) DFX_RT_LAMBDA { value.snap(); });
 					}
 
-					auto const subSliceFrameCount = [this, numFramesToProcess, subSlicePosition, noteIndex, activeNumBands]
+					auto const subSliceFrameCount = [this, numFramesToProcess, subSlicePosition, noteIndex, activeNumBands] DFX_RT_LAMBDA
 					{
-						auto const valueIsSmoothing = [](auto const& value){ return value.isSmoothing(); };
+						constexpr auto valueIsSmoothing = [](auto const& value) DFX_RT_LAMBDA { return value.isSmoothing(); };
 						auto const freqIsSmoothing = mBaseFreq[noteIndex].isSmoothing()
 						|| std::any_of(mBandCenterFreq[noteIndex].cbegin(),
 									   std::next(mBandCenterFreq[noteIndex].cbegin(), activeNumBands),
@@ -133,8 +133,8 @@ void RezSynth::processaudio(std::span<float const* const> inAudio, std::span<flo
 									  noteIndex, activeNumBands);
 
 					mBaseFreq[noteIndex].inc(subSliceFrameCount);
-					std::ranges::for_each(mBandCenterFreq[noteIndex], [subSliceFrameCount](auto& value){ value.inc(subSliceFrameCount); });
-					std::ranges::for_each(mBandBandwidth[noteIndex], [subSliceFrameCount](auto& value){ value.inc(subSliceFrameCount); });
+					std::ranges::for_each(mBandCenterFreq[noteIndex], [subSliceFrameCount](auto& value) DFX_RT_LAMBDA { value.inc(subSliceFrameCount); });
+					std::ranges::for_each(mBandBandwidth[noteIndex], [subSliceFrameCount](auto& value) DFX_RT_LAMBDA { value.inc(subSliceFrameCount); });
 
 					subSlicePosition += subSliceFrameCount;
 				}
@@ -143,7 +143,7 @@ void RezSynth::processaudio(std::span<float const* const> inAudio, std::span<flo
 			// could be because it already was inactive, or because we just completed articulation of the note
 			if (!getmidistate().isNoteActive(noteIndex))
 			{
-				std::ranges::for_each(mLowpassGateFilters[noteIndex], [](auto& filter){ filter.reset(); });
+				std::ranges::for_each(mLowpassGateFilters[noteIndex], [](auto& filter) DFX_RT_LAMBDA { filter.reset(); });
 			}
 
 			mNoteActiveLastRender[noteIndex] = getmidistate().isNoteActive(noteIndex);

@@ -21,8 +21,8 @@ class CombFilter
 public:
                     CombFilter(double timeInSeconds, double sampleRate);
 
-    void            clear();
-    inline float    process(float inputAudioSample, float feedback, float damping);
+    void            clear() noexcept [[clang::nonblocking]];
+    inline float    process(float inputAudioSample, float feedback, float damping) noexcept [[clang::nonblocking]];
 
 private:
     float   mFilterHistory = 0.0f;
@@ -31,7 +31,7 @@ private:
 };
 
 
-inline float CombFilter::process(float inputAudioSample, float feedback, float damping)
+inline float CombFilter::process(float inputAudioSample, float feedback, float damping) noexcept [[clang::nonblocking]]
 {
     const auto output = mBuffer[mBufferIndex];
 

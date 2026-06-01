@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2022  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2026  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -34,10 +34,13 @@ using namespace dfx::TV;
 
 
 
-void TransverbDSP::process(std::span<float const> inAudio, std::span<float> outAudio) {
+void TransverbDSP::process(std::span<float const> inAudio,
+                           std::span<float> outAudio) noexcept DFX_RT_ATTR {
 
   std::array<float, kNumDelays> delayvals {};  // delay buffer output values
   auto const bsize_float = static_cast<double>(bsize);  // cut down on casting
+  auto const quality = getparameter_i(kQuality);
+  auto const tomsound = getparameter_b(kTomsound);
   auto const freeze = getparameter_b(kFreeze);
   int const writerIncrement = freeze ? 0 : 1;
   auto const attenuateFeedbackByMixLevel = getparameter_b(kAttenuateFeedbackByMixLevel);

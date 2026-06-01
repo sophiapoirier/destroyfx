@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -73,22 +73,22 @@ void MIDIGater::cleanup()
 }
 
 //-----------------------------------------------------------------------------------------
-void MIDIGater::reset()
+void MIDIGater::reset() noexcept DFX_RT_ATTR
 {
 	resetFilters();
 }
 
 //-----------------------------------------------------------------------------------------
-void MIDIGater::resetFilters()
+void MIDIGater::resetFilters() noexcept DFX_RT_ATTR
 {
-	std::ranges::for_each(mLowpassGateFilters, [](auto& channelFilters)
+	std::ranges::for_each(mLowpassGateFilters, [](auto& channelFilters) DFX_RT_LAMBDA
 	{
-		std::ranges::for_each(channelFilters, [](auto& filter){ filter.reset(); });
+		std::ranges::for_each(channelFilters, [](auto& filter) DFX_RT_LAMBDA { filter.reset(); });
 	});
 }
 
 //-----------------------------------------------------------------------------------------
-void MIDIGater::processparameters()
+void MIDIGater::processparameters() noexcept DFX_RT_ATTR
 {
 	if (getparameterchanged(kAttack) || getparameterchanged(kRelease))
 	{
@@ -115,7 +115,7 @@ void MIDIGater::processparameters()
 
 
 //-----------------------------------------------------------------------------------------
-void MIDIGater::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames)
+void MIDIGater::processaudio(std::span<float const* const> inAudio, std::span<float* const> outAudio, size_t inNumFrames) noexcept DFX_RT_ATTR
 {
 	auto const numChannels = outAudio.size();
 	auto numFramesToProcess = inNumFrames;  // for dividing up the block according to events
@@ -192,7 +192,7 @@ void MIDIGater::processaudio(std::span<float const* const> inAudio, std::span<fl
 						{
 							dfx::IIRFilter::Coefficients filterCoef;
 							std::tie(filterCoef, postFilterAmp) = getmidistate().processEnvelopeLowpassGate(noteCount);
-							std::ranges::for_each(channelFilters, [&filterCoef](auto& filter)
+							std::ranges::for_each(channelFilters, [&filterCoef](auto& filter) DFX_RT_LAMBDA
 							{
 								filter.setCoefficients(filterCoef);
 							});
@@ -223,7 +223,7 @@ void MIDIGater::processaudio(std::span<float const* const> inAudio, std::span<fl
 			// could be because it already was inactive, or because we just completed articulation of the note
 			if (!getmidistate().isNoteActive(noteCount))
 			{
-				std::ranges::for_each(channelFilters, [](auto& filter){ filter.reset(); });
+				std::ranges::for_each(channelFilters, [](auto& filter) DFX_RT_LAMBDA { filter.reset(); });
 			}
 		}  // end of notes loop
 

@@ -380,7 +380,7 @@
 				USE_HEADERMAP = NO;
 				WARNING_CFLAGS = (
 					"-Wall",
-					"-Wno-perf-constraint-implies-noexcept",
+					"-Wfunction-effects",
 				);
 				WRAPPER_EXTENSION = component;
 			};
@@ -438,7 +438,7 @@
 				USE_HEADERMAP = NO;
 				WARNING_CFLAGS = (
 					"-Wall",
-					"-Wno-perf-constraint-implies-noexcept",
+					"-Wfunction-effects",
 				);
 				WRAPPER_EXTENSION = component;
 			};
