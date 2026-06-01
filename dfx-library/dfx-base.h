@@ -104,21 +104,21 @@ somewhere in the include tree for every file for a DfxPlugin.
 
 #if defined(__has_attribute) && __has_attribute(nonblocking)
 	#define DFX_RT_ATTR [[clang::nonblocking]]
-	#define DFX_RT_UNSAFE(...)                                           \
-		_Pragma("clang diagnostic push")                                 \
-		_Pragma("clang diagnostic ignored \"-Wunknown-warning-option\"") \
-		_Pragma("clang diagnostic ignored \"-Wfunction-effects\"")       \
-		__VA_ARGS__                                                      \
-		_Pragma("clang diagnostic pop")
-	#define DFX_RT_ASSERT(...) DFX_RT_UNSAFE(assert(__VA_ARGS__))
 #else
 	#define DFX_RT_ATTR
-	#define DFX_RT_UNSAFE(...)
-	#define DFX_RT_ASSERT(...) assert(__VA_ARGS__)
 #endif
 
 // shortcut for less text in a line of lambda code in a realtime context
 #define DFX_RT_LAMBDA noexcept DFX_RT_ATTR
+
+#define DFX_RT_UNSAFE(...)                                           \
+	_Pragma("clang diagnostic push")                                 \
+	_Pragma("clang diagnostic ignored \"-Wunknown-warning-option\"") \
+	_Pragma("clang diagnostic ignored \"-Wfunction-effects\"")       \
+	__VA_ARGS__                                                      \
+	_Pragma("clang diagnostic pop")
+
+#define DFX_RT_ASSERT(...) DFX_RT_UNSAFE(assert(__VA_ARGS__))
 
 namespace dfx
 {
