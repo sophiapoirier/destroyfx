@@ -135,14 +135,10 @@ void DfxParam::init(std::vector<std::string_view> const& inNames,
 	switch (valueType)
 	{
 		case ValueType::Float:
-			assert(!std::isnan(get_f(inInitialValue)));
-			assert(!std::isinf(get_f(inInitialValue)));
-			assert(!std::isnan(get_f(inDefaultValue)));
-			assert(!std::isinf(get_f(inDefaultValue)));
-			assert(!std::isnan(get_f(inMinValue)));
-			assert(!std::isinf(get_f(inMinValue)));
-			assert(!std::isnan(get_f(inMaxValue)));
-			assert(!std::isinf(get_f(inMaxValue)));
+			assert(std::isfinite(get_f(inInitialValue)));
+			assert(std::isfinite(get_f(inDefaultValue)));
+			assert(std::isfinite(get_f(inMinValue)));
+			assert(std::isfinite(get_f(inMaxValue)));
 			if (get_f(mMinValue) > get_f(mMaxValue))
 			{
 				std::swap(mMinValue, mMaxValue);
@@ -318,8 +314,7 @@ double DfxParam::derive_f(Value inValue) noexcept DFX_RT_ATTR
 	switch (getvaluetype(inValue))
 	{
 		case ValueType::Float:
-			DFX_RT_ASSERT(!std::isnan(get_f(inValue)));
-			DFX_RT_ASSERT(!std::isinf(get_f(inValue)));
+			DFX_RT_ASSERT(std::isfinite(get_f(inValue)));
 			return get_f(inValue);
 		case ValueType::Int:
 			return static_cast<double>(get_i(inValue));
@@ -337,8 +332,7 @@ int64_t DfxParam::derive_i(Value inValue) noexcept DFX_RT_ATTR
 	switch (getvaluetype(inValue))
 	{
 		case ValueType::Float:
-			DFX_RT_ASSERT(!std::isnan(get_f(inValue)));
-			DFX_RT_ASSERT(!std::isinf(get_f(inValue)));
+			DFX_RT_ASSERT(std::isfinite(get_f(inValue)));
 			return Float2Int(get_f(inValue));
 		case ValueType::Int:
 			return get_i(inValue);
@@ -356,8 +350,7 @@ bool DfxParam::derive_b(Value inValue) noexcept DFX_RT_ATTR
 	switch (getvaluetype(inValue))
 	{
 		case ValueType::Float:
-			DFX_RT_ASSERT(!std::isnan(get_f(inValue)));
-			DFX_RT_ASSERT(!std::isinf(get_f(inValue)));
+			DFX_RT_ASSERT(std::isfinite(get_f(inValue)));
 			return Float2Boolean(get_f(inValue));
 		case ValueType::Int:
 			return Int2Boolean(get_i(inValue));
@@ -574,8 +567,7 @@ void DfxParam::set(Value inValue) noexcept DFX_RT_ATTR
 	switch (getvaluetype(inValue))
 	{
 		case ValueType::Float:
-			DFX_RT_ASSERT(!std::isnan(get_f(inValue)));
-			DFX_RT_ASSERT(!std::isinf(get_f(inValue)));
+			DFX_RT_ASSERT(std::isfinite(get_f(inValue)));
 			inValue = limit_f(get_f(inValue));
 			break;
 		case ValueType::Int:

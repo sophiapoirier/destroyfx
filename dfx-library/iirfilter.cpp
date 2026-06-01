@@ -190,13 +190,10 @@ void dfx::IIRFilter::setCoefficients(Coefficients const& inCoefficients) noexcep
 dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setCoefficients(FilterType inFilterType, double inFrequency, double inQ, double inGain) noexcept DFX_RT_ATTR
 {
 	DFX_RT_ASSERT(inFrequency > 0.);
-	DFX_RT_ASSERT(!std::isinf(inFrequency));
-	DFX_RT_ASSERT(!std::isnan(inFrequency));
+	DFX_RT_ASSERT(std::isfinite(inFrequency));
 	DFX_RT_ASSERT(inQ > 0.);
-	DFX_RT_ASSERT(!std::isinf(inQ));
-	DFX_RT_ASSERT(!std::isnan(inQ));
-	DFX_RT_ASSERT(!std::isinf(inGain));
-	DFX_RT_ASSERT(!std::isnan(inGain));
+	DFX_RT_ASSERT(std::isfinite(inQ));
+	DFX_RT_ASSERT(std::isfinite(inGain));
 
 	mFilterType = inFilterType;
 	mFilterFrequency = inFrequency;
@@ -214,11 +211,9 @@ dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setCoefficients(FilterType i
 				  (inFilterType != FilterType::LowShelf) && 
 				  (inFilterType != FilterType::HighShelf));
 	DFX_RT_ASSERT(inFrequency > 0.);
-	DFX_RT_ASSERT(!std::isinf(inFrequency));
-	DFX_RT_ASSERT(!std::isnan(inFrequency));
+	DFX_RT_ASSERT(std::isfinite(inFrequency));
 	DFX_RT_ASSERT(inQ > 0.);
-	DFX_RT_ASSERT(!std::isinf(inQ));
-	DFX_RT_ASSERT(!std::isnan(inQ));
+	DFX_RT_ASSERT(std::isfinite(inQ));
 
 	mFilterType = inFilterType;
 	mFilterFrequency = inFrequency;
