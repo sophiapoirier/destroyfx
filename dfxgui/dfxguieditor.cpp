@@ -235,6 +235,8 @@ try
 	{
 		return HasParameterAttribute(parameterID, DfxParam::kAttribute_Unused);
 	});
+
+	mMainThreadID = std::this_thread::get_id();
 #endif
 
 	OpenEditor();
@@ -286,6 +288,10 @@ void DfxGuiEditor::close()
 	mControlsList.clear();
 
 	frame_temp->forget();
+
+#ifndef TARGET_API_AUDIOUNIT
+	mMainThreadID = {};
+#endif
 
 	TARGET_API_EDITOR_BASE_CLASS::close();
 }
@@ -401,20 +407,7 @@ void DfxGuiEditor::idle()
 	{
 		if (!propertyChangeHasPosted.test_and_set())
 		{
-			switch (propertyDescriptor.mID)
-			{
-			#if TARGET_PLUGIN_USES_MIDI
-				case dfx::kPluginProperty_MidiLearn:
-					HandleMidiLearnChange();
-					break;
-				case dfx::kPluginProperty_MidiLearner:
-					HandleMidiLearnerChange();
-					break;
-			#endif
-				default:
-					HandlePropertyChange(propertyDescriptor.mID, propertyDescriptor.mScope, propertyDescriptor.mItemIndex);
-					break;
-			}
+			DoHandlePropertyChange(propertyDescriptor.mID, propertyDescriptor.mScope, propertyDescriptor.mItemIndex);
 		}
 	}
 #endif
@@ -450,11 +443,36 @@ void DfxGuiEditor::PropertyChanged(dfx::PropertyID inPropertyID, dfx::Scope inSc
 {
 	if (IsPropertyRegistered(inPropertyID, inScope, inItemIndex))
 	{
-		// defer handling to the main thread
-		// TODO: execute immediately if on the main thread
-		PropertyDescriptor const property{inPropertyID, inScope, inItemIndex};
-		assert(mPropertyChangesHavePosted.contains(property));
-		mPropertyChangesHavePosted[property].clear();
+		if (std::this_thread::get_id() == mMainThreadID)
+		{
+			DoHandlePropertyChange(inPropertyID, inScope, inItemIndex);
+		}
+		else
+		{
+			// defer handling to the main thread
+			PropertyDescriptor const property{inPropertyID, inScope, inItemIndex};
+			assert(mPropertyChangesHavePosted.contains(property));
+			mPropertyChangesHavePosted[property].clear();
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::DoHandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex)
+{
+	switch (inPropertyID)
+	{
+	#if TARGET_PLUGIN_USES_MIDI
+		case dfx::kPluginProperty_MidiLearn:
+			HandleMidiLearnChange();
+			break;
+		case dfx::kPluginProperty_MidiLearner:
+			HandleMidiLearnerChange();
+			break;
+	#endif
+		default:
+			HandlePropertyChange(inPropertyID, inScope, inItemIndex);
+			break;
 	}
 }
 #endif

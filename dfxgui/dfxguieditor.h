@@ -32,6 +32,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <mutex>
 #include <optional>
 #include <string>
+#include <thread>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -421,6 +422,8 @@ private:
 	static void AudioUnitEventListenerProc(void* inCallbackRefCon, void* inObject, AudioUnitEvent const* inEvent, UInt64 inEventHostTime, Float32 inParameterValue);
 	// Convert each element of mRegisteredProperties to an AudioUnitEvent and call argument function on it.
 	void ForEachRegisteredAudioUnitEvent(std::function<void(AudioUnitEvent const&)>&& f);
+#else
+	void DoHandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned int inItemIndex);
 #endif
 
 #ifdef TARGET_API_VST
@@ -471,6 +474,7 @@ private:
 	AudioUnitEvent mMidiLearnerPropertyAUEvent {};
 #else
 	std::map<PropertyDescriptor, std::atomic_flag> mPropertyChangesHavePosted;
+	std::thread::id mMainThreadID;
 #endif
 
 #ifdef TARGET_API_VST
