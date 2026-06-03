@@ -358,7 +358,7 @@
 				INFOPLIST_FILE = "rmsbuddy-info.plist";
 				INSTALL_MODE_FLAG = "u+w,a+rX";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components";
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 11.5;
 				PRODUCT_BUNDLE_IDENTIFIER = org.destroyfx.RMSBuddy;
 				PRODUCT_NAME = "dfx RMS Buddy";
 				USE_HEADERMAP = NO;
@@ -409,7 +409,7 @@
 				INFOPLIST_FILE = "rmsbuddy-info.plist";
 				INSTALL_MODE_FLAG = "u+w,a+rX";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components";
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 11.5;
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = org.destroyfx.RMSBuddy;
 				PRODUCT_NAME = "dfx RMS Buddy";

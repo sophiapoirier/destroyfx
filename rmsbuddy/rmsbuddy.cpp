@@ -58,6 +58,8 @@ RMSBuddy::RMSBuddy(AudioComponentInstance inComponentInstance)
 			AUBase::SetParameter(paramID, kAudioUnitScope_Global, AudioUnitElement{0}, paramInfo.defaultValue, 0);
 		}
 	}
+
+	SetWantsRenderThreadID(true);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -69,9 +71,30 @@ OSStatus RMSBuddy::Initialize()
 	{
 		HandleChannelCount();
 
-		// hosts aren't required to trigger Reset between Initializing and starting audio processing, 
-		// so it's a good idea to do it ourselves here
+		// hosts are not required to trigger Reset between Initializing and starting audio processing, 
+		// so it is a good idea to do it ourselves here
 		Reset(kAudioUnitScope_Global, AudioUnitElement{0});
+
+		mChannelParameterNotifications = decltype(mChannelParameterNotifications)(kChannelParameter_Count * mChannelCount);
+		std::ranges::for_each(mChannelParameterNotifications, [](auto& flag){ flag.test_and_set(); });
+		// TODO: could be optimized to have all plugin instances share a single thread,
+		// but are people actually likely to load numerous instances of this plugin?
+		mNotificationThread.emplace([this](std::stop_token stopToken)
+		{
+			::pthread_setname_np("RMS Buddy notifications");
+			while (!stopToken.stop_requested())
+			{
+				for (AudioUnitParameterID i = 0; i < mChannelParameterNotifications.size(); i++)
+				{
+					if (!mChannelParameterNotifications[i].test_and_set(std::memory_order_relaxed))
+					{
+						NotifyMeterChanged(kChannelParameter_Base + i);
+					}
+				}
+				using namespace std::literals;
+				std::this_thread::sleep_for(30ms);
+			}
+		});
 	}
 	return status;
 }
@@ -80,6 +103,9 @@ OSStatus RMSBuddy::Initialize()
 // this is the sort of mini-destructor partner to Initialize, where we clean up DSP resources
 void RMSBuddy::Cleanup()
 {
+	mNotificationThread.reset();
+	mChannelParameterNotifications.clear();
+
 	mAverageRMS = {};
 	mTotalSquaredCollection = {};
 	mAbsolutePeak = {};
@@ -534,10 +560,27 @@ void RMSBuddy::HandleChannelCount()
 //-----------------------------------------------------------------------------------------
 void RMSBuddy::SetMeter(UInt32 inChannelIndex, AudioUnitParameterID inID, AudioUnitParameterValue inLinearValue) noexcept AUSDK_RTSAFE
 {
-	auto const paramID = GetParameterIDFromChannelAndID(inChannelIndex, inID);
+	auto const parameterID = GetParameterIDFromChannelAndID(inChannelIndex, inID);
 	auto const decibelValue = std::max(LinearToDecibels(inLinearValue), mMinMeterValueDb);
-	AudioUnitParameter const auParam = { GetComponentInstance(), paramID, kAudioUnitScope_Global, AudioUnitElement{0} };
-	AUParameterSet(nullptr, nullptr, &auParam, decibelValue, 0);  // TODO: defer off render thread
+	AudioUnitSetParameter(GetComponentInstance(), parameterID, kAudioUnitScope_Global, AudioUnitElement{0}, decibelValue, 0);
+
+	if (InRenderThread())
+	{
+		auto const index = parameterID - kChannelParameter_Base;
+		AUSDK_RT_UNSAFE(assert(index < mChannelParameterNotifications.size()));
+		mChannelParameterNotifications[index].clear(std::memory_order_relaxed);
+	}
+	else
+	{
+		AUSDK_RT_UNSAFE(NotifyMeterChanged(parameterID));
+	}
+}
+
+//-----------------------------------------------------------------------------------------
+void RMSBuddy::NotifyMeterChanged(AudioUnitParameterID inParameterID) noexcept
+{
+	AudioUnitParameter const auParam = { GetComponentInstance(), inParameterID, kAudioUnitScope_Global, AudioUnitElement{0} };
+	AUParameterListenerNotify(nullptr, nullptr, &auParam);
 }
 
 //-----------------------------------------------------------------------------------------

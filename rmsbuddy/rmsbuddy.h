@@ -22,7 +22,9 @@ To contact the author, use the contact form at http://destroyfx.org
 #pragma once
 
 #include <AudioUnitSDK/AUEffectBase.h>
+#include <atomic>
 #include <optional>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -68,6 +70,7 @@ private:
 
 	void HandleChannelCount();
 	void SetMeter(UInt32 inChannelIndex, AudioUnitParameterID inID, float inLinearValue) noexcept AUSDK_RTSAFE;
+	void NotifyMeterChanged(AudioUnitParameterID inParameterID) noexcept;
 
 	void ResetRMS() noexcept AUSDK_RTSAFE;
 	void ResetPeak() noexcept AUSDK_RTSAFE;
@@ -84,4 +87,7 @@ private:
 	uint64_t mAnalysisWindowSampleCounter {};  // number of samples analyzed since the last GUI refresh
 	std::vector<double> mContinualRMS;  // the accumulation for continual RMS for GUI display
 	std::vector<float> mContinualPeak;  // the absolute peak value since the last GUI refresh
+
+	std::vector<std::atomic_flag> mChannelParameterNotifications;
+	std::optional<std::jthread> mNotificationThread;
 };
