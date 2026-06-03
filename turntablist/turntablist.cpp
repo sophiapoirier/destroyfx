@@ -135,8 +135,6 @@ Turntablist::Turntablist(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	m_nCurrentNote = m_nRootKey;
 	m_nCurrentVelocity = 0x7F;
-
-	mPlayChangedInProcessHasPosted.test_and_set();
 }
 
 //-----------------------------------------------------------------------------------------
@@ -165,7 +163,7 @@ void Turntablist::initialize()
 //-----------------------------------------------------------------------------------------
 void Turntablist::idle()
 {
-	if (!mPlayChangedInProcessHasPosted.test_and_set(std::memory_order_relaxed))
+	if (mPlayChangedInProcessHasPosted.getAndReset())
 	{
 		dfx_PropertyChanged(kTurntablistProperty_Play);
 	}
@@ -616,7 +614,7 @@ void Turntablist::setPlay(bool inPlayState, bool inShouldSendNotification) noexc
 	{
 		if (isrenderthread())
 		{
-			mPlayChangedInProcessHasPosted.clear(std::memory_order_relaxed);
+			mPlayChangedInProcessHasPosted.set();
 		}
 		else
 		{

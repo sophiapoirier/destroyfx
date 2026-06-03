@@ -405,7 +405,7 @@ void DfxGuiEditor::idle()
 #ifndef TARGET_API_AUDIOUNIT
 	for (auto& [propertyDescriptor, propertyChangeHasPosted] : mPropertyChangesHavePosted)
 	{
-		if (!propertyChangeHasPosted.test_and_set())
+		if (propertyChangeHasPosted.getAndReset())
 		{
 			DoHandlePropertyChange(propertyDescriptor.mID, propertyDescriptor.mScope, propertyDescriptor.mItemIndex);
 		}
@@ -433,7 +433,7 @@ void DfxGuiEditor::RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Sco
 	mRegisteredProperties.push_back(property);
 
 #ifndef TARGET_API_AUDIOUNIT
-	mPropertyChangesHavePosted[property].test_and_set();
+	mPropertyChangesHavePosted[property];	// trigger element insertion
 #endif
 }
 
@@ -452,7 +452,7 @@ void DfxGuiEditor::PropertyChanged(dfx::PropertyID inPropertyID, dfx::Scope inSc
 			// defer handling to the main thread
 			PropertyDescriptor const property{inPropertyID, inScope, inItemIndex};
 			assert(mPropertyChangesHavePosted.contains(property));
-			mPropertyChangesHavePosted[property].clear();
+			mPropertyChangesHavePosted[property].set();
 		}
 	}
 }

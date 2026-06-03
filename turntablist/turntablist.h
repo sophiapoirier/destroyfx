@@ -40,7 +40,6 @@ To contact the developer, use the contact form at http://destroyfx.org
 #pragma once
 
 #include <CoreServices/CoreServices.h>
-#include <atomic>
 #include <expected>
 #include <vector>
 
@@ -300,5 +299,5 @@ private:
 
 	dfx::SpinLock m_AudioFileLock;
 
-	std::atomic_flag mPlayChangedInProcessHasPosted;
+	dfx::AtomicFlag mPlayChangedInProcessHasPosted;
 };

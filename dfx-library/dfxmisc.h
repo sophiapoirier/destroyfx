@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2025  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -45,6 +45,8 @@ These are some generally useful functions.
 	#include <CoreFoundation/CoreFoundation.h>
 #endif
 
+#include "dfx-base.h"
+
 
 namespace dfx
 {
@@ -61,6 +63,27 @@ inline constexpr bool AlwaysFalse = false;
 template <typename T>
 requires std::atomic<T>::is_always_lock_free
 using LockFreeAtomic = std::atomic<T>;
+
+//-----------------------------------------------------------------------------
+// wrapper for the most lightweight atomic to invert its unintuitive API
+class AtomicFlag
+{
+public:
+	AtomicFlag() noexcept
+	{
+		mFlag.test_and_set();
+	}
+	void set() noexcept DFX_RT_ATTR
+	{
+		mFlag.clear(std::memory_order_relaxed);
+	}
+	bool getAndReset() noexcept DFX_RT_ATTR
+	{
+		return !mFlag.test_and_set(std::memory_order_relaxed);
+	}
+private:
+	std::atomic_flag mFlag;
+};
 
 
 //-----------------------------------------------------------------------------

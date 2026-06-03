@@ -126,7 +126,6 @@ VST_NUM_CHANNELS
 #pragma once
 
 
-#include <atomic>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
@@ -139,6 +138,7 @@ VST_NUM_CHANNELS
 #include <string>
 #include <string_view>
 #include <thread>
+#include <type_traits>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -771,13 +771,13 @@ private:
 
 	std::vector<DfxParam> mParameters;
 	std::vector<bool> mParametersChangedAsOfPreProcess, mParametersTouchedAsOfPreProcess;
-	std::vector<std::atomic_flag> mParametersChangedInProcessHavePosted;
+	std::vector<dfx::AtomicFlag> mParametersChangedInProcessHavePosted;
 	// the effect owns a single random engine shared by all parameters rather than each parameter owning its own for efficiency, because its state data can be quite large
 	dfx::math::RandomEngine mParameterRandomEngine {dfx::math::RandomSeed::Entropic};
 	dfx::SpinLock mParameterRandomEngineLock;
 	std::vector<std::pair<std::string, std::set<dfx::ParameterID>>> mParameterGroups;
 	std::vector<DfxPreset> mPresets;
-	std::atomic_flag mPresetChangedInProcessHasPosted;
+	dfx::AtomicFlag mPresetChangedInProcessHasPosted;
 
 	std::vector<ChannelConfig> mChannelConfigs;
 
@@ -792,8 +792,8 @@ private:
 #if TARGET_PLUGIN_USES_MIDI
 	DfxMidi mMidiState;
 	std::unique_ptr<DfxSettings> mDfxSettings;
-	std::atomic_flag mMidiLearnChangedInProcessHasPosted;
-	std::atomic_flag mMidiLearnerChangedInProcessHasPosted;
+	dfx::AtomicFlag mMidiLearnChangedInProcessHasPosted;
+	dfx::AtomicFlag mMidiLearnerChangedInProcessHasPosted;
 #endif
 
 	size_t mCurrentPresetNum = 0;
@@ -852,15 +852,15 @@ private:
 	void processtimeinfo() noexcept DFX_RT_ATTR;
 
 	std::variant<size_t, double> mLatency {0uz};
-	std::atomic_flag mLatencyChangeHasPosted;
+	dfx::AtomicFlag mLatencyChangeHasPosted;
 	std::variant<size_t, double> mTailSize {0uz};
-	std::atomic_flag mTailSizeChangeHasPosted;
+	dfx::AtomicFlag mTailSizeChangeHasPosted;
 	bool mInPlaceAudioProcessingAllowed = true;
 	bool mAudioIsRendering = false;
 	std::vector<std::pair<dfx::ISmoothedValue&, DfxPluginCore*>> mSmoothedAudioValues;
 	bool mIsFirstRenderSinceReset = false;
 #ifndef TARGET_API_AUDIOUNIT
-	std::thread::id mAudioRenderThreadID {};
+	std::thread::id mAudioRenderThreadID;
 #endif
 
 #ifdef TARGET_API_RTAS

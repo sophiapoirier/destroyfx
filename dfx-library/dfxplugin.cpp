@@ -194,17 +194,6 @@ DfxPlugin::DfxPlugin(TARGET_API_BASE_INSTANCE_TYPE inInstance,
 		mPresets.emplace_back(inNumParameters);
 	}
 
-	// reset pending notifications
-	std::ranges::for_each(mParametersChangedInProcessHavePosted, [](auto& flag){ flag.test_and_set(); });
-	mPresetChangedInProcessHasPosted.test_and_set();
-	mLatencyChangeHasPosted.test_and_set();
-	mTailSizeChangeHasPosted.test_and_set();
-
-#if TARGET_PLUGIN_USES_MIDI
-	mMidiLearnChangedInProcessHasPosted.test_and_set();
-	mMidiLearnerChangedInProcessHasPosted.test_and_set();
-#endif
-
 #ifdef TARGET_API_AUDIOUNIT
 	SetWantsRenderThreadID(true);
 #if !TARGET_PLUGIN_IS_INSTRUMENT
@@ -685,7 +674,7 @@ void DfxPlugin::postupdate_parameter(dfx::ParameterID inParameterID) noexcept DF
 	if (isrenderthread())
 	{
 		// defer listener notification to later, off the realtime thread
-		return mParametersChangedInProcessHavePosted[inParameterID].clear(std::memory_order_relaxed);
+		return mParametersChangedInProcessHavePosted[inParameterID].set();
 	}
 
 	// realtime-unsafe calls after this point are fine because realtime execution returns early above
@@ -1027,7 +1016,7 @@ void DfxPlugin::postupdate_preset() noexcept DFX_RT_ATTR
 
 	if (isrenderthread())
 	{
-		return mPresetChangedInProcessHasPosted.clear(std::memory_order_relaxed);
+		return mPresetChangedInProcessHasPosted.set();
 	}
 
 	// realtime-unsafe calls after this point are fine because realtime execution returns early above
@@ -1375,30 +1364,30 @@ void DfxPlugin::do_idle()
 {
 	for (dfx::ParameterID parameterIndex = 0; parameterIndex < mParametersChangedInProcessHavePosted.size(); parameterIndex++)
 	{
-		if (!mParametersChangedInProcessHavePosted[parameterIndex].test_and_set(std::memory_order_relaxed))
+		if (mParametersChangedInProcessHavePosted[parameterIndex].getAndReset())
 		{
 			postupdate_parameter(parameterIndex);
 		}
 	}
-	if (!mPresetChangedInProcessHasPosted.test_and_set(std::memory_order_relaxed))
+	if (mPresetChangedInProcessHasPosted.getAndReset())
 	{
 		postupdate_preset();
 	}
-	if (!mLatencyChangeHasPosted.test_and_set(std::memory_order_relaxed))
+	if (mLatencyChangeHasPosted.getAndReset())
 	{
 		postupdate_latency();
 	}
-	if (!mTailSizeChangeHasPosted.test_and_set(std::memory_order_relaxed))
+	if (mTailSizeChangeHasPosted.getAndReset())
 	{
 		postupdate_tailsize();
 	}
 
 #if TARGET_PLUGIN_USES_MIDI
-	if (!mMidiLearnChangedInProcessHasPosted.test_and_set(std::memory_order_relaxed))
+	if (mMidiLearnChangedInProcessHasPosted.getAndReset())
 	{
 		postupdate_midilearn();
 	}
-	if (!mMidiLearnerChangedInProcessHasPosted.test_and_set(std::memory_order_relaxed))
+	if (mMidiLearnerChangedInProcessHasPosted.getAndReset())
 	{
 		postupdate_midilearner();
 	}
@@ -1584,7 +1573,7 @@ void DfxPlugin::setlatency_samples(size_t inSampleFrames) noexcept DFX_RT_ATTR
 		// defer the notification because it is not realtime-safe
 		if (isrenderthread())
 		{
-			mLatencyChangeHasPosted.clear(std::memory_order_relaxed);
+			mLatencyChangeHasPosted.set();
 		}
 		else
 		{
@@ -1613,7 +1602,7 @@ void DfxPlugin::setlatency_seconds(double inSeconds) noexcept DFX_RT_ATTR
 		// defer the notification because it is not realtime-safe
 		if (isrenderthread())
 		{
-			mLatencyChangeHasPosted.clear(std::memory_order_relaxed);
+			mLatencyChangeHasPosted.set();
 		}
 		else
 		{
@@ -1678,7 +1667,7 @@ void DfxPlugin::settailsize_samples(size_t inSampleFrames) noexcept DFX_RT_ATTR
 		// defer the notification because it is not realtime-safe
 		if (isrenderthread())
 		{
-			mTailSizeChangeHasPosted.clear(std::memory_order_relaxed);
+			mTailSizeChangeHasPosted.set();
 		}
 		else
 		{
@@ -1707,7 +1696,7 @@ void DfxPlugin::settailsize_seconds(double inSeconds) noexcept DFX_RT_ATTR
 		// defer the notification because it is not realtime-safe
 		if (isrenderthread())
 		{
-			mTailSizeChangeHasPosted.clear(std::memory_order_relaxed);
+			mTailSizeChangeHasPosted.set();
 		}
 		else
 		{

@@ -24,7 +24,6 @@ To contact the author, use the contact form at http://destroyfx.org
 #pragma once
 
 
-#include <atomic>
 #include <functional>
 #include <list>
 #include <map>
@@ -473,7 +472,7 @@ private:
 	AudioUnitEvent mMidiLearnPropertyAUEvent {};
 	AudioUnitEvent mMidiLearnerPropertyAUEvent {};
 #else
-	std::map<PropertyDescriptor, std::atomic_flag> mPropertyChangesHavePosted;
+	std::map<PropertyDescriptor, dfx::AtomicFlag> mPropertyChangesHavePosted;
 	std::thread::id mMainThreadID;
 #endif
 
