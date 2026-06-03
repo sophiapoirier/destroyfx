@@ -372,17 +372,9 @@
 			children = (
 				EC9DF10828B5BADC00681622 /* include */,
 				EC9DF11928B5BADC00681622 /* src */,
-				EC53BE0825257C12005A1D50 /* Source */,
 			);
 			name = AudioUnitSDK;
 			path = ../AudioUnitSDK;
-			sourceTree = "<group>";
-		};
-		EC53BE0825257C12005A1D50 /* Source */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Source;
 			sourceTree = "<group>";
 		};
 		EC89B4FD208D367600E15129 /* VSTGUI */ = {
@@ -547,6 +539,7 @@
 			inputPaths = (
 				"$(INSTALL_PATH)/$(INFOPLIST_PATH)",
 				"$(DFX_ROOT_SOURCE_PATH)/dfx-library/dfxplugin-metadata.cpp",
+				"$(GCC_PREFIX_HEADER)",
 			);
 			outputPaths = (
 				"$(BUILT_PRODUCTS_DIR)/dfxplugin-metadata",
