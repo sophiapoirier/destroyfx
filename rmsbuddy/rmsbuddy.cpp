@@ -33,6 +33,7 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "rmsbuddy-base.h"
 
 
+static constexpr AudioUnitParameterValue kAnalysisWindowSizeMinimum_ms = 30.f;
 static CFStringRef const kRMSBuddyBundleID = CFSTR("org.destroyfx.RMSBuddy");
 static constexpr UInt32 kBaseClumpID = kAudioUnitClumpID_System + 1;
 
@@ -82,6 +83,8 @@ OSStatus RMSBuddy::Initialize()
 		mNotificationThread.emplace([this](std::stop_token stopToken)
 		{
 			::pthread_setname_np("RMS Buddy notifications");
+			std::chrono::milliseconds const interval(std::lround(kAnalysisWindowSizeMinimum_ms) / 2);  // TODO C++23: constexpr + static_assert
+			assert(interval.count() > 0);
 			while (!stopToken.stop_requested())
 			{
 				for (AudioUnitParameterID i = 0; i < mChannelParameterNotifications.size(); i++)
@@ -91,8 +94,7 @@ OSStatus RMSBuddy::Initialize()
 						NotifyMeterChanged(kChannelParameter_Base + i);
 					}
 				}
-				using namespace std::literals;
-				std::this_thread::sleep_for(30ms);
+				std::this_thread::sleep_for(interval);
 			}
 		});
 	}
@@ -183,9 +185,9 @@ OSStatus RMSBuddy::GetParameterInfo(AudioUnitScope inScope, AudioUnitParameterID
 																				pluginBundleRef, CFSTR("parameter name"));
 			FillInParameterName(outParameterInfo, paramNameString, true);
 			outParameterInfo.unit = kAudioUnitParameterUnit_Milliseconds;
-			outParameterInfo.minValue = 30.0f;
-			outParameterInfo.maxValue = 1000.0f;
-			outParameterInfo.defaultValue = 69.0f;
+			outParameterInfo.minValue = kAnalysisWindowSizeMinimum_ms;
+			outParameterInfo.maxValue = 1000.f;
+			outParameterInfo.defaultValue = 69.f;
 			return noErr;
 		}
 
