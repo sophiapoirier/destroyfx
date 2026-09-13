@@ -1062,12 +1062,12 @@ void DfxPlugin::PropertyChanged(AudioUnitPropertyID inPropertyID,
 	{
 		if (inPropertyID == dfx::kPluginProperty_MidiLearn)
 		{
-			mMidiLearnChangedInProcessHasPosted.clear(std::memory_order_relaxed);
+			mMidiLearnChangedInProcessHasPosted.set();
 			return;
 		}
 		if (inPropertyID == dfx::kPluginProperty_MidiLearner)
 		{
-			mMidiLearnerChangedInProcessHasPosted.clear(std::memory_order_relaxed);
+			mMidiLearnerChangedInProcessHasPosted.set();
 			return;
 		}
 	}
