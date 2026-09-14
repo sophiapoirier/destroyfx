@@ -543,12 +543,6 @@ void RMSBuddy::HandleChannelCount()
 	auto const previousChannelCount = std::exchange(mChannelCount, GetNumberOfChannels());
 	if (mChannelCount != previousChannelCount)
 	{
-		mAverageRMS.assign(mChannelCount, 0.0);
-		mTotalSquaredCollection.assign(mChannelCount, 0.0);
-		mAbsolutePeak.assign(mChannelCount, 0.0f);
-		mContinualRMS.assign(mChannelCount, 0.0);
-		mContinualPeak.assign(mChannelCount, 0.0f);
-
 		for (UInt32 ch = previousChannelCount; ch < mChannelCount; ch++)
 		{
 			for (AudioUnitParameterID channelParamID = 0; channelParamID < kChannelParameter_Count; channelParamID++)
@@ -560,6 +554,12 @@ void RMSBuddy::HandleChannelCount()
 
 		PropertyChanged(kAudioUnitProperty_ParameterList, kAudioUnitScope_Global, AudioUnitElement{0});
 	}
+
+	mAverageRMS.assign(mChannelCount, 0.);
+	mTotalSquaredCollection.assign(mChannelCount, 0.);
+	mAbsolutePeak.assign(mChannelCount, 0.f);
+	mContinualRMS.assign(mChannelCount, 0.);
+	mContinualPeak.assign(mChannelCount, 0.f);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -572,8 +572,12 @@ void RMSBuddy::SetMeter(UInt32 inChannelIndex, AudioUnitParameterID inID, AudioU
 	if (InRenderThread())
 	{
 		auto const index = parameterID - kChannelParameter_Base;
-		AUSDK_RT_UNSAFE(assert(index < mChannelParameterNotifications.size()));
-		mChannelParameterNotifications[index].clear(std::memory_order_relaxed);
+		// JUCE pluginval calls this in the "render thread" while AU Uninitialized
+		//AUSDK_RT_UNSAFE(assert(index < mChannelParameterNotifications.size()));
+		if (index < mChannelParameterNotifications.size())
+		{
+			mChannelParameterNotifications[index].clear(std::memory_order_relaxed);
+		}
 	}
 	else
 	{
@@ -597,7 +601,7 @@ void RMSBuddy::ResetRMS() noexcept AUSDK_RTSAFE
 	std::ranges::fill(mTotalSquaredCollection, 0.);
 	for (UInt32 ch = 0; ch < mChannelCount; ch++)
 	{
-		SetMeter(ch, kChannelParameter_AverageRMS, mAverageRMS[0]);
+		SetMeter(ch, kChannelParameter_AverageRMS, 0.f);
 	}
 }
 
@@ -608,7 +612,7 @@ void RMSBuddy::ResetPeak() noexcept AUSDK_RTSAFE
 	std::ranges::fill(mAbsolutePeak, 0.f);
 	for (UInt32 ch = 0; ch < mChannelCount; ch++)
 	{
-		SetMeter(ch, kChannelParameter_AbsolutePeak, mAbsolutePeak[ch]);
+		SetMeter(ch, kChannelParameter_AbsolutePeak, 0.f);
 	}
 }
 
