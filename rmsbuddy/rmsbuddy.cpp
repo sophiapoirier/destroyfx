@@ -22,12 +22,14 @@ To contact the author, use the contact form at http://destroyfx.org
 #include "rmsbuddy.h"
 
 #include <algorithm>
+#include <atomic>
 #include <AudioToolbox/AudioUnitUtilities.h>
 #include <cassert>
 #include <cmath>
 #include <cstring>
 #include <memory>
 #include <span>
+#include <string>
 #include <type_traits>
 
 #include "rmsbuddy-base.h"
@@ -82,7 +84,8 @@ OSStatus RMSBuddy::Initialize()
 		// but are people actually likely to load numerous instances of this plugin?
 		mNotificationThread.emplace([this](std::stop_token stopToken)
 		{
-			::pthread_setname_np("RMS Buddy notifications");
+			static std::atomic<size_t> threadNumber(1);
+			::pthread_setname_np(("RMS Buddy notifications " + std::to_string(threadNumber.fetch_add(1))).c_str());
 			std::chrono::milliseconds const interval(std::lround(kAnalysisWindowSizeMinimum_ms) / 2);  // TODO C++23: constexpr + static_assert
 			assert(interval.count() > 0);
 			while (!stopToken.stop_requested())
