@@ -27,7 +27,6 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 #include "dfxplugin.h"
 
 #include <algorithm>
-#include <atomic>
 #include <bitset>
 #include <cassert>
 #include <climits>
@@ -87,7 +86,6 @@ public:
 private:
 	DfxIdleRegistrar() = default;
 
-	std::atomic<bool> mThreadShouldRun {false};
 	std::optional<std::jthread> mThread;
 	std::mutex mThreadLock;
 	std::unordered_set<DfxPlugin*> mClients;
@@ -114,13 +112,12 @@ void DfxIdleRegistrar::add(DfxPlugin* const inIdleClient)
 		std::lock_guard const guard(mThreadLock);
 		if (!mThread)
 		{
-			mThreadShouldRun = true;
-			mThread.emplace([this]
+			mThread.emplace([this](std::stop_token stopToken)
 			{
 #if TARGET_OS_MAC
 				pthread_setname_np(PLUGIN_NAME_STRING " idle timer");
 #endif
-				while (mThreadShouldRun)
+				while (!stopToken.stop_requested())
 				{
 					{
 						std::lock_guard const guard(mClientsLock);
@@ -146,7 +143,6 @@ void DfxIdleRegistrar::remove(DfxPlugin* const inIdleClient)
 
 	if (allClientsCompleted)
 	{
-		mThreadShouldRun = false;
 		std::lock_guard const guard(mThreadLock);
 		mThread.reset();
 	}
