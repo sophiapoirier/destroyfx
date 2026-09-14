@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2024  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -23,7 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org
 
 #include <array>
 #include <cstdio>
-#include <map>
+#include <flat_map>
 #include <tuple>
 #include <utility>
 
@@ -177,7 +177,7 @@ void RezSynthEditor::OpenEditor()
 
 	auto const addSliderComponents = [&](dfx::ParameterID const inParameterID, DGTextDisplay::ValueToTextProc const inDisplayProc = DGTextDisplay::valueToTextProc_Generic)
 	{
-		auto const horizontalSliderHandleImage = std::map<Section, DGImage*>{
+		auto const horizontalSliderHandleImage = std::flat_map<Section, DGImage*>{
 			{Section::Bands, horizontalSliderHandleImage_bands},
 			{Section::Envelope, horizontalSliderHandleImage_envelope},
 			{Section::MidiNotes, horizontalSliderHandleImage_midiNotes},
@@ -395,7 +395,7 @@ void RezSynthEditor::mouseovercontrolchanged(IDGControl* currentControlUnderMous
 
 	if (currentControlUnderMouse)
 	{
-		auto const headerColor = [this, currentControlUnderMouse]() -> DGColor
+		auto const headerColor = [this, currentControlUnderMouse] -> DGColor
 		{
 			constexpr DGColor midiColor(246, 122, 251);
 			if (currentControlUnderMouse == mTitleArea)
@@ -415,7 +415,7 @@ void RezSynthEditor::mouseovercontrolchanged(IDGControl* currentControlUnderMous
 			{
 				return {150, 158, 251};
 			}
-			return std::map<Section, DGColor>{
+			return std::flat_map<Section, DGColor>{
 				{Section::Bands, {255, 250, 51}},
 				{Section::Envelope, {255, 72, 78}},
 				{Section::MidiNotes, DGColor::kWhite},

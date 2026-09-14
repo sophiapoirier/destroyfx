@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2004-2024  Sophia Poirier
+Copyright (C) 2004-2026  Sophia Poirier
 
 This file is part of Turntablist.
 
@@ -764,7 +764,7 @@ OSStatus TurntablistEditor::NotifyAudioFileLoadError(OSStatus inErrorCode, FSRef
 	alert.messageText = (__bridge NSString*)titleString.get();
 	alert.informativeText = (__bridge NSString*)messageString.get();
 	alert.alertStyle = NSAlertStyleCritical;
-	auto const window = [this]() -> NSWindow*
+	auto const window = [this] -> NSWindow*
 	{
 		if (auto const frame = getFrame())
 		{
@@ -1291,7 +1291,7 @@ void TurntablistEditor::parameterChanged(dfx::ParameterID inParameterID)
 	{
 		return;
 	}
-	auto const getMouseDownView = [this]() -> VSTGUI::CView*  // reimplementation of protected CViewContainer method
+	auto const getMouseDownView = [this] -> VSTGUI::CView*  // reimplementation of protected CViewContainer method
 	{
 		if (VSTGUI::CView* view = nullptr; getFrame()->getAttribute(FOURCC('v', 'c', 'm', 'd')/*kCViewContainerMouseDownViewAttribute*/, view))
 		{
@@ -1433,7 +1433,7 @@ void TurntablistEditor::parameterChanged(dfx::ParameterID inParameterID)
 void TurntablistEditor::dfxgui_Idle()
 {
 #if DRAG_N_DROP
-	// It's better to do this outside of the drag event handler, so I use the idle loop to delay its occurrence.  
+	// It is better to do this outside of the drag event handler, so we use the idle loop to delay its occurrence.  
 	// Otherwise the alert dialog's run loop will block (and potentially timeout) the drag event callback.
 	if (mDragAudioFileError != noErr)
 	{

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2025  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -267,7 +267,7 @@ void DGRangeSlider::draw(VSTGUI::CDrawContext* inContext)
 	auto const upperActiveHandleImage = getHandleImage(mUpperControl, mUpperMainHandleImage, mUpperAlternateHandleImage);
 	if (lowerActiveHandleImage && upperActiveHandleImage)
 	{
-		auto const [lowerValue, upperValue] = [this]() -> std::pair<float, float>
+		auto const [lowerValue, upperValue] = [this] -> std::pair<float, float>
 		{
 			auto const lowerValue = mLowerControl->asCControl()->getValueNormalized();
 			auto const upperValue = mUpperControl->asCControl()->getValueNormalized();
@@ -418,7 +418,7 @@ void DGRangeSlider::onMouseMoveEvent(VSTGUI::MouseMoveEvent& ioEvent)
 		mNewValue = mFineTuneStartValue + ((mNewValue - mOldValue) / getFineTuneFactor());
 	}
 
-	auto const [lowerValue, upperValue] = [this, pos = ioEvent.mousePosition, modifiers = ioEvent.modifiers, isFineTune]() -> std::pair<float, float>
+	auto const [lowerValue, upperValue] = [this, pos = ioEvent.mousePosition, modifiers = ioEvent.modifiers, isFineTune] -> std::pair<float, float>
 	{
 		// unfortunately VSTGUI on macOS hijacks control-left-button and remaps it to right-button (even after mouse-down)
 		auto const controlKeyPressed = isPlatformControlKeySet(modifiers);

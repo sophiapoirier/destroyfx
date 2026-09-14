@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2025  Sophia Poirier
+Copyright (C) 2001-2026  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -573,7 +573,7 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 		return;
 	}
 
-	auto const helpStrings = [currentControlUnderMouse, this]() -> std::array<char const* const, kHelpDisplayLineCount>
+	auto const helpStrings = [currentControlUnderMouse, this] -> std::array<char const* const, kHelpDisplayLineCount>
 	{
 		auto currentControlParamID = dfx::kParameterID_Invalid;
 		if (currentControlUnderMouse)

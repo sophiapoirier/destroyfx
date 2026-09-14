@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2025  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -365,7 +365,7 @@ long DGButton::getRadioValue(VSTGUI::CPoint const& inPos) const
 {
 	assert(mMode == Mode::Radio);
 
-	auto const result = [inPos, this]() -> long
+	auto const result = [inPos, this] -> long
 	{
 		auto const pos = (mOrientation & dfx::kAxis_Horizontal) ? (inPos.x - getViewSize().left) : (inPos.y - getViewSize().top);
 		if (!mRadioThresholds.empty())
