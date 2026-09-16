@@ -37,6 +37,7 @@ Welcome to our settings persistence mess.
 #include <cstring>
 #include <numeric>
 #include <optional>
+#include <ranges>
 #include <stdexcept>
 #include <string_view>
 #include <type_traits>
@@ -65,8 +66,7 @@ DfxSettings::DfxSettings(uint32_t inMagic, DfxPlugin& inPlugin, size_t inSizeofE
 	mParameterAssignments(mNumParameters)
 {
 	// default to each parameter having its ID equal its index
-	// TODO C++23: std::ranges::iota
-	std::iota(mParameterIDMap.begin(), mParameterIDMap.end(), 0);
+	std::ranges::iota(mParameterIDMap, 0);
 
 	// calculate some data sizes that are useful to know
 	mSizeOfPreset = sizeOfGenPreset(mNumParameters);

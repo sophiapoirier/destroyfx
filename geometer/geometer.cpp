@@ -35,6 +35,7 @@ Featuring the Super Destroy FX Windowing System!
 #include <mutex>
 #include <numbers>
 #include <numeric>
+#include <ranges>
 #include <string>
 
 #include "dfxmath.h"
@@ -166,8 +167,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   auto const addparameterrangegroup = [this](auto name, dfx::ParameterID parameterIndexBegin, dfx::ParameterID parameterIndexEnd) {
     assert(parameterIndexBegin < parameterIndexEnd);
     std::vector<dfx::ParameterID> parameters(parameterIndexEnd - parameterIndexBegin, dfx::kParameterID_Invalid);
-    // TODO C++23: std::ranges::iota
-    std::iota(parameters.begin(), parameters.end(), parameterIndexBegin);
+    std::ranges::iota(parameters, parameterIndexBegin);
     addparametergroup(name, parameters);
   };
   addparameterrangegroup("points", P_POINTSTYLE, P_INTERPSTYLE);

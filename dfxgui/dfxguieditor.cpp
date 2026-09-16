@@ -229,8 +229,7 @@ try
 	}
 #else
 	mParameterList.assign(GetNumParameters(), dfx::kParameterID_Invalid);
-	// TODO C++23: std::ranges::iota
-	std::iota(mParameterList.begin(), mParameterList.end(), 0);
+	std::ranges::iota(mParameterList, 0);
 	std::erase_if(mParameterList, [this](auto parameterID)
 	{
 		return HasParameterAttribute(parameterID, DfxParam::kAttribute_Unused);
