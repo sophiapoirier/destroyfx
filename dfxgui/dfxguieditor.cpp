@@ -717,12 +717,7 @@ std::optional<double> DfxGuiEditor::dfxgui_GetParameterValueFromString_f(dfx::Pa
 {
 	if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
 	{
-		double value {};
-		auto const readCount = std::sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%lf", &value);
-		if ((readCount >= 1) && (readCount != EOF))
-		{
-			return value;
-		}
+		return dfx::StringToNumber<double>(inText);
 	}
 	else
 	{
@@ -747,12 +742,7 @@ std::optional<long> DfxGuiEditor::dfxgui_GetParameterValueFromString_i(dfx::Para
 	}
 	else
 	{
-		long value {};
-		auto const readCount = std::sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%ld", &value);
-		if ((readCount >= 1) && (readCount != EOF))
-		{
-			return value;
-		}
+		return dfx::StringToNumber<long>(inText);
 	}
 
 	return {};
@@ -1911,16 +1901,15 @@ void DfxGuiEditor::TextEntryForParameterMidiCC(dfx::ParameterID inParameterID)
 
 	auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID inParameterID)
 	{
-		int value {};
-		auto const readCount = std::sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%d", &value);
-		if ((readCount < 1) || (readCount == EOF) || (value < 0) || (value > DfxMidi::kMaxValue))
+		auto const value = dfx::StringToNumber<int>(inText);
+		if (!value || (*value < 0) || (*value > DfxMidi::kMaxValue))
 		{
 			return false;
 		}
 		dfx::ParameterAssignment parameterAssignment;
 		parameterAssignment.mEventType = dfx::MidiEventType::CC;
 		parameterAssignment.mEventChannel = getparametermidiassignment(inParameterID).mEventChannel;  // persist any existing choice
-		parameterAssignment.mEventNum = value;
+		parameterAssignment.mEventNum = *value;
 		setparametermidiassignment(inParameterID, parameterAssignment);
 		return true;
 	};
@@ -1943,15 +1932,14 @@ void DfxGuiEditor::TextEntryForParameterMidiChannel(dfx::ParameterID inParameter
 
 	auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID inParameterID)
 	{
-		int value {};
-		auto const readCount = std::sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%d", &value);
-		value -= 1;  // transform from display value to zero-based index as used by MIDI
-		if ((readCount < 1) || (readCount == EOF) || (value < 0) || (value > DfxMidi::kMaxChannelValue))
+		auto const value = dfx::StringToNumber<int>(inText);
+		constexpr int lowestValue = 1;
+		if (!value || (*value < lowestValue) || (*value > (DfxMidi::kMaxChannelValue + lowestValue)))
 		{
 			return false;
 		}
 		auto parameterAssignment = getparametermidiassignment(inParameterID);
-		parameterAssignment.mEventChannel = value;
+		parameterAssignment.mEventChannel = *value - lowestValue;  // transform from display value to zero-based index as used by MIDI
 		setparametermidiassignment(inParameterID, parameterAssignment);
 		return true;
 	};
@@ -2024,13 +2012,12 @@ void DfxGuiEditor::TextEntryForSmoothedAudioValueTime()
 
 	auto const textEntryCallback = [this](std::string const& inText, dfx::ParameterID)
 	{
-		double value {};
-		auto const readCount = std::sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%lf", &value);
-		if ((readCount < 1) || (readCount == EOF) || (value < 0.))
+		auto const value = dfx::StringToNumber<double>(inText);
+		if (!value || (value < 0.))
 		{
 			return false;
 		}
-		setSmoothedAudioValueTime(value);
+		setSmoothedAudioValueTime(*value);
 		return true;
 	};
 	if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))

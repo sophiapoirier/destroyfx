@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2025  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -29,10 +29,13 @@ To contact the author, use the contact form at http://destroyfx.org
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
+#include <type_traits>
 
 #include "dfxgui-base.h"
+#include "dfxmisc.h"
 
 
 //-----------------------------------------------------------------------------
@@ -219,5 +222,46 @@ bool LaunchDocumentation();
 
 // perform some platform fixups for the GUI library
 void InitGUI();
+
+template <typename T>
+requires std::is_arithmetic_v<T>
+std::optional<T> StringToNumber(std::string_view inText)
+try
+{
+	using DecayedT = std::decay_t<T>;
+	auto const sanitizedText = SanitizeNumericalInput(inText);
+	if constexpr (std::is_same_v<DecayedT, int>)
+	{
+		return std::stoi(sanitizedText);
+	}
+	else if constexpr (std::is_same_v<DecayedT, long>)
+	{
+		return std::stol(sanitizedText);
+	}
+	else if constexpr (std::is_same_v<DecayedT, long long>)
+	{
+		return std::stoll(sanitizedText);
+	}
+	else if constexpr (std::is_same_v<DecayedT, float>)
+	{
+		return std::stof(sanitizedText);
+	}
+	else if constexpr (std::is_same_v<DecayedT, double>)
+	{
+		return std::stod(sanitizedText);
+	}
+	else if constexpr (std::is_same_v<DecayedT, long double>)
+	{
+		return std::stold(sanitizedText);
+	}
+	else
+	{
+		static_assert(dfx::AlwaysFalse<T>, "unhandled condition");
+	}
+}
+catch (...)
+{
+	return {};
+}
 
 }  // namespace dfx
