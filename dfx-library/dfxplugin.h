@@ -168,7 +168,7 @@ VST_NUM_CHANNELS
 
 #include "dfx-base.h"
 #include "dfxmath.h"
-#include "dfxmutex.h"
+#include "dfxmisc.h"
 #include "dfxparameter.h"
 #include "dfxplugin-base.h"
 #include "dfxpluginproperties.h"
@@ -725,9 +725,9 @@ protected:
 	}
 
 	template <dfx::math::Randomizable T>
-	T generateParameterRandomValue();
+	T generateParameterRandomValue() noexcept DFX_RT_ATTR;
 	template <dfx::math::Randomizable T>
-	T generateParameterRandomValue(T const& inRangeMinimum, T const& inRangeMaximum);
+	T generateParameterRandomValue(T const& inRangeMinimum, T const& inRangeMaximum) noexcept DFX_RT_ATTR;
 
 	bool isrenderthread() const noexcept DFX_RT_ATTR;
 
@@ -772,9 +772,10 @@ private:
 	std::vector<DfxParam> mParameters;
 	std::vector<bool> mParametersChangedAsOfPreProcess, mParametersTouchedAsOfPreProcess;
 	std::vector<dfx::AtomicFlag> mParametersChangedInProcessHavePosted;
-	// the effect owns a single random engine shared by all parameters rather than each parameter owning its own for efficiency, because its state data can be quite large
+	// the effect owns two random engines shared by all parameters rather than each parameter owning its own for efficiency, because its state data can be quite large, but a separate instance is needed for thread-safe realtime usage
 	dfx::math::RandomEngine mParameterRandomEngine {dfx::math::RandomSeed::Entropic};
-	dfx::SpinLock mParameterRandomEngineLock;
+	dfx::math::RandomEngine mParameterRandomEngineRT {dfx::math::RandomSeed::Entropic};
+	std::mutex mParameterRandomEngineLock;
 	std::vector<std::pair<std::string, std::set<dfx::ParameterID>>> mParameterGroups;
 	std::vector<DfxPreset> mPresets;
 	dfx::AtomicFlag mPresetChangedInProcessHasPosted;
@@ -1419,23 +1420,32 @@ public:
 
 // template implementations follow
 
-// while it is possible for a parameter randomization to be executed from a realtime audio thread, 
-// and therefore locking would be detrimental, the likelihood of contention on this lock is extremely low, 
-// and the critical section extremely brief, and the lock lightweight and out of the scheduler's management, 
-// that this shouldn't actually in practice present any issues
-// TODO: disagreeing with my past self, especially the scheduler statement, this should be fixed
 template <dfx::math::Randomizable T>
-T DfxPlugin::generateParameterRandomValue()
+T DfxPlugin::generateParameterRandomValue() noexcept DFX_RT_ATTR
 {
-	std::lock_guard const guard(mParameterRandomEngineLock);
-	return mParameterRandomEngine.next<T>();
+	if (isrenderthread())
+	{
+		return mParameterRandomEngineRT.next<T>();
+	}
+	else
+	{
+		DFX_RT_UNSAFE(std::lock_guard const guard(mParameterRandomEngineLock));
+		return mParameterRandomEngine.next<T>();
+	}
 }
 
 template <dfx::math::Randomizable T>
-T DfxPlugin::generateParameterRandomValue(T const& inRangeMinimum, T const& inRangeMaximum)
+T DfxPlugin::generateParameterRandomValue(T const& inRangeMinimum, T const& inRangeMaximum) noexcept DFX_RT_ATTR
 {
-	std::lock_guard const guard(mParameterRandomEngineLock);
-	return mParameterRandomEngine.next<T>(inRangeMinimum, inRangeMaximum);
+	if (isrenderthread())
+	{
+		return mParameterRandomEngineRT.next<T>(inRangeMinimum, inRangeMaximum);
+	}
+	else
+	{
+		DFX_RT_UNSAFE(std::lock_guard const guard(mParameterRandomEngineLock));
+		return mParameterRandomEngine.next<T>(inRangeMinimum, inRangeMaximum);
+	}
 }
 
 #if TARGET_PLUGIN_USES_DSPCORE

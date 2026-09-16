@@ -12,7 +12,6 @@
 		ECB2A4062712896A004E741E /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECB2A4052712896A004E741E /* AppKit.framework */; };
 		ECC1ACD5270DF66900ECC0FD /* thrush.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECC1ACD4270DF66900ECC0FD /* thrush.cpp */; };
 		ECC1AD3C270DF69D00ECC0FD /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECC1ACD9270DF69D00ECC0FD /* dfx-au-utilities.strings */; };
-		ECC1AD50270DF69D00ECC0FD /* dfxmutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECC1ACF3270DF69D00ECC0FD /* dfxmutex.cpp */; };
 		ECC1AD54270DF69D00ECC0FD /* dfxplugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECC1AD00270DF69D00ECC0FD /* dfxplugin.cpp */; };
 		ECC1AD56270DF69D00ECC0FD /* lfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECC1AD04270DF69D00ECC0FD /* lfo.cpp */; };
 		ECC1AD57270DF69D00ECC0FD /* dfxplugin-audiounit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECC1AD08270DF69D00ECC0FD /* dfxplugin-audiounit.cpp */; };
@@ -46,7 +45,6 @@
 		ECC1ACE8270DF69D00ECC0FD /* dfxplugin-au-debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = "dfxplugin-au-debug.xcconfig"; sourceTree = "<group>"; };
 		ECC1ACEB270DF69D00ECC0FD /* dfxplugin-au-release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = "dfxplugin-au-release.xcconfig"; sourceTree = "<group>"; };
 		ECC1ACF2270DF69D00ECC0FD /* dfxmath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmath.h; sourceTree = "<group>"; };
-		ECC1ACF3270DF69D00ECC0FD /* dfxmutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmutex.cpp; sourceTree = "<group>"; };
 		ECC1ACF6270DF69D00ECC0FD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = "../../dfx-library/en.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECC1ACF8270DF69D00ECC0FD /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECC1ACF9270DF69D00ECC0FD /* dfxplugin-base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "dfxplugin-base.h"; sourceTree = "<group>"; };
@@ -63,7 +61,6 @@
 		ECC1AD0E270DF69D00ECC0FD /* dfxparameter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxparameter.cpp; sourceTree = "<group>"; };
 		ECC1AD0F270DF69D00ECC0FD /* dfxplugin-prefix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "dfxplugin-prefix.h"; sourceTree = "<group>"; };
 		ECC1AD10270DF69D00ECC0FD /* lfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lfo.h; sourceTree = "<group>"; };
-		ECC1AD11270DF69D00ECC0FD /* dfxmutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmutex.h; sourceTree = "<group>"; };
 		ECC1AD12270DF69D00ECC0FD /* dfxmisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxmisc.mm; sourceTree = "<group>"; };
 		ECC1AD13270DF69D00ECC0FD /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
 		ECC1AD14270DF69D00ECC0FD /* dfxmisc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmisc.cpp; sourceTree = "<group>"; };
@@ -205,8 +202,6 @@
 				ECC1AD38270DF69D00ECC0FD /* dfxmisc.h */,
 				ECC1AD14270DF69D00ECC0FD /* dfxmisc.cpp */,
 				ECC1AD12270DF69D00ECC0FD /* dfxmisc.mm */,
-				ECC1AD11270DF69D00ECC0FD /* dfxmutex.h */,
-				ECC1ACF3270DF69D00ECC0FD /* dfxmutex.cpp */,
 				ECC1AD09270DF69D00ECC0FD /* dfxparameter.h */,
 				ECC1AD0E270DF69D00ECC0FD /* dfxparameter.cpp */,
 				ECC1ACF9270DF69D00ECC0FD /* dfxplugin-base.h */,
@@ -377,7 +372,6 @@
 				ECC1AD6A270DF69D00ECC0FD /* dfx-au-utilities.c in Sources */,
 				ECC1AD5D270DF69D00ECC0FD /* dfx-au-utilities-preset-files.m in Sources */,
 				ECC1AD5B270DF69D00ECC0FD /* dfxmisc.mm in Sources */,
-				ECC1AD50270DF69D00ECC0FD /* dfxmutex.cpp in Sources */,
 				ECC1AD5A270DF69D00ECC0FD /* dfxparameter.cpp in Sources */,
 				ECC1AD54270DF69D00ECC0FD /* dfxplugin.cpp in Sources */,
 				ECC1AD57270DF69D00ECC0FD /* dfxplugin-audiounit.cpp in Sources */,
