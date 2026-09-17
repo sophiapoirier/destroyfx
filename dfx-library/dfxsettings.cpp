@@ -1174,7 +1174,8 @@ void DfxSettings::handleMidi_automateParameters(dfx::MidiEventType inEventType, 
 	// if any are found, automate them with the event message's value
 	for (dfx::ParameterID parameterID = 0; parameterID < mNumParameters; parameterID++)
 	{
-		auto const& pa = mParameterAssignments.at(parameterID);
+		DFX_RT_ASSERT(parameterID < mParameterAssignments.size());
+		auto const& pa = mParameterAssignments[parameterID];
 
 		// if the event type doesn't match what this parameter has assigned to it, 
 		// skip to the next parameter parameter
@@ -1328,7 +1329,8 @@ void DfxSettings::assignParameter(dfx::ParameterID inParameterID, dfx::MidiEvent
 	{
 		for (dfx::ParameterID i = 0; i < mNumParameters; i++)
 		{
-			auto const& pa = mParameterAssignments.at(i);
+			DFX_RT_ASSERT(i < mParameterAssignments.size());
+			auto const& pa = mParameterAssignments[i];
 			// skip this parameter if the event type doesn't match
 			if (pa.mEventType != inEventType)
 			{
