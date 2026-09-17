@@ -812,7 +812,9 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
 
     /* sort them */
 
-    std::sort(px, px + numpts);
+    /* std::sort seems to be realtime-safe,
+       both in specification and in clang's implementation */
+    DFX_RT_UNSAFE(std::sort(px, px + numpts));
 
     for (int sd = 0; sd < numpts; sd++) {
       py[sd] = in[px[sd]];
@@ -1254,7 +1256,9 @@ void PLUGINCORE::process(std::span<float const> tin,
 
 void PLUGINCORE::updatewindowsize() noexcept DFX_RT_ATTR
 {
-  framesize = PLUGIN::buffersizes.at(getparameter_i(P_BUFSIZE));
+  auto const windowsizeindex = dfx::math::ToIndex(getparameter_i(P_BUFSIZE));
+  DFX_RT_ASSERT(windowsizeindex < PLUGIN::buffersizes.size());
+  framesize = PLUGIN::buffersizes[windowsizeindex];
   third = framesize / 2;
   bufsize = third * 3;
 
