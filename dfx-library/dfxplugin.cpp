@@ -2234,13 +2234,21 @@ bool DfxPlugin::getMidiAssignmentsSteal() const
 //-----------------------------------------------------------------------------
 void DfxPlugin::postupdate_midilearn() noexcept DFX_RT_ATTR
 {
-	dfx_PropertyChanged(dfx::kPluginProperty_MidiLearn);
+	if (isrenderthread())
+	{
+		return mMidiLearnChangedInProcessHasPosted.set();
+	}
+	DFX_RT_UNSAFE(dfx_PropertyChanged(dfx::kPluginProperty_MidiLearn));
 }
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::postupdate_midilearner() noexcept DFX_RT_ATTR
 {
-	dfx_PropertyChanged(dfx::kPluginProperty_MidiLearner);
+	if (isrenderthread())
+	{
+		return mMidiLearnerChangedInProcessHasPosted.set();
+	}
+	DFX_RT_UNSAFE(dfx_PropertyChanged(dfx::kPluginProperty_MidiLearner));
 }
 
 #endif  // TARGET_PLUGIN_USES_MIDI

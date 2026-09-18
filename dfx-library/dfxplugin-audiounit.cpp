@@ -1057,22 +1057,6 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 void DfxPlugin::PropertyChanged(AudioUnitPropertyID inPropertyID, 
 								AudioUnitScope inScope, AudioUnitElement inElement)
 {
-#if TARGET_PLUGIN_USES_MIDI
-	if (isrenderthread())
-	{
-		if (inPropertyID == dfx::kPluginProperty_MidiLearn)
-		{
-			mMidiLearnChangedInProcessHasPosted.set();
-			return;
-		}
-		if (inPropertyID == dfx::kPluginProperty_MidiLearner)
-		{
-			mMidiLearnerChangedInProcessHasPosted.set();
-			return;
-		}
-	}
-#endif
-
 	// NOTE: this will bite you if running debug builds in hosts that offline render audio (hence the validator exception)
 	// NOTE: exception for Connection property because AUGraph seems to sometimes disconnect from the audio I/O thread
 	assert(!isrenderthread() || (inPropertyID == kAudioUnitProperty_MakeConnection) || dfx::IsHostValidator());  // this method is not realtime-safe
