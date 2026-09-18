@@ -131,6 +131,7 @@ private:
     return speedModeStates.at(dfx::TV::speedModePropertyIDToIndex(inPropertyID));
   }
 
+  size_t randomPresetIndex {};
   std::array<uint32_t, dfx::TV::kNumDelays> speedModeStates {};
 };
 

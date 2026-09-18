@@ -85,7 +85,6 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
   settailsize_seconds(getparametermax_f(kBsize) * 0.001);
 
-  setpresetname(0, PLUGIN_NAME_STRING);  // default preset name
   initPresets();
 
   addchannelconfig(kChannelConfig_AnyMatchedIO);  // N-in/N-out
@@ -392,7 +391,8 @@ void Transverb::initPresets() {
 */
 
 	// special randomizing "preset"
-	setpresetname(getnumpresets() - 1, "random");
+	randomPresetIndex = getnumpresets() - 1;
+	setpresetname(randomPresetIndex, "random");
 }
 
 //-----------------------------------------------------------------------------
@@ -403,7 +403,7 @@ bool Transverb::loadpreset(size_t index) noexcept DFX_RT_ATTR
 		return false;
 	}
 
-	if (getpresetname(index) == "random")
+	if (index == randomPresetIndex)
 	{
 		randomizeparameters();
 		return true;
