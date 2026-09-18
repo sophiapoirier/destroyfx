@@ -319,13 +319,13 @@ double RezSynth::getBandwidthForFreq(double inFreq) const noexcept DFX_RT_ATTR
 // If it is, then that note's filter feedback buffers are cleared.
 void RezSynth::checkForNewNote(size_t currentEvent) noexcept DFX_RT_ATTR
 {
+	auto const event = getmidistate().getBlockEvent(currentEvent);
 	// store the current note MIDI number
-	auto const currentNote = getmidistate().getBlockEvent(currentEvent).mByte1;
+	auto const currentNote = event.mByte1;
 
 	// if this latest event is a note-on and this note isn't still active
 	// from being previously played, then clear this note's delay buffers
-	if ((getmidistate().getBlockEvent(currentEvent).mStatus == DfxMidi::kStatus_NoteOn)  // it's a note-on
-		&& !getmidistate().isNoteActive(currentNote))  // this note is currently off
+	if ((event.mStatus == DfxMidi::kStatus_NoteOn) && !getmidistate().isNoteActive(currentNote))
 	{
 		// wipe out the feedback buffers
 		for (auto& values : mPrevOutValue)

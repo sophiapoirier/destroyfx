@@ -43,10 +43,11 @@ void Skidder::processMidiNotes() noexcept DFX_RT_ATTR
 
 	for (size_t i = 0; i < getmidistate().getBlockEventCount(); i++)
 	{
-		auto const currentNote = getmidistate().getBlockEvent(i).mByte1;
-		auto const velocity = getmidistate().getBlockEvent(i).mByte2;
+		auto const event = getmidistate().getBlockEvent(i);
+		auto const currentNote = event.mByte1;
+		auto const velocity = event.mByte2;
 
-		switch (getmidistate().getBlockEvent(i).mStatus)
+		switch (event.mStatus)
 		{
 			// note-on status was received
 			case DfxMidi::kStatus_NoteOn:
@@ -54,7 +55,7 @@ void Skidder::processMidiNotes() noexcept DFX_RT_ATTR
 				// This is not very accurate.
 				// If more than one note-on happens this block, only the last one is effective.
 				// This is good enough for this effect, though.
-				noteOn(getmidistate().getBlockEvent(i).mOffsetFrames);
+				noteOn(event.mOffsetFrames);
 				noteWasOn = true;
 				break;
 
@@ -65,7 +66,7 @@ void Skidder::processMidiNotes() noexcept DFX_RT_ATTR
 
 			// all notes off
 			case DfxMidi::kStatus_CC:
-				if (getmidistate().getBlockEvent(i).mByte1 == DfxMidi::kCC_AllNotesOff)
+				if (event.mByte1 == DfxMidi::kCC_AllNotesOff)
 				{
 					mNoteTable.fill(0);  // turn off all notes
 					noteOff();  // do the notes off Skidder stuff

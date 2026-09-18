@@ -139,6 +139,17 @@ public:
 		kCC_PolyModeOn = 0x7F  // 0 only
 	};
 
+	// MIDI event data
+	struct Event
+	{
+		int mStatus = 0;  // the event status MIDI byte
+		int mByte1 = 0;  // the first MIDI data byte
+		int mByte2 = 0;  // the second MIDI data byte
+		int mChannel = 0;  // the MIDI channel
+		size_t mOffsetFrames = 0;  // the delta offset (the sample position in the current block where the event occurs)
+		size_t mOrderOfArrival = 0;  // the sequence within the current block in which the event arrived (hack to achieve stable sort)
+	};
+
 	DfxMidi();
 
 	void reset() noexcept DFX_RT_ATTR;  // resets the variables
@@ -168,15 +179,9 @@ public:
 	{
 		return mNumBlockEvents;
 	}
-	auto const& getBlockEvent(size_t inIndex) const
-	{
-		return mBlockEvents.at(inIndex);
-	}
+	Event getBlockEvent(size_t inIndex) const noexcept DFX_RT_ATTR;
 	// TODO: this is a hack just for Buffer Override, maybe should rethink?
-	void invalidateBlockEvent(size_t inIndex)
-	{
-		mBlockEvents.at(inIndex).mStatus = kInvalidValue;
-	}
+	void invalidateBlockEvent(size_t inIndex) noexcept DFX_RT_ATTR;
 
 	bool isNoteActive(int inMidiNote) const noexcept DFX_RT_ATTR;
 
@@ -239,18 +244,6 @@ private:
 	static constexpr int kInvalidValue = -1;  // sentinel for any MIDI value type
 
 	//-----------------------------------------------------------------------------
-	// this holds MIDI event information
-	struct Event
-	{
-		int mStatus = 0;  // the event status MIDI byte
-		int mByte1 = 0;  // the first MIDI data byte
-		int mByte2 = 0;  // the second MIDI data byte
-		int mChannel = 0;  // the MIDI channel
-		size_t mOffsetFrames = 0;  // the delta offset (the sample position in the current block where the event occurs)
-		size_t mOrderOfArrival = 0;  // the sequence within the current block in which the event arrived (hack to achieve stable sort)
-	};
-
-	//-----------------------------------------------------------------------------
 	// this holds information for each MIDI note
 	struct MusicNote
 	{
@@ -279,8 +272,8 @@ private:
 
 	bool incNumEvents() noexcept DFX_RT_ATTR;  // increment the block events counter, safely
 
-	MusicNote const& getNoteState(int inMidiNote) const;
-	MusicNote& getNoteStateMutable(int inMidiNote);
+	MusicNote const& getNoteState(int inMidiNote) const noexcept DFX_RT_ATTR;
+	MusicNote& getNoteStateMutable(int inMidiNote) noexcept DFX_RT_ATTR;
 	void turnOffNote(int inMidiNote) noexcept DFX_RT_ATTR;
 
 	void postprocessEnvelope(MusicNote& inNote) noexcept DFX_RT_ATTR;
@@ -296,6 +289,7 @@ private:
 
 	// legato is handled by its own voice/note instance, separate from the array MIDI note numbers
 	MusicNote mLegatoVoice;
+	MusicNote mBogusNoteState;  // HACK: returned upon invalid note state queries
 	// therefore the MIDI note number associated with the voice is stored independently,
 	// given that it can change with new note events, but only applies to the single voice
 	int mActiveLegatoMidiNote = kInvalidValue;

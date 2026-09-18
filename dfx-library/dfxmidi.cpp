@@ -173,29 +173,60 @@ void DfxMidi::postprocessEvents() noexcept DFX_RT_ATTR
 }
 
 //-----------------------------------------------------------------------------
+DfxMidi::Event DfxMidi::getBlockEvent(size_t inIndex) const noexcept DFX_RT_ATTR
+{
+	DFX_RT_ASSERT(inIndex < mBlockEvents.size());
+	if (inIndex < mBlockEvents.size())
+	{
+		return mBlockEvents[inIndex];
+	}
+	return {};
+}
+
+//-----------------------------------------------------------------------------
+void DfxMidi::invalidateBlockEvent(size_t inIndex) noexcept DFX_RT_ATTR
+{
+	DFX_RT_ASSERT(inIndex < mBlockEvents.size());
+	if (inIndex < mBlockEvents.size())
+	{
+		mBlockEvents[inIndex].mStatus = kInvalidValue;
+	}
+}
+
+//-----------------------------------------------------------------------------
 bool DfxMidi::isNoteActive(int inMidiNote) const noexcept DFX_RT_ATTR
 {
 	return (getNoteState(inMidiNote).mVelocity != 0);
 }
 
 //-----------------------------------------------------------------------------
-DfxMidi::MusicNote const& DfxMidi::getNoteState(int inMidiNote) const
+DfxMidi::MusicNote const& DfxMidi::getNoteState(int inMidiNote) const noexcept DFX_RT_ATTR
 {
 	if (inMidiNote == kLegatoVoiceNoteIndex)
 	{
 		return mLegatoVoice;
 	}
-	return mNoteTable.at(inMidiNote);
+	if ((inMidiNote >= 0) && (inMidiNote < std::ssize(mNoteTable)))
+	{
+		return mNoteTable[inMidiNote];
+	}
+	DFX_RT_ASSERT(false);
+	return mBogusNoteState;
 }
 
 //-----------------------------------------------------------------------------
-DfxMidi::MusicNote& DfxMidi::getNoteStateMutable(int inMidiNote)
+DfxMidi::MusicNote& DfxMidi::getNoteStateMutable(int inMidiNote) noexcept DFX_RT_ATTR
 {
 	if (inMidiNote == kLegatoVoiceNoteIndex)
 	{
 		return mLegatoVoice;
 	}
-	return mNoteTable.at(inMidiNote);
+	if ((inMidiNote >= 0) && (inMidiNote < std::ssize(mNoteTable)))
+	{
+		return mNoteTable[inMidiNote];
+	}
+	DFX_RT_ASSERT(false);
+	return mBogusNoteState;
 }
 
 //-----------------------------------------------------------------------------
@@ -335,6 +366,7 @@ void DfxMidi::heedEvents(size_t inEventIndex, float inVelocityCurve, float inVel
 		case kStatus_NoteOn:
 		{
 			auto const currentNote = event.mByte1;
+
 			insertNote(currentNote);
 
 			auto const setNoteAmp = [inVelocityCurve, inVelocityInfluence, velocity = event.mByte2](MusicNote& note) DFX_RT_LAMBDA
@@ -380,7 +412,7 @@ void DfxMidi::heedEvents(size_t inEventIndex, float inVelocityCurve, float inVel
 			if (!isLegatoMode())
 			{
 				// don't process this note off, but do remember it, if the sustain pedal is on
-				if (mSustain)
+				if (mSustain && isNoteActive(currentNote))
 				{
 					mSustainedNotes[currentNote] = true;
 				}
@@ -452,6 +484,7 @@ void DfxMidi::heedEvents(size_t inEventIndex, float inVelocityCurve, float inVel
 }
 
 //-----------------------------------------------------------------------------
+// TODO: option to select whether tuning is queried at note-on only? (per MTS-ESP recommendation)
 double DfxMidi::getNoteFrequency(int inMidiNote) const noexcept DFX_RT_ATTR
 {
 	if (inMidiNote == kLegatoVoiceNoteIndex)
@@ -461,7 +494,7 @@ double DfxMidi::getNoteFrequency(int inMidiNote) const noexcept DFX_RT_ATTR
 	if (noteIsValid(inMidiNote))
 	{
 		DFX_RT_ASSERT(dfx::math::ToIndex(inMidiNote) < mNoteFrequencyTable.size());
-		return mNoteFrequencyTable.at(dfx::math::ToIndex(inMidiNote));
+		return mNoteFrequencyTable[dfx::math::ToIndex(inMidiNote)];
 	}
 	return 0.0;
 }

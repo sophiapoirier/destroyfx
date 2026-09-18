@@ -90,33 +90,35 @@ void BufferOverride::heedMidiEvents(size_t samplePos) noexcept DFX_RT_ATTR
 		// search events from the beginning up until the current processing block position
 		for (size_t eventIndex = 0; eventIndex < midiState.getBlockEventCount(); eventIndex++)
 		{
+			auto const event = midiState.getBlockEvent(eventIndex);
+
 			// don't search past the current processing block position
-			if (midiState.getBlockEvent(eventIndex).mOffsetFrames > samplePos)
+			if (event.mOffsetFrames > samplePos)
 			{
 				break;
 			}
 
-			if (DfxMidi::isNote(midiState.getBlockEvent(eventIndex).mStatus))
+			if (DfxMidi::isNote(event.mStatus))
 			{
 				foundNote = true;
 				// update the notes table
-				if (midiState.getBlockEvent(eventIndex).mStatus == DfxMidi::kStatus_NoteOn)
+				if (event.mStatus == DfxMidi::kStatus_NoteOn)
 				{
-					midiState.insertNote(midiState.getBlockEvent(eventIndex).mByte1);
-					foundNoteOn = midiState.getBlockEvent(eventIndex).mByte1;
+					midiState.insertNote(event.mByte1);
+					foundNoteOn = event.mByte1;
 				}
 				else
 				{
-					midiState.removeNote(midiState.getBlockEvent(eventIndex).mByte1);
+					midiState.removeNote(event.mByte1);
 				}
 
 				// the note shouldn't be considered anymore
 				midiState.invalidateBlockEvent(eventIndex);
 			}
 
-			else if (midiState.getBlockEvent(eventIndex).mStatus == DfxMidi::kStatus_CC)
+			else if (event.mStatus == DfxMidi::kStatus_CC)
 			{
-				if (midiState.getBlockEvent(eventIndex).mByte1 == DfxMidi::kCC_AllNotesOff)
+				if (event.mByte1 == DfxMidi::kCC_AllNotesOff)
 				{
 					foundNote = true;
 					midiState.removeAllNotes();
@@ -153,12 +155,13 @@ void BufferOverride::heedMidiEvents(size_t samplePos) noexcept DFX_RT_ATTR
 		// search events backwards again looking for the most recent valid pitchbend
 		for (size_t eventIndex = midiState.getBlockEventCount() - 1; true; eventIndex--)
 		{
+			auto const event = midiState.getBlockEvent(eventIndex);
+
 			// once we're below the current block position, pitchbend messages can be considered
-			if ((midiState.getBlockEvent(eventIndex).mOffsetFrames <= samplePos)
-				&& (midiState.getBlockEvent(eventIndex).mStatus == DfxMidi::kStatus_PitchBend))
+			if ((event.mOffsetFrames <= samplePos) && (event.mStatus == DfxMidi::kStatus_PitchBend))
 			{
 				// update the divisor parameter value
-				auto const tempDivisor = getDivisorParameterFromPitchbend(midiState.getBlockEvent(eventIndex).mByte1, midiState.getBlockEvent(eventIndex).mByte2);
+				auto const tempDivisor = getDivisorParameterFromPitchbend(event.mByte1, event.mByte2);
 				// make sure that we ought to be updating divisor
 				// the function will return -3 if we're in MIDI trigger mode and no notes are active
 				if (tempDivisor > 0.0f)
@@ -173,7 +176,7 @@ void BufferOverride::heedMidiEvents(size_t samplePos) noexcept DFX_RT_ATTR
 				// invalidate this and all earlier pitchbend messages so that they are not found in a future search
 				while (true)
 				{
-					if (midiState.getBlockEvent(eventIndex).mStatus == DfxMidi::kStatus_PitchBend)
+					if (event.mStatus == DfxMidi::kStatus_PitchBend)
 					{
 						// the note shouldn't be considered anymore
 						midiState.invalidateBlockEvent(eventIndex);

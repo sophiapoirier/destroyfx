@@ -552,10 +552,11 @@ void Scrubby::processMidiNotes() noexcept DFX_RT_ATTR
 
 	for (size_t i = 0; i < getmidistate().getBlockEventCount(); i++)
 	{
+		auto const event = getmidistate().getBlockEvent(i);
 		// wrap the note value around to our 1-octave range
-		auto const currentNote = dfx::math::ToIndex(getmidistate().getBlockEvent(i).mByte1) % kNumPitchSteps;
+		auto const currentNote = dfx::math::ToIndex(event.mByte1) % kNumPitchSteps;
 
-		switch (getmidistate().getBlockEvent(i).mStatus)
+		switch (event.mStatus)
 		{
 			case DfxMidi::kStatus_NoteOn:
 				// correct any bogus values that would mess up the system
@@ -582,7 +583,7 @@ void Scrubby::processMidiNotes() noexcept DFX_RT_ATTR
 				break;
 
 			case DfxMidi::kStatus_CC:
-				if (getmidistate().getBlockEvent(i).mByte1 == DfxMidi::kCC_AllNotesOff)
+				if (event.mByte1 == DfxMidi::kCC_AllNotesOff)
 				{
 					for (size_t noteIndex = 0; noteIndex < mActiveNotesTable.size(); noteIndex++)
 					{
