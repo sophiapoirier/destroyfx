@@ -92,8 +92,6 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setInPlaceAudioProcessingAllowed(false);
 	getmidistate().setResumedAttackMode(true);  // this enables the lazy note attack mode
 
-	setpresetname(0, "feminist synth");  // default preset name
-
 	registerSmoothedAudioValue(mOutputGain);
 	registerSmoothedAudioValue(mBetweenGain);
 	registerSmoothedAudioValue(mDryGain);

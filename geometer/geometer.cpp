@@ -176,7 +176,6 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   addparameterrangegroup("pointop2", P_POINTOP2, P_POINTOP3);
   addparameterrangegroup("pointop3", P_POINTOP3, NUM_PARAMS);
 
-  setpresetname(0, "Geometer LoFi");	/* default preset name */
   makepresets();
 
   windowcache_reader = &windowcaches.front();

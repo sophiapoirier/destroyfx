@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2005-2023  Tom Murphy 7
+Copyright (C) 2005-2026  Tom Murphy 7
 
 This file is part of Slowft.
 
@@ -61,7 +61,6 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setlatency_samples(delay_samples);
   settailsize_samples(delay_samples);
 
-  setpresetname(0, "Slowft Default"); /* default preset name */
   makepresets();
 
   /* allow MIDI keys to be used to control parameters */

@@ -50,8 +50,6 @@ MIDIGater::MIDIGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparametervaluestring(kGateMode, kGateMode_Amplitude, "amplitude");
 	setparametervaluestring(kGateMode, kGateMode_Lowpass, "low-pass");
 
-	setpresetname(0, "push the button");  // default preset name
-
 	setInPlaceAudioProcessingAllowed(false);
 	getmidistate().setResumedAttackMode(true);  // this enables the lazy note attack mode
 	getmidistate().setEnvCurveType(kAmplitudeGateEnvelopeCurve);

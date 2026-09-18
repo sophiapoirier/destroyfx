@@ -115,7 +115,6 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	settailsize_seconds(getparametermax_f(kSeekRange) * 0.001 / getparametermin_f(kSeekRate_Hz));
 
-	setpresetname(0, "scub");  // default preset name
 	initPresets();
 
 	addchannelconfig(kChannelConfig_AnyMatchedIO);  // N-in/N-out

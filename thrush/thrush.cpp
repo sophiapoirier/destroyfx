@@ -108,7 +108,6 @@ Thrush::Thrush(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	mCurrentTempoBPS = getparameter_f(kTempo) / 60.;
 
-	setpresetname(0, "thrush");  // default preset name
 	initPresets();
 
 	registerSmoothedAudioValue(mInputGain);

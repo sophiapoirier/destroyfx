@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2024  Sophia Poirier
+Copyright (C) 2002-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -90,8 +90,7 @@ DfxStub::DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //	addchannelconfig(number_of_inputs, number_of_outputs);
 
 
-// now initialize the presets
-	setpresetname(0, "default setting");  // default preset name, preset index 0
+// initialize the presets
 	// create the other built-in presets, if any
 	// (optional, and not a virtual method, so call it whatever you want)
 	initPresets();

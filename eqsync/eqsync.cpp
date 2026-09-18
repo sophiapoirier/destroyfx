@@ -59,9 +59,6 @@ EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	}
 
 	addparametergroup("coefficients", {kA0, kA1, kA2, kB1, kB2});
-
-
-	setpresetname(0, "with motors");  // default preset name
 }
 
 //-----------------------------------------------------------------------------

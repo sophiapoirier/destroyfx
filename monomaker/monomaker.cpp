@@ -76,8 +76,6 @@ The -3 dB setting uses a constant power curve based on sin/cos, while other two 
 //	setparametervaluestring(kPanLaw, kPanLaw_, "square root");
 //	setparametervaluestring(kPanLaw, kPanLaw_, "0 dB");
 
-	setpresetname(0, "let's merge");  // default preset name
-
 	addchannelconfig(2, 2);  // 2-in/2-out
 	addchannelconfig(1, 2);  // 1-in/2-out
 

@@ -77,8 +77,6 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	addparameterattributes(kMidiMode, DfxParam::kAttribute_OmitFromRandomizeAll);
 
 
-	setpresetname(0, "thip thip thip");  // default preset name
-
 	mNoteTable.fill(0);
 
 	addchannelconfig(kChannelConfig_AnyMatchedIO);  // N-in/N-out
