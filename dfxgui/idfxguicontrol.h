@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2018-2023  Sophia Poirier
+Copyright (C) 2018-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -45,8 +45,8 @@ class IDGControl
 public:
 	virtual ~IDGControl() = default;
 
-	virtual VSTGUI::CControl* asCControl() = 0;
-	virtual VSTGUI::CControl const* asCControl() const = 0;
+	virtual VSTGUI::CControl* asCControl() noexcept = 0;
+	virtual VSTGUI::CControl const* asCControl() const noexcept = 0;
 	virtual DfxGuiEditor* getOwnerEditor() const noexcept = 0;
 
 	virtual void setValue_gen(float inValue) = 0;
@@ -57,8 +57,8 @@ public:
 	virtual dfx::ParameterID getParameterID() const = 0;
 	virtual void setParameterID(dfx::ParameterID inParameterID) = 0;
 	virtual bool isParameterAttached() const = 0;
-	virtual size_t getNumStates() const = 0;
-	virtual float getFineTuneFactor() const = 0;
+	virtual size_t getNumStates() const noexcept = 0;
+	virtual float getFineTuneFactor() const noexcept = 0;
 	virtual bool notifyIfChanged() = 0;
 	virtual void onMouseWheelEditing() = 0;
 	virtual void invalidateMouseWheelEditingTimer() = 0;

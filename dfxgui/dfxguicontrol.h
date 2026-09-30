@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2003-2023  Sophia Poirier
+Copyright (C) 2003-2026  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -50,11 +50,11 @@ public:
 	template <typename... Args>
 	explicit DGControl(Args&&... args);
 
-	VSTGUI::CControl* asCControl() final
+	VSTGUI::CControl* asCControl() noexcept final
 	{
 		return this;
 	}
-	VSTGUI::CControl const* asCControl() const final
+	VSTGUI::CControl const* asCControl() const noexcept final
 	{
 		return this;
 	}
@@ -75,13 +75,13 @@ public:
 	void setParameterID(dfx::ParameterID inParameterID) final;
 	bool isParameterAttached() const final;
 
-	size_t getNumStates() const final
+	size_t getNumStates() const noexcept final
 	{
 		return mNumStates;
 	}
 	void setNumStates(size_t inNumStates);
 
-	float getFineTuneFactor() const override
+	float getFineTuneFactor() const noexcept override
 	{
 		return kDefaultFineTuneFactor;
 	}
