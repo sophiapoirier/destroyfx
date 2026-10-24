@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2023  Sophia Poirier
+	Copyright (C) 2003-2026  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -147,7 +147,6 @@ void const* CFAUPresetArrayRetainCallBack(CFAllocatorRef inAllocator, void const
 void CFAUPresetArrayReleaseCallBack(CFAllocatorRef inAllocator, void const* inPreset);
 Boolean CFAUPresetArrayEqualCallBack(void const* inPreset1, void const* inPreset2);
 CFStringRef CFAUPresetArrayCopyDescriptionCallBack(void const* inPreset);
-void CFAUPresetArrayCallBacks_Init(CFArrayCallBacks* outArrayCallBacks);
 
 //-----------------------------------------------------------------------------
 // This function is called when an item (an AUPreset) is added to the CFArray, 
@@ -197,34 +196,6 @@ CFStringRef CFAUPresetArrayCopyDescriptionCallBack(void const* inPreset)
 }
 
 //-----------------------------------------------------------------------------
-// this will initialize a CFArray callbacks structure to use the above callback functions
-void CFAUPresetArrayCallBacks_Init(CFArrayCallBacks* outArrayCallBacks)
-{
-	if (outArrayCallBacks == NULL)
-	{
-		return;
-	}
-	// wipe the struct clean
-	memset(outArrayCallBacks, 0, sizeof(*outArrayCallBacks));
-	// set all of the values and function pointers in the callbacks struct
-	outArrayCallBacks->version = 0;  // currently, 0 is the only valid version value for this
-	outArrayCallBacks->retain = CFAUPresetArrayRetainCallBack;
-	outArrayCallBacks->release = CFAUPresetArrayReleaseCallBack;
-	outArrayCallBacks->copyDescription = CFAUPresetArrayCopyDescriptionCallBack;
-	outArrayCallBacks->equal = CFAUPresetArrayEqualCallBack;
-}
-
-//-----------------------------------------------------------------------------
-#ifdef __GNUC__
-CFArrayCallBacks const kCFAUPresetArrayCallBacks;
-static void kCFAUPresetArrayCallBacks_constructor(void) __attribute__((constructor));
-static void kCFAUPresetArrayCallBacks_constructor(void)
-{
-	CFAUPresetArrayCallBacks_Init((CFArrayCallBacks*)&kCFAUPresetArrayCallBacks);
-}
-#else
-// XXX I'll use this for other compilers, even though I hate initializing structs with all arguments at once 
-// (cuz what if you ever decide to change the order of the struct members or something like that?)
 CFArrayCallBacks const kCFAUPresetArrayCallBacks = 
 {
 	0, 
@@ -233,7 +204,6 @@ CFArrayCallBacks const kCFAUPresetArrayCallBacks =
 	CFAUPresetArrayCopyDescriptionCallBack, 
 	CFAUPresetArrayEqualCallBack
 };
-#endif
 
 
 
@@ -330,7 +300,7 @@ void CFAUOtherPluginDescRelease(CFAUOtherPluginDescRef inDesc)
 }
 
 //-----------------------------------------------------------------------------
-// The following 4 functions are CFArray callbacks for use when creating an AU's 
+// The following functions are CFArray callbacks for use when creating an AU's 
 // other plugin descriptions array to support kAudioUnitMigrateProperty_FromPlugin.
 //-----------------------------------------------------------------------------
 
@@ -338,7 +308,6 @@ void const* CFAUOtherPluginDescArrayRetainCallBack(CFAllocatorRef inAllocator, v
 void CFAUOtherPluginDescArrayReleaseCallBack(CFAllocatorRef inAllocator, void const* inDesc);
 Boolean CFAUOtherPluginDescArrayEqualCallBack(void const* inDesc1, void const* inDesc2);
 CFStringRef CFAUOtherPluginDescArrayCopyDescriptionCallBack(void const* inDesc);
-void CFAUOtherPluginDescArrayCallBacks_Init(CFArrayCallBacks* outArrayCallBacks);
 
 //-----------------------------------------------------------------------------
 // This function is called when an item (an AudioUnitOtherPluginDesc) is added to the CFArray, 
@@ -431,34 +400,6 @@ CFStringRef CFAUOtherPluginDescArrayCopyDescriptionCallBack(void const* inDesc)
 }
 
 //-----------------------------------------------------------------------------
-// this will initialize a CFArray callbacks structure to use the above callback functions
-void CFAUOtherPluginDescArrayCallBacks_Init(CFArrayCallBacks* outArrayCallBacks)
-{
-	if (outArrayCallBacks == NULL)
-	{
-		return;
-	}
-	// wipe the struct clean
-	memset(outArrayCallBacks, 0, sizeof(*outArrayCallBacks));
-	// set all of the values and function pointers in the callbacks struct
-	outArrayCallBacks->version = 0;  // currently, 0 is the only valid version value for this
-	outArrayCallBacks->retain = CFAUOtherPluginDescArrayRetainCallBack;
-	outArrayCallBacks->release = CFAUOtherPluginDescArrayReleaseCallBack;
-	outArrayCallBacks->copyDescription = CFAUOtherPluginDescArrayCopyDescriptionCallBack;
-	outArrayCallBacks->equal = CFAUOtherPluginDescArrayEqualCallBack;
-}
-
-//-----------------------------------------------------------------------------
-#ifdef __GNUC__
-CFArrayCallBacks const kCFAUOtherPluginDescArrayCallBacks;
-static void kCFAUOtherPluginDescArrayCallBacks_constructor(void) __attribute__((constructor));
-static void kCFAUOtherPluginDescArrayCallBacks_constructor(void)
-{
-	CFAUOtherPluginDescArrayCallBacks_Init((CFArrayCallBacks*)&kCFAUOtherPluginDescArrayCallBacks);
-}
-#else
-// XXX I'll use this for other compilers, even though I hate initializing structs with all arguments at once 
-// (cuz what if you ever decide to change the order of the struct members or something like that?)
 CFArrayCallBacks const kCFAUOtherPluginDescArrayCallBacks = 
 {
 	0, 
@@ -467,7 +408,6 @@ CFArrayCallBacks const kCFAUOtherPluginDescArrayCallBacks =
 	CFAUOtherPluginDescArrayCopyDescriptionCallBack, 
 	CFAUOtherPluginDescArrayEqualCallBack
 };
-#endif
 
 
 
